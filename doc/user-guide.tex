@@ -1,0 +1,1594 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{dsfont, mathrsfs}
+\usepackage{palatino}
+\usepackage{amsmath,amssymb}
+\usepackage{graphics}
+\usepackage[all]{xy}
+\usepackage{alltt}
+
+\input{macro}
+
+\renewcommand{\ttdefault}{txtt}
+
+
+
+\title{IPR User Guide\\{\normalsize (for version 0.45)}}
+\author{Gabriel Dos~Reis}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+\label{sec:intro}
+
+This document is a companion to the IPR Reference 
+Manual~\cite{dosreis04:ipr-ref}.  It is intended to illustrate uses of the IPR
+library.
+
+The library currently consists of three components:
+\begin{itemize}
+\item \emph{the interface}, available through \code{<ipr/interface>}.  This
+  is a collection of interfaces (\ie{} abstract classes) that provide views and
+  non-mutating operations to manipulate IPR nodes;
+\item \emph{the I/O component}, available through \code{<ipr/io>}.  This
+  header file declares functions necessary to render IPR nodes in their
+  external, persistent form according to the XPR syntax;
+\item \emph{the implementation classes}, available through
+  \texttt{<ipr/impl>}.  This is a collection of types that provide
+  implementations for the interface component.  They also support mutating
+  operations necessary to build   complete IPR nodes. 
+\end{itemize}
+Programs that use the IPR library usually include \code{<ipr/interface>}
+when their only interests are non-mutating manipulations of IPR nodes.  They
+need to include \code{<ipr/io>} if they intend to print out IPR nodes in
+XPR syntax.  Finally, they include \code{<ipr/impl>} if
+they do create IPR nodes, as opposed to inspecting them.
+
+
+The interface classes reside in the namespace \texttt{ipr}.  The
+implementation classes are found in the sub-namespace \code{ipr::impl}.
+In general, an interface \code{ipr::Xyz} has a corresponding implementation
+named \code{ipr::impl::Xyz}. 
+
+
+\section{Installation}
+\label{sec:install}
+
+
+
+\section{Generalities}
+\label{sec:generalities}
+
+The IPR library provides data structures for representing programs written in
+ISO Standard C++.  Programs are represented as graphs, with distinguished
+roots called \emph{units}.  An IPR unit roughly corresponds to a translation
+unit in C++.  In fact, IPR represents a superset of Standard C++; so it can
+handle programs using full C++  as well as incorrect or incomplete programs. 
+
+The notion of unit is directly represented by the interface class
+\NodeClass{Unit}. An object of that type contains the sequence of top-level
+declarations in a given translation unit. It also provides  access to nodes
+that represent C++ fundamental types.  The general approach is that
+every C++ entity has a type.  In particular C++ types, being expressions in
+IPR, do have types.  For example, the following program prints out some
+IPR expression nodes and their types.
+\begin{Program}
+#include <ipr/impl>
+#include <ipr/io>
+#include <iostream>
+
+template<class E>
+void inspect(const E& e)        // Print a expression and its type.
+\{
+   ipr::Printer pp(std::cout);  // Create an XPR pretty printer
+                                // tied to std::cout.
+   pp << ipr::xpr_expr(e);      // Output e in XPR notation.
+   pp << " has type ";
+   pp << ipr::xpr_expr(e.type()); // Output type of e in XPR notation.
+   std::cout << std::endl;
+\}
+
+int main()
+\{
+   using namespace ipr;
+   impl::Unit unit;             // Current translation unit
+
+   // Inspect the representations of some literals.
+   inspect(*unit.make_literal(unit.get_char(), "'c'"));
+   inspect(*unit.make_literal(unit.get_int(), "1024"));
+   inspect(*unit.make_literal(unit.get_double(), "3.141592653589793"));
+
+   // Inspect the representations of some C++ fundamental types.
+   inspect(unit.get_char());
+   inspect(unit.get_int());
+   inspect(unit.get_double());
+\}
+\end{Program}
+
+When, compiled and linked against the IPR library, it produces the output
+\begin{Output}
+'c' has type char
+1024 has type int
+3.141592653589793 has type double
+char has type  typename
+int has type  typename
+double has type  typename
+\end{Output}
+
+%% Notions like \code{class}, \code{enum}, \code{union} and \code{namespace} are
+%% types in IPR: they characterize type expresions such as class-expressions,
+%% enum-expressions, union-expression and namespace-expressions.
+
+A node of type \NodeClass{Unit} also serves to represent the notion of 
+\emph{instantiation unit}\footnote{See clause 2 of \cite{iso98, iso03}}.
+Recall that typical C++ translation units contain requests for template
+instantiations.  An instantiation unit is a translation unit where all
+template instantiation requests have been resolved.
+
+
+The next sections will focuse on the part of the library typically used for
+building IPR nodes.  It is meant to provide support for tools that create IPR
+nodes, \eg{} IPR generators from compilers or XPR parsers.  All IPR
+node construction functions return pointers; usually their names start with
+the prefix \code{make\_}.  
+
+Type nodes, expression nodes and statements nodes are created with
+\NodeClass{impl::Unit} objects.  Declarations are created with their enclosing
+regions.  They are generally represented as a triple of name, type and
+optional initializer.
+
+
+\section{Literals}
+\label{sec:literals}
+
+Lexical units (\eg{} names, literals) of Standard C++ are directly represented
+in IPR. This section deals with literals and the next with names.
+
+ISO Standard C++ defines five sub-categories of literals:
+\begin{Grammar}
+  \cxxRule{literal:}
+      \cxxRule{integer-literal}
+      \cxxRule{character-literal}
+      \cxxRule{floating-literal}
+      \cxxRule{string-literal}
+      \cxxRule{boolean-literal}
+\end{Grammar}
+They are all uniformly represented in IPR as pairs of type and string.
+There is no restriction on the set of types a literal can be conceived for.
+In other words, any type node in IPR can serve to create a literal.  The
+semantics of the resulting node is entirely up to the environment that creates
+and, or interprets such nodes. 
+%% \begin{Program}
+%%   #include <ipr/impl.H>
+%%   #include <ipr/io.H>
+%%   #include <iostream>
+%%   int main()
+%%   \{
+%%      using namespace ipr;
+%%      impl::Unit unit;
+%%      const Literal* four = unit.make_literal(unit.Int(), "4");
+%%      const Literal* c = unit.make_literal(unit.Char(), "'c'");
+
+%%      Printer pp(std::cout);
+%%      pp << xpr_expr(*four)
+%%         << '\bslash{n}'
+%%         << xpr_expr(*c);
+%%      std::cout << std::endl;
+%%   \}
+%% \end{Program}
+
+As the example from \secref{sec:generalities} shows, literals are made with
+the member function \texttt{make\_literal()} of the implementation class
+\NodeClass{impl::Unit}.  It takes two arguments:  the type of the literal and
+the spelling string.  There is no mutating operations on literals.  The
+sequence of characters should include back-quotes or double-quotes for
+character literals or string literals. 
+
+\section{Names}
+\label{sec:name}
+
+Names are useful for designating data, types or any computational entity of
+interest. IPR covers the variety of names found in Standard C++.
+All names are unified in the sense that, two calls to the same
+name-constructor function, with the same argument list, will yield the same
+physical node. Consequently, all name nodes are immutable.
+
+There are eight sub-categories of names
+\begin{Grammar}
+  \cxxRule{name:}
+      \cxxRule{identifier}
+      \cxxRule{operator-function-id}
+      \cxxRule{conversion-function-id}
+      \cxxRule{qualified-id}
+      \cxxRule{template-id}
+      \cxxRule{type-id}
+      \cxxRule{constructor-name}
+      \cxxRule{destructor-name}
+\end{Grammar}
+accounting for the variety of names in Standard C++.
+
+\subsection{Plain identifiers}
+\label{sec:name.identifier}
+
+\begin{Grammar}
+  \cxxRule{identifier:}
+     \cxxRule{nondigit}
+     \cxxRule{identifier} \cxxRule{nondigit}
+     \cxxRule{identifier} \cxxRule{digit}
+\end{Grammar}
+An \NodeClass{Identifier} node can be created out of a string that contains
+any character string:
+\begin{Program}
+  \expr{unit}.make_identifier(\expr{string})
+\end{Program}
+where \expr{unit} is an instance of \code{impl::Unit} and \expr{string} is
+the string to make an identifier out of.  The returned value of the
+function \code{make\_identifier} has type \code{const Identifier*}.
+
+\subsection{Operator function names}
+\label{sec:name.operator}
+\begin{Grammar}
+  \cxxRule{operator-function-id:}
+     operator \cxxRule{operator}
+\end{Grammar}
+Any operator-name is represented by IPR node constructed out of a string
+containing the spelling of that operator:
+\begin{Program}
+  \expr{unit}.make_operator(\expr{string});
+\end{Program}
+where \expr{unit} is an expression of type \code{impl::Unit} and \expr{string}
+is a string for the operator-name.  The whole expression has type
+\code{const Operator*}.
+
+For usual operators like \texttt{operator+} or \texttt{operator==}, the string
+is \texttt{"+"} or \texttt{"=="}.  For the array forms of the allocating and
+deallocating functions, the string is \texttt{"new[]"} or \texttt{"delete[]"}.
+
+
+\subsection{Conversion function names}
+\label{sec:name.conversion}
+\begin{Grammar}
+  \cxxRule{conversion-function-id:}
+     operator \cxxRule{type-id}
+\end{Grammar}
+
+IPR represents a conversion function name as a node that takes the destination
+type as argument.  Such node is constructed as:
+\begin{Program}
+  \expr{unit}.make_conversion(\expr{type})
+\end{Program}
+where \expr{unit} is an expression of type \code{impl::Unit} and \expr{type}
+is an expression of type derived from \code{Type}.  The returned value is
+of type \code{const Conversion*}.
+
+
+\subsection{Qualified names}
+\label{sec:name.qualified}
+\begin{Grammar}
+  \cxxRule{qualified-id:}
+     \cxxOpt{::} \cxxRule{nested-name-specifier} \cxxRule{unqualified-name}
+     {::} \cxxRule{name}
+\end{Grammar}
+
+
+IPR represents qualified names as a \NodeClass{Scope\_ref} that takes two
+arguments: (a) an expression for the qualifying scope;
+and (b) the designated name.
+\begin{Program}
+  \expr{unit}.make_scope_ref(\expr{scope}, \expr{name})
+\end{Program}
+where \expr{unit} is of type \code{impl::Unit}, \expr{scope} --- designating
+the qualifying part --- is any node of type derived from \code{Expr}, and
+\expr{name} --- designating the name being qualified --- is also any node of
+type derived from \code{Expr}.  The return value is of type 
+\code{const Scope\_ref*}.
+
+\subsection{Template specialization names}
+\label{sec:name.specialization}
+\begin{Grammar}
+  \cxxRule{template-id:}
+     \cxxRule{unqualified-name} <\cxxOptRule{template-argument-list}>
+\end{Grammar}
+
+Template specialization names, \NodeClass{Specialization} in IPR, are made out
+of two expressions, as:
+\begin{Program}
+  \expr{unit}.make_specialization(\expr{template}, \expr{arglist});
+\end{Program}
+where the first argument designates the template to specialize and the second
+argument is an \code{Expr\_list} that denotes the template-argument
+list.  The return value has type \code{const Specialization*}. 
+
+\subsection{Type names}
+\label{sec:name.type-id}
+
+All types have names.  Type-names may be as simple as \texttt{int} or
+\texttt{double}; but they can also be more complicated expression, composed
+not just a single identifier, e.g. \texttt{int (*[256])(int)}.  Names for such
+constructed types are represented in IPR by \NodeClass{Type\_id} nodes.  They
+are built as
+\begin{Program}
+  \expr{unit}.make_type_id(\expr{type})
+\end{Program}
+that takes the to-be-named type as its sole argument.  Usually, IPR users
+should not need to have to create a \NodeClass{Type\_id} nodes by themselves
+as these get created automatically for compound types that need them.
+
+
+\subsection{Constructor name}
+\label{sec:name.ctor-name}
+
+Standard C++ says that constructors don't have names.  However, it also says
+that some qualified names actually designate constructors.  Which is quite
+confusing. For example, in the program fragment
+\begin{Program}
+  struct S \{
+     // ...
+  \};
+  S x = S();
+\end{Program}
+the declaration of the variable \code{x}, the symbol \code{S} refers to two
+distinct entity: The first is the class-type and the second is the default
+constructor (invoked through \code{S()}).  
+Similarly, a class with a template constructor needs ways to refer to partial
+specializations and explicit instantiations.  
+
+IPR defines a category of name called \code{Ctor\_name} used to represent
+constructor names.  A node for such type can be built as
+\begin{Program}
+  \expr{unit}.make_ctor_name(\expr{type})
+\end{Program}
+where \expr{type} is the type whose constructor one wants to build a name for.
+The resulting expression has type \code{const Ctor\_name*}.  
+
+\subsection{Destructor name}
+\label{sec:name.dtor-name}
+
+The node class \code{Dtor\_name} represents a destructor name.  Say
+\begin{Program}
+  \expr{unit}.make_dtor_name(\expr{type})
+\end{Program}
+to make a destructor name for \expr{type}.  The resulting expression has type
+\code{const Dtor\_name*}.
+
+
+\section{Types}
+\label{sec:types}
+
+IPR has a unified type system.  By that we mean that any two
+calls to the same type node construction function with the same argument list
+will yield the same physical node.
+
+\subsection{CV-qualified type}
+\label{sec:type.cv-qualified}
+Any type (in IPR sense) can be cv-qualified.  The set of cv-qualifiers
+currently supported consists in \texttt{const}, \texttt{volatile} and
+\texttt{restrict} (C99).  They are denoted by the enumerators
+\texttt{Type::Const}, \texttt{Type::Volatile} and \texttt{Type::Restrict}.
+They can be bitor-ed.  A cv-qualified type is built with the
+\texttt{impl::Unit} member function
+\begin{Program}
+  const Type* make_qualified(const Type&, Type::Qualifier);
+\end{Program}
+where the first parameter denotes the type to be cv-qualified and the second
+parameter denotes the set of cv-qualifier to apply. 
+
+\subsection{Pointer type}
+\label{sec:type.pointer}
+
+A \NodeClass{Pointer} type node can be constructed out of any IPR type node
+with the \NodeClass{impl::Unit} member function
+\begin{Program}
+  const Pointer* make_pointer(const Type&);
+\end{Program}
+
+\subsection{Reference type}
+\label{sec:type.reference}
+
+Similar to pointer type nodes, a \NodeClass{Reference} type node can be
+constructed out of any IPR type node with the \NodeClass{impl::Unit} member
+function 
+\begin{Program}
+  const Reference* make_reference(const Type&);
+\end{Program}
+
+
+\subsection{Array type}
+\label{sec:type.array}
+
+An array is made with the \NodeClass{impl::Unit} member function
+\begin{Program}
+  const Array* make_array(const Type&, const Expr&);
+\end{Program}
+where the first argument is the array element type and the second argument
+specifies the bound.  For example, ISO Standard C++ says that the type of the 
+string literal \code{"Hello World!"} is \code{const char[13]}, so its
+type will be represented in IPR with a node constructed as 
+\begin{Program}
+  // Build a node for the integer literal value `13'
+  const Expr& sz = *unit.make_literal(unit.get_int(),unit.get_string("13"));
+  // create the actual node for `const int[13]'
+  unit.make_array(*unit.make_cv_qualified(unit.get_char()), sz);
+\end{Program}
+As a limiting case, an array type with no specified bound, \eg{}
+\texttt{int[]}, may be constructed along the lines of
+\begin{Program}
+  unit.make_array(unit.get_int(), unit.null_expr());
+\end{Program}
+where \texttt{unit.null\_expr()} denotes here the absence of bound
+specification. 
+
+
+\subsection{Declared type}
+\label{sec:type.decltype}
+
+IPR has provision to represent the mechanism to query generalized expression
+types (see the \texttt{auto} and \texttt{decltype} proposals).  Such an
+explicit request for inferred type is represented by a \NodeClass{Decltype}
+node, constructed with 
+\begin{Program}
+  const Decltype* make_decltype(const Expr&);
+\end{Program}
+
+\subsection{Expression as type}
+\label{sec:type.as-type}
+
+In various contexts it is useful to view an expression node as actually
+denoting a type.  For instance, the C++ reserved identifier \code{bool} 
+designates the built-in boolean type.  The way that is
+accomplished in IPR is to build an \NodeClass{As\_type} node out of the
+\NodeClass{Identifier} node created for \code{bool}:
+\begin{Program}
+  unit.make_as_type(*unit.make_identifier("bool"))
+\end{Program}
+All built-in C++ simple types are created that way.
+
+Another instance of situations where an \NodeClass{As\_type} is helpful
+is when dealing with dependent types.  Assume that you have created a
+\NodeClass{Parameter} node for a template-parameter \texttt{C} and you want
+to represent the nested-type \texttt{typename C::value\_type}.  The natural
+answer here is to build a \NodeClass{Scope\_ref} and use the resulting node as
+a type (reflecting the assumption introduced by the C++ keyword
+\texttt{typename}):
+\begin{Program}
+  unit.make_as_type(*unit.make_scope_ref
+                        (\expr{C}, *unit.make_identifier("value_type")))
+\end{Program}
+
+
+\subsection{Function type}
+\label{sec:type.function}
+
+A function type consists in three logical parts: (a) the parameter type list;
+(b) the return type; and (c) the list of exceptions a function of that type
+may throw.  IPR represents a function type as a \NodeClass{Function} node.
+Such nodes can be constructed with the \NodeClass{impl::Unit} member functions 
+\begin{Program}
+  const Function* make_function(const Product&, const Type&);
+  const Function* make_function(const Product&, const Type&, const Sum&);
+\end{Program}
+The first constructor function is a convenient surrogate for the second, as it
+implies that the function may throw any type (noted \code{...}).
+
+\subsection{Template type}
+\label{sec:type.template}
+
+A template type is very similar to a function type, except that it is
+represented by a \NodeClass{Template} node.  The corresponding constructor
+function is the member function of \NodeClass{impl::Unit}
+\begin{Program}
+  const Template* make_template(const Product&, const Type&);
+\end{Program}
+The first argument is the type of the parameter list, and the second argument
+is the type of the expression being parameterized.
+
+
+\subsection{Pointer to member type}
+\label{sec:type.ptro-to-member}
+
+A pointer to member type is represented as a pair: The class-type and the type
+of the member.  The corresponding construction function is
+\begin{Program}
+  const Ptr_to_member* make_ptr_to_member(const ipr::Type&,
+                                          const ipr::Type&);
+\end{Program}
+of the class \NodeClass{impl::Unit}.
+
+At the implementation level, most compilers distinguish pointer to data
+member types from pointer to member function types. However, the internal
+representation is immaterial to the actual semantics constraints. One issue
+with our desire to have uniform syntax and representation for non-static
+member and ordinary functions, however, is to make sure that address of
+members are given the right type:  this is easily solved as at anytime we do
+know when a function declaration is a non-static member function.  See the
+discussion in \ref{sec:fun-decl}.
+
+
+\subsection{User-defined types}
+\label{sec:type.udt}
+
+All standard C++ user-defined types (\eg{} class or struct, union, enum)
+as well as namespace are considered user-defined types in IPR.  They can be
+constructed with one of the expressions
+\begin{Program}
+  \expr{unit}.make_class(\expr{parent_region});
+  \expr{unit}.make_enum(\expr{parent_region});
+  \expr{unit}.make_namespace(\expr{parent_region});
+  \expr{unit}.make_union(\expr{parent_region});
+\end{Program}
+The resultinf type is \code{impl::Class*}, \code{impl::Enum*}, 
+\code{impl::Namespace*} and \code{impl::Union*}, respectively.
+
+The definitions of all user-defined types delimit a region, which is the
+declarative region of their members.  All, except enums, have a heterogeneous 
+region, implemented by the class \code{impl::Region}.
+Enums' bodies are homogeneous region (\code{impl::homogeneous\_region})
+because their members are all enumerators of the same type.  For instance, an
+enumeration's body is a \code{impl::homogeneous\_region<Enumerator>}
+
+
+Similarly  the sequence of declarations in a heterogeneous region is a 
+heterogeneous scope (\code{impl::Scope}), whereas in a homogeneous region,
+it is a \code{impl::homogeneous\_scope<T>}, where \code{T} is the interface 
+type of the declarations.  
+
+
+\section{Classic expressions}
+\label{sec:expression}
+
+The abstract language modeled by IPR nodes is expression-based.  This is to
+say that nearly any computational entity of interest is thought of as an
+expression.   Thus compared to Standard C++ notions, most IPR nodes may be
+considered as representations of \emph{generalized expressions}.
+Consequently, the term \emph{classic expressions} is used to designate genuine
+Standard C++ expressions.
+
+Classic expressions are generally divided into categories:
+\begin{itemize}
+\item \emph{unary expressions}, e.g. \texttt{sizeof (int)};
+\item \emph{binary expressions}, e.g. \texttt{a + b};
+\item \emph{ternary expressions}, e.g. \texttt{x < y ? x : y}.
+\end{itemize}
+
+Each category contains a comprehensive list of IPR nodes specifically designed
+to cover all kinds of expressions that fall in that category.
+
+Every expression is made by a \texttt{impl::Unit} object.  For
+example, the following program fragment shows how to create an IPR node for
+\texttt{sizeof (int)}:
+\begin{Program}
+  unit.make_type_sizeof(unit.get_int());
+\end{Program}
+
+When an expression involves an identifier that refers to a declared entity,
+we need to distinguish the \emph{use} of that identifier from the declaration
+itself.  This is important for preserving the semantics of the input source
+program.  For example the fragments
+\begin{Program}
+  if (bool b = get_answer())
+     // ...
+\end{Program}
+and
+\begin{Program}
+  bool b = get_answer();
+  if (b)
+     // ...
+\end{Program}
+are in general not equivalent.  The distinction between a use of
+identifier that denotes a declared entity from the introducing declaration is 
+captured by the node \code{Id\_expr}.  In general, one says
+\begin{Program}
+  \expr{unit}.make_id_expr(\expr{decl});
+\end{Program}
+to build an \code{Id\_expr} out of a \code{Decl} node.  For the occasional
+situation where --- in a template definition --- an identifier cannot
+be resolved to the introducing declarations, one uses a \code{Name} node
+instead of a \code{Decl} node as argument to \code{make\_id\_expr}.
+Here is how one can construct nodes for the expression
+\texttt{a + b}
+\begin{Program}
+  const Var& a = ...
+  const Var& b = ...
+  Expr* sum = unit.make_plus(*unit.make_id_expr(a), 
+                             *unit.make_id_expr(b));
+\end{Program}
+
+The conditional expression \texttt{x < y ? x : y} can be constructed
+as follows
+\begin{Program}
+  const Expr& x = ...
+  const Expr& y = ...
+  const Expr& min = *unit.make_conditional(*unit.make_less(x, y), x, y);
+\end{Program}
+
+Cast-expressions are represented as binary expressions: The first operand is
+the target type and the second operand is the source expression.
+
+
+\subsection{User-defined operators}
+\label{sec:expression.user-defined-operator}
+
+In Standard C++, most operators can be overloaded and given a user-defined
+meaning. For generality, IPR takes the approach that just about any operator
+can be given a user-defined meaning.  Consequently, every IPR implementation
+class for a operator has a field \code{op\_impl} to record the function
+declaration that implements that operator.  For instance, consider the
+expression \code{cout~<<~2} for inserting the integer value tow in the
+output standard stream.  Assume further that the insertion function operator
+declaration is represented by \code{ins}, then the IPR representation for the
+whole expression would be constructed as
+\begin{Program}
+  impl::Lshift* shift = unit.make_lshist(\expr{cout}, \expr{two});
+  shift->op_impl = ins;   // remember the insertion function
+\end{Program}
+
+If the member \code{op\_impl} is not set, then it is assumed to be a
+built-in operator.
+
+
+\subsection{Names and resolutions}
+\label{sec:expression.name-lookup}
+
+
+\section{Named data}
+\label{sec:data.named}
+
+This section describes the representation of named data, \ie{} variables, data
+member.  Notice that in either cases, references are treated no specially from
+variables or data members -- even though the C++ standard says that references
+are not objects. 
+
+Named data are declared at user-defined types (\ie{} class-types,
+enumerations or namespaces) level.  Consequently, their IPR node
+representations are  manifactured with a member function, prefixed by
+\code{declare\_}, of the enclosing user-defined type. The next subsections
+discuss the mapping ofthe variety C++ named data to IPR representation.
+
+\subsection{Variable declaration}
+\label{sec:decl.variable}
+
+A variable is an association of a name and a storage for data, that does not
+have any enclosing object. The notion of variable is implemented by
+\code{impl::Var}.  Manifacturing a node of that type requires ---
+as do most declaration nodes --- three things: (a) the name of the variable;
+(b) the type of the data to store; and (c) an optional initializer.
+
+A node for a variable is created with the member function
+\texttt{declare\_var()} of the implementation class for the enclosing
+user-defined type (\code{impl::Class}, \code{imp::Union} or
+\code{impl::Namespace}).  Once a \texttt{impl::Var} is
+created, it must be 
+associated with its initializer (if any).  The following program
+illustrates how to build a variable declaration 
+\begin{Program}
+  static const int bufsz = 1024;
+\end{Program}
+at the global scope and write the resulting node in XPR notation.
+\begin{Program}
+#include <ipr/impl>
+#include <ipr/io>
+#include <iostream>
+int main()
+\{
+   using namespace ipr;
+   impl::Unit unit;              // current translation unit
+   
+   // Build the variable's name and type
+   const Name* name = unit.make_identifier("bufsz");
+   const Type* type = unit.make_cv_qualified(unit.get_int(), Type::Const);
+
+   // and the actual impl::Var node at global scope and initialize it
+   impl::Var* var = unit.global_ns->declare_var(*name, *type);
+   var->decl_data.spec = ipr::Decl::Static;
+   var->init = unit.make_literal(unit.get_int(), "1024");
+   
+   // Print out the whole translation unit
+   Printer pp(std::cout);
+   pp << unit;
+   std::cout << '\bslash{n}';
+\}
+\end{Program}
+The output of the above program is
+\begin{Output}
+  bufsz : static const int = 1024;
+\end{Output}
+
+The effort of constructing the representation of that declaration basically is
+one line per significant token. 
+
+
+\subsection{Static data members}
+\label{sec:named.data.static-member}
+
+A static data member is a global variable in disguise.  They key difference
+between a static data member and an ordinary variable that the former is
+subject to to access control.  Therefore, a static data member is also
+represented by a \code{Var} node.  From the IPR representation point of view,
+the steps for manifacturing a node for a static data member is pretty much
+the same as for ordinary variable, except that one uses the enclosing
+class-type as the manifacturer.  For instance, consider the program fragment 
+\begin{Program}
+  class nifty_counter \{
+    // ...
+  private:
+     static int count;
+  \};
+\end{Program}
+where we are only interested in the portion relating to the representation of
+the static data member \code{nifty\_counter::count}.  Here is a program that
+accomplishes that job and prints the IPR representation:
+\begin{Program}
+#include <ipr/impl>
+#include <ipr/io>
+#include <iostream>
+
+int main()
+\{
+   using namespace ipr;
+   impl::Unit unit;              // current translation unit
+
+   // First, build the node for the nifty_counter class
+   impl::Class* nifty_type = unit.make_class(*unit.global_region());
+   nifty_type->id = unit.make_identifier("nifty_counter");
+   unit.global_ns->declare_type(*nifty_type->id, unit.Class())->init
+      = nifty_type;
+   
+   // Then build the static data member
+   impl::Var* count = nifty_type->declare_var(*unit.make_identifier("count"),
+                                              unit.get_int());
+   // "cout" is private 
+   count->decl_data.spec = Decl::Static | Decl::Private;
+   // We do not set the initializer, since there is none.
+   
+   // Print out the whole translation unit
+   Printer pp(std::cout);
+   pp << unit;
+   std::cout << '\bslash{n}';
+\}
+\end{Program}
+
+A \code{Var} node represents a static data member if and only if its
+membership is a class-type.  Notice that the operation \code{declare\_var()}
+is supported by implementation classes for all user-defined types, except
+enumerations. 
+
+\subsection{Non-static data members}
+\label{sec:named.data.nonstatic-member}
+
+A non-static data member has semantics different from that of ordinary 
+variable and static data-members.  Consequently, it is represented by a
+distinct node (\code{Field}).  However, the steps for manifacturing such node
+is very similar to that of a variable, except that the construction function 
+\code{declare\_field()} is used --- instead of \code{declare\_var()}.
+
+Consider the following C++ program fragment
+\begin{Program}
+  struct point \{
+    int x;
+    int y;
+  \};
+\end{Program}
+that declares a class named \code{point} at the global scope.  That
+declaration can be constructed as follows
+\begin{Program}
+#include <ipr/impl>
+#include <ipr/io>
+#include <iostream>
+
+int main()
+\{
+   using namespace ipr;
+   impl::Unit unit;
+
+   // Make the class node, and bind it to the name "point".
+   impl::Class* point = unit.make_class(*unit.global_region());
+   point->id = unit.make_identifier("point");
+   unit.global_ns->declare_type(*point->id, unit.Class())->init = point;
+
+   // declare the public data member "x".
+   point->declare_field(*unit.make_identifier("x"), unit.get_int())
+      ->decl_data.spec = Decl::Public;
+
+   // Ditto for "y".
+   point->declare_field(*unit.make_identifier("y"), unit.get_int())
+      ->decl_data.spec = Decl::Public;
+
+   // Print the current unit.
+   Printer pp(std::cout);
+   pp << unit;
+   std::cout << std::endl;
+\}
+\end{Program}
+
+The output is:
+\begin{Program}
+point : class \{
+    x : public int;
+    y : public int;
+\};
+\end{Program}
+In a well formed C++ programs, a \code{Field} does not have an initializer.
+However, the IPR library does not enforce that rule --- an erroneous program
+may initialize a non-static data member and we do not gain any uniformity in
+enforcing that rule in the IPR data structures. 
+
+\section{Function declarations}
+\label{sec:fun-decl}
+
+This sections discusses the basics for  building nodes for function
+declarations.  A function declaration is an association of a name with a
+mapping.  For example, the C++ declaration 
+\begin{Program}
+  int identity(int);
+\end{Program}
+defines a mapping from \code{int} to \code{int} called \code{identity}.
+More generaly, that declaration is represented as the association of the name
+\code{identity} with a 
+unary parameterized expression, where the argument is expected to be of type
+\code{int}, the result of type \code{int}, and the computation of the result
+may be abnormally ended with an exception of any type (implied by the absence
+of exception specification).  In XPR notation, it reads:
+\begin{Program}
+  identity : (:int) int throw (...);
+\end{Program}
+
+Similar to the situation of named data (\secref{sec:data.named}), C++
+distinguishes member functions from non-member functions.  Unlike the
+named data case, both member functions and non-member function declarations
+are uniformly represented by \NodeClass{Fundecl} nodes. Like in the \code{Var}
+case, the membership of a \code{Fundecl} distinguishes a non-member function
+(membership is a namespace) from a member function (membership is a
+class-type). 
+
+Member functions  are further subdivided into two categories: static
+member functions and non-static member functions.  The former are disguised
+non-member functions with privileged access to their enclosing class-type's
+members (kind of friend non-member functions), and the latter have an implicit
+or implied parameter.  We do not have different kinds of function types for
+the types of static member functions and non-static member functions. They 
+all have types uniformely represented by a \code{Function} node.
+
+A \code{Fundecl} for a static member function differs from a \code{Fundecl}
+for a non-static member function in that the former has the
+\code{Decl::Static} set and the latter not.  
+
+Furthermore, the correspondance between a non-static member function in C++
+and its ``regularized'' version in IPR makes and adjustment:  the keyword
+\code{this} is made an explicit parameter.  For instance, the following
+member function declarations 
+\begin{Program}
+  struct A \{
+    // ...
+    int& f();
+    const int& f() const;
+    static double g(A*);
+    virtual void h(int) = 0;
+  \};
+\end{Program}
+will be interpreted as (XPR notation)
+\begin{Program}
+  f: public (this: *A) &int throw(...);
+  f: public (this: *const A) &const int throw(...);
+  g: public static (: *A) double throw(...);
+  h: public virtual pure (this: A*, : int) void throw(...);
+\end{Program}
+As a general rule, every non-static member function is adjusted to take 
+\code{this} as first parameter, of type \code{*}\expr{cv T} where
+\expr{T} is the class and \expr{cv} is the cv-qualification of the 
+non-static member function.
+
+
+\subsection{Mapping}
+\label{sec:fun-decl.mapping}
+
+A mapping is a parameterized expression.   The notion of mapping is general
+enough to account for both function declaration bodies and template
+declaration bodies.  To illustrate the generality here, consider the following 
+program fragments in both Standard C++ and XPR notations:
+\begin{center}
+\begin{minipage}[t]{13cm}
+  \begin{minipage}[t]{4cm}
+    \centering{\textit{C++}}
+    \begin{Program}
+int identity(int x) \{
+  return x;
+\}
+
+template<int N>
+struct buffer \{
+   char data[N];
+\};
+    \end{Program}
+  \end{minipage}\hfil \vrule \hfil
+  \begin{minipage}[t]{7cm}
+    \centering{\textit{XPR}}
+    \begin{Program}
+identity : (x : int) int throw(...) = \{
+  return x;
+\}
+
+buffer : <N : int> class = \{
+  data : public [N] char;
+\};
+    \end{Program}
+  \end{minipage}
+\end{minipage}
+\end{center}
+A feature of the XPR notation here is that it makes a clear separation
+between the names being declared and what they are being bound to.  The
+function \code{identity} maps an \code{int} to an \code{int}, and the class
+template \code{buffer} maps an \code{int} to a class-type.  Furthermore, how
+the integer result of \code{identity} is computed is given by 
+\code{int \{~return x;~\}}; similarly how the class result of \code{buffer} is
+computed is given by \code{struct \{~char data[N];~\}}.  The implementation 
+of either map constitutes its body.
+
+A mapping consists of a parameter list and a body.  Its IPR implementation
+node is described by the class\NodeClass{impl::Mapping}, built with the member
+function 
+\begin{Program}
+  impl::Mapping* make_mapping(const ipr::Region&);
+\end{Program}
+of the \NodeClass{impl::Unit} class.  For example, let's assume the previous
+declaration for \code{identity} appears at the global scope.  Then, its
+associated mapping node would be made as follows:
+\begin{Program}
+impl::Mapping* mapping = unit.make_mapping(*unit.global_region());  
+\end{Program}
+Parameters are specified with the \code{param()} member function
+of \NodeClass{impl::Mapping}.  
+\begin{Program}
+impl::Parameter* x = mapping->param(*unit.make_identifier("x"), unit.get_int());
+\end{Program}
+
+The data member \code{impl::Mapping::parameters}
+holds the list of specified parameters.  Its type is a product type, and
+represented by a \NodeClass{Product} node.  It describes the domain type of
+the mapping.  A mapping, being an expression, as a type.  That type is
+represented by a \NodeClass{Function} node when it is associated with a
+function declaration, and a \NodeClass{Template} node when it is associated
+with a parameterized declaration.  So, for the case of the \code{identity}
+function declaration, one would write the following
+\begin{Program}
+const Function* ftype = unit.make_function
+    (mapping->parameters.type(), unit.get_int());
+mapping->constraint = ftype;  
+\end{Program}
+
+We will discuss the case of parameterized declarations in
+\secref{sec:decls:parameterized}. 
+
+\subsection{Naming a mapping}
+\label{sec:fun-decl:naming}
+
+Building a \NodeClass{impl::Fundecl} is very similar to the process of
+building a node for a variable: one needs a name, a type and optional
+initializer.  As explained above, the initializer for a function declaration
+is a mapping.
+\begin{Program}
+impl::Fundecl* f = unit.global_ns->declare_fun
+   (*unit.make_identifier("identity"), *ftype);
+f->init = mapping;                        // the named mapping
+\end{Program}
+
+The node for a function declaration that is not a definition is initialized
+with an incomplete mapping.   An incomplete mapping is a mapping whose body is
+not specified.
+
+
+\subsection{Constructors and destructors}
+
+A constructor or destructor is represented as a non-static member function,
+suitably adjusted to take \code{this} as a first parameter.  Constructors and
+destructors to not return values, consequently their return type is
+\code{void}.
+
+\section{Statements}
+\label{sec:statements}
+
+This section gives the translation of ISO Standard C++ statements to IPR
+nodes. 
+
+\subsection{Compound statement}
+\label{sec:stmt.compound}
+
+Named mappings are initialized with blocks in function definitions.
+An IPR block is a statement and consists of a sequence of statements and
+optional sequence of handlers.
+
+Standard C++ defines a compound statement as any brace-enclosed sequence of
+statements
+\begin{Grammar}
+  \cxxRule{compound-statement:}
+     \{ \cxxOptRule{statement-seq} \}
+
+  \cxxRule{statement-seq:}
+      \cxxRule{statement}
+      \cxxRule{statement-seq} \cxxRule{statement}
+\end{Grammar}
+
+The corresponding concrete IPR representation is \NodeClass{impl::Block}.
+Such a node is built with the member function
+\begin{Program}
+  impl::Block* make_block(const ipr::Region&);
+\end{Program}
+of the class \NodeClass{impl::Unit}.  Suppose that we have to create nodes for
+the definition
+\begin{Program}
+  int identity(int x) \{ return x; \}
+\end{Program}
+Then one would first create a block node for the body of the mapping
+associated with \code{identity}, and then fill in that block with sequence of
+statements as explained in sub-sections to follow.
+\begin{Program}
+impl::Block* body = unit.make_block(mapping->parameters, unit.get_int());
+mapping->body = body;
+// fill in the body with add_stmt() as shown below
+\end{Program}
+
+
+\subsection{Expression statement}
+\label{sec:stmt.expr}
+Most statements are actually expressions statements, which Standard C++ 
+defines as
+\begin{Grammar}
+  \cxxRule{expression-statement:}
+      \cxxOptRule{expression} ;
+\end{Grammar}
+
+They are concretely represented with \NodeClass{impl::Expr\_stmt}:
+\begin{Program}
+           unit.make_expr_stmt(\cxxRule{expr})
+\end{Program}
+The case of \emph{null statement}, \ie{} an expression statement with
+missing expression, is handled by calling the (member) function
+\verb=null_expr()= for the \NodeClass{Unit} object.  An instance of null
+statement is the following fragment
+\begin{Program}
+  while (*dst++ = *src++)
+     ;
+\end{Program}
+While statements are discussed in \secref{sec:stmt.iteration.while}.  Here, we
+just illustrate the representation an ``empty'' body:
+\begin{Program}
+  Stmt* stmt = unit.make_expr_stmt(unit.null_expr());
+\end{Program}
+
+\subsection{Selection statement}
+\label{sec:stmt.selection}
+
+A selection statement is any of the three kind of statements as defined by 
+\begin{Grammar}
+  \cxxRule{selection-statement:}
+      if ( \cxxRule{condition} ) \cxxRule{statement}
+      if ( \cxxRule{condition} ) \cxxRule{statement} else \cxxRule{statement}
+      switch ( \cxxRule{condition} ) \cxxRule{statement}
+\end{Grammar}
+They are concretely represented in IPR with \NodeClass{If\_then},
+\NodeClass{If\_then\_else} and \NodeClass{Switch} nodes,
+respectively. 
+
+Both \NodeClass{impl::If\_then} and \NodeClass{impl::Switch} nodes are
+constructed in similar ways. They all require two arguments: the first being
+the condition and the second being the selected statement.  Use
+\texttt{make\_if\_then()} to build a \NodeClass{impl::If\_then} node, and
+\texttt{make\_switch()} for a  \NodeClass{impl::Switch} node.
+ For instance, the fragment
+\begin{Program}
+  if (lhs < rhs)
+     return false;
+\end{Program}
+may be translated as:
+\begin{Program}
+  Expr* return_value = unit.make_literal(unit.Bool(), "bool");
+  unit.make_if_then(*unit.make_less(\expr{lhs}, \expr{rhs}),
+                    *unit.make_return(*return_value));
+\end{Program}
+
+
+An \NodeClass{impl::If\_then\_else} node requires three arguments: the
+condition, the then-branch statement and the else-branch statement.  It is
+constructed through the (member) function \texttt{make\_if\_then\_else()} of
+class \NodeClass{impl::Unit}.
+
+\subsection{Iteration statement}
+\label{sec:stmt.iteration}
+
+Standard C++ defines an iteration statement to be 
+\begin{Grammar}
+  \cxxRule{iteration-statement:}
+      while ( \cxxRule{condition} ) \cxxRule{statement}
+      do \cxxRule{statement} while ( \cxxRule{condition} )
+      for ( \cxxOptRule{for-init-statement} \cxxOptRule{condition} ; \cxxOptRule{expression} ) \cxxRule{statement}
+\end{Grammar}
+
+
+\subsubsection{While statement}
+\label{sec:stmt.iteration.while}
+
+Constructing a \NodeClass{impl::While} node requires the condition node and
+the iterated statement node.  For example, the following fragment
+\begin{Program}
+  while (n != 0)
+     n = process_line(n);
+\end{Program}
+may be constructed with
+\begin{Program}
+  impl::Var* n = ...
+  impl::Fundecl* processline = ...
+  // ...
+  Expr* cond = unit.make_not_equal(n, *unit.make_literal(unit.get_int(), "0"));
+  impl::Expr_list* args = unit.make_expr_list(); // hold the arg-list.
+  args->push_back(n);  
+  Expr* call = unit.make_call(processline, *args);
+  Stmt* stmt = unit.make_expr_stmt(*uni.make_assign(n, call));
+  Stmt* while_stmt = unit.make_while(cond, stmt);
+\end{Program}
+
+
+\subsubsection{Do statement}
+
+A do statement is constructed similar to a while statement.  The
+(member) function to call is \texttt{make\_do()} with the
+iterated statement and the condition expression as arguments, in that order. 
+
+
+\subsubsection{For statement}
+A for statement is a curious and interesting statement.  All its
+components are optional.  A missing part is equivalent to either a null
+expression or a null statement.
+
+A \NodeClass{For} node is created through the (member) function
+\texttt{make\_for()} which takes four arguments, one for each components.
+
+Let's first look at 
+\begin{Program}
+  for (int i = 0; i < N; ++i)
+     \cxxRule{stmt}
+\end{Program}
+In this case, the \cxxRule{for-init-statement} is a declaration.  Therefore,
+we create a sub-region (of the active region) that will contain the declaration
+and we use the scope of that sub-region as the first argument for
+\texttt{make\_for()}. 
+\begin{Program}
+  // the IPR node representing the for statement 
+  impl::For* for_stmt = unit.make_for();
+
+  // Build the declaration for "i".
+  impl::Region* init_region = \expr{active_region}->make_subregion();
+  impl::Var* i = init_region->declare_var(unit.make_identifier("i"),
+                                          unit.get_int());
+  i->init = unit.make_literal(unit.get_int(), "0");
+
+  // set the for-init
+  for_stmt->init = &init_region.scope;
+
+  // Build the condition.
+  for_stmt->cond = unit.make_less(*i, \expr{N});
+
+  // the incrementation
+  for_stmt->inc = unit.make_pre_increment(*i);
+  
+  // the body of the for-statement
+  for_stmt->stmt = \expr{stmt};
+\end{Program}
+%% Notice that, in this case, the scope for the init-declaration becomes the
+%% active scope till \cxxRule{stmt}.
+
+If the declaration for the variable \texttt{i} was not limited to the
+for statement, \ie{} if we had
+\begin{Program}
+  int i;
+  for (i = 0; i < N; ++i)
+    \cxxRule{stmt}
+\end{Program}
+then we would not need to build a sub-scope for that variable.  Rather, we
+would just build the declaration in the current scope:
+\begin{Program}
+// Build a declaration for "i",
+Var* i = \textit{active_region}->declare_var(*unit.make_identifier("i"), unit.get_int());
+impl::For* for_stmt = unit.make_for();
+for_stmt->init = unit.make_assign(*i, *unit.make_literal(unit.get_int(), "0"));
+// the condition,
+for_stmt->cond = unit.make_less(*i, \textit{N});
+// the incrementation,
+for_stmt->inc = unit.make_pre_increment(*i);
+\end{Program}
+
+
+Another interesting case is when the \cxxRule{condition} in the for statement
+is actually a declaration.  In that case, we build a sub-region (of the active
+region) and use it as the second argument to \texttt{make\_for()}. Therefore
+the following fragment
+\begin{Program}
+  for (int i = 0; int j = N - i; ++i)
+     \cxxRule{stmt}
+\end{Program}
+may be translated by
+\begin{Program}
+  impl::For* for_stmt = unit.make_for();
+
+  // Build the for-initialization part
+  impl::Region* init_region = \expr{active_region}->make_subregion();
+  for_stmt->init = &init_region->scope;
+  impl::Var* i = init_region->declare_var(*unit.make_identifier("i"),
+                                          unit.get_int());
+  i->init = unit.make_literal(unit.get_int(), "0");
+
+  // The for-condition part
+  impl::Region* cond_region = init_region->make_subregion();
+  for_stmt->cond = &cond_region->scope;
+  impl::Var* j = cond_region->declare_var(*unit.make_identifier("j"),
+                                          unit.get_int());
+  j->init = unit.make_sub(\expr{N}, *i);
+
+  // the incrementation part,
+  for_stmt->inc = unit.make_pre_increment(*i);
+
+  // and the body of the for-statement.
+  for_stmt->stmt = \cxxRule{stmt};
+\end{Program}
+Notice that the region containing \code{j} is a sub-region of the scope
+containing \code{i} and is the active scope till \cxxRule{stmt}.
+
+
+\subsection{Labeled statement}
+\label{sec:stmt.labeled}
+
+Standard C++ defines a labeled statement according to the grammar:
+\begin{Grammar}
+  \cxxRule{labeled-statement:}
+      \cxxRule{identifier} : \cxxRule{statement}
+      case \cxxRule{constant-expression} : \cxxRule{statement}
+      default : \cxxRule{statement}
+\end{Grammar}
+
+All these three variants of labeled statements are uniformly represented in
+IPR through the node class \NodeClass{Labeled\_stmt}.  The label can be any
+IPR expression.  Since a name is a expression a statement like 
+\begin{Program}
+  id:
+     token = cursor - 1;
+     // ...
+\end{Program}
+may be represented in IPR as:
+\begin{Program}
+  impl::Var cursor = ...;
+  // ...
+  impl::Minus* rhs = unit.make_minus(cursor, 
+                                     *unit.make_literal(unit.get_int(), "1")));
+  impl::Assign* expr = unit.make_assign(*cursor, *rhs);
+  impl::Expr_stmt* expr_stmt = unit.make_expr_stmt(*expr);
+  impl::Idenifier* lbl = unit.make_identifier("id");
+  impl::Labeled_stmt* labeled_stmt = unit.make_labeled_stmt(*lbl, *expr_stmt);
+\end{Program}
+Here a node created for the name \texttt{id} is used as the expression
+that labels the whole statement.
+
+For a \texttt{case} label, the associated constant expression is used as the
+labeling expression.  For example, for the program fragment
+\begin{Program}
+  int line_count = 0;
+  // ...
+  switch (*cur) \{
+    case '{\bslash}n':
+       ++line_count;
+       // ...
+  \}
+\end{Program}
+one might construct
+\begin{Program}
+  impl::Var* linecount = ...
+  // ...
+  // literal used to label the case-statement
+  impl::Literal* nl = unit.make_literal(unit.get_char(), "{\bslash\bslash}n");
+  impl::Labeled_stmt* stmt = unit.make_labeled_stmt
+     (*nl, *unit.make_expr_stmt(*unit.make_pre_increment(*linecount)));
+\end{Program}
+
+The \texttt{default} label is represented no different from ordinary labels.
+That is, one uses \verb=unit.make_identifier("default")= as the labeling
+expression. 
+
+
+\subsection{Jump statement}
+\label{sec:stmt.jump}
+
+A jump statement is any of
+\begin{Grammar}
+  \cxxRule{jump-statement:}
+      break ;
+      continue ;
+      return \cxxOptRule{expression} ;
+      goto \cxxRule{identifier} ;
+\end{Grammar}
+
+Return-statements are built with the member function \code{make\_return()} of 
+\code{imp::Unit}. So, continuing with the \code{identity} function
+\begin{Program}
+body->add_stmt(unit.make_return(*x));  
+\end{Program}
+
+A break-statement is built with \code{make\_break()}, a continue-statement
+is built with \code{make\_continue()}, and a goto-statement is built with
+\code{make\_goto()} taking the destination as argument. At the exception of
+the return statement, IPR nodes for jump statements have room to record the
+statements primarily affected by the control transfer.  Consider the program
+fragment 
+\begin{Program}
+  char c;
+  int line_count = 0;
+  // ...
+  switch (c) \{
+    case '{\bslash}n':
+      ++line_count;
+      break;
+    // ...
+  \}
+\end{Program}
+
+Here is a corresponding IPR nodes construction:
+\begin{Program}
+  // Build declaration for "c",
+  impl::Var* c = \expr{active_region}->declare_var(*unit.make_identifier("c"),
+                                                   unit.get_char());
+
+  // do the same for "line_count", 
+  impl::Var* line_count = \expr{active_region}->declare_var
+     (*unit.make_identifier("line_count"), unit.get_int());
+  line_count->init = unit.make_literal(unit.get_int(), "0");
+
+  // ...
+  // Build the Block for the switch statement.
+  impl::Block* block = unit.make_block(\textit{active_region});
+  // Build the switch-statement node.
+  Switch* switch_stmt = unit.make_switch(*c, *block);
+
+  // Fill in the switch body,
+  Stmt* stmt = unit.make_expr_stmt(*unit.make_pre_increment(line_count));
+  Expr* lbl = unit.make_literal(unit.get_char(), "{\bslash}n");
+  block->add_stmt(unit.make_labeled_stmt(lbl, stmt));
+
+    // Build the break statement
+  impl::Break* break_stmt = unit.make_break();
+    // record the statement we're breaking from
+  break_stmt->stmt = switch_stmt;
+
+    // put it in the body.
+  block->add_stmt(break_stmt);
+  // ...
+\end{Program}
+
+
+\subsection{Declaration statement}
+\label{sec:stmt.declaration}
+
+A declaration is a statement.  As such, a declaration that appears at block
+scope shall be added to the sequence of statements that constitute the body of
+that block.  
+
+\subsection{Try Block}
+\label{sec:stmt.try-block}
+Try blocks in Standard C++ come into various syntactic flavors.
+\begin{Grammar}
+  \cxxRule{try-block:}
+     try \cxxRule{compound-statement} \cxxRule{handler-seq}
+
+  \cxxRule{function-try-block:}
+     try \cxxOptRule{ctor-initializer} \cxxRule{function-body} \cxxRule{handler-seq}
+
+  \cxxRule{handler-seq:}
+     \cxxRule{handler} \cxxOptRule{handler-seq}
+
+  \cxxRule{handler:}
+     catch ( \cxxRule{exception-declaration} ) \cxxRule{compound-statement}
+\end{Grammar}
+
+In IPR, we do not have a separate node for try-block statement.  Rather, we
+take the general approach that any block can potentially throw an exception;
+therefore any \NodeClass{Block} has an associated sequence of handlers.
+If that sequence is empty then it does not come from a try-block.  
+
+
+\section{Parameterized declarations}
+\label{sec:decls:parameterized}
+
+In IPR, any expression can be parameterized.  Parameterized expressions, and
+are uniformly represented with \NodeClass{impl::Mapping} nodes (see discussion
+in \secref{sec:fun-decl.mapping}).  Parameterized declarations, or template
+declarations in Standard C++ terminology, are declaration generators. 
+For instance, consider the following generalization of the function
+\code{identity} from previous section:
+\begin{Program}
+  template<class T>
+    T identity(T x) 
+    { return x; }
+\end{Program}
+equivalently written in XPR as
+\begin{Program}
+  identity: <T: class> (x: T) T throws(...) = \{
+     return x;
+  \}
+\end{Program}
+It is clear that it is a named mapping which, when given a type argument
+T, produces a function declaration --- named \code{identity<T>} -- taking a
+\code{T} and returning a value of the same type.  In a sense, it is a mapping
+of a mapping: the result of the first mapping is compilte-time, whereas the
+second is runtime; however the abstract representations are similar.
+
+A named mapping is a declaration (\code{Named\_map}).  It has type represented
+by a \NodeClass{Template} node.  Its initializer is a mapping of type
+\code{Template}.
+
+
+
+\subsection{Primary declaration generators}
+\label{sec:named-mapping:primary}
+
+C++ template declarations can be divided into two categories:
+(a) primary templates; and (b) secondary templates.
+
+A primary template is the most general form of a declaration generator.
+It indicates the type of the declaration it generates, and the number and
+sorts of arguments it accepts.  A primary declaration generator participates
+in overload resolution (secondary declaration generators don't).
+
+The notion of primary template declaration should not be confused with that of
+master declaration.  A master declaration is the first  declaration of an
+entity in a given scope.  Primary declarations, on the other hand, may be
+repeated where permitted (for instance, at namespace scope).   
+\begin{Program}
+  template<class T>
+     struct Array \{                         // \#1
+        // ...
+     \};
+  
+  template<class T>
+     T sum(const Array<T>&);                // \#2
+ 
+  template<class T> 
+     struct Array;                          // \#3
+\end{Program}
+\code{\#1} is the first declaration of the template \code{Array<>}; so it is 
+a master declaration.  It is also the most general form of 
+\code{Array<>} instance declaration generator;
+therefore it is also a primary template.  In summary, \code{\#1} is a master
+primary template declaration.  On the other hand, \code{\#3} is a
+re-declaration, therefore it is a non-master primary template declaration.
+
+A node for a primary template declaration is built with the member function  
+\begin{Program}
+  impl::Named_map* declare_primary_map(const ipr::Name&, const ipr::Template&);
+\end{Program}
+of the enclosing user-defined type.  A primary map does bookkeeping for
+various ``administrative'' information.  The program fragment below builds the
+nodes for the representation of \code{\#1}
+\begin{Program}
+#include <ipr/impl>
+#include <ipr/io>
+#include <iostream>
+
+int main()
+\{
+   using namespace ipr;
+   impl::Unit unit;
+   Printer pp(std::cout);
+
+   // make the node that contains the body of the Array template
+   impl::Mapping* mapping = unit.make_mapping(*unit.global_region());
+
+   // declare the template type-parameter "T".
+   impl::Parameter* T = mapping->param(*unit.make_identifier("T"),
+                                       unit.Class());
+
+   // set the type of the mapping.
+   const ipr::Template* tt = unit.make_template(mapping->parameters.type(),
+                                                unit.Class());
+   mapping->constraint = tt;
+
+   // build the decl for "Array", with same type.
+   impl::Named_map* array = unit.global_ns->declare_primary_map
+      (*unit.make_identifier("Array"), *tt);
+   array->init = mapping;
+
+   // "Array" uses the argument list "<T>".
+   array->args.push_back(T);
+
+   // and the body of the mapping is a class-expression
+   impl::Class* body = unit.make_class(mapping->parameters);
+   mapping->body = body;
+   // set its name.
+   body->id = unit.make_template_id(*array, array->args);
+
+   pp << unit;
+   std::cout << std::endl;
+\}
+\end{Program}
+
+Every instance of \code{Named\_map} keeps track of the (template) argument
+list it uses.  That argument list is needed for the purpose of determining
+the most specialized version of a named mapping use.
+
+\subsection{Secondary named mappings}
+\label{sec:named-mapping:secondary}
+
+A secondary template declaration provides a specialized implementation for 
+given sub-family of the primary template.  Therefore, it may introduce
+more or fewer parameters than the primary template does.  However, it must
+supply an argument list that meets the requirements (in number and kinds)
+stated by the primary template declaration. Secondary templates do not
+participate in overload resolution. Consider for example th previous
+\code{Array<>} declaration, continued as follows
+\begin{Program}
+  template<>
+    struct Array<void*> \{                    // #4
+       // ...
+    \};
+
+  template<class T>
+    struct Array<T*> : Array<void*> \{        // #5
+       // ...
+    \};
+\end{Program}
+The declaration \code{\#4} is an explicit specialization of
+\code{Array<>}, but it is \emph{not} a template.  Therefore, it must be
+represented as an ordinary class.  On the other hand, \code{\#5} is a
+secondary template declaration.  It specializes \code{\#1}, and uses the 
+argument list \code{<T*>}.
+
+Secondary named mappings are manifactured with the member function
+\begin{Program}
+  impl::Named_map* declare_secondar_map(const ipr::Name&, const ipr::Template&);
+\end{Program}
+of the enclosing user-defined type.
+
+\section{External representation}
+\label{sec:xpr}
+
+The persistent form of IPR nodes is expressed through the 
+XPR syntax --- for \emph{eXternal Program Representation}.  The XPR syntax is
+defined in the Reference Manual.  
+
+The header file \texttt{<ipr/io>} provides access to XPR output 
+facilities.  That header file defines:
+\begin{itemize}
+\item a basic XPR printer \texttt{ipr::Printer} ;
+\item facilities to print \emph{expressions}, \emph{types}, \emph{statements}
+  and \emph{declarations}.  
+\end{itemize}
+
+The basic XPR printer takes a reference to an \emph{std::ostream} --- which is
+the stream into which it will insert the XPR syntax of whatever nodes it is
+asked to print.  A typical construction is 
+\begin{Program}
+  \#include <ipr/impl>
+  \#include <ipr/io>
+  \#include <iostream>
+  int main() 
+  \{
+      ipr::impl::Unit unit;
+      // construct IPR nodes ...
+      // Print them out, starting from the global scope
+      ipr::Printer printer(std::cout);
+      printer << unit;
+      std::cout << std::endl;
+      // ...
+  \}
+\end{Program}
+
+\bibliographystyle{amsalpha}
+\bibliography{ipr}
+
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

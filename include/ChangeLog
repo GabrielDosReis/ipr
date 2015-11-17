@@ -1,0 +1,2139 @@
+2010-11-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (expr_factory::make_phantom): Add overload taking a type
+	argument. 
+
+2010-07-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::expr_factory::make_id_expr): Add new overload for Decl.
+
+2010-05-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Initializer_list): New.
+	* impl.H: Provide implementation for Initializer_list.
+
+2010-04-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Unit::get_typename): Declare.
+	* impl.H (impl::Unit::get_typename): Likewise.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (expr_factory::make_identifier): Add overloads.
+	(expr_factory::make_operator): Likewise.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (C_linkage): Remove.
+	(Cxx_linkage): Likewise.
+	(Visitor::visit(const C_linkage&)): Likewise.
+	(Visitor::visit(const Cxx_linkage&)): Likewise.
+	* impl.H (Unit::get_linkage): Move to...
+	(expr_factory::get_linkage): ... here.
+	(type_factory::make_as_type): Add unary overload.
+	(Unit::get_cxx_linkage): Simplify return type.
+	(Unit::get_c_linkage): Likewise.
+	(Unit::cxx_linkage): Remove.
+	(Unit::c_linkage): Likewise.
+	(Unit::linkages): Move to ...
+	(expr_factory::linkages): ...here.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (expr_factory::make_literal): Add overloads for 'const
+	char*' and 'const std::string&'.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unit::get_string): Move to...
+	(expr_factory::get_string): ... here.
+
+2009-09-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Rvalue_reference): New IPR node type for
+	rvalue-reference types.
+	(Visitor::visit): Overload for Rvalue_reference.
+	* node-category.def: Add rvalue_reference_cat.
+	* impl.H (impl::Rvalue_reference): New type alias for
+	ipr::Rvalue_reference implementation.
+	(type_factory::make_rvalue_reference): New.
+
+2009-06-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	Version 0.43
+	* interface.H (For_in): New IPR node type.
+	* impl.H (impl::For_in): New.
+
+2008-11-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Mapping::has_result): Remove.
+	(Decl::Constexpr): New specifier.
+
+2008-11-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Builtin): Simplify.
+
+2008-11-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Builtin): Set this->id.
+
+2008-11-19  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Stmt::source_location): New.
+	* impl.H (impl::Stmt::source_location): Implement.
+
+2008-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Datum): Now member of Classic.  The implementation
+	was already in Classic, so this just fix a thinko.
+
+2008-09-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Classic): Now non-template.  Propogate change
+	throughout. 
+
+2008-06-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Var::membership): Remove.
+	* impl.H (impr::Var::membership): Likewise.
+	(impl::Var::member_of): Likeise.
+	(Udt<>::impl::declare_var): Don't set member_of.
+
+2008-05-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+
+	* interface.H (Decl::lexical_region): Declare.
+	(Decl::home_region): Likewise.
+	* impl.H (impl::Fundecl::lexical_region): Declare.
+	(impl::Typedecl::lexical_region): Likewise.
+	(impl::Bitfield::lexical_region): Likewise.
+	(impl::Bitfield::home_region): Likewise.
+	(impl::Field::lexical_region): Likewise.
+	(impl::Field::home_region): Likewise.
+	(impl::Var::lexical_region): Likewise.
+	(impl::Alias::lexical_region): Likewise.
+	(impl::Named_map::lexical_region): Likewise.
+
+2005-11-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* lexer.H: New.
+
+2005-09-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Unit::Ellipsis): Declare.
+	(Unit::Class): Likewise.
+	(Unit::Union): Likewise.
+	(Unit::Enum): Likewise.
+	(Unit::Namespace): Likewise.
+
+2005-09-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::unary_node): New.
+	(impl::unary_expr): Use it as base class.  Refactor.
+	(impl::unar_expr::rep): Remove, now inherited from impl::unary_node.
+	(impl::unary_expr::operand): Remove, now implemened by
+	impl::unar_node.
+
+	(impl::Linkage): New; implement ipr::Linkage.
+
+	* node-category.def (linkage_cat): New.
+	* interface.H (Linkage): New.
+	(Visitor::visit(const Linkage&)): New.
+
+2005-05-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Mapping::nesting_level): New.
+	(impl::Mapping::depth): Override ipr::Mapping::depth.
+	(impl::Mapping::Mapping): Adjust.
+	(impl::expr_factory::make_mapping): Take an additional "level"
+	parameter.
+	(impl::unique_decl<>::scope_pos): Remove.
+	(impl::unique_decl<>::position): Remove.
+	(impl::Parameter::constraint): Remove.
+	(impl::Parameter::abstract_designator): New.
+	(impl::Parameter::position): New.
+	(impl::Parameter::Parameter): Adjust signature.
+	(impl::Base_type::scope_pos): New, declare.
+	(impl::Base_type::Base_type): Adjust signature.
+	(impl::Base_type::position): Override ipr::Decl::position.
+	(impl::Enumerator::scope_pos): New, declare.
+	(impl::Enumerator::Enumerator): Adjust signature.
+	(impl::Enumerator::position): Override ipr::Decl::position.
+	(impl::Parameter_list::add_member): Adjust signature.
+	(impl::expr_factory::rname_for_next_param): Rename from
+	impl::expr_factory::make_rname.
+	(impl::Unit::make_parameter): New.
+
+	* interface.H (Mapping::depth): New.
+	
+	* io.H (Printer::operator<<(int)): Define.
+
+	* impl.H (impl::Rname): New.
+	(impl::expr_factory::make_rname): Likewise.
+	(impl::expr_factory::rnames): Likewise.
+	* interface.H (Visitor::visit(const Rname&)): New.
+	* node-category.def (rname_cat): New.
+	* interface.H (Rname): New.
+
+2005-04-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H (xpr_decl::needs_newline): New.
+	(xpr_decl::xpr_decl): Take an additional parameter.
+
+2005-04-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Makefile.am: Tidy.
+
+2005-04-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::unary_expr::unary_expr): Initialize constraint.
+	(impl::binary_expr::binary_expr): Likewise.
+	(impl::ternary_expr::ternary_expr): Likewise.
+
+2005-03-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Makefile.am (stamp-ipr): Avoid symbolic links with relative
+	paths. It does not work.
+
+2005-03-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (stats:all_nodes_count): Declare.
+	(stats::node_count): Likewise.
+
+	* Makefile.am (ipr_srchdr): Add node-category.def
+	(stamp-ipr): Set link for node-category.def too.
+	(install-data-local): Install node-category too.
+	* Makefile.in: Regenerate.
+
+	* impl.H: Revert previous changes relating to constructor definition.
+
+2005-03-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (of_same_category): New function.
+	(Node::Node): Make protected.
+	(Node::kind): Remove.
+	(Comment::Comment): Define.
+	(Annotation::Annotation): Likewise.
+	(Region::Region): Likewise.
+	(Expr::Expr): Likewise.
+	(Name::Name): Likewise.
+	(Identifier::Identifier): Likewise.
+	(Operator::Operator): Likewise.
+	(Conversion::Conversion): Likewise.
+	(Scope_ref::Scope_ref): Likewise.
+	(Template_id::Template_id): Likewise.
+	(Ctor_name::Ctor_name): Likewise.
+	(Dtor_name::Dtor_name): Likewise.
+	(Overload::Overload): Likewise.
+	(Scope::Scope): Likewise.
+	(Type::Type): Likewise.
+	(Type_id::Type_id): Likewise.
+	(Product::Product): Likewise.
+	(Sum::Sum): Likewise.
+	(Decltype::Decltype): Likewise.
+	(Pointer::Pointer): Likewise.
+	(Ptr_to_member::Ptr_to_member): Likewise.
+	(Reference::Reference): Likewise.
+	(Array::Array): Likewise.
+	(As_type::As_type): Likewise.
+	(Udt::Udt): Likewise.
+	(Namespace::Namespace): Likewise.
+	(Class::Class): Likewise.
+	(Union::Union): Likewise.
+	(Enum::Enum): Likewise.
+	(Template::Template): Likewise.
+	(Classic): Take additional template parameter.
+	(Classic::Classic): Define.
+	(Address, Array_delete, Complement, Delete, Deref, Expr_sizeof,
+	Expr_typeid, Unary_minus, Not, Post_decrement, Post_increment,
+	Pre_decrement, Pre_increment): Have Classic the node category code
+	as argument. 
+	(Paren_expr::Paren_expr): Define.
+	(Expr_list::Expr_list): Likewise.
+	(Label::Label): Likewise.
+	
+
+2005-03-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Overload, impl::single_overload,
+	impl::empty_overload): Have Node<ipr::Overload,
+	ipr::overload_node> as base class. 
+	(impl::Overload::accept, impl::single_overload::accept,
+	impl::empty_overload::accept): Remove. 
+	(impl::unary_expr<>::accept): Remove.
+	(impl::Type<>::accept): Remove.
+	(impl::type_sequence<>): Have Node<ipr::Product, ipr::product> as
+	base type.
+	(impl::basic_expr<>::accept): Remove.
+	(impl::conversion_expr<>::accept): Remove.
+	(impl::ternary_expr<>::accept): Remove.
+	(impl::Decl<>::accept): Remove.
+	(impl::unique_decl<>::accept): Remove.
+	(impl::homogeneous_scope<>): Have Node<ipr::Scope,
+	ipr::scope_node> as base class.
+	(impl::homogeneous_scope<>::accept): Remove.
+	(impl::homogeneous_region<>::accept): Remove.
+	(impl::Comment): Have Node<ipr::Comment, ipr::comment_node> as
+	base class.
+	(impl::Comment::accept): Remove.
+	(impl::Expr_list): Have Node<ipr::Expr_list, ipr::expr_list_node>
+	as base class.
+	(impl::Expr_list::accept): Remove.
+	(impl::Identifier): Have Node<ipr::Identifier,
+	ipr::identifier_node> as base class.
+	(impl::Identifier::accept): Remove.
+	(impl::Id_expr): Have Node<ipr::Id_expr, ipr::Id_expr_node> as
+	base class. 
+	(impl::Id_expr::accept): Remove.
+	(impl::Operator): Have Node<ipr::Operator, ipr::operator_node> as
+	base class.
+	(impl::Operator::accept): Remove.
+	(impl::Paren_expr): Have Node<ipr::Paren_expr,
+	ipr::paren_expr_node> as base class.
+	(impl::Paren_expr::accept): Remove.
+	(impl::Region) Have Node<ipr::Region, ipr::region_node> as base class.
+	(impl::Region::accept): Remove.
+	(impl::Scope): Have Node<ipr::Scope, ipr::scope_node> as base class.
+	(impl::Scope::accept): Remove.
+	(impl::Enum): Have impl::Node<impl::Type<ipr::Enum>,
+	ipr::enum_node> as base class.
+	(impl::Break): Have impl::Node<ipr::Break, ipr::break_node> as
+	base class.
+	(impl::Break::accept): Remove.
+	(impl::Continue): Have impl::Node<ipr::Continue,
+	ipr::continue_node> as base class.
+	(impl::Continue::accept): Remove.
+	(impl::Block): impl::Node<ipr::Block, ipr::block_node> as base
+	class.
+	(impl::Block::accept): Remove.
+	(impl::For): Have impl::Node<ipr::For, ipr::for_node> as base class.
+	(impl::For:accept): Remove.
+	(impl::Type_id::accept): Remove.
+	(impl::Literal::accept): Remove.
+	(impl::Mapping::accept): Remove.
+
+	* interface.H (Node_kind): New enumeration.
+	(Basic_node<>): New.
+	(Node::kind): New.
+	(Comment): Make Basic_node<Node, comment_node> a base class.
+	(Annotation): Make Basic_node<Node, comment_node> a base class.
+	(Region): Make Basic_node<Node, region_node> a base class.
+	(Identifier): Make Basic_node<Name, identifier_node> a base class.
+	(Operator): Have Basic_node<Name, operator_node> as base class.
+	(Conversion) Have Basic_node<Name, conversion_node> as base class.
+	(Scope_ref): Have Basic_node<Name, scope_ref_node> as base class.
+	(Template_id): Have Basic_node<Name, template_id_node> as base class.
+	(Ctor_name): Have Basic_node<Name, ctor_name_node> as base class.
+	(Ctor_name): Have Basic_node<Name, dtor_name_node> as base class.
+
+	* node-kind.def: New file.  Define Node_code enumerators.
+
+	* impl.H (impl::Id_expr): New. Implement corresponding interface.
+	(expr_factory::id_exprs): New.
+	(expr_factory::make_id_expr): Declare.
+
+	* interface.H (Id_expr): New.
+	(Visitor::visit(const Id_expr&)): Declare.
+
+	* impl.H (impl::Mapping::value_type): New.
+	(impl::Mapping::result_type): Declare.
+	* interface.H (Mapping::result_type): New.
+
+2005-03-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H (xpr_type): New.
+	(operator<<(Printer&, xpr_type)): Likewise.
+
+2005-03-10  Peter Pirkelbauer <peter.pirkelbauer@tamu.edu>
+
+	* impl.H (Classic<>): Change type of op_impl/impl_decl() from
+	const ipr::Fundecl* to const ipr::Decl*.
+  
+        * interface.H (Classic<>): Change type of impl_decl() from const
+	ipr::Fundecl* to const ipr::Decl* 
+
+2005-03-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Classic<>): New.
+
+	* Mark for 0.34
+
+2005-02-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Unit::global_ns): Make public.
+
+2005-02-18  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Var::membership): New.
+	(Typedecl::membership): New.
+
+	* impl.H (impl::Class::add_base): Rename to declare_base.
+	(impl::Var::member_of): New.
+	(impl::Var::membership): Declare.
+	(impl::Typedecl::member_of): New.
+	(impl::Typedecl::membership): New.
+
+2005-02-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H: Rename Expr_as_type to As_type
+	* impl.H: Likewise. Rename make_expr_as_type to make_as_type.
+	Rename heterogeneous_scope so Scope.
+	Rename heterogeneous_region to Region.
+	(impl::Region::declare_bitfield): Define.
+	
+	* impl.H (impl::Datum): Fix thinko.
+
+2005-02-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.H (impl::util::rb_tree::container<>::find_slot): Fix thinko.
+	(impl::util::rb_tree::container<>::find): Rework.
+	(impl::util::rb_tree::container<>::insert): Likewise.
+	(impl::util::rb_tree::container<>::find_slot): Remove.
+
+2005-02-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::basic_map): Remove.
+	(impl::master_map_data): Likewise.
+	(impl::Impl): Rename to impl::decl_rep.
+	(impl::primary_map_data): Remove.
+	(impl::basic_map_data): Likewise.
+	(impl::decl_factory::decls): Make public.
+	(impl::decl_factory::master_info): Likewise.
+	(impl::Fundecl::init): Make non-const.
+	(impl::heterogeneous_scope::make_secondary_map): Adjust type.
+	(impl::heterogeneous_scope::master_primary_map_info): Remove.
+	(impl::heterogeneous_scope::master_secondary_map_info): Likewise.
+	(impl::heterogeneous_scope::maps): Likewise.
+	(impl::heterogeneous_region::declare_primary_map): New.
+	(impl::heterogeneous_region::declare_secondary_map): Likewise.
+
+2005-02-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H (Printer::operator<<): Define overloads for 
+	characters.
+	(needs_newline): Remove.
+	(newline): Likewise.
+
+	* impl.H (impl::Fundecl::init): Make non-const.
+
+2005-02-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H (Token): Remove.
+	(operator<<(Printer&, Printer& (*)(Printer&))): Likewise.
+	(Printer::operator<<): Remove template declaration.  Add
+	individual declaration.
+
+	* impl.H (impl::heterogeneous_region::declare_alias): New.
+	(impl::heterogeneous_region::declare_var): Likewise.
+	(impl::heterogeneous_region::declare_field): Likewise
+	(impl::heterogeneous_region::declare_typedecl): Likewise.
+	(impl::heterogeneous_region::declare_fundecl): Likewise.
+
+	(impl::Udt<>::decl): Remove.
+	(impl::Udt<>::id): New.
+	(impl::Udt<>::name): Adjust.
+	(impl::Udt<>::Udt): Likewise.
+	(impl::Enum::decl): Remove.
+	(impl::Enum::id): New.
+
+2005-02-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::Class::add_base): New.
+
+2005-02-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.33
+
+	* io.H (xpr_decl): Rename from xpr_declaration.
+	(xpr_stmt): Rename from xpr_statement.
+	(xpr_expr): Rename from xpr_expression.
+
+	* interface.H (Unit::global_members): Remove.
+
+	* impl.H (impl::ref_sequence<>): Tidy.
+	(impl::Decl<>): Document.
+	(impl::unique_decl<>): Likewise.
+	(impl::homogeneous_sequence<>): Tidy.
+	(impl::homogeneous_sequence::push_back): New.
+	(impl::homogeneous_scope<>): Tidy.
+	(impl::homogeneous_scope::push_back): New.
+	(impl::homogeneous_region::size): New.
+	(impl::homogeneous_region::get): New.
+	(impl::homogeneous_region::type): New.
+	(impl::Expr_list): Make a class.  Support push_back operation.
+	(impl::heterogeneous_scope): Tidy.  Document.
+	(impl::Udt<>): Liekwise.
+	(impl::type_factory): Likewise.
+	(impl::Break): Document.
+	(impl::Conitnue): Likewise.
+	(impl::stmt_factory): Tidy.
+	(impl::Fundecl::init): Rename from impl::Fundecl::expr.
+	
+	
+
+2005-02-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (impl::ref_sequence<>): Import members "begin", "end".
+	(impl::Unit::make_expr_list): Take an impl::ref_sequence.
+	(impl::Unit::make_product): Likewise.
+	(impl::Unit::make_sum): Likewise.
+	(impl::Unit::expr_seqs): New.
+	(impl::Unit::type_seqs): Likewise.
+
+2005-02-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Unary<>::Category): Remove.
+	(Binary<>::Category): Likewise.
+	(Ternary<>::Category): Likewise.
+
+2005-02-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.31.
+
+	* utility.H (util::rb_tree::core<>::rotate_right): Fix thinko.
+	(util::rb_tree::container<>::insert): Likewise.
+	(util::slist<>::push_back): New overload.
+
+	* impl.H (impl::Type<>::constraint): Remove.
+	(impl::Type<>::Type): Likewise.
+	(impl::Type<>::type): Likewise.
+	(impl::elaborated_type<>::id): Change type from impl::Type_id to
+	ipr::Name*.
+	(impl::typed_sequence<>::constraint): New.
+	(impl::typed_sequence<>::typed_sequence): Likewise.  
+	(impl::homogeneous_scope<>::homogeneous_scope): Likewise.
+	(impl::homogeneous_region<>::homogeneous_region): Take additional
+	parameter. 
+	(impl::Parameter_list::Parameter_list): Likewise.
+	(impl::Type_id): Make a class.
+	(impl::Mapping::Mapping): Take additional parameter.
+	(impl::Scope_ref): Make a typedef.
+	(impl::expr_factory::makde_ctor_name): New.
+	(impl::expr_factory::make_dtor_name): New.
+	(impl::expr_factory::make_type_id): New.
+	(impl::expr_factory::make_mapping): Take additional parameter.
+	(impl::basic_map_data::basic_map_data): Lose the last parameter.
+	(impl::heterogeneous_scope::heterogeneous_scope): Take additional
+	parameter.
+	(impl::heterogeneous_region): Move member definitions out of
+	class.
+	(impl::Udt<>::constraint): New.
+	(impl::Udt<>::Udt): Take additional parameter.
+	(impl::Enum::constraint): New.
+	(impl::Enum::Enum): Take additional parameter.
+	(impl::Class::Class): Likewise.
+	(impl::Block::Block): Likewise.
+	(impl::stmt_factory::make_block): Likewise.
+	(impl::Unit::global_ns): Change type to pointer.
+
+2005-01-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.30.
+	* impl.H: Add more docuementation.
+	(impl::Overload): Tidy.
+	(impl::singleton_overload): New.
+	(impl::unique_decl<>): New. 
+	(impl::Parameter): Derive from impl::unique_decl<>.
+	(impl::Base_type): Likewise.
+	(impl::Enumerator): Likewise.
+	(impl::empty_overload): New.
+	(impl::homogeneous_scope): Use it.
+	(impl::heterogeneous_scope): Likewise.
+	* utility.H (util::slist<>): Don't derive from std::allocator<>.
+	(util::slist<>::allocate): New.
+	(util::slist<>::deallocate): Likewise.
+
+2005-01-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.29
+	* utility.H (util::rb_tree): Rework.
+
+	* interface.H (Node::node_id): New.
+	(Type): Tidy.
+	(Fundecl::throws): Remove.
+	(Fundecl::target): Likewise.
+
+	* impl.H (impl::decl_sequence::get): Make public.
+	(impl::overload_datum::type): Make a reference.
+	(impl::master_decl_data::master_decl_data): Take a type as parameter.
+	(impl::Overload::lookup): New.
+	(impl::singleton_overload::type): Declare.
+	(impl::basic_type::accept): Define.
+	(impl::typed_sequence): New.
+	(impl::conversion_expr<>::Rep): New.
+	(impl::conversion_expr<>::conversion_expr): Use it.
+	(impl::Parameter::overload): Rename from impl::Parameter::declseq.
+	(impl::Base_type::overload): Rename from impl::Base_type::declseq.
+	(impl::Enumerator::overload): Rename from
+	impl::Enumerator::declseq.
+	(impl::homogeneous_sequence<>): Tidy.
+	(impl::homogeneous_scope<>): Likewise.
+	(impl::Parameter_list::type): New.
+	(impl::redecl<>): Tidy.
+	(impl::first_decl<>): Likewise.
+	(impl::type_factory): Likewise.
+	(impl::Identifier::Less): New.
+	(impl::Literal): Tidy.
+	(impl::Mapping): Likewise.
+	(impl::expr_factory): Likewise.
+	(impl::Var): Robustify.
+	(impl::Bitfield): Likewise.
+	(impl::Typedecl): Likewise.
+	(impl::Fundecl): Likewise.
+	(impl::heterogeneous_scope): Tidy.
+	(impl::decl_factory): Robustify.
+	(impl::Enum::accept): Remove.
+	(impl::type_factory): New.
+	(impl::Block): Tidy.
+	(impl::Break): Likewise.
+	(impl::Continue): Likewise.
+	(impl::stmt_factory): Likewise.
+	(impl::Unit): Likewise.
+
+2005-01-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.H: Move red-black tree implementations to namespace
+	ipr::util::rb_tree.  Rename data types.
+	(util::rb_tree::link::as): Remove.
+	(util::rb_tree::core::root): Tweak.
+
+	* interface.H (Expr_in_parens): Rename to ...
+	(Paren_expr): ... this.
+	(Add): Rename to ...
+	(Plus): ... this.
+	(Add_assign): Rename to...
+	(Plus_assign): ... this.
+	(C_cast): Rename to ...
+	(Cast): ... this.
+	(Value): Rename to ...
+	(Datum): ... this.
+	(Scheme): Rename to ...
+	(Mapping): ... this.
+	(Sub): Rename to ...
+	(Minus): ... this.
+	(Sub_assign): Rename to ...
+	(Minus_assign): ... this.
+	(Pattern): Rename to ...
+	(Named_map): ... this.
+	(Overload::region): Comment out.
+	(Namespace::Member): New.
+	(Enum::Member): Likewise.
+	(Class::Member): Likewise.
+	(Union::Member): Likewise.
+	(Negate): Rename to ...
+	(Unary_minus): ... this.
+
+	* impl.H: Rewrite from scratch.  Move implementation classes to 
+	ipr::impl.
+
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.H (physically_same): New.
+
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.28.
+	
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Makefile.am: New.
+	* Makefile.in: Likewise.
+	* impl.H ("ipr/interface.H"): Change to <ipr/interface>
+	("ipr/utility.H"): Change to <ipr/utility>.
+	* io.H ("ipr/interface.H"): Change to <ipr/interface>
+	* traversal.H ("ipr/interface.H"): Change to <ipr/interface>.
+
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Move files from $ROOT/ipr to here. 
+	
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.27.
+	
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.H (util::rb_tree<>::destroy_node): Tidy.
+	(util::slist<>::~slist): Likewise.
+
+	* io.H (operator<<(Printer&, const Unit&)): Declare.
+
+	* interface.H (Type_expr): Rename to ...
+	(Expr_ast_type): ... this.
+	(Arrow_select): Rename to ...
+	(Arrow): ... this.
+	(Dot_select): Rename to ...
+	(Dot): ... this.
+	(Scheme): New data type.  Implemenet paramerized expressions.
+	(Bit_field): Rename to ...
+	(Bitfied): ... this.
+	(Fun_decl): Rename to ...
+	(Fundecl): ... this.
+	(Type_decl): Rename to ...
+	(Typedecl): ... this.
+	(Template_decl): Rename to ...
+	(Pattern): ... this.
+	(Region::decls): Rename to ...
+	(Region::bindings): ... this.
+	(Class::base_scope): Remove.
+	(Parameter_list): Make simple a Node that is also a
+	Sequence<Parameter>. 
+	(Visitor): Adjust member functions to reflect renaming.
+	(Visitor::visit(const Scheme&)): New.
+
+	* impl.H (Sequence_impl<>): Take an additional template
+	argument, in case we're implementing a derived interface
+	of Sequence<>.
+	(Value_sequence<>): Implement Sequence<>, but stores actual
+	values, not pointers.
+
+	(Expr_impl<>::type_impl): Remove.
+	(Expr_impl<>::constraint): Make public.
+
+	(Scope_impl<>::register_decl): Remove.
+
+	(Region_impl<>::scope): Remove.
+	(Region_impl<>::decls_impl): Likewise.
+	(Region_impl<>::span_impl): Likewise.
+	(Region_impl<>::owner_impl): Likewise.
+	(Region_impl<>::owned_by): Make public.
+	(Region_impl<>::locs): Rename to ...
+	(Region_impl<>::extent): ... this.
+	(Region_impl<>::decl_seq): Rename to ...
+	(Region_impl<>::decls): ... this.
+
+	(Udt_impl<>::decl_impl): Remove.
+	(Udt_imp<>::region_impl): Likewise.
+	(Udt_impl<>::scope_impl): Likewise.
+	(Udt_impl<>::typedecl): Make public.
+	(Udt_impl<>::body): Likewise.
+
+	(Stmt_impl<>::loc): Rename to ...
+	(Stmt_impl<>::unit_locus): ... this.  Make public.
+	(Stmt_impl<>::attrs): Rename to ...
+	(Stmt_impl<>::notes): ... this.
+	(Stmt_impl<>::unit_location_impl): Remove.
+	(Stmt_impl<>::annotation_impl): Likewise.
+
+	(Decl_impl<>::spec): Make public.
+	(Decl_impl<>::init): Likewise.
+	(Decl_impl<>::specifiers_impl): Remove.
+	(Decl_impl<>::scope_impl): Likewise.
+	(Decl_impl<>::initializer_impl): Likewise.
+	(Decl_impl<>::register_to): Likewise.
+
+	(Decl_with_name<>::id): Make public.
+	(Decl_with_name<>::pat): Likewise.
+	(Decl_with_name<>::tmpl_args): Likewise.
+
+	(Enumerator_impl::membership): Move defintion out of line.
+	(Enumerator_impl::Enumerator_impl): Likewise.
+
+	(Enum_impl::add_member): New member function.
+
+	(combined_sequence<Decl>::enums): Remove.
+	(combined_sequence<Decl>::classes): Likewise.
+	(combined_sequence<Decl>::namespaces): Likewise.
+	(combined_sequence<Decl>::unions): Likewise.
+
+	(Parameter_list_impl): Derive from Node_impl<Value_sequence
+	<Parameter_impl, Parameter_list> >.
+
+	(Scheme_impl): New.  Implement Scheme.
+
+	(Class_impl::base_scope): Remove.
+	(Class_impl::bases_impl): Likewise.
+	(Class_impl::bases): Move definition out of line.
+	(Class_impl::Class_impl): Likewise.
+	(Class_impl::baseobjs): Rename to ..
+	(Class_impl::base_subobjects): ... this.
+
+	(Block_impl::Block_impl): Move definition out of line.
+	(Block_impl::members): Likewise.
+	(Block_impl::body): Likewise.
+	(Block_impl::handlers): Likewise.
+	(Block_impl::members_impl): Remove.
+	(Block_impl::stmts_impl): Likewise.
+	(Block_impl::handlers_impl): Likewise.
+	(Block_impl::zone): Rename to ...
+	(Block_impl::region): ... this.
+	(Block_impl::stmt_seq): Make public.
+	(Block_impl::handler_seq): Likewise.
+
+	(For_impl::For_impl): Move definition out of line.
+	(For_impl::initializer): Likewise.
+	(For_impl::condition): Likewise.
+	(For_impl::increment): Likewise.
+	(For_impl::body): Likewise.
+	(Break_impl::Break_impl): Likewise.
+	(Break_impl::from): Likewise.
+	(Continue_impl::Continue_impl): Likewise.
+	(Continue_impl::iteration): Likewise.
+
+	(Fun_decl_impl): Rename to ...
+	(Fundecl_impl): ... this.  Move all in-class definitions out of
+	line. 
+	(Fundecl_impl::params): Remove.
+
+	(Var_impl::Var_impl): Move definition our of line.
+	(Var_impl::definition): Likewise.
+	(Alias_impl::Alias_impl): Likewise.
+	(Field_impl::Field_impl): Likewise.
+	(Field_impl::membership): Likewise.
+
+	(Bit_field_impl): Rename to ...
+	(Bitfield_impl): ... this.
+	(Bitfield_impl::Bitfield_impl): Move definition out of line.
+	(Bitfield_impl::membership): Likewise.
+	(Bitfield_impl::size): Rename to ...
+	(Bitfield_impl::precision): ... this.  Move definition out of
+	line.
+	(Type_decl_impl): Rename to ...
+	(Typedecl_impl): ... this.
+	(Typedecl_impl::Typedecl_impl): Move definition out of line.
+	(Typedecl_impl::definition): Likewise.
+	(Template_decl_impl): Split into primary_pattern and
+	specialized_pattern.  Remove.
+	(basic_pattern): New.
+	(primary_pattern): New. Implement primary templates.
+	(specialized_pattern): New.  Implement partial and explicit
+	specializations of templates.
+
+	(Address_impl, Array_delete_impl, Complement_impl,
+	Conversion_impl, Ctor_name_impl, Dtor_name_impl, Delete_impl,
+	Deref_impl, Expr_in_parens_impl, Expr_list_impl, Expr_sizeof_impl, 
+	Expr_typeid_impl, Identifier_impl, Negate_impl, Not_impl,
+	Operator_impl, Pre_increment_impl, Pre_decrement_impl,
+	Post_increment_impl, Post_decrement_impl, Throw_impl,
+	Type_id_impl, Type_sizeof_impl, Type_typeid_impl, Unary_plus_impl,
+	Add_impl, Add_assign_impl, And_impl, Annotation_Impl,
+	Array_ref_impl, Arrow_impl, Arrow_star_impl, Assign_impl,
+	Bitand_impl, Bitand_assign_impl, Bitor_impl, Bitor_assign_impl,
+	Bitxor_impl, Bitxor_assign_impl, C_cast_impl, Call_impl,
+	Comma_impl, Const_cast_impl, Div_impl, Div_assign_impl, Dot_impl,
+	Dot_star_impl, Dynamic_cast_impl, Equal_impl, Greater_impl,
+	Greater_equal_impl, Less_impl, Less_equal_impl, Literal_impl,
+	Lshift_impl, Lshift_assign_impl, Member_init_impl, Modulo_impl,
+	Modulo_assign_impl, Mul_impl, Mul_assign_impl, Not_equal_impl,
+	Or_impl, Reinterpret_cast_impl, Rshift_impl, Rshift_assign_impl,
+	Scope_ref_impl, Static_cast_impl, Sub_impl, Sub_assign_impl,
+	Template_id_impl, Value_impl, New_impl, Conditional_impl):
+	Introduce as typedefs for interface implementations.
+
+	(Expr_builder): Adjust signatures of all member functions.
+
+	(Unit_impl::global_region): Tidy.
+	(Unit_impl::global_scope): Likewise.
+	(Unit_impl::make_alias): Remove.
+	(Unit_impl::make_enumerator): Likewise.
+	(Unit_impl::make_base_type): Likewise.
+	(Unit_impl::make_fun_decl): Likewise.
+	(Unit_impl::make_var): Likewise.
+	(Unit_impl::make_field): Likewise.
+	(Unit_impl::make_bit_field): Likewise.	
+
+2005-01-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Sequence<>::Position): Remove.
+	(Sequence<>::get): Adjust signature.
+	(Sequence<>::operator[]): Likewise.
+	(Sequence<>::Iterator::Position): Remove.
+	(Sequence<>::Iterator::index): Adjust type.
+	(Parameter_list): Derive from Udt, instead of scope.
+
+	* impl.H: Propagate changes in interface.H to implementation
+	classes.  
+	(Empty_sequence::Position): Remove.
+
+	(combined_sequence<Decl>::decls): New data member.
+	(combined_sequence<Decl>::size): Define.
+	(combined_sequence<Decl>::get): Define.
+
+	* impl.H (Enum_impl::make_enumerator): New member function.
+	(Unit_impl::make_enumerator): Remove.
+	(Unit_impl::make_base_type): Remove.
+	(Unit_impl::make_alias): Move to ...
+	(combined_sequence<Decl>::make_alias): ... here.
+
+2004-12-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Expr_impl<>::Expr_impl()): Initialize constraint.
+	(combined_sequence<>): New.
+	(Scope_impl<>): Derive from it.
+
+2004-12-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.H (util::less): New function objects. 
+
+2004-12-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.H (util::check): New function.
+	* impl.H (Checked_ptr): Remove.
+	(Unit_impl::String): Remove.
+
+2004-12-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.H (Missing_overrider): New function object.
+	(missing_overrider):  Turn it into the above function object.
+
+2004-11-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.H (as): Move from interface.H.
+	(missing_overrider): Likewise.
+
+	* interface.H (Lshift): Rename from Shift_left.
+	(Lshift_assign): Rename from Shift_left_assign.
+	(Rshift): Rename from Shift_right.
+	(Rshift_assign): Rename from Shift_right_assign.
+	* impl.H: Make corresponding changes.
+
+2004-11-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Multi_comment_impl): Remove.
+
+	* interface.H (Multi_comment): Remove. 
+	(Visitor::visit(const Multi_comment&)): Likewise.
+
+2004-11-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Comment_impl): typedef to instance of Unary_impl<>.
+	(Multi_comment_impl): Likewise.
+	(Type_builder): Inherit from table for Ptr_to_member.
+	(Unit_impl): Inherit from Node_impl<Unit>, instead of Unit.
+	(Unit_impl::make_ptr_to_member): Declare.
+
+	* interface.H (Commment): New datatype.
+	(Multi_comment): Likewise.
+	(Ptr_to_member): Likewise.
+	(Visitor::visit(const Comment&)): Declare.
+	(Visitor::visit(const Multi_comment&)): Likewise.
+	(Visitor::visit(const Ptr_to_member&)): Likewise.
+	(Unit): Derive from Node.
+
+2004-11-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type_expr): Rename from Expr_as_type.
+	(Template_id): Rename from Specialization.
+	(Basic_location): New datatype.
+	(Source_location): Likewise.  Derive from Basic_location.
+	(Unit_location): Likewise.
+
+	* impl.H: Likewise.
+
+2004-11-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Decl::template_params): New.
+	(Decl::template_args): Likewise.
+
+2004-11-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Asm): New Decl node.
+	(Visitor::visit(const Asm&)): New.
+
+2004-11-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Var_impl::definition): Override.
+	(Var_impl::definition_impl): New.
+
+	* interface.H (Decl::definition): New.
+
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.26.	
+	
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Expr_stmt_impl): Make a typedef to 
+	Unary_impl<Expr_stmt, Stmt_impl<Expr_stmt> >.
+	(Labeled_stmt_impl): Make a typedef to
+	Binary_impl<Labeled_stmt, Stmt_impl<Labeled_stmt> >.
+	(Ctor_body_impl): Make a typedef to
+	Binary_impl<Ctor_body, Expr_list, Block>.
+	(If_then_impl): Make a typedef to 
+	Binary_impl<If_then, Stmt_impl<If_then> >.
+	(If_then_else_impl): Make a typedef to 
+	Ternary_impl<If_then_else, Stmt_impl<If_then_else> >.
+	(Switch_impl): Make a typedef to 
+	Binary_impl<Switch, Stmt_impl<Switch> >
+	(While_impl): Make a typedef to 
+	Binary_impl<While, Stmt_impl<While> >.
+	(Do_impl): Make a typedef to Binary_impl<Do, Stmt_impl<Do> >.
+	(Goto_impl): Make a typedef to Unary_impl<Goto, Stmt_impl<Goto> >.
+	(Handler_impl): Make a typedef to 
+	Binary_impl<Hander, Stmt_impl<Handler> >.
+	(Union_impl): Make a typedef to Udt_impl<Union>.
+	(Namespace_impl): Make a typedef to Udt_impl<Namespace>.
+
+	* interface.H (Expr_stmt): Derive from Unary<stmt, Expr>.
+	(Expr_stmt::expr): Forward to Unary<>::operand.
+	(Labeled_stmt): Derive from Binary<Stmt, Expr, Expr>.
+	(Labeled_stmt::label): Forward to Binary<>::first.
+	(Labeled_stmt::stmt): Forward to Binary<>::second.
+	(Ctor_body): Derive from Binary<Stmt, Expr, Expr>.
+	(Ctor_body::inits): Forward to Binary<>::first.
+	(Ctor_body::block): Forward to Binary<>::second.
+	(If_then): Derive from Binary<Stmt, Expr, Expr>.
+	(If_then::condition): Forward to Binary<>::first.
+	(If_then::then_stmt): Forward to Binary<>::second.
+	(If_then_else): Derive from Ternary<Stmt, Expr, Expr, Expr>.
+	(If_then_else::condition): Forward to Binary<>::first.
+	(If_then_else::then_stmt): Forward to Binary<>::second.
+	(If_then_else::else_stmt): Forward to Binary<>::third.
+	(Switch): Derive from Binary<Stmt, Expr, Expr>.
+	(Switch::condition): Forward to Binary<>::first.
+	(Switch::body): Forward to Binary<>::second.
+	(While): Derive from Binary<Stmt, Expr, Expr>.
+	(While::condition): Forward to Binary<>::first.
+	(While::body): Forward to Binary<>::second.
+	(Do): Derive from Binary<Stmt, Expr, Expr>.
+	(Do::condition): Forward to Binary<>::first.
+	(Do::body): Forward to Binary<>::second.
+	(Goto): Derive from Unary<Stmt, Expr>.
+	(Goto::target): Forward to Unary<>::operand.
+	(Handler): Derive from Binary<Stmt, Decl, Block>.
+	(Hanlder::expcetion): Forward to Binary<>::first.
+	(Handler::body): Forward to Binary<>::second.
+
+2004-10-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unary_Factor<>::Impl): Move to enclosing scope...
+	(Unary_impl<>): As this.
+
+2004-10-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type_id::type): Define.  This is the type of the
+	type.
+
+	* impl.H (Expr_builder): Move name nodes factories to Unit_impl.
+	(Unit_impl): Constify return types for unified node factories.
+	(Type_builder): Expunge almost of member functions.
+	(Stmt_builder): Move member function deifnitions to src/ipr.C
+	(Expr_basic_impl<>): Remove.
+
+2004-10-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unit_impl::make_specialization): Declare.
+
+2004-10-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unary_factor<>::Impl::accept()): Remove.
+	(Binary_factor<>::Impl::accept()): Likewise.
+	(Ternary_factor<>::Impl::accept()): Likewise.
+	(Unary_factory): Now take Cat_impl as a template
+	template-parameter. 
+	(Unary_factory<>::Impl): Inherit from Cat_impl<Interface>.
+	(Binary_factory): Now take Cat_impl as a template
+	template-parameter.  
+	(Binary_factory<>::Impl): Inherit from Cat_impl<Interface>.
+	(Ternary_factory): Now take Cat_impl as a template
+	template-parameter.  
+	(Ternary_factory<>::Impl): Inherit from Cat_impl<Interface>.
+	(Node_impl<>): New.
+	(Expr_basic_impl<>): Remove.
+	(Expr_builder): Tidy.
+	(Type_builder): Likewise.
+
+2004-10-19  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Template_decl_impl): New.
+
+2004-10-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Template_decl): New.
+	(Visitor::visit(const Template_decl&)): Likewise.
+
+	* impl.H (Scope_impl<>::Overload_impl::register_decl): Take the
+	opportunity to set constraint.
+
+2004-10-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Expr_builder): Add table for Expr_in_parens.
+	(Expr_in_parens::make_expr_in_parens): New.
+
+	* interface.H (Expr_in_parens): New.
+	(Visitor::visit(const Expr_in_parens&)): Declare.
+	(Template::parameterized): Rename from parametree.
+	(Decl::Export): New enumerator.
+
+2004-09-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.25.
+
+	* impl.H (Constructor_impl): Remove.
+	(Destructor): Likewise.
+	(Unit_impl::make_constructor): Likewise.
+	(Unit_impl::make_destructor): Likewise.
+	(Expr_builder): Inherit also from Unary_fatctory<Ctor_name> and
+	Unary_fatctory<Dtor_name>.
+	(Expr_builder::make_ctor_name): New.
+	(Expr_builder::make_dtor_name): Likewise.
+	(Unit_impl::make_ctor_name): Likewise.
+	(Unit_impl::make_dtor_name): Likewise.
+
+	* interface.H (Constructor): Remove.
+	(Destructor): Likewise.
+	(Visitor::visit(const Constructor&)): Likewise.
+	(Visitor::visit(const Destructor&)): Likewise.
+	(Dtor_name): New node class. 
+	(Ctor_name): Likewise.  For consistency with destructor.
+	(Visitor::visit(const Dtor_name&)): Declare.
+	(Visitor::visit(const Ctor_name&)): Likewise.
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.H: New file.
+
+	* interface.H (Visitor::visit(const Name&)): Don't make pure.
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.24
+	
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Decl_impl<>::register_to): New.
+
+2004-09-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unit_impl::make_fun_decl): Update signature.
+	(Unit_impl::make_constructor): Likewise.
+	(Unit_impl::make_destructor): New.
+
+2004-09-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Type_builder): Add table for Sum too.
+	(Type_builder::make_sum): New.
+	(Type_builder::make_function): Update.
+	(Unit_impl::make_sum): New.
+	(Unit_impl::make_function): Update.
+
+	* interface.H (Sum): New type node.
+	(Function): Use it for exception specification list.
+	(Visitor::visit(const Sum&)): Declare.
+
+2004-08-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.23.
+	
+2004-08-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Visitor::visit(const Exnumerator&)): Add.
+
+2004-08-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Specialization): Derive from Name.
+
+2004-08-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Type_builder): Inherirt from factory for Decltype too.
+	(Type_builder::make_decltype): New.
+	(Unit_impl::make_decltype): New.
+	(Expr_builder::make_identifier): Return Expr_impl<Identifier>*.
+	(Expr_builder::make_operator): Return Expr_impl<Operator>*.
+	(Expr_builder::make_conversion): Return Expr_impl<Conversion>*.
+	(Expr_builder::make_scope_ref): Return Expr_impl<Scope_ref>*.
+	(Unit_impl::make_identifier): New.
+	(Unit_impl::make_operator): Likewise.
+	(Unit_impl::make_conversion): Likewise.
+	(Unit_impl::make_scope_ref): Likewise.
+
+	* interface.H (Decltype): New node class.
+	(Visitor::visit(const Decltype&)): New.
+
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.22.
+	
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Alias): Add lazy evaluation of type().  It is
+	always that of the initializer.
+
+2004-08-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Expr_builder::make_scope_ref): Adjust return-type to
+	Scope_ref*. 
+
+	* interface.H (Scope_ref): Derive from Name.
+
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.21.
+	
+2004-08-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Block::stmts): Revert from previosu change.  Return
+	a Sequence<Expr> instead of Sequence<Stmt>.
+	(Labeled_stmt::stmt): Revert from previous change.  Return an
+	Expr, not Stmt.
+	(If_then::then_stmt): Likewise.
+	(If_then_else::then_stmt, If_then_else::else_stmt): Likewise.
+	(While::body): Likewise.
+	(Do_while::body): Likewise.
+	(For::body): Likewise.
+	(Break::from, Continue::iteration): Likewise.
+
+	* impl.H (Labeled_stmt_impl): Reflect changes in ipr/initerface.H.
+	(Block_impl): Likewise.
+	(If_then_impl): Likewise.
+	(If_then_else_impl): Likewise.
+	(Switch_impl): Likewise.
+	(While_impl): Likewise.
+	(Do_while_impl): Likewise.
+	(For_impl): Likewise.
+	(Break_impl): Likewise.
+	(Continue_impl): Likewise.
+	(Stmt_builder::make_do_while): Likewise.
+	(Stmt_builder::make_if_then): Likewise.
+	(Stmt_builder::make_switch): Likewise.
+	(Stmt_builder::make_labeled_stmt): Likewise.
+	(Stmt_builder::make_switch): Likewise.
+	(Stmt_builder::make_if_then_else): Likewise.
+	(Stmt_builder::make_for): Likewise.
+	(Stmt_builder::make_do): Rename from make_do_while.
+
+	* interface.H: Simplify Do_while to Do.
+	* impl.H: Likewise.
+
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.20.
+	
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Visitor::visit(const Udt&)): New.
+
+	* impl.H (Block_impl::decls): Make it an integral part of the
+	block.
+	(Block_impl::Block_impl): Also take a Unit_impl parameter.
+	(Unit_impl::make_block): New.  Forward to Stmt_builder::make_block.
+
+2004-08-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Ctor_body_impl): Rename from Function_body_impl.
+	Implement Ctor_body interface.
+	(Quaternary_factory): Remove.
+	(Expr_stmt_impl): New.  Implement Expr_stmt interface.
+	(Labeled_stmt_impl): New.  Implement Labeled_stmt interface.
+	(Block_impl): New. Implement Block interface.
+	(If_then_impl): New.  Implement If_then interface.
+	(If_then_else_impl): New.  Implement If_then_else interface.
+	(Switch_impl): New.  Implement Switch interface.
+	(While_impl): New.  Implement While interface.
+	(Do_while_impl): New.  Implement Do_while interface.
+	(For_impl): New.  Implement For interface.
+	(Break_impl): New.  Implement Break interface.
+	(Continue_impl): New.  Implement Continue interface.
+	(Goto_impl): New.  Implement Goto interface.
+	(Return_impl): New.  Implement Return interface.
+	(Handler_impl):  New.  Implement Handler interface.
+	(Stmt_builder): Rework.
+	(Unit_impl::make_handler_seq): Remove.
+	(Unit_impl::hander_seqs): Likewise.
+
+	* interface.H (Ctor_body, Expr_stmt): New interfaces.
+	(Function_body): Remove.
+	(Labeled_stmt, Block, If_then, If_then, If_then_else, Switch,
+	While, Do_while, For, Break, Continue, Goto, Return, Handler):
+	Derive directly from Stmt.
+	(Visitor::visit(const Function_body&)): Remove.
+	(Visitor::visit(const Ctor_body&)): New.
+	(Visitor::visit(const Expr_stmt&)): Likewise.
+
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.19
+	
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.18
+	
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Member_init): Add convenient functions.
+	* impl.H (Expr_builder<>): Add factory for Member_init.
+
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.17
+	
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type_id): New datatype. Interface for type-ids.
+	(Expr_list): Now a Unary<> expression.  Add subscripting operation.
+	(Product): Add subscripting operation.
+	(Name_as_expr): Remove.
+	(Visitor::visit(const Name_as_expr&)): Remove.
+	(Visitor::visit(const Type_id&)): New.
+
+	* impl.H (Type_impl<>): Tidy.
+	(Scope_impl<>): Temporarily remove protected copy-constructor
+	(Expr_list_impl<>): Remove.
+	(Decl_with_name<>): New datatype.
+	(Parameter_impl): Derive from it.
+	(Enumerator_impl): Likewise.
+	(Fun_decl_impl): Likewise.
+	(Alias_impl): Likewise.
+	(Var_impl): Likewise.
+	(Type_impl): All types now have names.
+	(Type_decl_impl): Likewise.
+	(Field_impl): Likewise.
+	(Bit_field_impl): Likewise.
+	(Type_builder): Add factory for Product.
+	(Expr_builder): Adjust to make name as expressions.  Add factory
+	for Expr_list.
+	(Unit_impl): Tidy.
+
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.16
+	
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unary_fatctory<>::make): Overload with a version
+	that takes the type of the expression.
+	(Binary_factor<>::make): Likewise.
+	(Ternary_factor<>::make): Likewise.
+	(Stmt_impl<>::annotation): Move from Expr_impl<>.
+	(Stmt_impl<>::annotation_impl): Likewise.
+	(Unit_impl::make_pointer): New.
+	(Unit_impl::make_reference): Likewise.
+	(Unit_impl::make_expr_as_type): Likewise.
+	(Unit_impl::make_array): Likewise.
+	(Unit_impl::make_template): Likewise.
+	(Unit_impl::make_function): Likwise.
+	(Unit_impl::built_in_type): Likewise.
+	(Unit_impl::Builtin<>): Remove.
+	(Unit_impl::CV_fiber): Tidy to work-around bugs in GCC-3.5.x
+	(Unit_impl::Typename): New.
+
+2004-07-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Bit_field): New node.
+	(Field): Likewise.
+	(Visitor::visit(const Field&)): New.
+	(Visitor::visit(const Bit_field&)): Likewise.
+
+	* impl.H (Udt_impl<>::decl_impl): Fix const-correctness thinko.
+	(Field_impl): New. Implement Field interface.
+	(Bit_field): New.  Implement Bit_fiekd interface.
+	(Unit_impl::make_field): New.
+	(Unit_impl::make_bit_field): Likewise.
+
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H: Fix thinko in last change.
+	(Unit_impl::make_function):  Overload to take only
+	parameter-types and return type.
+
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.15.
+	
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (operator|=(Type::Qualifier&, Type::Qualifier)): New.
+	(operator^=(Type::Qualifier&, Type::Qualifier)): Likewise.
+	(operator&=(Type::Qualifier&, Type::Qualifier)): Likewise.
+	(operator|=(Decl::Specifier&, Decl::Specifier)): Likewise.
+	(operator^=(Decl::Specifier&, Decl::Specifier)): Likewise.
+	(operator&=(Decl::Specifier&, Decl::Specifier)): Likewise.
+
+	* impl.H (Unit_impl::make_subscope): Move from Scope_impl<>.
+	(Unit_impl::make_parameter_list): Likewise.
+	(Scope_impl<>::enclosing_impl): Remove.
+	(Scope_impl<>::unit_impl): Remove.
+
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark 0.14
+	
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (as): Move from ipr.C.
+	(Template): Use Parameter_list.
+	(operator|(Decl::Specifier, Decl::Specifier)): New.
+	(operator^(Decl::Specifier, Decl::Specifier)): New.
+	(operator&(Decl::Specifier, Decl::Specifier)): New.
+	(Unit::global_namespace): Rename from global_scope.
+	(Unit::global_members): New.
+
+	* impl.H (Type_builder::make_template): Take
+	Parameter_list as first argument.
+	(Unit_impl::global_namespace): Rename from global_scope.
+
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.13.
+	
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H: Reimplement from scratch.
+
+	* interface.H (Conditional): New node.
+	(Type_decl): Likewise.
+	(Visitor::visit(const Conditional&)): New.
+	(Visitor::visit(const Type_decl&)): Likewise.
+
+	* impl.H (Name_builder): Merge with Expr_builder. Remove.
+	(Expr_builder): Unify strings before making a Literal.
+	(Unit_impl): Adjust.
+	(Unit_impl::make_type_decl): New.
+	(Type_decl_impl): New. Implement Type_decl interface.
+
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.12.
+	
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Add_assign): New.
+	(Bitand_assign): Likewise.
+	(Bitor_assign): Likewise.
+	(Bitxor_assign): Likewise.
+	(Div_assign): Likewise.
+	(Member_init): Likewise.
+	(Modulo_assign): Likewise.
+	(Mul_assign): Likewise.
+	(Shift_left_assign): Likewise.
+	(Shift_right_assign): Likewise.
+	(Sub_assign): Likewise.
+	(Udt<>): Simplify.
+	(Visitor::visit(const Add_assign&)): New.
+	(Visitor::visit(const Bitand_assign&)): Likewise.
+	(Visitor::visit(const Bitor_assign&)): Likewise.
+	(Visitor::visit(const Bitxor_assign&)): Likewise.
+	(Visitor::visit(const Div_assign&)): Likewise.
+	(Visitor::visit(const Member_init&)): Likewise.
+	(Visitor::visit(const Modulo_assign&)): Likewise.
+	(Visitor::visit(const Mul_assign&)): Likewise.
+	(Visitor::visit(const Shift_left_assign&)): Likewise.
+	(Visitor::visit(const Shift_right_assign&)): Likewise.
+	(Visitor::visit(const Sub_assign&)): Likewise.	
+
+	* impl.H (Udt_impl<>): Simplify.
+	(Class_impl): Tidy.
+	(Union_impl): Likewise.
+	(Namespace_Impl): Likewise.
+	(Enum_impl): Likewise.
+	(Destructor_impl): New. Implement Destructor interface.
+	(Alias_impl): New. Implement Alias interface.
+	(Name_builder::make_conversion): Fix typo.
+	(Expr_builder): Make computed assignment nodes.
+	(Unit_impl::GlobalNamespace::bases): Remove. 
+
+	* io.H (printer::Base): Rework.  Move common stubs from derived
+	classes here.  Start infrastructure for better pretty-printing.
+	
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.11
+	
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Specialization): Rename from Instantiation. Derive
+	from Expr.
+	(Scope_ref): Rename from Qualified.  Derive from Expr.
+	(Object_type): Remove.
+	(Pointer): Adjust.
+	(Array): Likewise.
+	(Expr_as_type): New interface.
+	(Udt): Simplify.
+	(Namespace): Adjust.
+	(Class): Likewise.
+	(Enum): Likewise.
+	(Union): Likewise.
+	(Scope_select): Remove.
+	(Visitor::visit(const Instantiation&)): Remove.
+	(Visitor::visit(const Qualified&)): Likewise.
+	(Visitor::visit(const Scope_select&)): Likewise.
+	(Visitor::visit(const Expr_as_type&)): New.
+	(Unit::): Tidy.
+
+	* impl.H (Object_type_impl): Remove.
+	(Udt_impl): Tidy.
+	(Enum_impl): Likewise.
+	(Namespace_impl): Likewise.
+	(Var_impl): New.  Implement the Var interface.
+	(Name_builder): Rework.
+	(Type_builder): Build Expr_as_type.  Tidy.
+	(Expr_builder): Build Specialization and Scope_ref.
+	(Unit_impl): Tidy.
+
+	* io.H: Reflect changes in interface.H.
+
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H: #include <stdexcept>.
+	(Product): New interface.
+	(Expr_list): Likewise.
+	(Stmt): Rename from Statement.
+	(Scope): Derive from Expr.
+	(Udt): Rename from User_defined_type.
+	(Class): Adjust.
+	(Union): Likewise.
+	(Enum): Likewise.
+	(Namespace): Likewise.
+	(Function): Use Product for parameter-type-list.
+	(Template): Likewise.
+	(Call): Use Expr_list for argument-list.
+	(Object_construction): Likewise.
+	(New): Use Expr_list for placement and initializer list.
+	(Function_body): Make an Expr.
+	(Enumerator::value): Remove.
+	(Alias::has_initializer): Remove.
+	(Alias::aliasee): Likewise.
+	(Base_type::has_initializer): Remove.
+	(Parameter::has_default): Likewise.
+	(Template_param): Likewise.
+	(Constructor): New interface.
+	(Copy_assignment): Likewise.
+	(Visitor::visit(const Scope&)): Make non pure.
+	(Visitor::visit(const Product&)): New.
+	(Visitor::visit(const Expr_list&)): Likewise.
+
+	* impl.H: #include <list>.
+	(Expr_impl<>): Tidy.
+	(Parameter_data): Remove.
+	(Scope_impl<>): Simplify.
+	(Product_impl): New datatype.  Implement Product interface.
+	(Udt_imp<>): Rename from User_defined_type_impl<>.
+	(Class_impl): Simplify.
+	(Union_impl): Likewise.
+	(Enum_impl): Likewise.
+	(Namespace_impl): Likewise.
+	(Expr_list_impl): New data type. Implement Expr_list interface.
+	(Stmt_impl): Rename from Statement_impl.
+	(Decl_impl<>): Simplify.
+	(Fun_decl_impl): Likewise.
+	(Enumerator_impl): New. Implement Enumerator interface.
+	(Constructor_impl): New. Implement Constructor interface.
+	(Parameter_list_impl): New. Implement Parameter_list interface.
+	(Name_builder): New.
+	(Type_builder); Likewise.
+	(Expr_builder): Likewise.
+	(Stmt_builder): Likewise.
+	(Unit_impl): Reimplement.
+
+	* io.H (printer::xpr::Declaration::visit(const Parameter_list&)): New.
+	(printer::xpr::Declaration::visit(const Enumerator&)): New.
+	(printer::xpr::Declaration::visit(const Base_type&)): New.
+	(printer::xpr::Declaration::visit(const Scope&)): Remove.
+	(printer::xpr::Expression::visit(const Product&)): New.
+	(printer::xpr::Expression::visit(const Expr_list&)): New.
+
+2004-06-19  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H: Re-architecture.
+	(Enumerator): New Decl node.
+	(Base_type): Likewise.
+	(Sequence::size): Return int.
+	(Unary<>): New class template.
+	(Binary<>): Likewise.
+	(Ternary<>): Likewise.
+	(Quaternary<>): Likewise.
+	(Annotation): Derive from Binary<Node, std::string, Literal>.
+	(Identifier): Derive from Unary<Name, std::string>.
+	(Operator): Likewise.
+	(Conversion): Derive from Unary<Name, Type>.
+	(Instantiation): Derive from Binary<Name, Name, Sequence<Expr> >.
+	(Qualified): Derive from Binary<Name, Name, Name>.
+	(Pointer): Derive from Unary<Object_type, Type>.
+	(Reference): Derive from Unary<Type, Type>.
+	(Array): Derive from Binary<Object_type, Object_type, Expr>.
+	(Function): Derive from Ternary<Type, Sequence<Type>, Type,
+	Sequence<Type> >.
+	(Template): Derive from Binary<Type, Sequence<Type>, Expr>.
+	(Literal): Derive from Binary<Expr, Type, std::string>.
+	(Unary_expr<>): Remove.
+	(Binary_expr<>): Likewise.
+	(Name_expr<>): Derive from Unary<Expr, Name>.
+	(Pre_increment): Derive from Unary<Expr, Expr>.
+	(Post_increment): Likewise.
+	(Pre_decrement): Likewise.
+	(Post_decrement): Likewise.
+	(Expr_typeid): Likewise.
+	(Expr_sizeof): Likewise.
+	(Type_typeid): Derive from Unary<Expr, Type>.
+	(Type_sizeof): Likewise.
+	(Deref): Derive from Unary<Expr, Expr>.
+	(Address): Likewise.
+	(Unary_plus): Likewise.
+	(Negate): Likewise.
+	(Not): Likewise.
+	(Complement): Likewise.
+	(Delete): Likewise.
+	(Array_delete): Likewise.
+	(Throw): Likewise.
+	(Literal); Derive from Binary<Expr, Type, std::string>.
+	(Cast_expr): Derive from Binary<Expr, Type, Expr>.  Make non-template.
+	(Mul): Derive from Binary<Expr, Expr, Expr>.
+	(Div): Likewise.
+	(Modulo): Likewise.
+	(Add): Likewise.
+	(Sub): Likewise.
+	(Shift_left): Likewise.
+	(Shift_right): Likewise.
+	(Less): Likewise.
+	(Greater): Likewise.
+	(Less_equal): Likewise.
+	(Greater_equal): Likewise.
+	(Equal): Likewise.
+	(Not_equal): Likewise.
+	(Bit_and): Likewise.
+	(Bit_or): Likewise.
+	(Bit_xor): Likewise.
+	(And): Likewise.
+	(Or): Likewise.
+	(Comma): Likewise.
+	(Assign): Likewise.
+	(Call): Likewise.
+	(Object_construction): Likewise.
+	(Member_select): Likewise.  Make non-template.
+	(New): Derive from Ternary<Expr, Sequence<Expr>, Object_type,
+	Sequence<Expr> >.
+	(Labeled_stmt): Derive from Binary<Statement>.
+	(Block): Derive from Ternary<Statement, Scope, Sequence<Expr>,
+	Sequence<Handler> >.
+	(Function_body): Derive from Binary<Statement, Sequence<Expr>, Block>.
+	(If_then): Derive from Binary<Statement>.
+	(If_then_else): Derive from Ternary<Statement>.
+	(Switch): Derive from Binary<Statement>.
+	(While): Likewise.
+	(Do_while): Likewise.
+	(For): Derivee from Quaternary<Statement>.
+	(Break): Derive from Unary<Statement>.
+	(Continue): Likewise.
+	(Goto): Likewise.
+	(Return): Likewise.
+	(Handler): Derive from Binary<Statement, Decl, Block>.
+	(Visitor::visit(const Base_type&)): New member function.
+
+	Remove unnecessary codes.
+	
+	* impl.H (Sequence_impl<>::size): Return int.
+	(Identifier_impl): Remove again.
+	(Operator_impl): Likewise.
+	(Conversion_impl): Likewise.
+	(Instantiation_impl): Likewise.
+	(Qualified_impl): Likewise.
+	(Scope_impl<>::operator[](const Name&)): Suspend definition.
+	(Parameter_data): New datatype.
+	(Scope_impl<>::make_block()): Remove.
+	(Scope_impl<>::make_namespace()): Likewise.
+	(Scope_Impl<>::make_parameter): Likewise.
+	(Scope_impl<>::make_fun_decl(const Name&)): Likewise.
+	(Scope_impl<>::Overload_impl): Move to Unit_impl.
+	(Scope_impl<>::Binding): Remove.
+	(Scope_Impl<>::bindings): Likewise.
+	(Type_impl<>::Type_impl(const Type_impl&)): Implement. Make
+	protected.  Add FIXME-comments.
+	(Type_impl<>::operator=(const Type_impl&)): Add FIXME-comments.
+	(Unary_expr_impl<>): Remove.
+	(Binary_expr_impl<>): Likewise.
+	(New_impl): Likewise.
+	(Block_impl): Likewise.
+	(Unary_factor<>): New datatype.
+	(Binary_factor<>): Likewise.
+	(Ternary_factor<>): Likewise.
+	(Quaternary_factor<>): Likewise.
+	(Fun_decl_impl): Comment out.
+	(Unit_impl::make_identifier): Reimplement.
+	(Unit_impl::make_operator): Likewise.
+	(Unit_impl::make_conversion): Likewise.
+	(Unit_impl::make_instantiation): Likewise.
+	(Unit_impl::make_qualified): Likewise.
+	(Unit_impl::make_pointer): Likewise.
+	(Unit_impl::make_reference): Likewise.
+	(Unit_impl::make_array): Likewise.
+	(Unit_impl::make_function): Likewise.
+	(Unit_impl::make_if_then_else): Remove.
+	(Unit_impl::make_for): Remove.
+	(Unit_impl::make_handler): Likewise.
+	(Unit_impl::make_literal): Reimplement.
+	(Unit_impl::make_annotation): Likewise.
+	(Unit_impl::make_unary_expr): Likewise.
+	(Unit_impl::make_binary_expr): Likewise.
+	(Unit_impl::make_ternary_expr): New.
+	(Unit_impl::make_unary_stmt): Likewise.
+	(Unit_impl::make_binary_stmt): New.
+	(Unit_impl::make_ternary_stmt): New.
+	(Unit_impl::make_quaternary_stmt): New.
+	(Unit_impl::Overload_impl): Move from Scope_impl<>::.
+	(Unit_impl::TypeFiber): Simplify.  Rename to CV_fiber.
+	(Unit_impl::ids): Change type to Unary_factory<Identifier,
+	Identifier>.
+	(Unit_impl::ops): Change type to Unary_factory<Operator, Operator>.
+	(Unit_impl::convs): Change type to Unary_factory<Conversion,
+	Conversion>. 
+	(Unit_impl::insts): Change type to Binary_factory<Instantiation,
+	Instantiation, Name, Sequence<Expr> >.
+	(Unit_impl::quals): Change type to Binary_factory<Qualified,
+	Qualified, Name, Name>.
+	(Unit_impl::pointers): New data member.
+	(Unit_impl::references): Likewise.
+	(Unit_impl::arrays): Likewise.
+	(Unit_impl::functions): Likewise.
+	(Unit_impl::UnaryExprs): New datatype.
+	(Unit_impl::unary_exprs: New data member.
+	(Unit_impl::BinaryExprs): New datatype.
+	(Unit_impl::binary_exprs: New data member.
+	(Unit_impl::TernaryExprs): New datatype.
+	(Unit_impl::ternary_exprs: New data member.
+	(Unit_impl::QuaternaryExprs): New datatype.
+	(Unit_impl::quaternary_exprs: New data member.
+
+	* io.H (Expression::visit(const Name_expr&)): Correct spelling.
+	(Expression::visit(const Throw&)): New member function. 
+
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.10.
+	
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Scope_impl): Turn into a template class parameterized by
+	the node declaration kind, with default to Decl.  Inherit from ...
+	(Scope_impl_base<>): ... this.  New class template.
+	(Name_binding): Remove.
+	(Name_binding::Overload_impl): Move to Scope_impl<>.
+	(Name_traits): Remove.
+	(Name_rep): Likewise.
+	(Name_impl): Likewise.
+	(Identifier_impl): Resurect.
+	(Operator_impl): Likewise.
+	(Conversion_impl): Likewise.
+	(Instantiation_impl): Likewise.
+	(Qualified_impl): Likewise.
+	(Expr_type<>):  Take a second template parameter, the type of
+	the expression with default to Type.
+	(Type_type<>): Likewise.
+	(Signature_impl<>): Remove.
+	(Statement_impl<>): Likewise.
+	(Decl_impl<>): Likewise.
+	(Ternay_expr<>): New class template.
+	(Unit_impl): Tidy.
+	(make_decl): Remove.
+	* interface.H (Sequence<>):  Provide an STL-style looking.
+	(Name::value): Remove.
+	(Name::scope): Likewise.
+	(Instantiation::scope): Likewise.
+	(Qualified::scope): Likewise.
+	(Scope::operator[](const Name&)): Return an Overload.
+	(Overload::operator[](const Type&)): Return a Sequence<Decl>.
+	(Signature): Remove.
+	(Function::signature): Return a Sequence<Type>.
+	(Member): Remove.
+	(Template::signature): Return a Sequence<Type>.
+	(Name_expr): Derived from Unary_expr<>.
+	(New): Derive from Ternary_expr.
+	(If_then_else): Likewise.
+	(Return::has_value): Remove.
+	(Decl::master): Return a Sequence<Decl>.
+	(Member_decl): Remove.
+	(Enumerator): New node class.
+	(Alias::aliasee): Return an Expr, the initializer.
+	(Fun_decl::signature): Return a Sequence<Type>.
+	(Visitor::visit(const Signature&)): Remove.
+	(Visitor::visit(const Member&)): Likewise.
+	(Visitor::visit(const Member_decl&)): Likewise.
+	(Unit::null_expr): New member function.
+	* io.H (printer::Base::operator<<): New function.  Forward to
+	standard format operations.
+
+2004-06-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Signature): Remove.
+	(Function::signature): Adjust return type.  Return Sequence<Type>.
+	(Template::signature): Likewise.
+	(Fun_decl::signature): Likewise.
+	(Fun_decl::parameters): Make pure virtual.
+	(Visitor::visit(const Signature&)): Remove.
+	* impl.H (Scope_impl::make_fun_decl): Tidy. 
+	(Signature_impl): Likewise.
+	(Parameter_impl): Tidy.
+	(Fun_decl_impl::ParameterList): Lose base class Signature.
+	(Fun_decl_impl::DeclType::signature):  Adjust return type.
+	(Fun_decl_impl::signature): Likewise.
+	(Unit_impl::make_signature): Remove.
+	(Unit_impl::make_function): Tidy.
+	(Unit_impl::sigs): Lose.
+
+2004-05-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Unary_expr<>): Take a third parameter as the
+	category of the expression.  Inherit from it.
+	(Binary_expr<>): Take Category as fourth parameter.  Inherit from it.
+	(Labeled_stmt): Inherit from Binary_expr<>.
+	(Block): Likewise.
+	(Function_body): Likewise.
+	(If_then): Likewise.
+	(Swicth): Likewise.
+	(While): Likewise.
+	(Do_while): Likewise.
+	(Break): Inherit from Unary_expr<>.
+	(Continue): Likewise.
+	(Goto): Likewise.
+	(Return): Likewise.
+	(Handler): Inherit from Binary_expr<>.
+
+	* io.H (ipr::printer): New namespace.
+	(Printer_base): Move there.  Rename to Base.
+	(ipr::printer::xpr): New namespace.
+	(Declaration_printer): Move there.  Rename to Declaration.
+	(Statement_printer): Move there.  Rename to Statement.
+	(Expression_printer): Move there.  Rename to Expression.
+
+	* interface.H: Rename Progam to Unit, throughout.
+	(Name::scope): New member function.
+	(Instantiation): Override Name::scope.
+	(Qualified): Likewise.
+	(Name_expr): Document.
+	(Binary_expr<>): Take two more template-arguments.
+	(Call): Derive from Binary_expr<>.
+	(Object_construction): Likewise.
+	(Template::parameters): Remove.
+	(Template::signature): New member function.
+	(Visitor::visit(const Assign&)): Declare.
+	(Template): Derived from Type instead of Expr.
+	(Template::result): New member function.
+	(Class_template): Remove.
+	(Fun_decl_template): Remove.
+	(Return::type): Override Expr::type.
+
+	* impl.H: Likewise.
+	(Call_impl): Remove.
+	(Object_construction_impl): Likewise.
+
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.08.
+	
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type::has_name): Remove.
+	(Type::name): Return a Name, not an Identifier.
+	(operator|): Overload for Type::Qualifier.
+	(operator&): Likewise.
+	(operator^): Likewise.
+	(Cast_expr<>): New class template. Derive from Binary_expr<>
+	(Dynamic_cast): Derived from Cast_expr<>, not Unary_expr<>.
+	(Static_cast): Likewise.
+	(Const_cast): Likewise
+	(Reinterpret_cast): Likewise.
+	(Cast): Likewise.
+	(Labeled_stmt::label): Return an Expr.
+	(Function_body):  Make only a statement, not a sequence of Statements.
+	(Block): Make a sequence of Exprs too.
+	(Parameter::has_default): Alias for Decl::has_initializer.
+	(Parameter::default_value): Alias for Decl::initializer.
+
+	* impl.H (Checked_ptr<>): Tidy.
+	(Sequence_impl<>): Likewise.
+	(Name_binding): New class.
+	(Name_traits<>): Likewise.
+	(Name_rep<>): Likewise.  Use the above.
+	(Name_impl<>): Derive from both Name_binding and Name_rep<>. Tidy.
+	(Expr_impl<>): Tidy.
+	(Overload_impl): Likewise.
+	(Type_impl<>): Likewise.
+	(Object_type_impl<>): Likewise.
+	(User_defined_type_impl<>): Likewise.
+	(Namespace_impl): Likewise.
+	(Unary_plus_impl<>): Likewise.
+	(Member_selection_impl<>): Remove.
+	(Binary_expr_impl<>): Tidy.
+	(New_impl): Likewise.
+	(Statement_impl<>): Likewise.
+	(Block_impl): Likewise.
+	(Handler_impl): Likewise.
+	(Decl_impl<>): Likewise.
+	(Parameter_impl): Likewise.
+	(Program_impl): Likewise.
+
+2004-05-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type::All): New enumerator.  Collect all
+	type-qualifier values.
+
+	* impl.H (Program_impl::TypeFiber): New class.
+	(Program_impl::typebundle): New data member.  Cache already
+	computed "fiber" values for types.
+	(Program_impl::make_cv_qualified): New member function.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.07.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H: Rework pretty-printers. 
+
+	* interface.H (Sequence<>::Position): New nested class.
+	(Sequence<>::operator[]): Take a Position, instead of int.
+	(Sequence<>::Iterator::index): Change to type
+	Sequence<>::Position.
+	(Scope): Derive also from Node.
+	(Scope::accept): Remove, since inherited from Node.
+	(Expr::attributes): Rename to Expr::annotation.
+	(Member_selection<>): Derive from Binary_expr<>.
+	(Labeled_stmt::body): Rename to ...::stmt.
+	(Function_body): Derive from both Statement and
+	Sequence<Statement>.
+	(Function_body::members): Remove.
+	(For::has_initializer): Likewise.
+	(For::has_condition): Likewise.
+	(For::has_increment): Likewise.
+	(Continue::iter_stmt): Rename to ...::iteration.
+	(Goto::target): Rename an Expr.
+	(Decl::has_name): Remove.
+	(Fun_decl): Rework.
+
+	* impl.H (Pointer_impl):  Remove.
+	(Reference_impl): Likewise.
+	(Array_impl): Likewise.
+	(Var_impl): Likewise.
+	(Identifier_impl): Likewise.
+	(Conversion_impl): Likewise.
+	(Qualified_impl): Likewise.
+	(Literal_impl): Likewise.
+	(Name_expr_impl): Likewise.
+	(Pre_increment_impl): Likewise.
+	(Post_increment_impl): Likewise.
+	(Pre_decrement_impl): Likewise.
+	(Post_decrement_impl): Likewise.
+	(Dynamic_cast_impl): Likewise.
+	(Static_cast_impl): Likewise.
+	(Reinterpret_cast_impl): Likewise.
+	(Const_cast_impl): Likewise.
+	(Cast_impl): Likewise.
+	(Expr_typeid_impl): Likewise.
+	(Type_typeid_impl): Likewise.
+	(Expr_sizeof_impl): Likewise.
+	(Type_sizeof_impl): Likewise.
+	(Deref_impl): Likewise.
+	(Address_impl): Likewise.
+	(Unary_plus_impl): Likewise.
+	(Negate_impl): Likewise.
+	(Not_impl): Likewise.
+	(Complement_impl): Likewise.
+	(Delete_impl): Likewise.
+	(Array_delete_impl): Likewise.
+	(Unary_expr_impl<>::Unary_expr_impl): Tidy signature.
+	(Dinary_expr_impl<>::Unary_expr_impl): Likewise.
+	(Dot_star_impl): Remove.
+	(Arrow_star_impl): Remove.
+	(Mul_impl): Remove.
+	(Div_impl): Remove.
+	(Add_impl): Remove.
+	(Sub_impl): Remove.
+	(Shift_left_impl): Remove.
+	(Shift_right_impl): Remove.
+	(Less_impl): Remove.
+	(Greater_impl): Remove.
+	(Less_equal_impl): Remove.
+	(Greater_equal_impl): Remove.
+	(Equal_impl): Remove.
+	(Not_equal_impl): Remove.
+	(Bit_and_impl): Remove.
+	(Bit_xor_impl): Remove.
+	(Bit_or_impl): Remove.
+	(And_impl): Remove.
+	(Or_impl): Remove.
+	(Comma_impl): Remove.
+	(Assign_impl): Remove.
+	(Array_select_impl): Remove.
+	(Dot_select_impl): Remove.
+	(Arrow_select_impl): Remove.
+	(Scope_select_impl): Remove.
+	(Member_select_impl): Tidy.
+	(Checked_ptr<>): New class.
+	(Sequence_impl<>::get):  Adjust signature.  
+	(Name_impl<>::value_impl):  Returns a Checked_ptr<>.
+	(Name_Impl<>::error_if_bound): Remove.
+	(Name_impl<>::binding):  Declare as Checked_ptr<Expr>.
+	(Expr_impl<>::attributes): Rename to Expr_impl<>::annotation.
+	(Expr_impl<>::constaint): Declare as Checked_ptr<const Type>.
+	(Expr_impl<>::type_impl): Returns a Checked_ptr<const Type>&.
+	(Scope_impl::enclosing_scope): Returns a Checked_ptr<Scope_impl>.
+	(Scope_impl::lookup_identifier): Returns a Name_impl<Identifier>*.
+	(Scope_impl::lookup_operator): Returns a Name_impl<Operator>*.
+	(Scope_impl::lookup_conversion): Returns a Name_impl<Conversion>*.
+	(Scope_impl::make_identifier): Returns a Name_impl<Identifier>*.
+	(Scope_impl::make_operator): Returns a Name_impl<Operator>*.
+	(Scope_impl::make_conversion): Returns a Name_impl<Conversion>*.
+	(Scope_impl::make_instantiation): Returns a Name_impl<Instantiation>*.
+	(Scope_impl::make_qualified): Returns a Name_impl<Qualified>*.
+	(Scope_impl::make_block): New more overloads.
+	(Scope_impl::make_var): New overloads.
+	(Scope_impl::make_fun_decl): Likewise.
+	(Scope_impl::get): Adjust type.
+	(Signature_impl): New class.
+	(Function_impl): Rework.
+	(Labeled_stmt_impl): Remove.
+	(Block_impl): Tidy.
+	(Function_body_impl): Rework.
+	(If_then_impl): Remove.
+	(If_then_else_impl): Remove.
+	(Switch_impl): Remove.
+	(While_impl): Remove.
+	(Do_while_impl): Remove.
+	(For_impl): Remove.
+	(Break_impl): Remove.
+	(Continue_impl): Remove.
+	(Goto_impl): Remove.
+	(Return_impl): Remove.
+	(Decl_impl<>::has_name): Remove.
+	(Decl_impl<>::init): Change type to Checked_ptr<const Expr>
+	(Var_impl): Remove.
+	(Parameter_impl): Tidy.
+	(Fun_decl_impl): Rework.
+	(Program_impl::make_function): New.
+	(Program_impl::make_labeled_stmt): Likewise.
+	(Program_impl::make_if_then): Likewise.
+	(Program_impl::make_if_then_else): Likewise.
+	(Program_impl::make_switch): Likewise.
+	(Program_impl::make_while): Likewise.
+	(Program_impl::make_do_while): Likewise.
+	(Program_impl::make_for): Likewise.
+	(Program_impl::make_break): Likewise.
+	(Program_impl::make_continue): Likewise.
+	(Program_impl::make_goto): Likewise.
+	(Program_impl::make_return): Likewise.
+	(Program_impl::make_handler): Likewise.
+	(Program_impl::make_expr_typeid): Likewise.
+	(Program_impl::make_type_typeid): Likewise.
+	(Program_impl::make_expr_sizeof): Likewise.
+	(Program_impl::make_type_sizeof): Likewise.
+	(Program_impl::make_name_expr): Likewise.
+	(Program_impl::make_unary_expr): Likewise.
+	(Program_impl::make_binary_expr): Likewise.
+	(Program_impl::make_member_selection): Likewise.
+	(Program_impl::make): Remove.
+	(Program_impl::IdMap): Likewise.
+	(Program_impl::Namemap): Likewise.
+	(Name_impl<>::value): Tidy.
+	(Name_impl<>::with): Tidy.
+	(Expr_impl<>::type): Tidy.
+	(make_decl): Tidy.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Fun_decl::params): New member function.
+	(Function::domain): Rename to Function::source.
+	(Signature): New class.
+	(Visitor::visit(const Signature&)): New.
+	* impl.H (Fun_decl_impl::params): Likewise.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark 0.06.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Program_impl::Class): New member function.
+	(Program_impl::Union): Likewise.
+	(Program_impl::Enum): Likewise.
+	(Program_impl::Namespace): Likewise.
+	(Program_impl::classtype): New data member.
+	(Program_impl::uniontype): Likewise.
+	(Program_impl::enumtype): Likewise.
+	(Program_impl::namespacetype): Likewise.
+
+2004-05-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Name_impl<>::with): New member.  Forward to...
+	(make_decl): ...this function.  New.
+	(missing_overrider): Declare.
+	(Identifier_impl<>::with): Remove.
+	(Operator_impl<>::with): Likewise.
+	(Conversion_impl<>::with): Likewise.
+	(Instantiation_impl<>::with): Likewise.
+	(Qualified_impl<>::with): Likewise.
+	(Decl_impl<>::Decl_impl): Revert previous change.  Take declname
+	by reference.
+	(Program_impl::make_decl<>): New member.
+	(Type_impl<>::has_name): Override Type::has_name. Default to false.
+	(Program_impl::ellipsis_impl): Rename tp Program_impl::Ellipsis.
+
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.05.
+	
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Visitor::visit(const Node&)): Make pure. 
+	(Visitor::visit(const Name&)): Likewise.
+	(Visitor::visit(const Type&)): Likewise.
+	(Visitor::visit(const Expr&)): Likewise.
+	(Visitor::visit(const Statement&)): Likewise.
+	(Visitor::visit(const Decl&)): Likewise.
+	(Type::is_named): Rename to Type::has_name.
+	(Decl::has_name): New member.
+
+	* impl.H (User_defined_type_impl<>::is_named): Rename to ...::has_name.
+	(Program_impl::Builtin<>::is_named): Likewise.
+	(Decl_impl<>::Decl_impl): Take decl-name by pointer, not reference.
+
+2004-04-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.H (Sequence_printer): New.
+	(Expression_printer):  Override more visit() member functions for
+	the purpose of pretty-printing more kinds of expression.
+
+2004-04-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.H (Type): Add members is_named(), name() to support
+	named types.
+	* impl.H (User_defined_type_impl<>): Implement.
+	(Program_impl::Builtin<>): New. Implement built-in types.
+
+2004-03-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.H (Unary_expr_impl): Have an explicit constructor that
+	takes an expression as sole argument.
+	(Pre_increment_impl): Likewise.
+	(Post_increment_impl): Likewise.
+	(Pre_decrement_impl): Likewise.
+	(Post_decrement_impl): Likewise.
+	(Expr_typeid_impl): Likewise.
+	(Type_typeid_impl): Likewise.
+	(Expr_sizeof_impl): Likewise.
+	(Type_sizeof_impl): Likewise.
+	(Deref_impl): Likewise.
+	(Address_impl): Likewise.
+	(Unary_plus_impl): Likewise.
+	(Negate_impl): Likewise.
+	(Not_impl): Likewise.
+	(Complement_impl): Likewise.
+	(Delete_impl): Likewise.
+	(Array_delete_impl): Likewise.
+	(Binary_expr_impl): Declare constructor taking two Exprs.
+	(Dot_star_impl): Likewise.
+	(Arrow_star_impl): Likewise.
+	(Mul_impl): Likewise.
+	(Div_impl): Likewise.
+	(Modulo_impl): Likewise.
+	(Add_impl): Likewise.
+	(Sub_impl): Likewise.
+	(Shift_left_impl): Likewise.
+	(Shift_right_impl): Likewise.
+	(Less_impl): Likewise.
+	(Greater_impl): Likewise.
+	(Less_equal_impl): Likewise.
+	(Greater_equal_impl): Likewise.
+	(Equal_impl): Likewise.
+	(Not_equal_impl): Likewise.
+	(Bit_and_impl): Likewise.
+	(Bit_xor_impl): Likewise.
+	(Bit_or_impl): Likewise.
+	(And_impl): Likewise.
+	(Or_impl): Likewise.
+	(Comma_impl): Likewise.
+	(Assign_impl): Likewise.
+	(Member_selection_impl): Likewise.
+	(Array_select_impl): Likewise.
+	(Dot_select_impl): Likewise.
+	(Arrow_select_impl): Likewise.
+	(Scope_select_impl): Likewise.
+

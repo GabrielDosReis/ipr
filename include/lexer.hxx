@@ -1,0 +1,188 @@
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis <gdr@cs.tamu.edu>
+// 
+
+#ifndef IPR_XPR_LEXER_INCLUDED
+#define IPR_XPR_LEXER_INCLUDED
+
+#include <string>
+#include <fstream>
+#include <set>
+#include <deque>
+
+#include <ipr/impl>
+
+namespace xpr {
+   
+   struct Token {
+      enum Kind {
+         Unknown,
+         LeftBrace          = '{',
+         RightBrace         = '}',
+         LeftParen          = '(',
+         RightParen         = ')',
+         LeftBracket        = '[',
+         RightBracket       = ']',
+         Dot                = '.',
+         Question           = '?',
+         Colon              = ':',
+         Bar                = '|',
+         Plus               = '+',
+         Minus              = '-',
+         Star               = '*',
+         Slash              = '/',
+         Percent            = '%',
+         LeftAngle          = '<',
+         RightAngle         = '>',
+         Not                = '!',
+         Assign             = '=',
+         Semicolon          = ';',
+         Comma              =',',
+         Complement         = '~',
+         At                 = '@',
+         Ampersand          = '&',
+         Dollar             = '$',
+         Hash               = '#',
+         ColonColon         = ':' + 256 * ':',
+         HashHash           = '#' + 256 * '#',
+         PercentPercent     = '%' + 256 * '%',
+         AmpersandAmpersand = '&' + 256 * '&',
+         BarBar             = '|' + 256 * '|',
+         LeftShift          = '<' + 256 * '<',
+         RightShift         = '>' + 256 * '>',
+         PlusPlus           = '+' + 256 * '+',
+         MinusMinus         = '-' + 256 * '-',
+         AssignAssign       = '=' + 256 * '=',
+         PlusAssign         = '+' + 256 * '=',
+         MinusAssign        = '-' + 256 * '=',
+         StarAssign         = '*' + 256 * '=',
+         SlashAssign        = '/' + 256 * '=',
+         PercentAssign      = '%' + 256 * '=',
+         Le                 = '<' + 256 * '=',
+         Ge                 = '>' + 256 * '=',
+         NotAssign          = '!' + 256 * '=',
+         BarAssign          = '|' + 256 * '=',
+         AmpersandAssign    = '&' + 256 * '=',
+         Arrow              = '-' + 256 * '>',
+         LeftSpec           = '[' + 256 * '<',
+         RightSpec          = '>' + 256 * ']',
+         DotStar            = '.' + 256 * '*',
+         Get                = '<' + 256 * '-',
+         LeftShiftAssign    = LeftShift + 256 * 256 * '=',
+         RightShiftAssign   = RightShift + 256 * 256 * '=',
+         ArrowStar          = Arrow + 256 * 256 * '*',
+         Boolean,            // boolean literal
+         Integer,            // integer literal
+         FloatingPoint,      // floating-poitn literal
+         Character = '\'',   // character literal
+         String = '"',       // string literal
+         Identifier,
+         Comment,            // well, for comments
+         
+         Auto,               // "auto"
+         Class,              // "class"
+         Union,              // "union"
+         Enum,               // "enum"
+         Namespace,          // "namespace"
+         Concept,            // "concept"
+         
+         Virtual,            // "virtual"
+         Const,              // "const"
+         Volatile,           // "volatile"
+         Restrict,           // "restrict"
+         
+         Public,             // "public"
+         Protected,          // "protected"
+         Private,            // "private"
+         Inline,             // "inline"
+         Explicit,           // "explicit"
+         Friend,             // "friend"
+         Export,             // "export"
+         Extern,             // "extern"
+         Static,             // "static"
+         Register,           // "register"
+         
+         Sizeof,             // "sizeof"
+         Typeid,             // "typeid"
+         Throw,              // "throw"
+         StaticCast,         // "static_cast"
+         DynamicCast,        // "dynamic_cast"
+         ConstCast,          // "const_cast"
+         ReinterpretCast,    // "reinterpret_cast"
+         New,                // "new"
+         Delete,             // "delete"
+         
+         For,                // "for"
+         If,                 // "if"
+         Else,               // "else"
+         Switch,             // "switch"
+         Continue,           // "continue"
+         Break,              // "break"
+         Return,             // "return"
+         Goto,               // "goto"
+         Case,               // "case"
+         Default,            // "default"
+         While,              // "while
+         Do,                 // "do"
+         Catch,              // "catch"
+         
+         EndOfInput          // end of character input stream
+      };
+
+      // Comparator function object type, useful for inserting
+      // tokens in an associative containers.
+      struct Compare {
+         bool operator()(const Token& lhs, const Token& rhs) const
+         {
+            return lhs.text < rhs.text;
+         }
+      };
+      
+      Token() : kind() { }
+      Token(Kind k, const char* s = 0) : kind(k), text(s) { }
+      
+      Kind kind;
+      ipr::Source_location location;
+      std::string text;
+   };
+   
+   struct Lexer {
+      explicit Lexer(ipr::impl::Unit&);
+      
+      Token& peek(int = 0);
+      void discard() { tokens.pop_front(); }
+      
+      void input_file(const char*);
+      void syntax_error();
+
+   protected:
+      ipr::impl::Unit& unit;
+      
+   private:
+      typedef std::set<Token, Token::Compare> Keyword_set;
+      struct Token_stream : std::deque<Token> {
+      };
+      
+      Token_stream tokens;
+      Keyword_set keywords;
+      ipr::Source_location locus;
+      std::string line;
+      std::ifstream input;
+      const char* cursor;
+      const char* end_of_line;
+      
+      void insert_keyword(Token::Kind, const char*);
+      std::istream& read_line();
+      void read_quoted_text(std::string&);
+      inline bool next_char_is(char);
+      inline Token::Kind if_duplicate_char(Token::Kind, Token::Kind);
+      inline bool escape_sequence() const;
+      void identifier(Token&);
+      void number(Token&);
+      void unknown(Token&);
+         inline const Token* keyword(const std::string&) const;
+   };
+}
+
+#endif // IPR_XPR_LEXER_INCLUDED

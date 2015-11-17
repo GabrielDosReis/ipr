@@ -1,0 +1,229 @@
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: Fix various discrepancies.
+
+2005-03-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.34
+
+2005-02-18  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (subsection{Pointer to member type}): New.
+	(subsection{Non-static data members}): Move from user-define type
+	section to variable section.
+	(subsection{Selection statement}): Give examples.
+	(section{Parameterized declarations}): Add more explanations.
+
+2005-02-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (subsection{Expression as type}): Propagate
+	renaming of Expr_as_type to As_type.
+	(subsubsection{Members of user-defined types}): Propagate renaming
+	of heterogeneous_region to Region.
+	(section{Function declarations}): Rework.
+
+2005-02-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (subsection{Primary named mappings}): Document
+	construction of primary template declaration.
+
+2005-02-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (subsection{Compound statement}): Fix thinko.
+
+2005-02-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (subsection{User-defined types}): Document
+	construction of user-defined types.
+
+2005-02-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.33
+
+	* user-guide.tex: Add more documentations.
+	(\section{Generalities}): New.
+	(\section{Statements}): Rework.
+	(\section{Function declaration}): Rework.
+	(\section{Declarations}): Remove.
+	* ref.tex: Remove bogus descriptions.
+
+2005-02-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ref.tex: Rewrite introductory section.  Document region and
+	such. Remove needless math obfuscation.  
+	* macro.tex (\cxxOpt): New command.
+	* ipr.bib: Update referneces.
+
+2005-02-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.31.
+
+2005-01-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.30.
+
+2005-01-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.29.
+
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Makefile.am: New.
+	* Makefile.in: Likewise.
+	
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.28.
+
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.27.
+
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.26.
+
+2004-09-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.25
+	
+	* user-guide.tex: Fix typos.  Document new nodes Ctor_name and
+	Dtor_name. 
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.24.
+	
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: Add more documentation on declaration
+	construction. 
+
+2004-09-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ref.tex (subsection{Annotations}): Update diagram.  Add more
+	description.
+	(subsubsection{\texttt{Identifier}}): Update description.  Add
+	diagram. 
+	(subsubsection{\texttt{Operator}}): Likewise.
+
+	* macro.tex: Add new macro for proper operation in Xy-pic mode.
+
+2004-09-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (section{Literals}): Clarify creation of literals.
+
+2004-08-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.23.
+	
+2004-08-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: Document more type nodes.
+
+2004-08-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex (section{Names}): Add documentations for the
+	various name nodes.
+
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.22.
+	
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.21.
+	
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.bib: New file.
+	* user-guide.tex: Use it. Document more nodes. 
+	* ref.tex: Use ipr.bib.  Update out-dated class definitions.
+
+2004-08-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* macro.tex: New file.
+	* user-guide.tex: Use it.
+	* ref.tex: Likewise.
+
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.20.
+	
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: Document statements.
+
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.19.
+	
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: New file.
+
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.18
+	
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.17
+	
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* user-guide.tex: New file.
+
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.16.
+	
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.15.
+	
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.14.
+	
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.13.
+	
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.12.
+	
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.11.
+
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.10.
+
+2004-05-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ref.tex: Expand on declarations, scopes documentation.  Document
+	the notion of type.
+
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.08.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.07.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ref.tex: Document more interface nodes.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.06.
+
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.05.
+

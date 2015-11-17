@@ -1,0 +1,200 @@
+2010-11-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump version to 0.47.
+
+2010-07-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump version to 0.46.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump to 0.45.
+
+2009-09-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump to 0.44.
+
+2008-05-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump to 0.40.
+
+2005-04-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac (ipr_top_builddir): Remove.
+	(ipr_srcdir): Likewise.
+	Require Autoconf 2.52 or higher.
+	Bump version to 0.36.
+	Include "foreign" Automake's options.
+
+2005-03-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump version to 0.35.
+	(ipr_top_builddir): New.
+	(ipr_srcdir): Remove.
+
+2005-03-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.34.
+
+	* configure.ac: Bump version.
+
+2005-02-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.33
+	* configure.ac: Bump version.
+	* configure: Regenrate.
+
+2005-02-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: Bump version.
+	* configure: Regenerate.
+
+2005-02-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.31.
+
+	* configure.ac: Bump version.
+	* configure: Regenerate.
+
+2005-01-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.30.
+
+	* configure: Regenrate.
+	* configure.ac: Bump version.
+
+2005-01-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.29
+	* configure.ac: Bump version.
+
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: AC_OUTPUT doc/Makefile too.
+
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.28
+	
+2005-01-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* configure.ac: AC_OUTPUT include/Makefile
+	* configure: Regenerate.
+
+	* Makefile.am (SUBDIRS): Add include.
+	* Makefile.in: Regenerate.
+	* libtool: New.
+
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	Enable autoconf/automake support.
+	* aclocal.m4: New.
+	* config.guess: Likewise.
+	* config.sub: Likewise.
+	* configure.ac: Likewise.
+	* depcomp: Likewise.
+	* install-sh: Likewise.
+	* missing: Likewise.
+	* Makefile.am: Likewise.
+	* Makefile.in: Likewise.
+
+2005-01-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.27.
+
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.26.
+
+2004-09-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.25.
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.24.
+
+2004-08-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.23.
+
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.22.
+
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.21.
+
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.20.
+
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.19.
+	
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.18
+	
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.17
+	
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.16
+	
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* grammar/nxpr.y: Update to last version from BS.
+
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.15.
+	
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.14.
+	
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.13.
+	
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.12.
+	
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* grammar/nxpr.y: Update to changes from BS.
+
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.11.
+	
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.10.
+	
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* grammar/nxpr.y: Incorporate update from BS. 
+
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.08.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.06.
+
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.05.
+	
+2004-04-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.04.
+

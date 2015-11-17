@@ -1,0 +1,1647 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{dsfont, mathrsfs}
+%\usepackage{lucidabr}
+%\usepackage{yhmath}
+\usepackage{palatino}
+\usepackage{amsmath,amssymb}
+%\usepackage{graphics, psfig}
+\usepackage[all]{xy}
+\usepackage{alltt}
+
+\input{macro}
+
+
+\title{Internal Program Representation for \ThePivot}
+
+\author{G.~Dos~Reis \and B.~Stroustrup}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+\ThePivot{} framework is a general infrastructure for transformation and
+static analysis of programs written in C++ programming language. This document
+serves as a refenrece manual for the internal program represenation use in the 
+\ThePivot{} framework.  A companion 
+document~\cite{dosreis04:ipr-user-guide} provides a user point of view.
+
+%% \begin{alltt}\small
+%%   \begin{note}
+%%     Include examples on the max function.
+%%   \end{note}
+%% \end{alltt}
+
+This document is structured as follows. The next subsections introduce general
+notions of the language used to represent C++ entities. 
+%% The second part
+%% \secref{sec:intro:organization} explains how the IPR library is organized.
+ Then \secref{sec:interface-classes} go on describing the
+interface of the various categories of nodes used in IPR. After that,
+\secref{sec:impl} discusses the implementations of those interfaces.  Finally,
+\secref{sec:xpr-grammar} gives a formal definition of XPR, the concrete syntax
+for the external representation of programs in \ThePivot{}.
+
+
+\subsection{The problem, solutions space and design choices}
+\label{sec:design}
+
+See \cite{stroustrup02:xti, gdr-bs05:cxx-rep}.
+
+\subsection{General notions}
+\label{sec:intro:general-notion}
+
+A program is internally represented as a graph.  The nodes represents various
+notions, such as types, expresssions, declarations, scopes, names...
+
+A (well-formed) program written in C++ is composed of instantiation units. 
+Instantiation units are obtained from translation units after template
+instantiation requests satisfaction.  Consequently, most IPR notions are
+driven by declarations.
+
+\subsubsection{Declaration}
+\label{sec:intro:general-notion:declaration}
+A \emph{declaration} is a specification of a \emph{type}, a set of
+\emph{attributes}, and an optional initialier for a name.  The type dictates
+the major mode of interpretation of the name.  The attributes or
+\emph{declaration specifiers} supply additional interpretations or modifiers
+the major mode.  The initializer is the expression the value of which the
+name evaluates to, until eventual assignment to another value (if permitted by
+the type).  This notion of declaration covers a wide range of situations.
+Example:
+
+\begin{minipage}[t]{12cm}
+  \begin{minipage}[t]{5cm}
+    \centering{\textit{C++}}
+    \begin{Program}
+  int counter = 0;
+
+  struct point \{
+    int x;
+    int y;
+  \};
+
+  int next(int x) \{
+    return x + 1;
+  \}
+
+  template<int N>
+  struct buffer \{
+     char data[N];
+  \};
+    
+    \end{Program}
+  \end{minipage}\hfil \vrule \hfil
+  \begin{minipage}[t]{5cm}
+    \centering{\textit{XPR}}
+    \begin{Program}
+  counter : int = 0;
+
+  point : class = \{
+    x : int;
+    y : int;
+  \};
+
+  next : (x : int) int = \{
+    return x + 1;
+  \}
+
+  buffer : <N : int> class = \{
+    data : [N] char;
+  \};
+    \end{Program}
+  \end{minipage}
+\end{minipage}
+
+In this example, the same program is expressed in both standard C++ and XPR
+notations.  All the declarations follow the same pattern (which is probably
+more stricking in the XPR notation): a name, a type, and an initializer.  In
+particular, the class body and the function body are the initializers for the
+class \texttt{point} and \texttt{next}, repsectively.  The name \texttt{point}
+is declared to have type \texttt{class}.
+ 
+In some regions, a declaration can be repeated many times. The first
+ declaration for a name (with a given type) in a given region is 
+ called the \emph{master declaration} of that name in that region.
+
+\subsubsection{Type}
+\label{sec:intro:general-notion:type}
+
+In IPR, a \emph{type} is conceived of as a collection of values or objects
+with operations or functions.  This is not the most abstract definition of
+type in circulation, but it is sufficiently general and close to the 
+general aims of the \ThePivot{} framework.  A type in IPR is a notion similar
+to that of category~\cite{mac-lane01:categories}, it is a notion used to
+describe a collection of objects with given properties.  In similar ways, the
+notion of category can be used to talk about collection of categories, types 
+in IPR are expressions that have types.  For example, the class \texttt{ios}
+of the previous section has type \texttt{class}, just like
+the enumerator \texttt{ios::dec} has type \texttt{ios::flags} and the
+enumeration \texttt{ios::flags} has type \texttt{enum}.
+
+\subsubsection{Overloading}
+\label{sec:intro:general-notion:overloading}
+Most regions can contain different declarations with a given name.  Such
+declarations are either redeclarations or declarations that use
+different types.  A name is said to be  \emph{overloaded} in a given region if
+that region contains at least two declarations specifying different types for
+that name.  This concept of overloading is uniformly applied in IPR.  In
+particular, any declaration can be overloaded, not just function declaration.
+So the following fragment (in XPR notation) is valid.
+\begin{Program}
+  pi : double = 3.141592653589793;
+  pi : float = 3.141592654f;
+\end{Program}
+
+That program frgament cannot be written directly in C++, as only functions
+can be overloaded in Standard C++.  However it could be emulated, in
+some specific cases, as a function object:
+\begin{Program}
+  struct pi \{
+    operator double() const \{ return 3.141592653589793; \}
+    operator float() const \{ return 3.141592654f; \}
+  \};
+\end{Program}
+
+Given a name in some scope, the collection of all declarations for that name
+is called its \emph{overload set}.
+
+
+\subsubsection{Scope}
+\label{sec:intro:general-notion:scope}
+A \emph{scope} is a sequence of declarations. This notion is much more
+general than that of Standard C++.  Obviously, the set of all declarations in
+a given region is a scope.  So is the union of the results of looking a name
+in a collection of regions.  That notion sets an elegant way to
+account for the base classes in a class definition or the enumerators in
+an enumeration definition.  Consider the following declarations:
+\begin{center}
+  \begin{minipage}[t]{6cm}
+    \centering{C++}
+    \begin{Program}
+struct ios \{
+  enum flags \{
+    boolapha, dec, fixed,
+    // ...
+  \};
+  // ...
+\};
+
+struct istream : virtual ios \{
+  // ...
+\};
+
+struct ostream : virtual ios \{
+  // ...
+\};
+
+struct stream : istream,
+                ostream \{
+  // ...
+\};
+    \end{Program}
+  \end{minipage}\hfil \vrule \hfil
+  \begin{minipage}[t]{6cm}
+    \centering{XPR}
+    \begin{Program}
+ios :class \{
+  flags :enum \{
+    boolapha, dec, fixed,
+    // ...
+  \};
+  // ...
+\};
+
+istream :class (ios public virtual) \{
+  // ...
+\};
+
+ostream :class (ios public virtual) \{
+  // ...
+\};
+
+stream :class (istream public,
+               ostream public) \{
+  // ...
+\};
+    \end{Program}
+  \end{minipage}
+\end{center}
+
+The sequence of declarations for \texttt{ios}, \texttt{istream},
+\texttt{ostream} and \texttt{stream}, appearing at toplevel, forms a scope.
+So is the sequence of enumerators \texttt{ios::booalpha}, \texttt{ios::dec},
+\texttt{ios::fixed}, ...  since they are for \emph{emplicitly declared}
+named constants.  Similarly, the sequence of the base classes
+\texttt{istream} and \texttt{ostream} of class \texttt{stream} is  a scope.
+It is the sequence of \emph{implicitly declared} subjects with the
+\texttt{public} declaration specifier.  Finally, the declaration for classes
+\texttt{istream} and \texttt{ostream} says that their base scopes consist in
+a single (implicit) declaration with specifiers \texttt{public} and
+\texttt{virtual}.
+
+
+%% A scope also supports the operation of lookup by name.  The result of that
+%% operation usually is a set of declarations that can be partitionned into 
+%% subsets of declarations that specify the same type for the looked-up name.
+%% Those subsets are called \emph{decl-sets}.  The collection of the decl-sets is 
+%% known as \emph{overload-set},  discussed in
+%% \secref{sec:general-notion:overload-set}.  
+
+
+%% \subsubsection{Overload set}
+%% \label{sec:general-notion:overload-set}
+%% In general, the result of looking up a name in a given scope
+%% (\secref{sec:intro:general-notion:scope}) is a set of 
+%% declarations, called the \emph{overload set} of that name in that scope.
+%% %(Note: an overload set is something that grows up as the scope is being filled
+%% %with declarations).
+%% Members of an overload set are distinguished by their types
+%% (\secref{sec:intro:general-notion:type}).  So, an overload set supports lookup
+%% by types, in the same way a scope supports lookup by name.  The result
+%% os subscripting an overload-set by a type is a declaration.
+%% %is the master declaration.  
+%% \begin{note} Mention master declaration, secondary declaration and
+%%   relationship between them. \end{note}
+
+%% \subsubsection{Sequence}
+%% \label{sec:intro:general-notion:sequence}
+%% A \emph{sequence} is a map $I\longrightarrow T$ where the domain $I$ is a
+%% subset of set of integers $\mathds{N}$.  Sequences considered in IPR have
+%% bounded domains.  Therefore, when we speak of a sequence it is implicitly
+%% understood to have a bounded domain. The cardinal of the domain of a sequence
+%% is its \emph{size}.  A sequence $I\stackrel{\Sigma}{\longrightarrow} T$ of
+%% size $n$ can be, canonically, decomposed into a chain of two maps
+%% $I\stackrel{\nu}{\longrightarrow} [0,n)\longrightarrow T$ where the map $\nu$,
+%% a numbering of the domain, is an increasing function.
+
+
+%% \subsubsection{Iterator}
+%% \label{sec:intro:general-notion:iterator}
+%% An \emph{iterator} is a pair of a sequence and an integer called
+%% \emph{position}.  An iterator $(s, i)$ is \emph{valid for indirection} if its
+%% position $i$ is in the range of the numbering domain for $s$, \ie{} if $i$ is
+%% nonnegative and less than the size of the sequence $s$.  The distinguished
+%% iterators $(s, 0)$ and $(s, \mathit{size}(n))$ are called \emph{first} and
+%% \emph{one-past-the-end} iterators, respectively. 
+
+
+
+%% \subsection{Unified type nodes}
+%% \label{sec:into.type.unified}
+
+%% IPR represents C++ programs as set of graphs and offers an abstract interfaces
+%% and non-mutating operations on the nodes (see \secref{sec:interface-classes}).
+%% Eevry node is constructed out of essential expressions, necessary to set up
+%% its invariants.   For example, an \NodeClass{Identifier} node is constructed
+%% out of the string that denotes the spelling of the identifier.  That string is
+%% necessary and sufficient to determine whether two identifiers are the same or
+%% not. 
+
+%% Consequently, IPR nodes
+
+
+%% \subsubsection{Pros}
+
+
+%% \subsubsection{Cons}
+
+
+\subsection{Organization}
+\label{sec:intro:organization}
+
+The IPR library is organized into three header files:
+\begin{enumerate}
+\item The interface header file \texttt{<ipr/interface>}.  This header defines
+  the abstract classes that serve as interface to the implementation classes.
+
+\item The implementation header file \texttt{<ipr/impl>}. 
+  Implementations for abstract class in the interface header are found
+  there.  Their names are derived from the interface my appending the
+  suffix \texttt{\_impl}.
+
+\item The input and ouput header file \texttt{<ipr/io>}.  This header provides
+  functions for reading in memory IPR nodes externally represented in XPR
+  syntax, and  writing out IPR nodes in the XPR syntax.
+\end{enumerate}
+
+
+\section{Interface Classes}
+\label{sec:interface-classes}
+
+All classes describing the interface of IPR are \emph{immutable} in the
+sense that they support only \texttt{const} operations.  There is no way
+programs using only the interface classes could alter the nodes.
+
+A class of IPR nodes is said \emph{unified} if two nodes of that class have
+equal values if and only if they have the same identity (as nodes).  Some
+nodes naturally lead themselves to unification in the sense that they are
+completely determined by their types and the argument list used to create
+them.  Examples of such nodes are those that represent pointer-types,
+reference-types or identifiers.  Other nodes, such as sequences, are first
+created then ``filled up''.  Unification for such nodes involves some degree
+of structural equality.  
+
+As stated in the introductory section of this paper, most of the IPR notions
+are driven by the representation of declarations, with full type information.  
+Declarations involve types and expressions (as initializers).  C++ expressions
+share similarity with C++ types in the sense that most of them are obtained as
+the result of sub-components compositions through unary, binary or ternary 
+operators.  That observation is at the basis of the decision of viewing most
+C++ entities as \emph{generalized expressions}, or simply expressions when the
+context is clear.  In particular, types, statements and declarations are
+generalized expressions. 
+
+
+\subsection{Structural interfaces}
+\label{sec:interface:structure}
+
+As observed above, there is a high degree of common structures between
+expressions, types and statements.  Those commonality are captured in form of 
+unary, binary or ternary expressions, and rendered as the following
+interfaceo templates:
+\begin{Program}
+         // -- Unary<> --
+   template<class Cat = Expr, class Operand = Expr>
+   struct Unary : Cat \{
+      typedef Operand Arg_type;
+      virtual const Operand& operand() const = 0;
+   \};
+
+         // -- Binary<> --
+   template<class Cat = Expr, class First = Expr, class Second = Expr>
+   struct Binary : Cat \{
+      typedef First Arg1_type;
+      typedef Second Arg2_type;
+      virtual const First& first() const = 0;
+      virtual const Second& second() const = 0;
+   \};
+
+         // -- Ternary<> --
+   template<class Cat = Expr, class First = Expr,
+            class Second = Expr, class Third = Expr>
+   struct Ternary : Cat \{ 
+      typedef First Arg1_type;
+      typedef Second Arg2_type;
+      typedef Third Arg3_type;
+      virtual const First& first() const = 0;
+      virtual const Second& second() const = 0;
+      virtual const Third& third() const = 0;
+   \};
+\end{Program}
+
+The first template parameter \code{Cat} indicates the kind of major categories
+(e.g. plain nodes, expressions, statements or declarations) the node is a
+member of.  The remaning template parameters indicate the type if
+sub-components.   The actual node interfaces will define forwarding functions
+(with more meaningful names) to the generic selectors.
+
+\subsection{Universal base class for nodes}
+\label{sec:interface:node}
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=4pc @H=1pc @R=0pc @*[F-]{%
+      *=<4pc,1pc>[F-]{\xyrel{Node}} & *{} & *{} \\
+      *=<4pc,1pc>[F-]{\xycst{node\_id}}\\ 
+      *=<4pc,1pc>[F-]{\xylabel{accept}}\\ 
+    }
+  \end{xy}
+  \caption{The \cat{Node} interface}
+  \label{fig:node.struct}
+\end{figure}
+
+C++ programs are represented in IPR as graphs, the nodes of which denote
+(generalizations of) C++ constructs.  Any notion directly represented in IPR
+is so as an object of class derived (either directly or indirectly) from class
+\texttt{Node}.  An informal definition of a \texttt{Node} is anything 
+of potential interest while traversing graphs of program fragments
+(through the Visitor Design Pattern~\cite{gamma}).  This class is the root
+of the IPR class hierarchies.
+\begin{Program}
+  struct Node \{
+      const int node_id;
+      Node();
+     virtual void accept(Visitor&) const = 0;
+  \};
+\end{Program}
+
+Every node in the IPR representation has a unique identifier (an integer
+value) assigned to it at its creation.  That identifier value is given by
+the member \code{Node::node\_id}.  An alternative would have been to use 
+the node's address as its unique identifier, but using an identifier
+independent of 
+the address space provides good support for persistency.  It also means that
+we can store nodes in associative containers and use their identifiers as
+keys, at a relatively efficient and portable fashion.
+
+
+\subsection{Comments in programs}
+\label{sec:interface:comment}
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=4pc @H=1pc @R=0pc @*[F-]{%
+      *=<4pc,1pc>[F-]{\xyrel{Comment}} & *{} & *{} \\
+      *=<4pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{text}} [rr]
+      \restore 
+      & *{} &
+      *=<7pc,1pc>{\txt{\cat{std::string}}}
+    }
+  \end{xy}
+  \caption{The \cat{Comment} interface}
+  \label{fig:comment.struct}
+\end{figure}
+
+A comment in C++ programs (be they written in C- or BCPL-style) are
+represented as unary node, the operand of which is the character stream that
+makes the comment:
+\begin{Program}
+   struct Comment : Unary<Node, std::string> \{
+      const std::string& text() const \{ return operand(); \}
+   \};
+\end{Program}
+
+\subsection{Annotations}
+\label{sec:interface:annotations}
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=5pc @H=1pc @R=0pc @*[F-] {%
+      *=<5pc,1pc>[F-]{\xyrel{Annotation}} & *{} & *{} \\
+      *=<5pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{name}} [rr]
+      \restore 
+      & *{} &
+      *=<7pc,1pc>{\txt{\cat{std::string}}} \\
+      *=<5pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{value}} [rr]
+      \restore 
+      & *{} &
+      *=<5pc,1pc>{\txt{\cat{Literal}}}
+    }
+  \end{xy}
+  \caption{\cat{Annotation} interface}
+  \label{fig:annotation.struct}
+\end{figure}
+
+The external and internal representations of C++ programs allow for 
+annotations on statements.  Annotations mostly represent informations 
+not understood by IPR.  They are pairs of identifier and literal.
+\begin{Program}
+   struct Annotation : Binary<Node, std::string, Literal> \{
+      const std::string& name() const \{ return first(); \}
+      const Literal& value() const    \{ return second(); \}
+   \};
+\end{Program}
+
+The exact interpretation of an annotation is dependent on the tool
+that uses the IPR library.  Only statements (and therefore declarations) 
+can be directly annotated.
+
+
+\subsection{Regions of program text}
+\label{sec:interface:region}
+
+Declarations appear inside regions of program texts.  Regions contribute to
+determine validity of name use, objects lifetime, and lexical
+characterizations of program fragments.  Regions nest.  Consequently, every
+region but the global has a parent region.
+\begin{Program}
+   struct Region : Node \{
+      typedef std::pair<Unit_location, Unit_location> Location_span;
+      virtual const Location_span& span() const = 0;
+      virtual const Region& enclosing() const = 0;
+      virtual const Scope& bindings() const = 0;
+      virtual const Expr& owner() const = 0;
+   \};
+\end{Program}
+Regions can be delimitated so that they correspond to lexical extent of
+function or class definitions.  A region has an owner, \ie{} C++ entities they
+are attached to.  Finally, all declarations appearing in a given region form a
+scope, available through  \xyiprop{Region::bindings}.
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=4pc @H=1.5pc @R=0pc @*[F-] {%
+      *=<4pc,1.5pc>[F-]{\xyrel{Region}} & *{} & *{} \\
+      *=<4pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{span}} [rr]
+      \restore 
+      & *{} &
+      *=<7pc,1pc>{\txt{\cat{Location\_span}}} \\
+      *=<4pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{enclosing}} [rr]
+      \restore 
+      & *{} &
+      *=<4pc,1pc>{\txt{\cat{Region}}}\\
+      *=<4pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{bindings}} [rr]
+      \restore 
+      & *{} &
+      *=<4pc,1pc>{\txt{\cat{Scope}}}\\
+      *=<4pc,1pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{owner}} [rr]
+      \restore 
+      & *{} &
+      *=<4pc,1pc>{\txt{\cat{Expr}}}
+    }
+  \end{xy}
+  \caption{\cat{Region} interface}
+  \label{fig:region.struct}
+\end{figure}
+
+
+\subsection{Program unit}
+\label{sec:interface:unit}
+
+A unit is the sequence of toplevel declarations in a transltaion or
+instantiation unit.
+\begin{Program}
+   struct Unit : Node \{
+      virtual const Namespace& global_namespace() const = 0;
+      virtual const Type& Void() const = 0;
+      virtual const Type& Bool() const = 0;
+      virtual const Type& Char() const = 0;
+      virtual const Type& Signed_char() const = 0;
+      virtual const Type& Unsigned_char() const = 0;
+      virtual const Type& Wchar_t() const = 0;
+      virtual const Type& Short() const = 0;
+      virtual const Type& Unsigned_short() const = 0;
+      virtual const Type& Int() const = 0;
+      virtual const Type& Unsigned_int() const = 0;
+      virtual const Type& Long() const = 0;
+      virtual const Type& Unsigned_long() const = 0;
+      virtual const Type& Long_long() const = 0;
+      virtual const Type& Unsigned_long_long() const = 0;
+      virtual const Type& Float() const = 0;
+      virtual const Type& Double() const = 0;
+      virtual const Type& Long_double() const = 0;
+      virtual const Expr& null_expr() const = 0;
+   \};
+\end{Program}
+It provides access to C++ fundamental types.
+
+
+\subsection{Generalized expressions}
+\label{sec:interface:expr}
+
+As explained earlier, most C++ notions are represented in IPR as generalized
+expressions.  All IPR expressions are typed. For instance, a declatarion
+\begin{Program}
+   struct Expr : Node \{
+      virtual const Type& type() const = 0;
+   \};
+\end{Program}
+obviously has a type (which is the type specified in the declaration).  In
+particular, a template declaration has a type (as opposed to Standard C++).
+A type in turn has a type, as explained previously.
+
+\subsection{Overload sets}
+\label{sec:interface:overload}
+ 
+The result of looking up the totallity of declarations for a name in a given
+scope is an overload set.  An overload set is further partitioned into subsets
+of declarations or redeclarations with same type.
+\begin{Program}
+   struct Overload : Sequence<Decl>, Expr \{
+      using Sequence<Decl>::operator[];
+      virtual const Sequence<Decl>& operator[](const Type&) const = 0;
+   \};
+\end{Program}
+An overload set is an expression, therefore has a type.  The type of an
+overload set is a Product type, that accounts for the types of all master
+declarations.  
+
+Selecting a particular member of an overload set, based on its type is
+supported through the subscription-by-type operation.  The result of that
+operation is the master declaration with that type. 
+
+\subsection{Interface for scopes}
+\label{sec:interface:scope}
+
+There is only one interface class, \texttt{Scope}, that represents the variety
+of scopes available in a C++ programs (function scope, function prototype
+scope, local scope, class scope, namespace scope). 
+
+
+The following are general operations supported by all scope nodes.
+\begin{description}
+\item[\texttt{const Type\& owner(const Scope scope\&)}]
+  Returns a \const{} reference to the \texttt{Type} that defines
+  \texttt{scope}.  Any scope is  associated with a given type for which it
+  represents the sequence of associated members or values.
+
+\item[\texttt{Scope::operator[](const Name\& name) const}] 
+  Returns a \const{} reference to an \texttt{Overload} that contains all
+  the master declarations of \texttt{name} (in the calling \texttt{Scope}
+  object). 
+  This set has null size if no declaration is found. The name look up
+  considered here is the \emph{lexical} name lookup. 
+\end{description}
+
+\texttt{Scope}s are visitable, they have an \texttt{accept()} member function
+that takes a reference to any vistor whose type derives from
+
+\subsection{Naming entities}
+
+\subsubsection{\texttt{Identifier}}
+\label{sec:interface:identifier}
+An \emph{identifier} in IPR is anything that Standard C++ defines as
+identifier, although the IPR library does not make any special enforcement. 
+%% \begin{displaymath}
+%%   \xyrel{Identifier}: \cat{Alphanumeric}\longrightarrow\cat{Identifier}.
+%% \end{displaymath}
+The string that serves to construct an \cat{Identifier} is given by the
+operation \iprop{string()}:
+%% \begin{displaymath}
+%%   \forall s \in\cat{Alphanumeric}\qquad
+%%   \iprop{string}\of{\xyrel{Identifier}\of{s}} = s.
+%% \end{displaymath}
+
+Identifiers are expressions, and do belong to a given category.  That category
+is the value of the operation \iprop{type()}.  Since interpretations of
+identifiers depend on the context of use, the type of an identifier is a
+\cat{Decltype} whose operand is the identifier in question.
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=5pc @H=1pc @R=0pc @*[F-] {%
+      {\xyrel{Identifier}} & *{} &
+      {\xyrel{Delctype}} \\
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{type}} [rr]
+      \restore 
+      & *{} &
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar`r[u] +/r4pc/^{\xylabel{expr}} 
+      `[u] +/u2pc/
+      `[ll][llu]
+      \restore
+      \\
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{string}} [rr]
+      \restore 
+      & *{} &
+      *+=<5pc,2pc>[F-:<4pt>]{\txt{\cat{std::string}}}
+    }
+  \end{xy}
+  \caption{\cat{Identifier} interface}
+  \label{fig:identifier.struct}
+\end{figure}
+The IPR interface to the category \cat{Identifier} of identifiers is
+implemented by the class \code{Identifier}:
+\begin{Program}
+   struct Identifier : Unary<Name, std::string> \{
+      const std::string& string() const \{ return operand(); \}
+   \};
+\end{Program}
+
+\subsubsection{\texttt{Operator}}
+\label{sec:interface:operator}
+An IPR \emph{operator name} is any Standard C++ operator name of the form
+\code{operator @}, where \code{@} is a member of \cat{OperatorName} (see
+table ???).   
+%% \begin{displaymath}
+%%   \xyrel{Operator}:\cat{OperatorName}\longrightarrow\cat{Operator}.
+%% \end{displaymath}
+Similar to an \cat{Identifier}, the string that served to construct
+an \cat{Operator} is given by the operation \iprop{opname}:
+%% \begin{displaymath}
+%%   \forall s \in\cat{OperatorName}\qquad
+%%   \iprop{opname}\of{\xyrel{Operator}\of{s}} = s.
+%% \end{displaymath}
+
+Also, similar to an \cat{Identifier}, an \cat{Operator} supports the
+\iprop{type} operation.
+\begin{figure}[htbp]
+  \leavevmode
+  \centering
+  \begin{xy}
+    \xymatrix @W=5pc @H=1pc @R=0pc @*[F-] {%
+      {\xyrel{Operator}} & *{} &
+      {\xyrel{Delctype}} \\
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{type}} [rr]
+      \restore 
+      & *{} &
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar`r[u] +/r4pc/^{\xylabel{expr}} 
+      `[u] +/u2pc/
+      `[ll][llu]
+      \restore
+      \\
+      *+<5pc,2pc>[F-]{\bullet} 
+      \save
+      * {} \ar ^{\xylabel{opname}} [rr]
+      \restore 
+      & *{} &
+      *+=<5pc,2pc>[F-:<4pt>]{\txt{\cat{std::string}}}
+    }
+  \end{xy}
+  \caption{\cat{Operator} interface}
+  \label{fig:operator.struct}
+\end{figure}
+The value of that operation is a \cat{Decltype} whose
+operand is the \cat{Operator}.
+The IPR interface to the operator name category \cat{Operator} is implemented
+by the class \code{Operator}:
+\begin{Program}
+   struct Operator : Unary<Name, std::string> \{
+      const std::string& opname() const \{ return operand(); \}
+   \};
+\end{Program}
+
+\subsubsection{\texttt{Conversion}}
+\label{sec:interface:conversion}
+A \emph{conversion} name is any name made out of \texttt{operator} and 
+a type.  Given
+%% \begin{displaymath}
+%%   \rel{Conversion}:\cat{Type}\longrightarrow\cat{Name}
+%% \end{displaymath}
+the following holds:
+%% \begin{displaymath}
+%%   \forall t\in\cat{Type}\qquad
+%%   \mathit{target}\of{\rel{Conversion}\of{t}} = t.
+%% \end{displaymath}
+
+
+The IPR interface to \cat{Conversion} is
+\begin{Program}
+   struct Conversion : Unary<Name, Type> \{
+      const Type& target() const \{ return operand(); \}
+   \};
+\end{Program}
+\begin{description}
+\item[\texttt{Conversion::target() const}] The type this conversion function
+  converts to. 
+\end{description}
+
+\subsection{Expressions}
+
+Nearly everyting is an expression in IPR.  An \emph{expression} is understood
+as the specification of an operator and arguments for a computation.  The
+operator need not be alsways explicitly spelled out.
+
+The various categories of expressions are described in detail in subsequent
+sections.  The interface to this notion is given by
+\begin{Program}
+   struct Expr : Node \{
+      virtual const Type& type() const = 0;
+   \};
+\end{Program}
+Thus, every expression node supports the \texttt{type()} and
+\texttt{annotation()} operations:
+\begin{description}
+\item[\texttt{Expr::type() const}] The IPR node that represent the type of
+  this expression.
+\item[\texttt{Expr::annotation() const}] The sequence of annotations made to
+  this expression.
+\end{description}
+
+
+
+\subsection{Literals}
+
+%% \begin{displaymath}
+%%   \rel{Literal} : \cat{String} \times \cat{Type} \longrightarrow
+%%   \cat{Expr}
+%% \end{displaymath}
+
+%% \begin{align*}
+%%   \forall s\in\cat{String},\, \forall t\in\cat{Type}\qquad
+%%   &\mathit{string}\of{\rel{Literal}\of{s,\, t}} = s\\
+%%   &\mathit{type}\of{\rel{Literal}\of{s,\, t}} = t
+%% \end{align*}
+
+\begin{Program}
+   struct Literal : Binary<Expr, Type, std::string> \{
+      const Type& type() const \{ return first(); \}
+      const std::string& string() const \{ return second(); \}
+   \};
+\end{Program}
+
+\begin{description}
+\item[\texttt{Literal::string()}] 
+\end{description}
+
+\subsection{Types in IPR}
+\label{sec:interface:types}
+
+The variety of C++ types are represented in IPR.  The abstract class
+\texttt{Type} serves as a base class of that hierarchy.  A type in IPR is a
+generalized expression, and therefore derives from the abstract class
+\texttt{Expr}.
+
+\subsubsection{Reference type}
+%% \begin{gather*}
+%%   \rel{Reference} : \cat{Type} \longrightarrow \cat{Type}\\
+%%   \forall t\in\cat{Type}\qquad
+%%   \mathit{refers\_to}\of{\rel{Reference}\of{t}} = t
+%% \end{gather*}
+
+\begin{Program}
+  struct Reference : Unary<Type, Type> \{
+    const Type& refers_to() const \{ return operand(); \}
+  \};
+\end{Program}
+
+
+\subsubsection{Function type}
+%% \begin{displaymath}
+%%   \rel{Function} : \cat{Signature} \times \cat{Type} \times
+%%   \cat{Sequence_{Type}} \longrightarrow \cat{Type}
+%% \end{displaymath}
+%% \begin{align*}
+%%   \forall s\in \cat{Signature},\, \forall t\in\cat{Type},\,
+%%   \forall e\in\cat{Sequence_{Type}}\qquad
+%%   &\mathit{signature}\of{\rel{Function}\of{s,\, t,\, e}} = s\\
+%%   &\mathit{target}\of{\rel{Function}\of{s,\, t,\, e}} = t\\
+%%   &\mathit{throws}\of{\rel{Function}\of{s,\, t,\, e}} = e\\
+%% \end{align*}
+
+\begin{Program}
+   struct Function : Ternary<Type, Product, Type, Type> \{
+      const Product& signature() const \{ return first(); \}
+      const Type& target() const \{ return second(); \}
+      const Type& throws() const \{ return third(); \}
+   \};
+\end{Program}
+
+\begin{description}
+\item[\texttt{Function::signature() const}] 
+\item[\texttt{Function::target() const}] 
+\item[\texttt{Function::throws() const}] 
+\end{description}
+
+
+\subsubsection{Pointer type}
+%% \begin{gather*}
+%%   \rel{Pointer} : \cat{Type} \longrightarrow \cat{Type}\\
+%%   \forall t\in \cat{Type}\qquad
+%%   \mathit{points\_to}\of{\rel{Pointer}\of{t}} = t
+%% \end{gather*}
+
+\begin{Program}
+   struct Pointer : Unary<Type, Type> \{
+      const Type& points_to() const \{ return operand(); \}
+   \};
+\end{Program}
+\begin{description}
+\item[\texttt{Pointer::points\_to() const}] 
+\end{description}
+
+
+\subsubsection{Array type}
+%% \begin{gather*}
+%%   \rel{Array} : \cat{Object\_type}\times\cat{Expr}
+%%   \longrightarrow \cat{Object\_type}\\
+%%   \forall t\in\cat{Object\_type},\,\forall b\in\cat{Expr}\\
+%%   \mathit{element\_type}\of{\rel{Array}\of{t,\, b}} = t\\
+%%   \mathit{bound}\of{\rel{Array}\of{t,\, b}} = b\\
+%% \end{gather*}
+
+\begin{Program}
+   struct Array : Binary<Type, Type, Expr> \{
+      const Type& element_type() const \{ return first(); \}
+      const Expr& bound() const        \{ return second(); \}
+   \};
+\end{Program}
+
+\begin{description}
+\item[\texttt{Array::element\_type() const}] 
+\item[\texttt{Array::bound() const}] 
+\end{description}
+
+\subsubsection{User-defined types}
+%% \begin{gather*}
+%%   \rel{Udt} : \cat{String}\times \cat{Scope} \times \cat{Scope}
+%%   \longrightarrow \cat{Type}\\
+%%   \rel{Class} = 
+%%   \rel{Udt}\of{\rel{Class},\, \bullet,\,\bullet}\\
+%%   \rel{Union} = 
+%%   \rel{Udt}\of{\rel{Union},\, \bullet,\,\bullet}\\
+%%   \rel{Enum} = 
+%%   \rel{Udt}\of{\rel{Enum},\, \bullet,\,\bullet}\\
+%%   \rel{Namespace} = 
+%%   \rel{Udt}\of{\rel{Namespace},\, \bullet,\,\bullet}\\
+%% \end{gather*}
+
+%% \begin{align*}
+%%   \forall b\in\cat{Scope},\,\forall m\in\cat{Scope}\qquad
+%%   &\mathit{bases}\of{\rel{User\_defined\_type}\of{\bullet,\, b, m}} = b\\
+%%   &\mathit{members}\of{\rel{User\_defined\_type}\of{\bullet,\, b, m}} = m\\
+%% \end{align*}
+
+\begin{Program}
+   struct Udt : Type \{
+      virtual const Scope& scope() const = 0;
+   \};
+  
+   struct Namespace : Udt \{
+      const Sequence<Decl>& members() const \{ return scope().members(); \}
+   \};
+
+   struct Class : Udt \{
+      const Sequence<Decl>& members() const \{ return scope().members(); \}
+      virtual const Sequence<Base_type>& bases() const = 0;
+      virtual const Scope& base_scope() const = 0;
+   \};
+
+   struct Union : Udt \{
+      const Sequence<Decl>& members() const \{ return scope().members(); \}
+   \};
+
+   struct Enum : Udt \{
+      virtual const Sequence<Enumerator>& members() const = 0;
+   \};
+\end{Program}
+
+
+\subsection{Unary expressions}
+\label{sec:interface:unary-expr}
+
+\subsubsection{Incrementation}
+%% \begin{gather*}
+%%   \rel{Pre\_increment}:\cat{Expr}\longrightarrow\cat{Expr}\\
+%%   \rel{Post\_increment}:\cat{Expr}\longrightarrow\cat{Expr}
+%% \end{gather*}
+
+\subsubsection{Decrementation}
+%% \begin{gather*}
+%%   \rel{Pre\_decrement}:\cat{Expr}\longrightarrow\cat{Expr}\\
+%%   \rel{Post\_decrement}:\cat{Expr}\longrightarrow\cat{Expr}
+%% \end{gather*}
+
+\subsubsection{Conversions}
+%% \begin{gather*}
+%%   \rel{Dynamic\_cast}:\cat{Expr}\times\cat{Type}\longrightarrow\cat{Expr}\\
+%%   \rel{Static\_cast}:\cat{Expr}\times\cat{Type}\longrightarrow\cat{Expr}\\
+%%   \rel{Reinterpret\_cast}:\cat{Expr}\times\cat{Type}
+%%   \longrightarrow\cat{Expr}\\
+%%   \rel{Const\_cast}:\cat{Expr}\times\cat{Type}\longrightarrow\cat{Expr}\\
+%%   \rel{Cast}:\cat{Expr}\times\cat{Type}\longrightarrow\cat{Expr}
+%% \end{gather*}
+
+\subsubsection{Type identification}
+
+A type identification comes in two flavors
+%% \begin{gather*}
+%%   \rel{Expr\_typeid} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Type\_typeid} : \cat{Type} \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+
+\subsubsection{Size of object representation}
+%% \begin{gather*}
+%%   \rel{Expr\_sizeof} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Type\_sizeof} : \cat{Type} \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+
+\subsubsection{Dereferencing}
+%% \begin{displaymath}
+%%   \rel{Deref}: \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\subsubsection{Taking the address of an object}
+%% \begin{displaymath}
+%%   \rel{Address} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\subsubsection{Unary plus}
+%% \begin{displaymath}
+%%   \rel{Unary\_plus} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\subsubsection{Negation}
+%% \begin{gather*}
+%%   \rel{Negate} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Not} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+
+\subsubsection{Complement}
+%% \begin{displaymath}
+%%   \rel{Complement} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+
+\subsubsection{Deletion}
+%% \begin{gather*}
+%%   \rel{Delete} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Array\_delete} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+\subsection{Binary expressions}
+\label{sec:interface:binary-expr}
+
+\subsubsection{Multiplicative expressions}
+%% \begin{gather*}
+%%   \rel{Mul} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Div} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Modulo} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%% \end{gather*}
+
+\subsubsection{Additive expressions}
+%% \begin{gather*}
+%%   \rel{Add} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Sub} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%% \end{gather*}
+
+
+\subsubsection{Logical expressions}
+%% \begin{gather*}
+%%   \rel{Less} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Greater} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Equal} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Less\_equal} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Greater\_equal} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Not\_equal} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{And} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Or} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%% \end{gather*}
+
+
+\subsubsection{Bits arithmetic}
+%% \begin{gather*}
+%%   \rel{Bit\_and} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Bit\_xor} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Bit\_or} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Shift\_left} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Shift\_right} : \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+\subsubsection{Member selection}
+%% \begin{gather*}
+%%   \rel{Dot\_select} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Dot\_star} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Arrow\_select} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Arrow\_star} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%%   \rel{Scope\_select} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}\\
+%% \end{gather*}
+
+\subsubsection{Expression sequencing}
+%% \begin{displaymath}
+%%   \rel{Comma} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\subsubsection{Assignment}
+%% \begin{displaymath}
+%%   \rel{Assign} : \cat{Expr} \times \cat{Expr} 
+%%   \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+
+\subsection{Expressions with variable number of arguments}
+\label{sec:interface:var-args-expr}
+
+\subsubsection{Function call}
+%% \begin{displaymath}
+%%   \rel{Call} : \cat{Expr} \times \cat{Sequence} 
+%%   \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+
+\subsubsection{Data construction}
+%% \begin{displaymath}
+%%   \rel{Object\_construction} : \cat{Type} \times \cat{Sequence}
+%%   \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+
+
+\subsection{Statements}
+
+\subsubsection{Labeled statements}
+
+%% \begin{displaymath}
+%%   \rel{Labeled\_stmt} : \cat{Expr}\times\cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+
+\subsubsection{Expression statements}
+
+\begin{Program}
+   struct Expr_stmt : Stmt \{
+      virtual const Expr& expr() const = 0;
+   \};
+\end{Program}
+
+\begin{Program}
+   struct Labeled_stmt : Stmt \{
+      virtual const Expr& label() const = 0;
+      virtual const Expr& stmt() const = 0;
+   \};
+\end{Program}
+
+\subsubsection{Blocks}
+
+%% \begin{displaymath}
+%%   \rel{Block} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\begin{Program}
+   struct Block : Stmt \{
+      virtual const Scope& members() const = 0;
+      virtual const Sequence<Expr>& stmts() const = 0;
+      virtual const Sequence<Handler>& handlers() const = 0;
+   \};
+\end{Program}
+
+\subsubsection{Ctor bodies}
+
+%% \begin{displaymath}
+%%   \rel{Function\_body} : \cat{Sequence_{Expr}} \times
+%%   \cat{Block} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\begin{Program}
+   struct Ctor_body : Stmt \{
+      virtual const Expr_list& inits() const = 0;
+      virtual const Block& block() const = 0;
+   \};
+\end{Program}
+
+\subsubsection{Selection statements}
+
+%% \begin{gather*}
+%%   \rel{If\_then} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{If\_then\_else} : \cat{Expr} \times \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+\begin{Program}
+   struct If_then : Stmt \{
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& then_stmt() const = 0;
+   \};
+  
+   struct If_then_else : Stmt \{
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& then_stmt() const = 0;
+      virtual const Expr& else_stmt() const = 0;
+   \};
+\end{Program}
+
+%% \begin{displaymath}
+%%   \rel{Switch} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{displaymath}
+
+\begin{Program}
+   struct Switch : Stmt {
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& body() const = 0;
+   };
+\end{Program}
+
+
+\subsubsection{Iteration iterations}
+
+%% \begin{gather*}
+%%   \rel{While} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Do} : \cat{Expr} \times \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{For} : \cat{Expr} \times \cat{Expr} \times \cat{Expr} \times \cat{Expr}
+%%   \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+\begin{Program}
+   struct While : Stmt \{
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& body() const = 0;
+   \};
+  
+   struct Do : Stmt \{
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& body() const = 0;
+   \};
+
+   struct For : Stmt \{
+      virtual const Expr& initializer() const = 0;
+      virtual const Expr& condition() const = 0;
+      virtual const Expr& increment() const = 0;
+      virtual const Expr& body() const = 0;
+   \};
+\end{Program}
+
+
+\subsubsection{Jump statements}
+
+%% \begin{gather*}
+%%   \rel{Break} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Continue} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Goto} : \cat{Expr} \longrightarrow \cat{Expr}\\
+%%   \rel{Return} : \cat{Expr} \longrightarrow \cat{Expr}
+%% \end{gather*}
+
+\begin{Program}
+   struct Break : Stmt \{
+      virtual const Expr& from() const = 0;
+   \};
+  
+   struct Continue : Stmt \{
+      virtual const Expr& iteration() const = 0;
+   \};
+
+   struct Goto: Stmt \{
+      virtual const Expr& target() const = 0;
+   \};
+
+   struct Return : Stmt \{
+      virtual const Expr& value() const = 0;
+      const Type& type() const  { return value().type(); }
+   \};
+\end{Program}
+
+
+\subsubsection{Exception handlers}
+
+\begin{Program}
+   struct Handler : Stmt \{
+      virtual const Decl& exception() const = 0;
+      virtual const Block& body() const = 0;
+   \};
+\end{Program}
+
+\subsection{Declarations}
+
+\begin{Program}
+   struct Decl : Stmt \{
+      enum Specifier \{
+         None = 0,
+         Auto       = 1 << 0,
+         Register   = 1 << 1,
+         Static     = 1 << 2,
+         Extern     = 1 << 3,
+         Mutable    = 1 << 4,
+         StorageClass  = Auto | Register | Static | Extern | Mutable,
+
+         Inline     = 1 << 5,
+         Virtual    = 1 << 6,
+         Explicit   = 1 << 7,
+         Pure       = 1 << 8,
+         FunctionSpecifier = Inline | Virtual | Explicit | Pure,
+      
+         Friend     = 1 << 9,
+         Typedef    = 1 << 10,
+
+         Public     = 1 << 11,
+         Protected  = 1 << 12,
+         Private    = 1 << 13,
+         AccessProtection = Public | Protected | Private
+      \};
+
+      virtual Specifier specifiers() const = 0;
+      virtual const Name& name() const = 0;
+      virtual const Scope& scope() const = 0;
+
+      virtual bool has_initializer() const = 0;
+      virtual const Expr& initializer() const = 0;
+
+      const Sequence<Decl>& decl_set() const
+      \{ return scope()[name()][type()]; \}
+      const Decl& master() const \{ return *decl_set().begin(); \}
+   \};
+\end{Program}
+
+A declaration is a statement. It usually introduces a name in a given scope
+and attributes for its interpretation: (a) a type; (b) a set of specifiers for
+access or storage; and (b) an optional initializer.
+
+\subsubsection{Declaration specifiers}
+
+
+\paragraph{Storage class specifiers}
+
+
+\paragraph{Function specifiers}
+
+
+\paragraph{Access control and friendship}
+
+
+\subsubsection{Variable declarations}
+\begin{Program}
+   struct Var : Decl \{
+   \};
+\end{Program}
+
+
+\subsubsection{Data member declarations}
+
+\begin{Program}
+   struct Field : Decl \{
+   \};
+  
+   struct Bit_field : Decl \{
+      virtual const Expr& size() const = 0;
+   \};
+\end{Program}
+
+\subsubsection{Parameter declarations}
+\begin{Program}
+   struct Parameter : Decl \{
+      virtual int position() const = 0;
+      const Expr& default_value() const { return initializer(); }
+   \};
+\end{Program}
+
+
+\subsubsection{Function declarations}
+
+\begin{Program}
+   struct Fun_decl : Decl \{
+      virtual const Type& target() const = 0;
+      virtual const Parameter_list& parameters() const = 0;
+      virtual const Type& throws() const = 0;
+   \};
+\end{Program}
+
+
+\paragraph{Constructors}
+\begin{Program}
+   struct Constructor : Fun_decl \{
+      const Name& name() const \{ return membership().name(); \}
+      const Type& target() const \{ return membership(); \}
+
+      virtual const Type& membership() const = 0;
+   \};
+\end{Program}
+
+
+\paragraph{Destructors}
+
+\begin{Program}
+   struct Destructor : Fun_decl \{
+      virtual const Type& membership() const = 0;
+   \};
+\end{Program}
+
+
+\subsubsection{Alias declarations}
+\begin{Program}
+   struct Alias : Decl \{
+   \};
+\end{Program}
+
+
+
+\subsubsection{Base-type declarations}
+\begin{Program}
+   struct Base_type : Decl \{
+      const Name& name() const \{ return type().name(); \}
+   \};
+\end{Program}
+
+
+\subsubsection{Enumerator declarations}
+
+\begin{Program}
+   struct Enumerator : Decl \{
+      const Type& type() const \{ return membership(); \}
+      virtual const Enum& membership() const = 0;
+   \};
+\end{Program}
+
+
+
+\subsubsection{Type declarations}
+
+\begin{Program}
+   struct Type_decl : Decl \{
+   \};
+\end{Program}
+
+\subsection{Traversing graphs:  Visitors}
+\begin{Program}
+   struct Visitor \{
+      virtual void visit(const Node&) = 0;
+      virtual void visit(const Annotation&);
+
+      virtual void visit(const Expr&) = 0;
+      
+      virtual void visit(const Name&) = 0;
+      virtual void visit(const Identifier&);
+      virtual void visit(const Operator&);
+      virtual void visit(const Conversion&);
+      virtual void visit(const Type_id&);
+
+      virtual void visit(const Type&) = 0;
+      virtual void visit(const Array&);
+      virtual void visit(const Class&);
+      virtual void visit(const Enum&);
+      virtual void visit(const Expr_as_type&);
+      virtual void visit(const Function&);
+      virtual void visit(const Namespace&);
+      virtual void visit(const Pointer&);
+      virtual void visit(const Product&);
+      virtual void visit(const Reference&);
+      virtual void visit(const Template&);
+      virtual void visit(const Union&);
+      virtual void visit(const Udt&);
+
+      virtual void visit(const Expr_list&);
+      virtual void visit(const Overload&);
+      virtual void visit(const Scope&);
+
+      virtual void visit(const Address&); 
+      virtual void visit(const Array_delete&); 
+      virtual void visit(const Complement&); 
+      virtual void visit(const Delete&); 
+      virtual void visit(const Deref&);
+      virtual void visit(const Expr_sizeof&);
+      virtual void visit(const Expr_stmt&);
+      virtual void visit(const Expr_typeid&); 
+      virtual void visit(const Label&);
+      virtual void visit(const Negate&); 
+      virtual void visit(const Not&); 
+      virtual void visit(const Post_decrement&);
+      virtual void visit(const Post_increment&); 
+      virtual void visit(const Pre_decrement&); 
+      virtual void visit(const Pre_increment&); 
+      virtual void visit(const Throw&);
+      virtual void visit(const Type_sizeof&); 
+      virtual void visit(const Type_typeid&); 
+      virtual void visit(const Unary_plus&); 
+
+      virtual void visit(const Add&);
+      virtual void visit(const Add_assign&);
+      virtual void visit(const And&); 
+      virtual void visit(const Array_ref&);
+      virtual void visit(const Arrow_select&); 
+      virtual void visit(const Arrow_star&); 
+      virtual void visit(const Assign&);
+      virtual void visit(const Bitand&);
+      virtual void visit(const Bitand_assign&);
+      virtual void visit(const Bitor&);
+      virtual void visit(const Bitor_assign&);
+      virtual void visit(const Bitxor&);
+      virtual void visit(const Bitxor_assign&);
+      virtual void visit(const C_cast&); 
+      virtual void visit(const Call&); 
+      virtual void visit(const Comma&);
+      virtual void visit(const Const_cast&); 
+      virtual void visit(const Div&);
+      virtual void visit(const Div_assign&);
+      virtual void visit(const Dot_select&);
+      virtual void visit(const Dot_star&); 
+      virtual void visit(const Dynamic_cast&); 
+      virtual void visit(const Equal&); 
+      virtual void visit(const Greater&); 
+      virtual void visit(const Greater_equal&); 
+      virtual void visit(const Less&); 
+      virtual void visit(const Less_equal&); 
+      virtual void visit(const Literal&);
+      virtual void visit(const Member_init&);
+      virtual void visit(const Modulo&);
+      virtual void visit(const Modulo_assign&);
+      virtual void visit(const Mul&);
+      virtual void visit(const Mul_assign&);
+      virtual void visit(const Not_equal&); 
+      virtual void visit(const Object_construction&); 
+      virtual void visit(const Or&); 
+      virtual void visit(const Reinterpret_cast&); 
+      virtual void visit(const Scope_ref&);
+      virtual void visit(const Shift_left&);
+      virtual void visit(const Shift_left_assign&);
+      virtual void visit(const Shift_right&);
+      virtual void visit(const Shift_right_assign&);
+      virtual void visit(const Specialization&);
+      virtual void visit(const Static_cast&); 
+      virtual void visit(const Sub&);
+      virtual void visit(const Sub_assign&);
+
+      virtual void visit(const Conditional&);
+      virtual void visit(const New&); 
+
+      virtual void visit(const Stmt&) = 0;
+      virtual void visit(const Labeled_stmt&);
+      virtual void visit(const Block&);
+      virtual void visit(const Ctor_body&);
+      virtual void visit(const If_then&);
+      virtual void visit(const If_then_else&);
+      virtual void visit(const Switch&);
+      virtual void visit(const While&);
+      virtual void visit(const Do&);
+      virtual void visit(const For&);
+      virtual void visit(const Break&);
+      virtual void visit(const Continue&);
+      virtual void visit(const Goto&);
+      virtual void visit(const Return&);
+      virtual void visit(const Handler&);
+
+      virtual void visit(const Decl&) = 0;
+      virtual void visit(const Alias&);
+      virtual void visit(const Base_type&);
+      virtual void visit(const Parameter&);
+      virtual void visit(const Parameter_list&);
+      virtual void visit(const Var&);
+      virtual void visit(const Field&);
+      virtual void visit(const Bit_field&);
+      virtual void visit(const Fun_decl&);
+      virtual void visit(const Constructor&);
+      virtual void visit(const Destructor&);
+      virtual void visit(const Type_decl&);
+   \};
+\end{Program}
+
+\section{Implementation Classes}
+\label{sec:impl}
+
+Every abstract class in the interface class hierarchy has a corresponding
+implementation class, named after that interface and with the suffix
+\texttt{Impl}. Those implementations classes often supports
+non-\texttt{const} operations too.  Every implementation class provide 
+an overriding implementation for the visitor hook 
+\texttt{Node::accept()} that transfer control to the appropriate overriding
+member function of \texttt{Visitor::visit()}
+
+There is only one instance of \texttt{std::string} for any given text string
+that might be hold in any IPR node (e.g. by names).
+
+
+
+
+\subsection{Implementation classes for names}
+
+The four kinds of names \textit{identifier}, \textit{operator name},
+\textit{conversion-function name}  and \textit{template instantiation name}
+are respectively implemented by \texttt{impl::Identifer}, 
+\texttt{impl::Operator}, \texttt{impl::Conversion} and 
+\texttt{impl::Specialization}.  They all derive from instantiations of the 
+parameterized implementation class \texttt{impl::Name<>}.  The later
+is parameterized by the interface
+
+\subsubsection{\texttt{impl::Identifier}}
+
+\subsubsection{\texttt{impl::Operator}}
+
+\subsubsection{\texttt{impl::Conversion}}
+
+\section{XPR grammars}
+\label{sec:xpr-grammar}
+
+XPR essentially retains C++'s syntax for expressions.  The differences appear
+mainly in the declaration syntax where XPR aims for a linear notation.
+\subsection{Lexical conventions}
+\label{sec:xpr-grammar:lexical-convention}
+
+
+\subsubsection{Literals}
+
+XPR retains C~\cite{iso99} and C++~\cite{iso03}'s spelling for literals
+\begin{Program}
+  
+\end{Program}
+
+
+\bibliographystyle{amsplain}
+\bibliography{ipr}
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

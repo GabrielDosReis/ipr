@@ -1,0 +1,1075 @@
+2010-07-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::expr_factory::make_id_expr): Define new overload.
+
+2010-05-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C: Pretty print Initializer_list.
+
+2010-05-11  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_initializer)): Print declarations
+	too. 
+
+2010-04-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Unit::get_typename): Define.
+
+2010-04-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (xpr::Decl): Print function specifiers.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (expr_factory::make_identifier(const char*)): Define.
+	(expr_factory::make_identifier(const std::string&)): Likewise.
+	(expr_factory::make_operator(const char*)): Likewise.
+	(expr_factory::make_operator(const std::string&)): Likewise.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (expr_factory::get_linkage): Define.
+	(Unit::get_cxx_linkage): Define in terms of expr_factory::get_linkage.
+	(Unit::get_c_linkage): Likewise.
+	(Unit::Unit): Call get_cxx_linkage iin lieu of cxx_linkage.
+	* traversal.C (Visitor::visit(const C_linkage&)): Remove.
+	(Visitor::visit(const Cxx_linkage&)): Linkage.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (expr_factory::make_literal): Define new overloads.
+
+2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (ipr): Reflect changes from Unit::get_string to
+	expr_factory::get_string. 
+
+2009-09-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (type_factory::make_rvalue_reference): Define.
+	(Unit::get_rvalue_reference): Likewise.
+
+2009-07-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::For_in::type): Define.
+
+2009-06-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C: Define For_in members.
+	* io.C: Define printer for For_in nodes.
+
+2008-11-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Mapping::has_result): Remove.
+	* io.C (impl::xpr_mapping_expression_visitor): Tidy.
+
+2008-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.C (Visitor::visit(const Datm&)): Forward as Classic.
+
+2008-09-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* traversal.C (Visitor::visit(const Classic&)): Implement.
+	Propagate forwarding visitor functions.
+
+2008-06-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Var::membership): Remove.
+	(impl::Var::Var): Don't initialize member_of.
+
+2008-05-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (Var::lexical_region): Define.
+	(Typedecl::lexical_region): Likewise.
+	(Parameter::lexical_region): Likewise.
+	(Parameter::home_region): Likewise.
+	(Named_map::lexical_region): Likewise.
+	(Fundecl::lexical_region): Likewise.
+	(Field::lexical_region): Likewise.
+	(Field::home_region): Likewise.
+	(Enumerator::lexical_region): Likewise.
+	(Enumerator::home_region): Likewise.
+	(Base_type::lexical_region): Likewise.
+	(Base_type::home_region): Likewise.
+	(Bitfield::lexical_region): Likewise.
+	(Bitfield::home_region): Likewise.
+	(Alias::lexical_region): Likewise.
+
+2005-11-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.C: New.
+
+2005-09-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Linkage::Linkage): Define.
+
+	* traversal.C (Visitor::visit(const Linkage&)): Define.
+
+2005-07-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_type)::Impl::visit(const
+	Ptr_to_member&)):  New.
+	(operator<<(Printer&, xpr_type_expr)::Impl::visit(const
+	Ptr_to_member&&)):  Likewise.
+
+2005-06-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* utility.C:New.
+
+	* impl.C (impl::Enumerator::Enumerator): Don't forget initization
+	of impl::Enumerator::init.
+
+2005-05-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::expr_factory::make_mapping): Adjust parameter list.
+	(impl::Parameter::Parameter): Tidy.
+	(impl::Parameter::type): Likewise.
+	(impl::Parameter::position): Define.
+
+	* io.C (xpr::Name::visit(const ipr::Rname&))): Define.
+
+	* impl.C (impl::Rname::Rname): Define.
+	(impl::Rname::type): Likewise.
+	(impl::Rname::position): Likewise.
+	(impl::Rname::level): Likewise.
+
+	* traversal.C (Visitor::visit(const Rname&)): Define.
+
+2005-04-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_decl)): Print semi-colon if
+	needed. 
+	(xpr::Decl::visit(const Scope&)): Tidy.
+	(operator<<(Printer&, xpr_expr)::Impl::visit(const Scope&)): Tidy.
+	(operator<<(Printer&, xpr_expr)::Impl::visit(const Decl&)): New.
+	(xpr::Decl::visit(const Scope&)): Remove.
+	(xpr::Stmt::visit(const Decl&)): New.
+	(xpr::Stmt): Derive from xpr::Assignment_expr.
+
+2005-03-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (xpr_quote): Remove.
+	(operator<<(Printer&, xpr_quote)): Move body to...
+	(xpr::Primary_expr::visit(const Literal&)): ... here.  Define outline.
+
+	* interface.C (stats::node_usage_counts): New local data.
+	(stats::all_nodes_count): Define.
+	(stats::node_count): Likewise.
+	(Node::Node): Increment usage count.
+
+	* io.C (new_style_cast): Make a template.
+	(offset_with_pm): Likewise.
+	(xpr::Initializer::visit(const Expr&)): New.
+	(xpr::Initializer::visit(const Stmt&)): Likewise.
+	(xpr::Stmt): New.
+	(operator<<(Printer&, xpr_stmt)): Use it.  Move local class
+	definition to xpr::Stmt.
+	(xpr::Decl): New.
+	(operator<<(Printer&, xpr_decl)): Use it.  Move local class
+	definition to xpr::Decl.
+	(operator<<(Printer&, const Decl&)): Remove.
+	(insert_xtoken): Remove.
+	(Token_helper<>): New.
+	(token<>): Likewise.
+	(operator<<(Printer&, Token_helper<>)): Likewise.
+
+2005-03-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* interface.C (Node::Node): Adjust.
+
+2005-03-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::expr_factory::make_id_expr): Define.
+	(impl::Overload::accept): Remove.
+	(impl::singleton_overload::accept): Likewise.
+	(impl::empty_overload::accept): Likewise.
+	(impl::Break::accept): Likewise.
+	(impl::Continue::accept): Likewise.
+	(impl::Comment::accept): Likewise.
+	(impl::Expr_list::accept): Likewise.
+	(impl::Identifier::accept): Likewise.
+	(impl::Id_expr::accept): Likewise.
+	(impl::Literal::accept): Likewise.
+	(impl::Mapping::accept): Likewise.
+	(impl::Operator::accept): Likewise.
+	(impl::Paren_expr::accept): Likewise.
+	(impl::Scope::accept): Likewise.
+	(impl::Region::accept): Likewise.
+	(impl::Unit::accept): Likewise.
+	(impl::Block::accept): Likewise.
+	(impl::For::accept): Likewise.
+	(impl::Literal::accept): Likewise.
+
+	* io.C (xpr::Primary_expr::visit(const Id_expr&)): Defie.
+
+	* traversal.C (Visitor::visit(const Id_expr&)): Define.
+
+	* impl.C (impl::Id_expr::Id_expr): Define.
+	(impl::Id_expr::type): Likewise.
+	(impl::Id_expr::operand): Likewise.
+	(impl::Id_expr::resolution): Likewise.
+	(impl::Id_accept): Likewise.
+
+	* io.C (xpr_initializer): New.
+	(operator<<(Printer&, xpr_initializer): New.
+	(operator<<(Printer&, xpr_mapping_expression): Use it.
+
+	* impl.C (impl::Mapping::Mapping): Initialize member value_type.
+	(impl::Mapping::result_type): Define.
+
+2005-03-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, const Expr&)): Remove.
+	(operator<<(Printer&, const Type&)): Likewise.
+	(operator<<(Printer&, const Decl&)): Likewise.
+	(print_sequence): Likewise.
+	(operator<<(Printer&, const Product&)): Likewise.
+	(operator<<(Printer&, const Sum&)): Likewise.
+
+	(operator<<(Printer&, const Expr_list&): Tidy.
+	(operator<<(Printer&, const Sequence<Type>&): Likewise.
+	(operator<<(Printer&, const Parameter_list&): Likewise.
+	(operator<<(Printer&, const Conversion&): Likewise.
+	(operator<<(Printer&, const Type_id&): Likewise.
+	(operator<<(Printer&, const Datum&): Likewise.
+	(operator<<(Printer&, const Cast_expr&): Likewise.
+	(new_style_cast): Likewise.
+	(operator<<(Printer&, const Cast&): Likewise.
+	(operator<<(Printer&, xpr_exception_spec): Likewise.
+	(operator<<(Printer&, xpr_base_classes): Likewise.
+	(operator<<(Printer&, const Decltype&): Likewise.
+	(operator<<(Printer&, const Reference&): Likewise.
+	(operator<<(Printer&, const Pointer&): Likewise.
+	(operator<<(Printer&, const Array&): Likewise.
+	(operator<<(Printer&, xpr_type): Likewise.
+	(operator<<(Printer&, const Base_type&): Likewise.
+	(operator<<(Printer&, const Typedecl&): Likewise.
+
+	(xpr::Name): New.
+	(operator<<(Printer&, const Name&)): Use it.
+
+	(xpr::Primary_expr): New.
+	(operator<<(Printer&, xpr_primary_expr): Use it. 
+
+	(xpr::Postfix_expr): New.
+	(operator<<(Printer&, xpr_postfix_expr): Use it. 
+
+	(xpr::Unary_expr): New.
+	(unary_operation): Use it. 
+	(operator<<(Printer&, xpr_unary_expr): Tidy. 
+
+	(xpr::Cast_expr): New.
+	(operator<<(Printer&, xpr_cast_expr): Use it. 
+
+	(xpr::Pm_expr): New.
+	(operator<<(Printer&, xpr_pm_expr): Use it. 
+
+	(xpr::Mul_expr): New.
+	(operator<<(Printer&, xpr_mul_expr): Use it. 
+
+	(xpr::Shift_expr): New.
+	(operator<<(Printer&, xpr_shift_expr): Use it. 
+
+	(xpr::Add_expr): New.
+	(operator<<(Printer&, xpr_add_expr): Use it. 
+
+	(xpr::Rel_expr): New.
+	(operator<<(Printer&, xpr_rel_expr): Use it. 
+
+	(xpr::Eq_expr): New.
+	(operator<<(Printer&, xpr_eq_expr): Use it. 
+
+	(xpr::And_expr): New.
+	(operator<<(Printer&, xpr_and_expr): Use it. 
+
+	(xpr::Xor_expr): New.
+	(operator<<(Printer&, xpr_xor_expr): Use it. 
+
+	(xpr::Ior_expr): New.
+	(operator<<(Printer&, xpr_ior_expr): Use it. 
+
+	(xpr::Land_expr): New.
+	(operator<<(Printer&, xpr_land_expr): Use it. 
+
+	(xpr::Cond_expr): New.
+	(operator<<(Printer&, xpr_cond_expr): Use it. 
+
+	(xpr::Assignment_expr): New.
+	(operator<<(Printer&, xpr_assignment_expr): Use it. 
+
+2005-03-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, const xpr_decl)::Impl::visit(const
+	Named_map)):  Fix thinko.
+
+2005-03-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (ipr::operator<<(Printer&, xpr_mapping_expression)): Fix
+	thinko. 
+	(ipr::operator<<(Printer&, xpr_decl)): Fix thinko.
+
+2005-03-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.34
+
+2005-02-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (ipr): Rename Expr_as_type to As_type.
+	* traversal.C: Likewise.
+	* impl.C: Likewise.  Rename make_expr_as_type to make_as_type.	
+	Rename heterogeneous_scope ro Scope.
+	Rename heterogeneous_region to Region.
+
+2005-02-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::heterogeneous_scope::operator[]): Tidy.
+
+2005-02-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Unit::make_template_id): Define.
+	(impl::Enum::add_member): Define.
+	(impl::Named_map::Named_map): Tidy.
+	(impl::Named_map::primary_named_map): Likewise.
+	(impl::Named_map::specializations): Likewise.
+	(impl::Named_map::mapping): Likewise.
+	(impl::Named_map::has_initializer): Likewise.
+	(impl::Named_map::initializer): Likewise.
+	(impl::Enum::add_member): Define.
+	(impl::heterogeneous_scope::make_primary_map): Rework.
+	(impl::heterogeneous_scope::make_secondary_map): Likewise.
+	(impl::Unit::make_template_id): Define.
+
+2005-02-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (Printer::operator<<): Remove definitions of overloads for
+	characters.
+
+2005-02-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Unit::make_ctor_name): Define.
+	(impl::Unit::make_dtor_name): Likewise.
+
+2005-02-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (impl::Class::add_base): Define.
+	(impl::Class::Class): Set
+	impl::Class::base_subobjects::scope::owned_by.
+
+2005-02-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.33.
+
+	* io.C (xpr_exception_spec): Tidy.
+	(operator<<(Printer&, xpr_mapping_expression): Define.
+
+	* impl.C (impl::Fundecl::Fundecl): Propagate changes.
+	(impl::Expr_list): Define all member functions.
+	(impl::Mapping::param): Define.
+	(impl::stmt_factory::make_for): Likewise.
+	(impl::heterogeneous_region::make_subregion): Likewise.
+	(impl::Unit::make_function): Likewise.
+	(Unit::make_expr_list): Remove.
+
+2005-02-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* impl.C (unary_less()): Compare ref_sequence<>s too.
+	(impl::Unit::make_product): Define.
+	(impl::Unit:make_sum): Likewise.
+	(impl::Unit::make_expr_list): Likewise.	
+
+2004-12-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C: #include "ipr/travsersal.H".
+	Propogate renaming in "ipr/interface.H".
+
+2004-11-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Lshift): Rename from Shift_left.
+	(Lshift_assign): Rename from Shift_left_assign.
+	(Rshift): Rename from Shift_right.
+	(Rshift_assign): Rename from Shift_right_assign.
+
+2004-11-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Multi_comment&)): Remove.
+
+2004-11-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Comment&)): Define.
+	(Visitor::visit(const Multi_comment&)): Likewise.
+	(Visitor::visit(const Unit&)): Likewise.
+
+2004-11-09  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C: Replace Expr_as_type with Type_expr.
+	Replace Specialization with Template_id.
+	* io.C: Likewise.
+
+2004-11-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Asm&)): Define.
+
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.26.
+	
+2004-10-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Stmt_builder::make_expr_stmt): Tidy.
+	(Stmt_builder::make_labeled_stmt): Likewise.
+	(Stmt_builder::make_ctor_body): Likewise.
+	(Stmt_builder::make_if_then): Likewise.
+	(Stmt_builder::make_if_then_else): Likewise.
+	(Stmt_builder::make_goto): Likewise.
+
+2004-10-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Stmt_builder::make_break): Define here.
+	(Stmt_builder::make_continue): Likewise.
+	(Stmt_builder::make_block): Likewise.
+	(Stmt_builder::make_ctor_body): Likewise.
+	(Stmt_builder::make_expr_stmt): Likewise.
+	(Stmt_builder::make_goto): Likewise.
+	(Stmt_builder::make_return): Likewise.
+	(Stmt_builder::make_do): Likewise.
+	(Stmt_builder::make_if_then): Likewise.
+	(Stmt_builder::make_switch): Likewise.
+	(Stmt_builder::make_handler): Likewise.
+	(Stmt_builder::make_labeled_stmt): Likewise.
+	(Stmt_builder::make_while): Likewise.
+	(Stmt_builder::make_if_then_else): Likewise.
+	(Stmt_builder::make_for): Likewise.
+
+2004-10-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_specialization): define.
+
+2004-10-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&,
+	xpr_primary_expression)::Impl::visit(const Expr_in_parens&)): Define.
+
+	* ipr.C (Visitor::visit(const Expr_in_parens&)): Define.
+
+2004-09-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.25.
+
+	* ipr.C (Unit_impl::make_ctor_name): Define.
+	(Unit_impl::make_dtor_name): Likewise..
+
+	* io.C (operator<<(Printer&, xpr_declaration)::Impl::visit(const
+	Constructor&)):  Remove.
+	(operator<<(Printer&, xpr_declaration)::Impl::visit(const
+	Destructor&)):  Remove.	
+	(operator<<(Printer&, xpr_name)::Impl::visit(const Ctor_name&)):
+	Define. 
+	(operator<<(Printer&, xpr_name)::Impl::visit(const Dtor_name&)):
+	Likewise. 
+	(operator<<(Printer&, xpr_type_expr)::Impl::visit(const Udt&)): Tidy.
+
+	* ipr.C (Visitor::visit(const Dtor_name&)): Define.
+	(Visitor::visit(const Ctor_name&)): Likewise.
+	(Visitor::visit(const Constructor&)): Remove.
+	(Visitor::visit(const Destructor&)): Likewise.
+	(Unit_impl::make_constructor): Likewise.
+	(Unit_impl::make_destructor): Likewise.
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Name&)): Define.
+
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.24
+	
+2004-09-20  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Parameter_list_impl::add_param): Use
+	Dcl_impl<>::register_to. 
+
+2004-09-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (view): New.
+	(Unit_impl::make_expr_as_type): Use it.
+
+2004-09-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_fun_decl): Tidy.
+	(Unit_impl::make_destructor): Define.
+
+2004-09-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&,
+	xpr_expression_list)::Impl::visit(const Sum&)): Define.
+	(operator<<(Printer&, xpr_type)::Impl::visit(const Sum&)): Define.
+
+	* ipr.C (Visitor::visit(const Sum&)): Define.
+	(Unit_impl::make_sum): Define.
+	(Unit_impl::make_function): Update. Tidy.
+
+2004-09-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_quote)): Tidy.
+
+2004-08-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.23.
+	
+2004-08-31  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_expr_as_type): Ensure idempotency.
+
+	* io.C (operator<<(Printer&, xpr_quote)): New.
+	(operator<<(Printer&, xpr_primary_expression)::Impl::visit(const
+	Literal&)): Use it.
+
+2004-08-30  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Enumerator&)): Define.
+
+2004-08-28  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Enum&)): Fallthrough to Udt.
+
+2004-08-27  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_name)::Impl::visit(const
+	Specialization&)):  Move from operator<<(Printer&,
+	xpr_primary_expression). 
+	(operator<<(Printer&, xpr_type_expr)::Impl::visit(const Template&)): 
+	Tidy.
+	(operator<<(Printer&, xpr_type_expr)::Impl:visit(const
+	Decltype&)): New.	
+	(pp_base::visit(const Type&)): Fallthrough to Expr.
+
+	* ipr.C (Visitor::visit(const Specialization&)): Fallthrough to Name.
+
+2004-08-26  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_operator): Define.
+	(Unit_impl::make_identifier): Likewise.
+	(Unit_impl::make_conversion): Likewise.
+	(Unit_impl::make_scope_ref): Likewise.
+
+	* io.C (operator<<(Printer&, xpr_name)): Handle Scope_ref.
+	(at): New helper function.
+
+	* ipr.C (Visitor::visit(const Scope_ref&)): Fallthrough to Name.
+	(Visitor::visit(const Union&)): Fallthrough to Udt.
+	(Visitor::visit(const Namespace&)): Likewise.
+	(Visitor::visit(const Class&)): Likewise.
+	(Visitor::visit(const Decltype&)): Fallthrough to Type.
+	(Unit_impl::make_decltype): Define.
+
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.22.
+	
+2004-08-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_alias): Don't set type_impl() here.
+
+2004-08-24  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Scope_ref&)): Tidy.
+
+2004-08-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* gnu-tu.H: New file.
+	* gnu-tu.C: Likewise.
+
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.21.
+	
+2004-08-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, Decl::Specifier)): Fix typo.
+
+2004-08-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C: Simplify Do_while to Do.
+	* io.C: Likewise.
+	(operator<<(Printer&, xpr_statement)): Tidy.
+
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.20.
+	
+2004-08-10  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_type_expr)): Collapse printing
+	for Union and Enum into one place that handles Udt by default.
+
+	* ipr.C (Visitor::visit(const Udt&)): Define.
+
+2004-08-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Ctor_body&)): Define.
+	(Visitor::visit(const Expr_stmt&)): Likewise.
+	(Unit_impl::make_handler_seq): Remove.
+
+	* io.C (operator<<(Printer&, xpr_expression)): Don't print
+	Function_body.
+	(operator<<(Printer&, xpr_statement)): Handle Ctor_body.
+
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.19.
+	
+2004-08-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_handler_seq): 
+	* io.C (operator<<(Printer&, xpr_unary_expression)): Don't forget
+	to print Unary_plus.
+	(operator<<(Printer&, xpr_type_expr)): Print parameter-list in
+	parenthesis.
+	(operator<<(Printer&, xpr_declaration)): Likewise.
+
+2004-07-18  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_type)): Fix thinko.
+
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.18.
+	
+2004-07-16  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_expression)): Handle Member_init 
+	and member-initializer list in constructor body.
+
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.17.
+	
+2004-07-15  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Type_id&)): Define.
+	(Visitor::visit(const Name_as_expr&)): Remove.
+	(Unit_impl::make_product): Tidy.
+	(Unit_impl::make_expr_list): Likewise.
+	(CV_type<>): New helper class.
+	(CV_unary<>): Likewise.
+	(CV_binary<>): Likewise.
+	(CV_ternary<>): Likewise.
+	(CV_udt<>): Likewise.
+	(Unit_impl::make_cv_qualified): Rework.  Build names for
+	cv-qualified types too.
+	(Unit_impl::make_class): Tidy.
+	(Unit_impl::make_union): Tidy.
+	(Unit_impl::make_enum): Tidy.
+	(Unit_impl::make_namespace): Tidy.
+	(Unit_impl::make_var): Move here from impl.H.
+
+	* io.C (pp_base::visit(const Name&)): Visit as an expression. 
+	(operator<<(Printer&, xpr_expression)): Handle Expr_list.
+	(operator<<(Printer&, xpr_name)): Render Type_id too.
+	(operator<<(Printer&, xpr_primary_expression)): Remove case for
+	Name_as_expr.
+	(operator<<(Printer&, Type::Qualifier)): New.
+	(operator<<(Printer&, xpr_type_expr)): Handle Expr_as_type.
+
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.16
+	
+2004-07-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr_type)): Uncomment out the case
+	for template printing.
+	(operator<<(Printer&, xpr_declaration)): Handle Bit_field.
+	(hash): New.
+	(xpr_base_classes): New.
+	(operator<<(Printer&, xpr_base_classes)): Handle base classes.
+
+2004-07-07  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_field): Define.
+	(Unit_impl::make_bit_field): Likewise.
+	(Visitor::visit(const Field&)): Likewise.
+	(Visitor::visit(const Bit_field&)): Likewise.
+
+2004-07-06  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (operator<<(Printer&, xpr::statement)::Impl
+	::visit(const For&)): Fix thinko.
+
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C: Tidy.
+	(operator<<(Printer&, xpr_expression)::Impl): Print Scope here.
+
+2004-07-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.15.
+	
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.14.
+	
+2004-07-04  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Field&)): New.
+	* io.C (newline): Tidy.
+	(pp_base::visit(const Decl&)): Call visit(const Expr&).
+
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.13.
+	
+2004-07-02  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Conditional&)): Define.
+	(Visitor::visit(const Type_decl&)): Likewise.
+	(Unit_impl::make_type_decl): Likewise.
+
+	* io.C: Reimplement from scratch.
+
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.12.
+	
+2004-07-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_alias): Define.
+
+	* io.C (printer::Base::visit(const Node&)): Define.
+	(printer::Base::visit(const Name&)): Likewise.
+	(printer::Base::visit(const Expr&)): Likewise.
+	(printer::Base::visit(const Type&)): Likewise.
+	(printer::Base::visit(const Stmt&)): Likewise.
+	(printer::Base::visit(const Decl&)): Likewise.
+	(printer::whitespace): Likewise.
+	(printer::left_paren): Likewise.
+	(printer::right_paren): Likewise.
+	(printer::left_brace): Likewise.
+	(printer::right_brace): Likewise.
+	(printer::left_bracket): Likewise.
+	(printer::right_bracket): Likewise.
+	(printer::xpr::Expression::visit(const Add_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Bitand_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Bitor_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Bitxor_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Div_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Mul_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Shift_left_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Shift_right_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Sub_assign&)): Likewise.
+	(printer::xpr::Expression::visit(const Destructor&)): Likewise.
+
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.11.
+	
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit(const Instantiation&)): Remove.
+	(Visitor::visit(const Qualified&)): Remove.
+	(Visitor::visit(const Object_type&)): Remove.
+	(Visitor::visit(const Expr_as_type&)): Define.
+	(Visitor::visit(const Specialization&)): Likewise.
+	(Unit_impl::make_cv_qualified::Builder): Simplify.
+	(Unit_impl::Unit_impl): Tidy.
+	
+2004-06-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C: Clean up.
+	(Visitor::visit(const Product&)): Define.
+	(Visitor::visit(const Scope&)): Likewise.
+	(Visitor::visit(const Expr_list&)): Likewise.
+	(Class_impl::): Remove.
+	(Union_impl::): Remove.
+	(Enum_impl::): Remove.
+	(Parameter_impl::): Remove.
+	(Parameter_list_impl::add_param): Define.
+	(Unit_impl::make_expr_list): Rename from Unit_impl::make_sequence.
+	(Unit_impl::make_product): Likewise.
+	(Unit_impl::make_fun_decl): Define.
+	(Unit_impl::make_enumerator): Likewise.
+	(Unit_impl::make_base_type): Liekwise.
+	(Unit_impl::make_constructor): Likewise.
+
+	* io.C (printer::xpr::Expression::visit(const Scope&)):
+	Reimplement.
+	(printer::xpr::Expression::visit(const Function&)): Tidy.
+	(printer::xpr::Expression::visit(const Product&)): Define.
+	(printer::xpr::Expression::visit(const Expr_list&)): Likewise.
+	(printer::xpr::Expression::visit(const Function_body&)): Likewise.
+	(printer::xpr::Declaration::visit(const Parameter_list&)): Likewise.
+	(printer::xpr::Declaration::visit(const Enumerator&)): Likewise.
+	(printer::xpr::Declaration::visit(const Base_type&)): Likewise.
+
+2004-06-19  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C: Reflect changes as fallout of removal of unnecessary codes
+	in ipr/interface.H.
+	(printer::xpr::Expression::visit(const Throw&)): Define.
+	* ipr.C (Visitor::visit(const Throw&)): Define.
+	(Visitor::visit(const Base_type&)): Likewise.
+	(New_impl::): Remove.
+	(Function_body_impl::): Comment out.
+	(Unit_impl::make_pointer): Remove.
+	(Unit_impl::make_reference): Remove.
+	(Unit_impl::make_array): Remove.
+	(Unit_impl::make_funuction): Remove.
+	(Unit_impl::make_if_then_else): Remove.
+	(Unit_impl::make_for): Remove.
+	(Unit_impl::make_literal): Remove.
+	(Unit_impl::make_annotation): Remove.
+
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.10.
+	
+2004-06-12  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C: Throught replace direct formatting to Base::stream with
+	an operation on printers. 
+	(print_namable): Remove.
+	(printer::xpr::Statement::visit(const Signature&)): Remove.
+	(printer::xpr::Declaration::visit(const Signature&)): Remove.
+	* ipr.C (validate_index): Remove.
+	(error): Likewise.
+	(default_to): Likewise.
+	(as): New function.  Throughout Visitor member functions, replace
+	default_to<> with a call to visit(as<>()).
+	(scope_impl): Remove.
+	(Instantiation_impl::name): Remove.
+	(Instantiation_impl::scope_impl): Likewise.
+	(Instantiation_impl::args): Likewise.
+	(Overload_impl::size): Likewise.
+	(Overload_impl::get): Likewise.
+	(Overload_impl::operator[]): Likewise.
+	(Overload_impl::accept): Likewise.
+	(Overload_impl::register_decl): Likewise.
+	(Signature): Remove all member definitions.
+	(Function_impl): Likewise.
+	(Member_impl): Likewise.
+	(Block_impl): Likewise.
+	(Handler_impl): Likewise.
+	(Member_decl_impl): Likewise.
+	(Fun_decl_impl): Likewise.
+
+2004-06-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Unit_impl::make_signature): Remove.
+	(Signature_impl): Remove.
+	(Unit_impl::make_function): Tidy.
+
+2004-05-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Call_impl): Remove.
+	(Object_construction_impl): Likewise.
+	(Unit_impl::make_labeled_stmt): Remove.
+	(Unit_impl::make_if_then): Likewise.
+	(Unit_impl::make_switch): Likewise.
+	(Unit_impl::make_while): Likewise.
+	(Unit_impl::make_do_while): Likewise.
+	(Unit_impl::make_break): Likewise.
+	(Unit_impl::make_continue): Likewise.
+	(Unit_impl::make_goto): Likewise.
+	(Unit_impl::make_return): Likewise.
+	(Unit_impl::make_handler): Likewise.
+	(Unit_impl::make_expr_sizeof): Likewise.
+	(Unit_impl::make_type_sizeof): Likewise.
+	(Unit_impl::make_expr_typeid): Likewise.
+	(Unit_impl::make_type_typeid): Likewise.
+
+	* io.C: Match renaming in ipr/interface.H
+	(ipr::printer::xpr::Statement::visit(const Labeled_stmt&)): Tidy.
+
+	* ipr.C: Replace "Program" with "Unit", throughout.
+	(Scope_impl::make_identifier::Impl::scope): Override Name::scope.
+	(Scope_impl::make_operator::Impl::scope): Likewise.
+	(Scope_impl::make_conversion::Impl::scope): Likewise.
+	(Function_body_impl::members): Remove.
+	(Function_body_impl::handlers): Likewise.
+	(Visitor::visit(const Assign&)): Define.
+	(Visitor::visit(const Class_template&)): Remove.
+	(Visitor::visit(const Fun_decl_template&)): Likewise.
+	(Visitor::visit(const Template&)): Default to Visitor::visit(const
+	Type&).
+
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.08.
+	
+2004-05-17  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (Expression_printer::visit(const Type&)): Handle
+	constructed types.
+
+2004-05-14  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Program_impl::make_pointer): Cache computed value.
+	(Program_impl::make_reference): Likewise.
+	(Program_impl::make_cv_qualified): Define.
+	(make_array): Cache computed value.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.07.
+
+2004-05-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit): Rework defaults.  Remove definitions
+	for classes removed from ipr/impl.H.  See ipr/ChangeLog.
+	(Scope_impl::make_block): Make node out of local class impl.
+	(Scope_impl::make_identifier): Likewise.
+	(Scope_impl::make_operator): Likewise.
+	(Scope_impl::make_conversion): Likewise.
+	(Scope_impl::make_qualified): Likewise.
+	(Scope_impl::make_instantiation): Likewise.
+	(Program_impl::make_pointer): Likewise.
+	(Program_impl::make_reference): Likewise.
+	(Program_impl::make_array): Likewise.
+	(Program_impl::make_function): Likewise.
+	(Program_impl::make_if_then): Likewise.
+	(Program_impl:make_if_then_else): Likewise.
+	(Program_impl::make_switch): Likewise.
+	(Program_impl::make_while): Likewise.
+	(Program_impl::make_do_while): Likewise.
+	(Program_impl::make_for): Likewise.
+	(Program_impl::make_break): Likewise.
+	(Program_impl::make_continue): Likewise.
+	(Program_impl::make_goto): Likewise.
+	(Program_impl::make_return): Likewise.
+	(Program_impl::make_handler): Likewise.
+	(Program_impl::make_annotation): Likewise.
+
+	* io.C: Rework pretty-printers.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.06.
+
+2004-05-05  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Program_impl::Program_impl): Initialize members
+	classtype, uniontype, enumtype and namespacetype.
+
+2004-05-03  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (missing_overrider): Don't make static.
+	(print_namable): Make member of namespace ipr.
+	(missing_overrider): Move from here to...
+	* ipr.C (missing_overrider): ...there.
+	(Parameter_impl::Parameter_impl): Rervet previous changes. 
+	(Var_impl::Var_impl): Likewise.
+
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* Mark for 0.05.
+	
+2004-05-01  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (missing_overrider): New.
+	(print_namable): Likewise.
+	(Expression_printer::visit(const Node&)): Implement.  Default to
+	missing_overrider.
+	(Expression_printer::visit(const Name&)): Likewise.
+	(Expression_printer::visit(const Expr&)): Likewise.
+	(Expression_printer::visit(const Statement&)): Define.
+	(Expression_printer::visit(const Type&)): Implement in terms of
+	print_namable.
+	(Expression_printer::visit(const Decl&)): Likewise.
+	(Statement_printer::visit(const Node&)): Define. Default to
+	missing_overrider.
+	(Statement_printer::visit(const Name&)): Likewise.
+	(Statement_printer::visit(const Expr&)): Likewise.
+	(Statement_printer::visit(const Type&)): Likewise.
+	(Statement_printer::visit(const Statement&)): Likewise.
+	(Statement_printer::visit(const Decl&)): Likewise.
+	(Declaration_printer::visit(const Node&)): Likewise.
+	(Declaration_printer::visit(const Name&)): Likewise.
+	(Declaration_printer::visit(const Expr&)): Likewise.
+	(Declaration_printer::visit(const Type&)): Likewise.
+	(Declaration_printer::visit(const Statement&)): Likewise.
+	(Sequence_printer::visit(const Node&)): Likewise.
+	(Sequence_printer::visit(const Name&)): Likewise.
+	(Sequence_printer::visit(const Expr&)): Likewise.
+	(Sequence_printer::visit(const Type&)): Likewise.
+	(Sequence_printer::visit(const Statement&)): Likewise.
+	(Sequence_printer::visit(const Decl&)): Likewise.
+
+	* ipr.C (Visitor::visit(const Node&)): Don't implement.
+	(Visitor::visit(const Name&)): Likewise.
+	(Visitor::visit(const Type&)): Likewise.
+	(Visitor::visit(const Expr&)): Likewise.
+	(Visitor::visit(const Statement&)): Likewise.
+	(Visitor::visit(const Decl&)): Likewise.
+
+	(Program_impl::Builtin<>::is_named): Rename to ...::has_name.
+	(Visitor::visit(const Bit_xor&)): Tidy.
+
+	(Fun_decl_impl): Adjust call to Decl_impl<>.
+	(Var_impl): Likewise.
+	
+2004-04-25  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* io.C (ipr::Expression::visit): Implement more expression
+	pretty-printer routines. 
+	(::accept): Remove.
+
+2004-04-21  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Visitor::visit): Try to make room for reasonable defaults.
+	* io.C (Declaration_printer): New.  Implement basic functionalities.
+	(Expression_printer): Same.
+
+2004-04-08  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Program_impl::Program_impl): Initializer built-in type
+	objects. 
+
+2004-03-23  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Mul_impl): Implement constructor taking two Expr.
+	(Div_impl): Likewise.
+	(Modulo_impl): Likewise.
+	(Add_impl): Likewise.
+	(Sub_impl): Likewise.
+	(Shift_left_impl): Likewise.
+	(Shift_right_impl): Likewise.
+	(Less_impl): Likewise.
+	(Greater_impl): Likewise.
+	(Less_equal_impl): Likewise.
+	(Greater_equal_impl): Likewise.
+	(Equal_impl): Likewise.
+	(Not_equal_impl): Likewise.
+	(Bit_and_impl): Likewise.
+	(Bit_xor_impl): Likewise.
+	(Bit_or_impl): Likewise.
+	(And_impl): Likewise.
+	(Or_impl): Likewise.
+	(Comma_impl): Likewise.
+	(Assign_impl): Likewise.
+	(Array_select_impl): Likewise.
+	(Dot_select_impl): Likewise.
+	(Arrow_select_impl): Likewise.
+	(Scope_select_impl): Likewise.
+
+2004-03-22  Gabriel Dos Reis  <gdr@cs.tamu.edu>
+
+	* ipr.C (Name_expr_impl): Implement explicit constructor.
+	(Pre_increment_impl): Likewise.
+	(Post_increment_impl): Likewise.
+	(Pre_decrement_impl): Likewise.
+	(Post_decrement_impl): Likewise.
+	(Expr_typeid_impl): Likewise.
+	(Type_typeid_impl): Likewise.
+	(Expr_sizeof_impl): Likewise.
+	(Type_sizeof_impl): Likewise.
+	(Deref_impl): Likewise.
+	(Address_impl): Likewise.
+	(Unary_plus_impl): Likewise.
+	(Negate_impl): Likewise.
+	(Not_impl): Likewise.
+	(Complement_impl): Likewise.
+	(Delete_impl): Likewise.
+	(Array_delete_impl): Likewise.
+	(Dot_star_impl): Likewise.
+	(Arrow_star_impl): Likewise.
+
