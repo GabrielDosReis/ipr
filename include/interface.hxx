@@ -341,10 +341,10 @@ namespace ipr {
 
       // Provide STL-style interface, for use with some STL algorithm
       // helper classes.  Sequence<> is an immutable sequence.
-      typedef T value_type;
-      typedef const T& reference;
-      typedef const T* pointer;
-      typedef Iterator iterator;
+      using value_type = T;
+      using reference = const T&;
+      using pointer = const T*;
+      using iterator = Iterator;
 
       virtual int size() const = 0;
       virtual Iterator begin() const;
@@ -445,7 +445,7 @@ namespace ipr {
    // provides interface for.
    template<class Cat, class Operand = const Expr&>
    struct Unary : Cat {
-      typedef Operand Arg_type;
+      using Arg_type = Operand;
       virtual Operand operand() const = 0;
    };
 
@@ -465,8 +465,8 @@ namespace ipr {
    // through the template-parameters First and Second.
    template<class Cat, class First = const Expr&, class Second = const Expr&>
    struct Binary : Cat {
-      typedef First Arg1_type;
-      typedef Second Arg2_type;
+      using Arg1_type = First;
+      using Arg2_type = Second;
       virtual First first() const = 0;
       virtual Second second() const = 0;
    };
@@ -478,9 +478,9 @@ namespace ipr {
    template<class Cat, class First = const Expr&,
             class Second = const Expr&, class Third = const Expr&>
    struct Ternary : Cat { 
-      typedef First Arg1_type;
-      typedef Second Arg2_type;
-      typedef Third Arg3_type;
+      using Arg1_type = First;
+      using Arg2_type = Second;
+      using Arg3_type = Third;
       virtual First first() const = 0;
       virtual Second second() const = 0;
       virtual Third third() const = 0;
@@ -493,10 +493,10 @@ namespace ipr {
             class Second = const Type&, class Third = const Type&,
             class Fourth = const Linkage&>
    struct Quaternary : Cat {
-      typedef First Arg1_type;
-      typedef Second Arg2_type;
-      typedef Third Arg3_type;
-      typedef Fourth Arg4_type;
+      using Arg1_type = First;
+      using Arg2_type = Second;
+      using Arg3_type = Third;
+      using Arg4_type = Fourth;
       virtual First first() const = 0;
       virtual Second second() const = 0;
       virtual Third third() const = 0;
@@ -537,7 +537,7 @@ namespace ipr {
    // Strings in IPR are immutable, and therefore unified.  The constitute
    // the basic building block of many nodes.
    struct String : Category<string_cat, Node> {
-      typedef const char* iterator;
+      using iterator = const char*;
       virtual int size() const = 0;
       virtual iterator begin() const = 0;
       virtual iterator end() const  = 0;
@@ -581,7 +581,7 @@ namespace ipr {
    // The sequence of declarations appearing in a Region makes up the
    // Scope of that region.
    struct Region : Category<region_cat, Node> {
-      typedef std::pair<Unit_location, Unit_location> Location_span;
+      using Location_span = std::pair<Unit_location, Unit_location>;
       virtual const Location_span& span() const = 0;
       virtual const Region& enclosing() const = 0;
       virtual const Scope& bindings() const = 0;
@@ -685,7 +685,7 @@ namespace ipr {
 
                                 // -- Scope_ref --
    // A qualified name of the form "scope::member".
-   struct Scope_ref : Binary<Category<scope_ref_cat, Name> > {
+   struct Scope_ref : Binary<Category<scope_ref_cat, Name>> {
       Arg1_type scope() const  { return first(); }
       Arg2_type member() const { return second(); }
    };
@@ -761,7 +761,7 @@ namespace ipr {
    // is a "sequence" of declarations, that additionaly supports
    // lookup by "Type".
    struct Scope : Category<scope_cat> {
-      typedef Sequence<Decl>::Iterator Iterator;
+      using Iterator = Sequence<Decl>::Iterator;
 
       // The sequence of declarations this scope contain.
       virtual const Sequence<Decl>& members() const = 0;
@@ -885,13 +885,11 @@ namespace ipr {
                                 // -- As_type --
    // This node represents the use of a general expression as
    // a type.  Such situation arises in cases where a declaration
-   // node can be used to designate a type, as in
-   // \code
+   // node can be used to designate a type, as in:
    //    struct S;
    //    typedef int count;
    //    typename T::size_type s = 90;
    //    template<typename T, T t> ...
-   // \endcode
    // Some C++ implementations define "extended built-in" types with
    // language linkage, e.g. `extern "Java"' or `extern "Fortran"', for
    // interoperating with other languages.  The current representation
@@ -916,7 +914,7 @@ namespace ipr {
    // however, we've made a special node for template.  ISO C++ specifies
    // that function types have language linkages and two function types
    // with different language linkages are different.
-   struct Function : Quaternary<Category<function_cat, Type> > {
+   struct Function : Quaternary<Category<function_cat, Type>> {
       // Parameter-type-list of a function of this type.  In full
       // generality, this also describes template signature.
       Arg1_type source() const { return first(); }
@@ -1033,20 +1031,20 @@ namespace ipr {
    // interesting because it is a sequence of declarations that can be
    // given a name.
    struct Namespace : Category<namespace_cat, Udt> {
-      typedef Decl Member;      // -- type of members of this type.
+      using Member = Decl;      // -- type of members of this type.
       const Sequence<Decl>& members() const { return scope().members(); }
    };
 
                                 // -- Class --
    struct Class : Category<class_cat, Udt> {
-      typedef Decl Member;      // -- type of members of this type.
+      using Member = Decl;      // -- type of members of this type.
       const Sequence<Decl>& members() const { return scope().members(); }
       virtual const Sequence<Base_type>& bases() const = 0;
    };
 
                                 // -- Union --
    struct Union : Category<union_cat, Udt> {
-      typedef Decl Member;      // -- type of members of this type.
+      using Member = Decl;      // -- type of members of this type.
       const Sequence<Decl>& members() const { return scope().members(); }
    };
 
@@ -1055,7 +1053,7 @@ namespace ipr {
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
    struct Enum : Category<enum_cat, Udt> {
-      typedef Enumerator Member;      // -- type of members of this type.
+      using Member = Enumerator;      // -- type of members of this type.
       virtual const Sequence<Enumerator>& members() const = 0;
    };
 
@@ -1079,34 +1077,34 @@ namespace ipr {
 
                                 // -- Address --
    // Address-of expression -- "&expr"
-   struct Address : Unary<Category<address_cat, Classic> > { };
+   struct Address : Unary<Category<address_cat, Classic>> { };
 
                                 // -- Array_delete --
    // Array-form of delete-expression --  "delete[] p"
-   struct Array_delete : Unary<Category<array_delete_cat,Classic> > {
+   struct Array_delete : Unary<Category<array_delete_cat, Classic>> {
       const Expr& storage() const { return operand(); }
    };
 
                                 // -- Complement --
    // Complement-expression -- "~expr"
-   struct Complement : Unary<Category<complement_cat,Classic> > { };
+   struct Complement : Unary<Category<complement_cat, Classic>> { };
 
                                 // -- Delete --
    // Delete-expression -- "delete p"
-   struct Delete : Unary<Category<delete_cat,Classic> > {
+   struct Delete : Unary<Category<delete_cat, Classic>> {
       const Expr& storage() const { return operand(); }
    };
 
                                 // -- Deref --
    // Dereference-expression -- "*expr"
-   struct Deref : Unary<Category<deref_cat, Classic> > { };
+   struct Deref : Unary<Category<deref_cat, Classic>> { };
 
                                 // -- Paren_expr --
    // Parenthesized-expressions -- "(expr)".  This might seem purely
    // syntactical but it also has semantic implications, like when an
    // argument-dependent lookup should be done or not, or on the accuracy
    // of an expression evaluation.
-   struct Paren_expr : Unary<Category<paren_expr_cat, Classic> > {
+   struct Paren_expr : Unary<Category<paren_expr_cat, Classic>> {
       const Expr& expr() const { return operand(); }
    };
 
@@ -1124,11 +1122,11 @@ namespace ipr {
 
                                 // -- Expr_sizeof --
    // sizeof-expression -- "sizeof (expr)"
-   struct Expr_sizeof : Unary<Category<expr_sizeof_cat, Classic> > { };
+   struct Expr_sizeof : Unary<Category<expr_sizeof_cat, Classic>> { };
 
                                 // -- Expr_typeid --
    // typeid-expression -- "typeid (expr)"
-   struct Expr_typeid : Unary<Category<expr_typeid_cat, Classic> > { };
+   struct Expr_typeid : Unary<Category<expr_typeid_cat, Classic>> { };
 
                                 // -- Id_expr --
    // This node represents use of a name to designate an entity.
@@ -1146,23 +1144,23 @@ namespace ipr {
 
                                 // -- Not --
    // logical-not-expression -- "!expr"
-   struct Not : Unary<Category<not_cat, Classic> > { };
+   struct Not : Unary<Category<not_cat, Classic>> { };
 
                                 // -- Post_decrement --
    // post-decrement-expression -- "expr--".
-   struct Post_decrement : Unary<Category<post_decrement_cat,Classic> > { };
+   struct Post_decrement : Unary<Category<post_decrement_cat,Classic>> { };
    
                                 // -- Post_increment --
    // post-increment-expression -- "expr++".
-   struct Post_increment : Unary<Category<post_increment_cat, Classic> > { };
+   struct Post_increment : Unary<Category<post_increment_cat, Classic>> { };
 
                                 // -- Pre_decrement --
    // pre-decrement-expression -- "--expr".
-   struct Pre_decrement : Unary<Category<pre_decrement_cat, Classic> > { };
+   struct Pre_decrement : Unary<Category<pre_decrement_cat, Classic>> { };
 
                                 // -- Pre_increment --
    // pre-increment-expression -- "++expr".
-   struct Pre_increment : Unary<Category<pre_increment_cat, Classic> > { };
+   struct Pre_increment : Unary<Category<pre_increment_cat, Classic>> { };
 
                                 // -- Throw --
    // A node that represents a C++ expression of the form `throw ex'.
@@ -1170,7 +1168,7 @@ namespace ipr {
    // this node represents the flow-control "throw;", which actually
    // could be represented by a dedicated statement node, Rethrow for
    // instance.
-   struct Throw : Unary<Category<throw_cat, Classic> > {
+   struct Throw : Unary<Category<throw_cat, Classic>> {
       const Expr& exception() const { return operand(); }
    };
 
@@ -1184,17 +1182,17 @@ namespace ipr {
 
                                 // -- Unary_minus --
    // unary-minus-expression -- "-expr"
-   struct Unary_minus : Unary<Category<unary_minus_cat, Classic> > { };
+   struct Unary_minus : Unary<Category<unary_minus_cat, Classic>> { };
 
                                 // -- Unary_plus --
    // unary-plus-expression -- "+expr"
-   struct Unary_plus : Unary<Category<unary_plus_cat, Classic> > { };
+   struct Unary_plus : Unary<Category<unary_plus_cat, Classic>> { };
 
                                 // -- Member_selection<> --
    // This class factorizes the commonalities of various object member
    // selection operation.
    template<Category_code Cat>
-   struct Member_selection : Binary<Category<Cat, Classic> > {
+   struct Member_selection : Binary<Category<Cat, Classic>> {
       const Expr& base() const { return this->first(); }
       const Expr& member() const { return this->second(); }
    };
@@ -1214,15 +1212,15 @@ namespace ipr {
 
                                 // -- Plus --
    // Addition-expression -- "a + b"
-   struct Plus : Binary<Category<plus_cat, Classic> > { };
+   struct Plus : Binary<Category<plus_cat, Classic>> { };
 
                                 // -- Plus_assign --
    // In-place addition-expression -- "a += b"
-   struct Plus_assign : Binary<Category<plus_assign_cat, Classic> > { };
+   struct Plus_assign : Binary<Category<plus_assign_cat, Classic>> { };
 
                                 // -- And --
    // Logical-and-expression -- "a && b"
-   struct And : Binary<Category<and_cat, Classic> > { };
+   struct And : Binary<Category<and_cat, Classic>> { };
 
                                 // -- Array_ref --
    // This is for an expression that designate a particular slot
@@ -1240,31 +1238,31 @@ namespace ipr {
 
                                 // -- Assign --
    // Assignment-expression -- "a = b"
-   struct Assign : Binary<Category<assign_cat, Classic> > { };
+   struct Assign : Binary<Category<assign_cat, Classic>> { };
 
                                 // -- Bitand --
    // Bit-and-expression -- "a & b"
-   struct Bitand : Binary<Category<bitand_cat, Classic> > { };
+   struct Bitand : Binary<Category<bitand_cat, Classic>> { };
 
                                 // -- Bitand_assign --
    // In-place bit-and-expression -- "a &= b"
-   struct Bitand_assign : Binary<Category<bitand_assign_cat, Classic> > { };
+   struct Bitand_assign : Binary<Category<bitand_assign_cat, Classic>> { };
 
                                 // -- Bitor --
    // Bit-or expression -- "a | b"
-   struct Bitor : Binary<Category<bitor_cat, Classic> > { };
+   struct Bitor : Binary<Category<bitor_cat, Classic>> { };
 
                                 // -- Bitor_assign --
    // In-place bit-or-expression -- "a |= b"
-   struct Bitor_assign : Binary<Category<bitor_assign_cat, Classic> > { };
+   struct Bitor_assign : Binary<Category<bitor_assign_cat, Classic>> { };
 
                                 // -- Bitxor --
    // Exclusive bit-or-expression -- "a ^ b"
-   struct Bitxor : Binary<Category<bitxor_cat, Classic> > { };
+   struct Bitxor : Binary<Category<bitxor_cat, Classic>> { };
 
                                 //  -- Bitxor_assign --
    // In-place exclusive bit-or-expression -- "a ^= b"
-   struct Bitxor_assign : Binary<Category<bitxor_assign_cat, Classic> > { };
+   struct Bitxor_assign : Binary<Category<bitxor_assign_cat, Classic>> { };
 
                                 //  -- Cast --
    // An expression of the form "(type) expr", representing the
@@ -1283,7 +1281,7 @@ namespace ipr {
 
                                 // -- Comma --
    // comma-expression -- "a, b"
-   struct Comma : Binary<Category<comma_cat, Classic> > { };
+   struct Comma : Binary<Category<comma_cat, Classic>> { };
 
                                 // -- Const_cast --
    // const_cast-expression -- "const_cast<type>(expr)".
@@ -1303,11 +1301,11 @@ namespace ipr {
 
                                 // -- Div --
    // Division-expression -- "a / b"
-   struct Div : Binary<Category<div_cat, Classic> > { };
+   struct Div : Binary<Category<div_cat, Classic>> { };
 
                                 //  -- Div_assign --
    // In-place division-expression -- "a /= b"
-   struct Div_assign : Binary<Category<div_assign_cat, Classic> > { };
+   struct Div_assign : Binary<Category<div_assign_cat, Classic>> { };
 
                                 // -- Dot --
    // This node type represents a member selection on object using
@@ -1325,23 +1323,23 @@ namespace ipr {
 
                                 // -- Equal --
    // Equality-comparison-expression -- "a == b"
-   struct Equal : Binary<Category<equal_cat, Classic> > { };
+   struct Equal : Binary<Category<equal_cat, Classic>> { };
 
                                 // -- Greater --
    // greater-comparison-expression -- "a > b"
-   struct Greater : Binary<Category<greater_cat, Classic> > { };
+   struct Greater : Binary<Category<greater_cat, Classic>> { };
 
                                 // -- Greater_equal --
    // greater-or-equal-comparison-expression -- "a >= b"
-   struct Greater_equal : Binary<Category<greater_equal_cat, Classic> > { };
+   struct Greater_equal : Binary<Category<greater_equal_cat, Classic>> { };
 
                                 // -- Less --
    // less-comparison-expression -- "a < b"
-   struct Less : Binary<Category<less_cat, Classic> > { };
+   struct Less : Binary<Category<less_cat, Classic>> { };
 
                                 // -- Less_equal --
    // less-equal-comparison-expression -- "a <= b"
-   struct Less_equal : Binary<Category<less_equal_cat, Classic> > { };
+   struct Less_equal : Binary<Category<less_equal_cat, Classic>> { };
    
                                 // -- Literal --
    // An IPR literal is just like a standard C++ literal. 
@@ -1372,42 +1370,42 @@ namespace ipr {
                                 // -- Member_init --
    // Node that represent a member initlization, in constructor
    // definition.
-   struct Member_init : Binary<Category<member_init_cat> > {
+   struct Member_init : Binary<Category<member_init_cat>> {
       Arg1_type member() const { return first(); }
       Arg2_type initializer() const { return second(); }
    };
 
                                 // -- Minus --
    // Subtraction-expression -- "a - b"
-   struct Minus : Binary<Category<minus_cat, Classic> > { };
+   struct Minus : Binary<Category<minus_cat, Classic>> { };
 
                                 //  -- Minus_assign --
    // In-place subtraction-expression -- "a -= b".
-   struct Minus_assign : Binary<Category<minus_assign_cat, Classic> > { };
+   struct Minus_assign : Binary<Category<minus_assign_cat, Classic>> { };
 
                                 // -- Modulo --
    // Modulo-expression -- "a % b"
-   struct Modulo : Binary<Category<modulo_cat, Classic> > { };
+   struct Modulo : Binary<Category<modulo_cat, Classic>> { };
 
                                 // -- Modulo_assign --
    // In-place modulo-expression -- "a %= b"
-   struct Modulo_assign : Binary<Category<modulo_assign_cat, Classic> > { };
+   struct Modulo_assign : Binary<Category<modulo_assign_cat, Classic>> { };
    
                                 // -- Mul --
    // Multiplication-expression -- "a * b"
-   struct Mul : Binary<Category<mul_cat, Classic> > { };
+   struct Mul : Binary<Category<mul_cat, Classic>> { };
 
                                 // -- Mul_assign --
    // In-place multiplication-expression -- "a *= b"
-   struct Mul_assign : Binary<Category<mul_assign_cat, Classic> > { };
+   struct Mul_assign : Binary<Category<mul_assign_cat, Classic>> { };
 
                                 // -- Not_equal --
    // Inequality-comparison-expression -- "a != b"
-   struct Not_equal : Binary<Category<not_equal_cat, Classic> > { };
+   struct Not_equal : Binary<Category<not_equal_cat, Classic>> { };
 
                                 // -- Or --
    // logical-or-expression -- "a || b"
-   struct Or : Binary<Category<or_cat, Classic> > { };
+   struct Or : Binary<Category<or_cat, Classic>> { };
 
                                 // -- Reinterpret_cast --
    // An expression of the form "reinterpret_cast<type>(expr)"
@@ -1415,19 +1413,19 @@ namespace ipr {
 
                                 // -- Lshift --
    // left-shift-expression -- "a << b"
-   struct Lshift : Binary<Category<lshift_cat, Classic> > { };
+   struct Lshift : Binary<Category<lshift_cat, Classic>> { };
 
                                 // -- Lshift_assign --
    // In-place left-shift-expression -- "a <<= b".
-   struct Lshift_assign : Binary<Category<lshift_assign_cat, Classic> > { };
+   struct Lshift_assign : Binary<Category<lshift_assign_cat, Classic>> { };
 
                                 // -- Rshift --
    // Right-shift-expression -- "a >> b"
-   struct Rshift : Binary<Category<rshift_cat, Classic> > { };
+   struct Rshift : Binary<Category<rshift_cat, Classic>> { };
 
                                 // -- Rshift_assign --
    // In-place right-shift-expression -- "a >>= b"
-   struct Rshift_assign : Binary<Category<rshift_assign_cat, Classic> > { };
+   struct Rshift_assign : Binary<Category<rshift_assign_cat, Classic>> { };
 
                                 // -- Static_cast --
    // An expression of the form "static_cast<type>(expr)".
@@ -1456,7 +1454,7 @@ namespace ipr {
    // it is redundant with both If_then_else and Swicth nodes
    // from semantics point of view.  However, if we want to preserve
    // the syntax, then it is necessary to have it.
-   struct Conditional : Ternary<Category<conditional_cat, Classic> > {
+   struct Conditional : Ternary<Category<conditional_cat, Classic>> {
       Arg1_type condition() const { return first(); }
       Arg2_type then_expr() const { return second(); }
       Arg3_type else_expr() const { return third(); }
@@ -1529,7 +1527,7 @@ namespace ipr {
    // This node class represents an expression statement, e.g.
    //    std::cout << "Hello World" << std::endl;
    // "expr()" is the Expression to evaluate.
-   struct Expr_stmt : Unary<Category<expr_stmt_cat, Stmt> > {
+   struct Expr_stmt : Unary<Category<expr_stmt_cat, Stmt>> {
       Arg_type expr() const { return operand(); }
    };
 
@@ -1635,13 +1633,13 @@ namespace ipr {
 
                                 // -- Goto --
    // A classic goto-statement.
-   struct Goto : Unary<Category<goto_cat, Stmt> > {
+   struct Goto : Unary<Category<goto_cat, Stmt>> {
       Arg_type target() const { return operand(); }
    };
 
                                 // -- Return --
    // A classic return-statement.
-   struct Return : Unary<Category<return_cat, Stmt> > {
+   struct Return : Unary<Category<return_cat, Stmt>> {
       Arg_type value() const { return operand(); }
    };
 

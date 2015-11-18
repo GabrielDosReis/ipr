@@ -54,16 +54,15 @@ namespace ipr {
       // of redelcarations in decl-sets.
       // In general, it can be used to implement the notion of sub-sequence.
 
-      template<class T, class Seq = Sequence<T> >
+      template<class T, class Seq = Sequence<T>>
       struct ref_sequence : Seq, private std::deque<const void*> {
-         typedef std::deque<const void*> Rep;
-         typedef const T* pointer;
-         typedef typename Seq::Iterator Iterator;
+         using Rep = std::deque<const void*>;
+         using pointer = const T*;
+         using Iterator = typename Seq::Iterator;
          
          explicit ref_sequence(std::size_t n = 0) : Rep(n) { }
          
-         // Override ipr::Sequence<T>::size.
-         int size() const { return (int)Rep::size(); }
+         int size() const override { return (int)Rep::size(); }
          
          using Seq::operator[];
          using Seq::begin;
@@ -74,8 +73,7 @@ namespace ipr {
          using Rep::push_back;
          using Rep::push_front;
          
-         // Override Cat::get, with range-check.
-         const T& get(int p) const { return *pointer(this->at(p)); }
+         const T& get(int p) const override { return *pointer(this->at(p)); }
       };
 
                                 // -- impl::val_sequence --
@@ -83,10 +81,10 @@ namespace ipr {
       // the actual values, instead of references to values (as is
       // the case of ref_sequence<T>).  
 
-      template<class T, class Seq = Sequence<T> >
+      template<class T, class Seq = Sequence<T>>
       struct val_sequence : Seq, private util::slist<T> {
-         typedef util::slist<T> Impl;
-         typedef typename Seq::Iterator Iterator;
+         using Impl = util::slist<T>;
+         using Iterator = typename Seq::Iterator;
 
          using Seq::operator[];
          using Seq::begin;
@@ -115,11 +113,9 @@ namespace ipr {
       // to keep track of their elements (even when they are empty).
       template<class T>
       struct empty_sequence : ipr::Sequence<T> {
-         // Override Sequence<T>::size.
-         int size() const { return 0; }
+         int size() const override { return 0; }
          
-         // Override Sequence<T>::get.
-         const T& get(int) const
+         const T& get(int) const override
          {
             throw std::domain_error("empty_sequence::get");
          }
@@ -135,7 +131,7 @@ namespace ipr {
                                 // -- Node --
       template<class T>
       struct Node : T {
-         typedef T Interface;
+         using Interface = T;
          void accept(ipr::Visitor& v) const { v.visit(*this); }
       };
 
@@ -159,21 +155,20 @@ namespace ipr {
       // Helper class
       template<class Interface>
       struct Unary : Interface {
-         typedef typename Interface::Arg_type Arg_type;
+         using typename Interface::Arg_type;
          Arg_type rep;
 
          explicit Unary(Arg_type a) : rep(a) { }
 
-         // Override ipr::Unary<>::operand.
-         Arg_type operand() const { return rep; }
+         Arg_type operand() const override { return rep; }
       };
 
       template<class Interface>
       struct type_from_operand : impl::Unary<Interface> {
-         typedef typename Interface::Arg_type Arg_type;
+         using typename Interface::Arg_type;
 
          explicit type_from_operand(Arg_type a) : impl::Unary<Interface>(a) { }
-         const ipr::Type& type() const // override ipr::Expr::type.
+         const ipr::Type& type() const override
          {
             return this->rep.type();
          }
@@ -181,8 +176,8 @@ namespace ipr {
       
       template<class Interface>
       struct Binary : Interface {
-         typedef typename Interface::Arg1_type Arg1_type;
-         typedef typename Interface::Arg2_type Arg2_type;
+         using typename Interface::Arg1_type;
+         using typename Interface::Arg2_type;
          struct Rep {
             Arg1_type first;
             Arg2_type second;
@@ -193,22 +188,20 @@ namespace ipr {
          Binary(const Rep& r) : rep(r) { }
          Binary(Arg1_type f, Arg2_type s) : rep(f, s) { }
 
-         // Override ipr::Binary<>::first.
-         Arg1_type first() const { return rep.first; }
+         Arg1_type first() const override { return rep.first; }
 
-         // Override ipr::Binary<>::second.
-         Arg2_type second() const { return rep.second; }
+         Arg2_type second() const override { return rep.second; }
       };
 
       template<class Interface>
       struct type_from_second : impl::Binary<Interface> {
-         typedef typename Interface::Arg1_type Arg1_type;
-         typedef typename Interface::Arg2_type Arg2_type;
+         using typename Interface::Arg1_type;
+         using typename Interface::Arg2_type;
 
          type_from_second(Arg1_type f, Arg2_type s)
                : impl::Binary<Interface>(f, s) { }
 
-         const ipr::Type& type() const // override ipr::Expr::type
+         const ipr::Type& type() const override
          {
             return this->rep.second.type();
          }
@@ -217,9 +210,9 @@ namespace ipr {
 
       template<class Interface>
       struct Ternary : Interface {
-         typedef typename Interface::Arg1_type Arg1_type;
-         typedef typename Interface::Arg2_type Arg2_type;
-         typedef typename Interface::Arg3_type Arg3_type;
+         using typename Interface::Arg1_type;
+         using typename Interface::Arg2_type;
+         using typename Interface::Arg3_type;
          struct Rep {
             Arg1_type first;
             Arg2_type second;
@@ -233,22 +226,17 @@ namespace ipr {
          Ternary(const Rep& r) : rep(r) { }
          Ternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep(f, s, t) { }
 
-         // Override ipr::Ternary<>::first.
-         Arg1_type first() const { return rep.first; }
-
-         // Override ipr::Ternary<>::second.
-         Arg2_type second() const { return rep.second; }
-
-         // Override ipr::Ternary<>::third.
-         Arg3_type third() const { return rep.third; }
+         Arg1_type first() const override { return rep.first; }
+         Arg2_type second() const override { return rep.second; }
+         Arg3_type third() const override { return rep.third; }
       };
 
       template<class Interface>
       struct Quaternary : Interface {
-         typedef typename Interface::Arg1_type Arg1_type;
-         typedef typename Interface::Arg2_type Arg2_type;
-         typedef typename Interface::Arg3_type Arg3_type;
-         typedef typename Interface::Arg4_type Arg4_type;
+         using typename Interface::Arg1_type;
+         using typename Interface::Arg2_type;
+         using typename Interface::Arg3_type;
+         using typename Interface::Arg4_type;
          struct Rep {
             Arg1_type first;
             Arg2_type second;
@@ -263,17 +251,10 @@ namespace ipr {
          Quaternary(const Rep& r) : rep(r) { }
          Quaternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep(f, s, t) { }
 
-         // Override ipr::Quaternary<>::first.
-         Arg1_type first() const { return rep.first; }
-
-         // Override ipr::Quaternary<>::second.
-         Arg2_type second() const { return rep.second; }
-
-         // Override ipr::Quaternary<>::third.
-         Arg3_type third() const { return rep.third; }
-
-         // Override ipr::Quaternary<>::fourth.
-         Arg4_type fourth() const { return rep.fourth; }
+         Arg1_type first() const override { return rep.first; }
+         Arg2_type second() const override { return rep.second; }
+         Arg3_type third() const override { return rep.third; }
+         Arg4_type fourth() const override { return rep.fourth; }
       };
 
       
@@ -300,10 +281,10 @@ namespace ipr {
                                 // -- Conversion_expr --
       template<class Interface>
       struct Conversion_expr
-         : impl::Binary<impl::Classic<impl::Node<Interface> > > {
-         typedef impl::Binary<impl::Classic<impl::Node<Interface> > > Base;
-         typedef typename Base::Arg1_type Arg1_type;
-         typedef typename Base::Arg2_type Arg2_type;
+         : impl::Binary<impl::Classic<impl::Node<Interface>>> {
+         using Base = impl::Binary<impl::Classic<impl::Node<Interface>>>;
+         using typename Base::Arg1_type;
+         using typename Base::Arg2_type;
 
          explicit Conversion_expr(typename Base::Rep r) : Base(r) { }
          Conversion_expr(Arg1_type f, Arg2_type s) : Base(f, s) { }
@@ -324,7 +305,7 @@ namespace ipr {
       };
 
                                 // -- Linkage --
-      typedef Unary<Node<ipr::Linkage> > Linkage;
+      using Linkage = Unary<Node<ipr::Linkage>>;
 
       // -------------------------
       // -- General expressions --
@@ -339,9 +320,10 @@ namespace ipr {
          const ipr::Type* constraint;
 
          Expr(const ipr::Type* t = 0) : constraint(t) { }
-
-         // Override ipr::Expr::type.
-         const ipr::Type& type() const { return *util::check(constraint); }
+         const ipr::Type& type() const override
+         {
+            return *util::check(constraint);
+         }
       };
 
 
@@ -400,12 +382,8 @@ namespace ipr {
       // The chain of declarations in a scope.
       
       struct decl_sequence : ipr::Sequence<ipr::Decl> {
-         // Override ipr::Sequence<>::size.
-         int size() const;
-
-         // Override ipr::Sequence<>::get.
-         const ipr::Decl& get(int) const;
-
+         int size() const override;
+         const ipr::Decl& get(int) const override;
          // Inserts a declaration in this sequence.
          void insert(scope_datum*);
 
@@ -425,11 +403,8 @@ namespace ipr {
 
          explicit singleton_declset(const T& t) : datum(t) { }
 
-         // Override ipr::Sequence<>::size.
-         int size() const { return 1; }
-
-         // Override ipr::Sequence::get.
-         const T& get(int i) const
+         int size() const override { return 1; }
+         const T& get(int i) const override
          {
             if (i == 1)
                return datum;
@@ -506,7 +481,7 @@ namespace ipr {
       template<>
       struct master_decl_data<ipr::Named_map>
          : basic_decl_data<ipr::Named_map>, overload_entry {
-         typedef basic_decl_data<ipr::Named_map> Base;
+         using Base = basic_decl_data<ipr::Named_map>;
          // The declaration that is considered to be the definition.
          const ipr::Named_map* def;
          const ipr::Linkage* langlinkage;
@@ -545,15 +520,9 @@ namespace ipr {
 
          explicit Overload(const ipr::Name&);
 
-         // Override ipr::Overload::operator[](const ipr::Type&).
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const;
-
-         // Override ipr::Sequence<ipr::Decl>::size.
-         int size() const;
-
-         // Override ipr::Sequence<ipr::Decl>::get.
-         const ipr::Decl& get(int) const;
-
+         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const override;
+         int size() const override;
+         const ipr::Decl& get(int) const override;
          overload_entry* lookup(const ipr::Type&) const;
 
          template<class T>
@@ -573,17 +542,10 @@ namespace ipr {
 
          explicit singleton_overload(const ipr::Decl&);
 
-         // Override ipr::Expr::type.
-         const ipr::Type& type() const;
-
-         // Override ipr::Sequence<ipr::Decl>::size.
-         int size() const;
-
-         // Override ipr::Sequence<ipr::Decl>::get.
-         const ipr::Decl& get(int) const;
-
-         // Override ipr::Overload::operator[](const ipr::Type&).
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const;
+         const ipr::Type& type() const override;
+         int size() const override;
+         const ipr::Decl& get(int) const override;
+         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const override;
       };
 
 
@@ -594,17 +556,10 @@ namespace ipr {
       // be clutered by try-blocks. 
 
       struct empty_overload : impl::Node<ipr::Overload> {
-         // Override ipr::Expr::type.
-         const ipr::Type& type() const;
-
-         // Override ipr::Sequence<ipr::Decl>::size.
-         int size() const;
-
-         // Override ipr::Sequence<ipr::Decl>::get.
-         const ipr::Decl& get(int) const;
-
-         // Override ipr::Overload::operator[](const ipr::Type&).
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const;
+         const ipr::Type& type() const override;
+         int size() const override;
+         const ipr::Decl& get(int) const override;
+         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const override;
       };
 
       struct node_compare {
@@ -644,8 +599,7 @@ namespace ipr {
          // override ipr::Type::main_variant.
 //         const ipr::Type& main_variant() const { return *this; }
 
-         // override ipr::Type::name.
-         const ipr::Name& name() const { return *util::check(id); }
+         const ipr::Name& name() const override { return *util::check(id); }
 
          const ipr::Name* id;
       };
@@ -666,14 +620,15 @@ namespace ipr {
          typed_sequence() { }
          explicit typed_sequence(const Seq& s) : seq(s) { }
          
-         // override ipr::Unary<>::operand.
-         const ipr::Sequence<ipr::Type>& operand() const { return *this; }
-
-         // override ipr::Sequence<>::size.
-         int size() const { return seq.size(); }
-
-         // override ipr::Sequence<>::get.
-         const ipr::Type& get(int i) const { return seq.get(i).type(); }
+         const ipr::Sequence<ipr::Type>& operand() const override
+         {
+            return *this;
+         }
+         int size() const override { return seq.size(); }
+         const ipr::Type& get(int i) const override
+         {
+            return seq.get(i).type();
+         }
       };
 
       // This class template maps an interface type to its actual
@@ -687,7 +642,7 @@ namespace ipr {
                                 // -----------------
                                 // -- impl::Rname --
                                 // -----------------
-      struct Rname : Ternary<Node<ipr::Rname> > {
+      struct Rname : Ternary<Node<ipr::Rname>> {
          explicit Rname(Rep);
 
          // It was not strictly necessary to actually define this class
@@ -703,20 +658,17 @@ namespace ipr {
          ipr::Source_location src_locus;
          ref_sequence<ipr::Annotation> notes;
 
-         // Override ipr::Stmt::unit_location.
-         const ipr::Unit_location& unit_location() const
+         const ipr::Unit_location& unit_location() const override
          {
             return unit_locus;
          }
 
-         // Override ipr::Stmt::unit_location.
-         const ipr::Source_location& source_location() const
+         const ipr::Source_location& source_location() const override
          {
             return src_locus;
          }
 
-         // Override ipr::Stmt::annotations.
-         const ipr::Sequence<ipr::Annotation>& annotation() const
+         const ipr::Sequence<ipr::Annotation>& annotation() const override
          {
             return notes;
          }
@@ -727,19 +679,17 @@ namespace ipr {
       // handled by the class template unique_decl<>.
       
       template<class D>
-      struct Decl : Stmt<Node<D> > {
+      struct Decl : Stmt<Node<D>> {
          basic_decl_data<D> decl_data;
          ipr::Named_map* pat;
          val_sequence<ipr::Substitution> args;
 
          Decl() : decl_data(0), pat(0) { }
 
-         // Override Decl::substitutions.
-         const ipr::Sequence<ipr::Substitution>& substitutions() const
+         const ipr::Sequence<ipr::Substitution>& substitutions() const override
          { return args; }
 
-         // Override Decl::pattern;
-         const ipr::Named_map& generating_map() const
+         const ipr::Named_map& generating_map() const override
          { return *util::check(pat); }
 
          const ipr::Linkage& lang_linkage() const
@@ -767,7 +717,7 @@ namespace ipr {
       // specialization of Decl<> in those cases.
       
       template<class Interface>
-      struct unique_decl : impl::Stmt<Node<Interface> > {
+      struct unique_decl : impl::Stmt<Node<Interface>> {
          ipr::Decl::Specifier spec;
          const ipr::Linkage* langlinkage;
          singleton_overload overload;
@@ -787,12 +737,10 @@ namespace ipr {
             return *util::check(langlinkage);
          }
 
-         // Override Decl::substitutions.
-         const ipr::Sequence<ipr::Substitution>& substitutions() const
+         const ipr::Sequence<ipr::Substitution>& substitutions() const override
          { return args; }
 
-         // Override Decl::pattern;
-         const ipr::Named_map& generating_map() const
+         const ipr::Named_map& generating_map() const override
          { return *util::check(pat); }
       };
 
@@ -858,17 +806,17 @@ namespace ipr {
 
       template<>
       struct traits<ipr::Parameter> {
-         typedef impl::Parameter rep;
+         using rep = impl::Parameter;
       };
 
       template<>
       struct traits<ipr::Base_type> {
-         typedef impl::Base_type rep;
+         using rep = impl::Base_type;
       };
 
       template<>
       struct traits<ipr::Enumerator> {
-         typedef impl::Enumerator rep;
+         using rep = impl::Enumerator;
       };
 
 
@@ -879,7 +827,7 @@ namespace ipr {
       
       template<class Member>
       struct homogeneous_sequence : ipr::Sequence<Member> {
-         typedef typename traits<Member>::rep rep;
+         using rep = typename traits<Member>::rep;
          val_sequence<rep> seq;
 
          int size() const { return seq.size(); }
@@ -906,8 +854,8 @@ namespace ipr {
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
                                  std::allocator<void> {
-         typedef typename homogeneous_sequence<Member>::rep member_rep;
-         typed_sequence<homogeneous_sequence<Member> > decls;
+         using member_rep = typename homogeneous_sequence<Member>::rep;
+         typed_sequence<homogeneous_sequence<Member>> decls;
          empty_overload missing;
 
          explicit
@@ -957,9 +905,9 @@ namespace ipr {
       }
 
       template<class Member,
-               class RegionKind = Node<ipr::Region> >
+               class RegionKind = Node<ipr::Region>>
       struct homogeneous_region : RegionKind {
-         typedef ipr::Region::Location_span location_span;
+         using location_span = ipr::Region::Location_span;
          const ipr::Region& parent;
          location_span extent;
          const ipr::Expr* owned_by;
@@ -980,9 +928,9 @@ namespace ipr {
       };
       
       struct Parameter_list : homogeneous_region<ipr::Parameter,
-                                 impl::Node<ipr::Parameter_list> > {
-         typedef homogeneous_region<ipr::Parameter,
-                                    impl::Node<ipr::Parameter_list> > Base;
+                                 impl::Node<ipr::Parameter_list>> {
+         using Base = homogeneous_region<ipr::Parameter,
+                                         impl::Node<ipr::Parameter_list>>;
          
          Parameter_list(const ipr::Region&, const ipr::Type&);
 
@@ -1040,43 +988,41 @@ namespace ipr {
       };
 
       
-      typedef Binary<Type<ipr::Array> > Array;
-      typedef Unary<Type<ipr::Decltype> > Decltype;
-      typedef Binary<Type<ipr::As_type> > As_type;
-      typedef Quaternary<Type<ipr::Function> > Function;
-      typedef Unary<Type<ipr::Pointer> > Pointer;
-      typedef Unary<Type<ipr::Product> > Product;
-      typedef Binary<Type<ipr::Ptr_to_member> > Ptr_to_member;
-      typedef Binary<Type<ipr::Qualified> > Qualified;
-      typedef Unary<Type<ipr::Reference> > Reference;
-      typedef Unary<Type<ipr::Rvalue_reference> > Rvalue_reference;
-      typedef Unary<Type<ipr::Sum> > Sum;
-      typedef Binary<Type<ipr::Template> > Template;
+      using Array = Binary<Type<ipr::Array>>;
+      using Decltype = Unary<Type<ipr::Decltype>>;
+      using As_type = Binary<Type<ipr::As_type>>;
+      using Function = Quaternary<Type<ipr::Function>>;
+      using Pointer = Unary<Type<ipr::Pointer>>;
+      using Product = Unary<Type<ipr::Product>>;
+      using Ptr_to_member = Binary<Type<ipr::Ptr_to_member>>;
+      using Qualified = Binary<Type<ipr::Qualified>>;
+      using Reference = Unary<Type<ipr::Reference>>;
+      using Rvalue_reference = Unary<Type<ipr::Rvalue_reference>>;
+      using Sum = Unary<Type<ipr::Sum>>;
+      using Template = Binary<Type<ipr::Template>>;
 
-      typedef Unary<Node<Comment> > Comment;
+      using Comment = Unary<Node<Comment>>;
 
-      typedef Expr<ipr::Phantom> Phantom;
+      using Phantom = Expr<ipr::Phantom>;
 
-      typedef Unary<Classic<Expr<ipr::Address> > > Address;
-      typedef Unary<Classic<Expr<ipr::Array_delete> > > Array_delete;
-      typedef Unary<Classic<Expr<ipr::Complement> > > Complement;
-      typedef Unary<Expr<ipr::Conversion> > Conversion;
-      typedef Unary<Expr<ipr::Ctor_name> > Ctor_name;
-      typedef Unary<Classic<Expr<ipr::Delete> > > Delete;
-      typedef Unary<Classic<Expr<ipr::Deref> > > Deref;
-      typedef Unary<Expr<ipr::Dtor_name> > Dtor_name;
+      using Address = Unary<Classic<Expr<ipr::Address>>>;
+      using Array_delete = Unary<Classic<Expr<ipr::Array_delete>>>;
+      using Complement = Unary<Classic<Expr<ipr::Complement>>>;
+      using Conversion = Unary<Expr<ipr::Conversion>>;
+      using Ctor_name = Unary<Expr<ipr::Ctor_name>>;
+      using Delete = Unary<Classic<Expr<ipr::Delete>>>;
+      using Deref = Unary<Classic<Expr<ipr::Deref>>>;
+      using Dtor_name = Unary<Expr<ipr::Dtor_name>>;
 
       struct Expr_list : impl::Node<ipr::Expr_list> {
-         typed_sequence<ref_sequence<ipr::Expr> > seq;
+         typed_sequence<ref_sequence<ipr::Expr>> seq;
 
          Expr_list();
          explicit Expr_list(const ref_sequence<ipr::Expr>&);
 
-         // Override ipr::Expr::type.
-         const ipr::Product& type() const;
+         const ipr::Product& type() const override;
          
-         // Override ipr::Unary<>::operand.
-         const ipr::Sequence<ipr::Expr>& operand() const;
+         const ipr::Sequence<ipr::Expr>& operand() const override;
 
          void push_back(const ipr::Expr* e) { seq.seq.push_back(e); }
 		 // >>>> Yuriy Solodkyy: 2007/02/02 
@@ -1085,66 +1031,66 @@ namespace ipr {
 		 // <<<< Yuriy Solodkyy: 2007/02/02 
       };
 
-      typedef Unary<Classic<Expr<ipr::Initializer_list> > > Initializer_list;
-      typedef Unary<Classic<Expr<ipr::Expr_sizeof> > > Expr_sizeof;
-      typedef Unary<Classic<Expr<ipr::Expr_typeid> > > Expr_typeid;
-      typedef Unary<Classic<Expr<ipr::Identifier> > > Identifier;
+      using Initializer_list = Unary<Classic<Expr<ipr::Initializer_list>>>;
+      using Expr_sizeof = Unary<Classic<Expr<ipr::Expr_sizeof>>>;
+      using Expr_typeid = Unary<Classic<Expr<ipr::Expr_typeid>>>;
+      using Identifier = Unary<Classic<Expr<ipr::Identifier>>>;
 
-      struct Id_expr : impl::Unary<Expr<ipr::Id_expr> > {
+      struct Id_expr : impl::Unary<Expr<ipr::Id_expr>> {
          const ipr::Decl* decl;
 
          explicit Id_expr(const ipr::Name&);
-         const ipr::Type& type() const; // override ipr::Expr::Type.
-         const ipr::Decl& resolution() const; //  ipr::Id_expr::resolution.
+         const ipr::Type& type() const override;
+         const ipr::Decl& resolution() const override;
       };
 
-      typedef Unary<Classic<Expr<ipr::Not> > > Not;
+      using Not = Unary<Classic<Expr<ipr::Not>>>;
 
-      typedef Unary<Classic<Expr<ipr::Operator> > > Operator;
-      typedef type_from_operand<Classic<Node<ipr::Paren_expr> > > Paren_expr;
+      using Operator = Unary<Classic<Expr<ipr::Operator>>>;
+      using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
       
-      typedef Unary<Classic<Expr<ipr::Pre_decrement> > > Pre_decrement;
-      typedef Unary<Classic<Expr<ipr::Pre_increment> > > Pre_increment;
-      typedef Unary<Classic<Expr<ipr::Post_decrement> > > Post_decrement;
-      typedef Unary<Classic<Expr<ipr::Post_increment> > > Post_increment;
-      typedef Unary<Classic<Expr<ipr::Throw> > > Throw;
-      typedef type_from_operand<Node<ipr::Type_id> > Type_id;
+      using Pre_decrement = Unary<Classic<Expr<ipr::Pre_decrement>>>;
+      using Pre_increment = Unary<Classic<Expr<ipr::Pre_increment>>>;
+      using Post_decrement = Unary<Classic<Expr<ipr::Post_decrement>>>;
+      using Post_increment = Unary<Classic<Expr<ipr::Post_increment>>>;
+      using Throw = Unary<Classic<Expr<ipr::Throw>>>;
+      using Type_id = type_from_operand<Node<ipr::Type_id>>;
 
-      typedef Unary<Classic<Expr<ipr::Type_sizeof> > > Type_sizeof;
-      typedef Unary<Classic<Expr<ipr::Type_typeid> > > Type_typeid;
-      typedef Unary<Classic<Expr<ipr::Unary_minus> > > Unary_minus;
-      typedef Unary<Classic<Expr<ipr::Unary_plus> > > Unary_plus;
+      using Type_sizeof = Unary<Classic<Expr<ipr::Type_sizeof>>>;
+      using Type_typeid = Unary<Classic<Expr<ipr::Type_typeid>>>;
+      using Unary_minus = Unary<Classic<Expr<ipr::Unary_minus>>>;
+      using Unary_plus = Unary<Classic<Expr<ipr::Unary_plus>>>;
 
-      typedef Binary<Classic<Expr<ipr::And> > > And;
-      typedef Binary<Node<ipr::Annotation> > Annotation;
-      typedef Binary<Classic<Expr<ipr::Array_ref> > > Array_ref;
-      typedef Binary<Classic<Expr<ipr::Arrow> > > Arrow;
-      typedef Binary<Classic<Expr<ipr::Arrow_star> > > Arrow_star;
-      typedef Binary<Classic<Expr<ipr::Assign> > > Assign;
-      typedef Binary<Classic<Expr<ipr::Bitand> > > Bitand;
-      typedef Binary<Classic<Expr<ipr::Bitand_assign> > > Bitand_assign;
-      typedef Binary<Classic<Expr<ipr::Bitor> > > Bitor;
-      typedef Binary<Classic<Expr<ipr::Bitor_assign> > > Bitor_assign;
-      typedef Binary<Classic<Expr<ipr::Bitxor> > > Bitxor;
-      typedef Binary<Classic<Expr<ipr::Bitxor_assign> > > Bitxor_assign;
-      typedef Binary<Classic<Expr<ipr::Call> > > Call;
-      typedef Conversion_expr<ipr::Cast> Cast;
-      typedef Binary<Classic<Expr<ipr::Comma> > > Comma;
-      typedef Conversion_expr<ipr::Const_cast> Const_cast;
-      typedef Conversion_expr<ipr::Datum> Datum;
-      typedef Binary<Classic<Expr<ipr::Div> > > Div;
-      typedef Binary<Classic<Expr<ipr::Div_assign> > > Div_assign;
-      typedef Binary<Classic<Expr<ipr::Dot> > > Dot;
-      typedef Binary<Classic<Expr<ipr::Dot_star> > > Dot_star;
-      typedef Conversion_expr<ipr::Dynamic_cast> Dynamic_cast;
-      typedef Binary<Classic<Expr<ipr::Equal> > > Equal;
-      typedef Binary<Classic<Expr<ipr::Greater> > > Greater;
-      typedef Binary<Classic<Expr<ipr::Greater_equal> > > Greater_equal;
-      typedef Binary<Classic<Expr<ipr::Less> > > Less;
-      typedef Binary<Classic<Expr<ipr::Less_equal> > > Less_equal;
-      typedef Conversion_expr<ipr::Literal> Literal;
-      typedef Binary<Classic<Expr<ipr::Lshift> > > Lshift;
-      typedef Binary<Classic<Expr<ipr::Lshift_assign> > > Lshift_assign;
+      using And = Binary<Classic<Expr<ipr::And>>>;
+      using Annotation = Binary<Node<ipr::Annotation>>;
+      using Array_ref = Binary<Classic<Expr<ipr::Array_ref>>>;
+      using Arrow = Binary<Classic<Expr<ipr::Arrow>>>;
+      using Arrow_star = Binary<Classic<Expr<ipr::Arrow_star>>>;
+      using Assign = Binary<Classic<Expr<ipr::Assign>>>;
+      using Bitand = Binary<Classic<Expr<ipr::Bitand>>>;
+      using Bitand_assign = Binary<Classic<Expr<ipr::Bitand_assign>>>;
+      using Bitor = Binary<Classic<Expr<ipr::Bitor>>>;
+      using Bitor_assign = Binary<Classic<Expr<ipr::Bitor_assign>>>;
+      using Bitxor = Binary<Classic<Expr<ipr::Bitxor>>>;
+      using Bitxor_assign = Binary<Classic<Expr<ipr::Bitxor_assign>>>;
+      using Call = Binary<Classic<Expr<ipr::Call>>>;
+      using Cast = Conversion_expr<ipr::Cast>;
+      using Comma = Binary<Classic<Expr<ipr::Comma>>>;
+      using Const_cast = Conversion_expr<ipr::Const_cast>;
+      using Datum = Conversion_expr<ipr::Datum>;
+      using Div = Binary<Classic<Expr<ipr::Div>>>;
+      using Div_assign = Binary<Classic<Expr<ipr::Div_assign>>>;
+      using Dot = Binary<Classic<Expr<ipr::Dot>>>;
+      using Dot_star = Binary<Classic<Expr<ipr::Dot_star>>>;
+      using Dynamic_cast = Conversion_expr<ipr::Dynamic_cast>;
+      using Equal = Binary<Classic<Expr<ipr::Equal>>>;
+      using Greater = Binary<Classic<Expr<ipr::Greater>>>;
+      using Greater_equal = Binary<Classic<Expr<ipr::Greater_equal>>>;
+      using Less = Binary<Classic<Expr<ipr::Less>>>;
+      using Less_equal = Binary<Classic<Expr<ipr::Less_equal>>>;
+      using Literal = Conversion_expr<ipr::Literal>;
+      using Lshift = Binary<Classic<Expr<ipr::Lshift>>>;
+      using Lshift_assign = Binary<Classic<Expr<ipr::Lshift_assign>>>;
 
       struct Mapping : impl::Expr<ipr::Mapping> {
          impl::Parameter_list parameters;
@@ -1154,41 +1100,35 @@ namespace ipr {
 
          Mapping(const ipr::Region&, const ipr::Type&, int);
          
-         // Override ipr::Mapping::params.
-         const ipr::Parameter_list& params() const;
+         const ipr::Parameter_list& params() const override;
 
          // Implement ipr::Mapping::result_type.
          const ipr::Type& result_type() const;
-
-         // Override ipr::Mapping::result.
-         const ipr::Expr& result() const;
-
-         // Override ipr::Mapping::depth.
-         int depth() const;
-
+         const ipr::Expr& result() const override;
+         int depth() const override;
          impl::Parameter* param(const ipr::Name&, const impl::Rname&);
       };
 
-      typedef Binary<Expr<ipr::Member_init> > Member_init;
-      typedef Binary<Classic<Expr<ipr::Minus> > > Minus;
-      typedef Binary<Classic<Expr<ipr::Minus_assign> > > Minus_assign;
-      typedef Binary<Classic<Expr<ipr::Modulo> > > Modulo;
-      typedef Binary<Classic<Expr<ipr::Modulo_assign> > > Modulo_assign;
-      typedef Binary<Classic<Expr<ipr::Mul> > > Mul;
-      typedef Binary<Classic<Expr<ipr::Mul_assign> > > Mul_assign;
-      typedef Binary<Classic<Expr<ipr::Not_equal> > > Not_equal;
-      typedef Binary<Classic<Expr<ipr::Or> > > Or;
-      typedef Binary<Classic<Expr<ipr::Plus> > > Plus;
-      typedef Binary<Classic<Expr<ipr::Plus_assign> > > Plus_assign;
-      typedef Conversion_expr<ipr::Reinterpret_cast> Reinterpret_cast;
-      typedef Binary<Classic<Expr<ipr::Rshift> > > Rshift;
-      typedef Binary<Classic<Expr<ipr::Rshift_assign> > > Rshift_assign;
-      typedef Binary<Expr<ipr::Scope_ref> > Scope_ref;
-      typedef Conversion_expr<ipr::Static_cast> Static_cast;
-      typedef Binary<Expr<ipr::Template_id> > Template_id;
+      using Member_init = Binary<Expr<ipr::Member_init>>;
+      using Minus = Binary<Classic<Expr<ipr::Minus>>>;
+      using Minus_assign = Binary<Classic<Expr<ipr::Minus_assign>>>;
+      using Modulo = Binary<Classic<Expr<ipr::Modulo>>>;
+      using Modulo_assign = Binary<Classic<Expr<ipr::Modulo_assign>>>;
+      using Mul = Binary<Classic<Expr<ipr::Mul>>>;
+      using Mul_assign = Binary<Classic<Expr<ipr::Mul_assign>>>;
+      using Not_equal = Binary<Classic<Expr<ipr::Not_equal>>>;
+      using Or = Binary<Classic<Expr<ipr::Or>>>;
+      using Plus = Binary<Classic<Expr<ipr::Plus>>>;
+      using Plus_assign = Binary<Classic<Expr<ipr::Plus_assign>>>;
+      using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
+      using Rshift = Binary<Classic<Expr<ipr::Rshift>>>;
+      using Rshift_assign = Binary<Classic<Expr<ipr::Rshift_assign>>>;
+      using Scope_ref = Binary<Expr<ipr::Scope_ref>>;
+      using Static_cast = Conversion_expr<ipr::Static_cast>;
+      using Template_id = Binary<Expr<ipr::Template_id>>;
 
-      typedef Ternary<Classic<Expr<ipr::New> > > New;
-      typedef Ternary<Classic<Expr<ipr::Conditional> > > Conditional;
+      using New = Ternary<Classic<Expr<ipr::New>>>;
+      using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
       struct expr_factory {
          // Returns an IPR node for unified string literals.
@@ -1421,13 +1361,13 @@ namespace ipr {
 
       template<>
       struct traits<ipr::Named_map> {
-         typedef impl::Named_map rep;
+         using rep = impl::Named_map;
       };
       
       template<class Interface>
       struct decl_factory {
-         util::slist<decl_rep<Interface> > decls;
-         util::slist<master_decl_data<Interface> > master_info;
+         util::slist<decl_rep<Interface>> decls;
+         util::slist<master_decl_data<Interface>> master_info;
 
          // We have gotten an overload-set for a name, and we are about
          // to enter the first declaration for that name with the type T.
@@ -1464,7 +1404,7 @@ namespace ipr {
 
       template<>
       struct traits<ipr::Alias> {
-         typedef impl::Alias rep; 
+         using rep = impl::Alias; 
       };
       
       struct Var : impl::Decl<ipr::Var> {
@@ -1473,19 +1413,14 @@ namespace ipr {
 
          Var();
 
-         // Override ipr::Decl::has_initializer.
-         bool has_initializer() const;
-
-         // Override ipr::Decl::initializer.
-         const ipr::Expr& initializer() const;
-
-         // Override ipr::Decl::lexical_region.
-         const ipr::Region& lexical_region() const;
+         bool has_initializer() const override;
+         const ipr::Expr& initializer() const override;
+         const ipr::Region& lexical_region() const override;
       };
 
       template<>
       struct traits<ipr::Var> {
-         typedef impl::Var rep;
+         using rep = impl::Var;
       };
 
       // FIXME: Field should use unique_decl, not impl::Decl.
@@ -1495,25 +1430,20 @@ namespace ipr {
 
          Field();
 
-         // Override ipr::Field::membership.
-         const ipr::Udt& membership() const;
-
-         // Override ipr::Decl::has_initializer.
-         bool has_initializer() const;
+         const ipr::Udt& membership() const override;
+         bool has_initializer() const override;
 
          // Override ipr::Decl::lexical_region.  Which is the
          // same as home_region for a Field.  Note that fields
          // are always nonstatic data members.
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-
-         // Override ipr::Decl::initializer.
-         const ipr::Expr& initializer() const;
+         const ipr::Expr& initializer() const override;
       };
 
       template<>
       struct traits<ipr::Field> {
-         typedef impl::Field rep;
+         using rep = impl::Field;
       };
 
       // FIXME: Bitfield should use unique_decl, not impl::Decl
@@ -1524,26 +1454,17 @@ namespace ipr {
 
          Bitfield();
 
-         // Override Bitfield::precision.
-         const ipr::Expr& precision() const;
-
+         const ipr::Expr& precision() const override;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-
-         // Override Bitfield::membership.
-         const ipr::Udt& membership() const;
-
-         // Override ipr::Decl::has_initializer.
-         bool has_initializer() const;
-
-         // Override ipr::Decl::initializer.
-         const ipr::Expr& initializer() const;
-
+         const ipr::Udt& membership() const override;
+         bool has_initializer() const override;
+         const ipr::Expr& initializer() const override;
       };
 
       template<>
       struct traits<ipr::Bitfield> {
-         typedef impl::Bitfield rep;
+         using rep = impl::Bitfield;
       };
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
@@ -1553,21 +1474,16 @@ namespace ipr {
 
          Typedecl();
 
-         // Override ipr::Typedecl::membership.
-         const ipr::Udt& membership() const;
-
-         // Override ipr::Decl:initializer
-         const ipr::Expr& initializer() const;
-
-         // Override ipr::Decl::has_initializer.
-         bool has_initializer() const;
+         const ipr::Udt& membership() const override;
+         const ipr::Expr& initializer() const override;
+         bool has_initializer() const override;
 
          const ipr::Region& lexical_region() const;
       };
 
       template<>
       struct traits<ipr::Typedecl> {
-         typedef impl::Typedecl rep;
+         using rep = impl::Typedecl;
       };
 
       struct Fundecl : impl::Decl<ipr::Fundecl> {
@@ -1577,24 +1493,16 @@ namespace ipr {
 
          Fundecl();
          
-         // Override Fundecl::mapping.
-         const ipr::Mapping& mapping() const;
-         
-         // Override Fundecl::membership.
-         const ipr::Udt& membership() const;
-
-         // Override ipr::Decl::initializer;
-         const ipr::Expr& initializer() const;
-
-         // Override ipr::Decl::has_initializer.
-         bool has_initializer() const;
-
+         const ipr::Mapping& mapping() const override;
+         const ipr::Udt& membership() const override;
+         const ipr::Expr& initializer() const override;
+         bool has_initializer() const override;
          const ipr::Region& lexical_region() const;
       };
 
       template<>
       struct traits<ipr::Fundecl> {
-         typedef impl::Fundecl rep;
+         using rep = impl::Fundecl;
       };
 
       
@@ -1645,7 +1553,7 @@ namespace ipr {
       // contains heterogeneous scope (as defined above).
 
       struct Region : impl::Node<ipr::Region> {
-         typedef ipr::Region::Location_span location_span;
+         using location_span = ipr::Region::Location_span;
          const ipr::Region* parent;
          location_span extent;
          const ipr::Expr* owned_by;
@@ -1723,8 +1631,7 @@ namespace ipr {
             body.owned_by = this;
          }
          
-         // Override Udt::region.
-         const ipr::Region& region() const { return body; }
+         const ipr::Region& region() const override { return body; }
          
          impl::Alias*
          declare_alias(const ipr::Name& n, const ipr::Type& t)
@@ -1801,16 +1708,15 @@ namespace ipr {
          explicit Enum(const ipr::Region&, const ipr::Type&);
       };
 
-      typedef Udt<ipr::Union> Union;
-      typedef Udt<ipr::Namespace> Namespace;
+      using Union = Udt<ipr::Union>;
+      using Namespace = Udt<ipr::Namespace>;
 
       struct Class : impl::Udt<ipr::Class> {
          homogeneous_region<ipr::Base_type> base_subobjects;
          
          explicit Class(const ipr::Region&, const ipr::Type&);
 
-         // Override Class::bases.
-         const ipr::Sequence<ipr::Base_type>& bases() const;
+         const ipr::Sequence<ipr::Base_type>& bases() const override;
 
          impl::Base_type* declare_base(const ipr::Type&);
 
@@ -1874,42 +1780,35 @@ namespace ipr {
       // -- Implementation of statements --
       // ----------------------------------
 
-      typedef Binary<Stmt<Expr<ipr::Ctor_body> > > Ctor_body;
-      typedef type_from_second<Stmt<Node<ipr::Do> > > Do;
-      typedef type_from_operand<Stmt<Node<ipr::Expr_stmt> > > Expr_stmt;
-      typedef type_from_operand<Stmt<Node<ipr::Empty_stmt> > > Empty_stmt;
-      typedef type_from_operand<Stmt<Node<ipr::Goto> > > Goto;
-      typedef type_from_second<Stmt<Node<ipr::Handler> > > Handler;
-      typedef type_from_second<Stmt<Node<ipr::If_then> > > If_then;
-      typedef Ternary<Stmt<Expr<ipr::If_then_else> > > If_then_else;
-      typedef type_from_second<Stmt<Node<ipr::Labeled_stmt> > > Labeled_stmt;
-      typedef type_from_operand<Stmt<Node<ipr::Return> > > Return;
-      typedef type_from_second<Stmt<Node<ipr::Switch> > > Switch;
-      typedef type_from_second<Stmt<Node<ipr::While> > > While;
+      using Ctor_body = Binary<Stmt<Expr<ipr::Ctor_body>>>;
+      using Do = type_from_second<Stmt<Node<ipr::Do>>>;
+      using Expr_stmt = type_from_operand<Stmt<Node<ipr::Expr_stmt>>>;
+      using Empty_stmt = type_from_operand<Stmt<Node<ipr::Empty_stmt>>>;
+      using Goto = type_from_operand<Stmt<Node<ipr::Goto>>>;
+      using Handler = type_from_second<Stmt<Node<ipr::Handler>>>;
+      using If_then = type_from_second<Stmt<Node<ipr::If_then>>>;
+      using If_then_else = Ternary<Stmt<Expr<ipr::If_then_else>>>;
+      using Labeled_stmt = type_from_second<Stmt<Node<ipr::Labeled_stmt>>>;
+      using Return = type_from_operand<Stmt<Node<ipr::Return>>>;
+      using Switch = type_from_second<Stmt<Node<ipr::Switch>>>;
+      using While = type_from_second<Stmt<Node<ipr::While>>>;
 
       // A Block holds a heterogeneous region, suitable for
       // recording the set of declarations appearing in that
       // block.  It also holds a sequence of handlers, when the
       // block actually represents a C++ try-block.
 
-      struct Block : impl::Stmt<Node<ipr::Block> > {
+      struct Block : impl::Stmt<Node<ipr::Block>> {
          Region region;
          ref_sequence<ipr::Stmt> stmt_seq;
          ref_sequence<ipr::Handler> handler_seq;
          
          Block(const ipr::Region&, const ipr::Type&);
 
-         // Override ipr::Expr::type.
-         const ipr::Type& type() const;
-         
-         // Override ipr::Block::members.
-         const ipr::Scope& members() const;
-         
-         // Override ipr::Block::body.
-         const ipr::Sequence<ipr::Stmt>& body() const;
-         
-         // Override ipr::Block::handlers.
-         const ipr::Sequence<ipr::Handler>& handlers() const;
+         const ipr::Type& type() const override;
+         const ipr::Scope& members() const override;
+         const ipr::Sequence<ipr::Stmt>& body() const override;
+         const ipr::Sequence<ipr::Handler>& handlers() const override;
 
          // The scope of declarations in this block
          Scope* scope() { return &region.scope; }
@@ -1930,7 +1829,7 @@ namespace ipr {
       // expresion; for flexibility, it is made in a way that
       // supports settings of its components after construction.
 
-      struct For : Stmt<Expr<ipr::For> > {
+      struct For : Stmt<Expr<ipr::For>> {
          const ipr::Expr* init;
          const ipr::Expr* cond;
          const ipr::Expr* inc;
@@ -1938,62 +1837,48 @@ namespace ipr {
 
          For();
 
-         const ipr::Type& type() const; // override ipr::Expr::type.
-         
-         // Override ipr::For::initializer.
-         const ipr::Expr& initializer() const;
-         
-         // Override ipr::For::condition.
-         const ipr::Expr& condition() const;
-         
-         // Override ipr::For::increment.
-         const ipr::Expr& increment() const;
-         
-         // Override ipr::For::body.
-         const ipr::Stmt& body() const;
+         const ipr::Type& type() const override;
+         const ipr::Expr& initializer() const override;
+         const ipr::Expr& condition() const override;
+         const ipr::Expr& increment() const override;
+         const ipr::Stmt& body() const override;
       };
 
-      struct For_in : Stmt<Expr<ipr::For_in> > {
+      struct For_in : Stmt<Expr<ipr::For_in>> {
          const ipr::Var* var;
          const ipr::Expr* seq;
          const ipr::Stmt* stmt;
 
          For_in();
 
-         const ipr::Type& type() const; // override ipr::Expr::type.
-         
-         // Override ipr::For_in::variable.
-         const ipr::Var& variable() const;
-         
-         // Override ipr::For_in::sequence.
-         const ipr::Expr& sequence() const;
-         
-         // Override ipr::For_in::body.
-         const ipr::Stmt& body() const;
+         const ipr::Type& type() const override;
+         const ipr::Var& variable() const override;
+         const ipr::Expr& sequence() const override;
+         const ipr::Stmt& body() const override;
       };
 
 
       // A Break node can record the selction- of iteration-statement it
       // transfers control out of.
 
-      struct Break : Stmt<Node<ipr::Break> > {
+      struct Break : Stmt<Node<ipr::Break>> {
          const ipr::Stmt* stmt;
 
          Break();
-         const ipr::Type& type() const; // override ipr::Expr::type.
-         const ipr::Stmt& from() const; // Override ipr::Break::from.
+         const ipr::Type& type() const override;
+         const ipr::Stmt& from() const override;
       };
 
 
       // Like a Break, a Continue node can refer back to the
       // iteration-statement containing it.
 
-      struct Continue : Stmt<Node<ipr::Continue> > {
+      struct Continue : Stmt<Node<ipr::Continue>> {
          const ipr::Stmt* stmt;
 
          Continue();
-         const ipr::Type& type() const; // override ipr::Expr::type.
-         const ipr::Stmt& iteration() const; // override Continue::iteration.
+         const ipr::Type& type() const override;
+         const ipr::Stmt& iteration() const override;
       };
 
 
@@ -2050,8 +1935,8 @@ namespace ipr {
       // most data needed by those implementations are shared.
       template<class T>
       struct Builtin : impl::Expr<T> {
-         typedef typename T::Arg1_type Arg1_type;
-         typedef typename T::Arg2_type Arg2_type;
+         using Arg1_type = typename T::Arg1_type;
+         using Arg2_type = typename T::Arg2_type;
          Builtin(const ipr::Name& n, Arg2_type l, const ipr::Type& t)
                : impl::Expr<T>(&t), id(n), link(l) { }
 
@@ -2187,14 +2072,14 @@ namespace ipr {
       private:
          void record_builtin_type(const ipr::As_type&);
 
-         typedef util::slist<impl::String> Filemap;
+         using Filemap = util::slist<impl::String>;
 
 
          Filemap filemap;
          type_factory types;
-         util::rb_tree::container<ref_sequence<ipr::Expr> > expr_seqs;
-         util::rb_tree::container<ref_sequence<ipr::Type> > type_seqs;
-         util::rb_tree::container<node_ref<ipr::As_type> > builtin_map;
+         util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
+         util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
+         util::rb_tree::container<node_ref<ipr::As_type>> builtin_map;
 
          const impl::Builtin<ipr::As_type> anytype;
          const impl::Builtin<ipr::As_type> classtype;

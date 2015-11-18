@@ -1,13 +1,14 @@
 AC_INIT([ipr],[0.47],[gdr@acm.org])
 AM_INIT_AUTOMAKE([foreign])
 
-dnl * We require Autoconf 2.52 or higher.
+dnl * We require Autoconf 2.69 or higher.
 AC_PREREQ([2.69])
 
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_PROG_CXX
 AC_LANG(C++)
+IPR_REQUIRE_MODERN_CXX
 LT_INIT
 
 AC_PROG_INSTALL

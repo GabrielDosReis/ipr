@@ -160,7 +160,7 @@ namespace xpr {
       ipr::impl::Unit& unit;
       
    private:
-      typedef std::set<Token, Token::Compare> Keyword_set;
+      using Keyword_set = std::set<Token, Token::Compare>;
       struct Token_stream : std::deque<Token> {
       };
       

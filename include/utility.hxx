@@ -270,13 +270,13 @@ namespace ipr {
          }
 
          template<typename T>
-         struct node : link<node<T> > {
+         struct node : link<node<T>> {
             T data;
          };
 
 
          template<typename T>
-         struct container : core<node<T> > {
+         struct container : core<node<T>> {
             template<typename Key, class Comp>
             T* find(const Key&, Comp) const;
 
@@ -475,8 +475,8 @@ namespace ipr {
          slist() : first(0), last(0), count(0) { }
          ~slist();
 
-         typedef slist_iterator<T> iterator;
-         typedef const_slist_iterator<T> const_iterator;
+         using iterator = slist_iterator<T>;
+         using const_iterator = const_slist_iterator<T>;
 
          iterator begin()
          {
@@ -513,7 +513,7 @@ namespace ipr {
          int size() const { return count; }
 
       private:
-         typedef slist_node<T> node;
+         using node = slist_node<T>;
          node* first;
          node* last;
          int count;
@@ -616,7 +616,7 @@ namespace ipr {
       struct string {
          struct arena;
 
-         typedef int size_type; // integer type that string length
+         using size_type = int; // integer type that string length
 
          // number of characters directly contained in this header
          // of the string.  Takent to be the number of bytes in size_type.

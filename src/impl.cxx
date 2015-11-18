@@ -160,7 +160,7 @@ namespace ipr {
       // -- impl::Rname --
       // -----------------
       Rname::Rname(Rep r)
-            : impl::Ternary<impl::Node<ipr::Rname> >(r) { }
+            : impl::Ternary<impl::Node<ipr::Rname>>(r) { }
 
       const ipr::Type&
       Rname::type() const {
@@ -933,7 +933,7 @@ namespace ipr {
       impl::Array*
       type_factory::make_array(const ipr::Type& t, const ipr::Expr& b)
       {
-         typedef impl::Array::Rep rep;
+         using rep = impl::Array::Rep;
          return arrays.insert(rep(t, b), binary_compare());
       }
 
@@ -947,7 +947,7 @@ namespace ipr {
             throw std::domain_error
                ("type_factoy::make_qualified: no qualifier");
 
-         typedef impl::Qualified::Rep rep;
+         using rep = impl::Qualified::Rep;
          return qualifieds.insert(rep(cv, t), binary_compare());
       }
 
@@ -961,7 +961,7 @@ namespace ipr {
       impl::As_type*
       type_factory::make_as_type(const ipr::Expr& e, const ipr::Linkage& l)
       {
-         typedef impl::As_type::Rep Rep;
+         using Rep = impl::As_type::Rep;
          return type_refs.insert(Rep(e, l), binary_compare());
       }
 
@@ -1015,7 +1015,7 @@ namespace ipr {
       type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
                                   const ipr::Sum& e, const ipr::Linkage& l)
       {
-         typedef impl::Function::Rep rep;
+         using rep = impl::Function::Rep;
          return functions.insert(rep(s, t, e, l), quaternary_compare());
       }
 
@@ -1036,7 +1036,7 @@ namespace ipr {
       impl::Ptr_to_member*
       type_factory::make_ptr_to_member(const ipr::Type& c, const ipr::Type& t)
       {
-         typedef impl::Ptr_to_member::Rep rep;
+         using rep = impl::Ptr_to_member::Rep;
          return member_ptrs.insert(rep(c, t), binary_compare());
       }
 
@@ -1057,7 +1057,7 @@ namespace ipr {
 
       impl::Template*
       type_factory::make_template(const ipr::Product& s, const ipr::Type& t) {
-         typedef impl::Template::Rep rep;
+         using rep = impl::Template::Rep;
          return templates.insert(rep(s, t), binary_compare());
       }
 
@@ -1107,7 +1107,7 @@ namespace ipr {
       // -------------
 
       Id_expr::Id_expr(const ipr::Name& n)
-            : impl::Unary<impl::Expr<ipr::Id_expr> >(n), decl(0)
+            : impl::Unary<impl::Expr<ipr::Id_expr>>(n), decl(0)
       { }
 
       const ipr::Type&
@@ -1386,7 +1386,7 @@ namespace ipr {
       }
 
       struct string_comp {
-         typedef std::pair<const char*, int> proxy;
+         using proxy = std::pair<const char*, int>;
 
          struct char_compare {
             int operator()(unsigned char lhs, unsigned char rhs) const
@@ -1767,7 +1767,7 @@ namespace ipr {
 
       impl::Literal*
       expr_factory::make_literal(const ipr::Type& t, const ipr::String& s) {
-         typedef impl::Literal::Rep rep;
+         using rep = impl::Literal::Rep;
          return lits.insert(rep(t, s), binary_compare());
       }
 
@@ -1860,7 +1860,7 @@ namespace ipr {
       impl::Scope_ref*
       expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r)
       {
-         typedef impl::Scope_ref::Rep Rep;
+         using Rep = impl::Scope_ref::Rep;
          return scope_refs.insert(Rep(l, r), binary_compare());
       }
 
@@ -1878,7 +1878,7 @@ namespace ipr {
       impl::Template_id*
       expr_factory::make_template_id(const ipr::Name& n,
                                      const ipr::Expr_list& args) {
-         typedef impl::Template_id::Rep Rep;
+         using Rep = impl::Template_id::Rep;
          return template_ids.insert(Rep(n, args), binary_compare());
       }
 
@@ -1902,7 +1902,7 @@ namespace ipr {
       impl::Rname*
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
-         typedef impl::Rname::Rep Rep;
+         using Rep = impl::Rname::Rep;
          return rnames.insert(Rep(t, map.nesting_level, map.parameters.size()),
                               ternary_compare());
       }

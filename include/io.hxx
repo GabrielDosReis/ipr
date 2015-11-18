@@ -21,9 +21,9 @@ namespace ipr
    /// is used by XPR parser to relink uses of names to appropriate declarations.
    /// The key of the map is the node_id of the name used, while the value
    /// is the information about corresponding declaration.
-   struct disambiguation_map_type : std::map<int, std::vector<const ipr::Decl*> >
+   struct disambiguation_map_type : std::map<int, std::vector<const ipr::Decl*>>
    {
-      typedef std::vector<const ipr::Decl*> declarations;
+      using declarations = std::vector<const ipr::Decl*>;
 
       /// Given a name and a declaration that corresponds to it, looks up
       /// or allocates a disambiguation id for them.
