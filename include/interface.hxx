@@ -1,10 +1,12 @@
-#ifndef IPR_INTERFACE_INCLUDED
-#define IPR_INTERFACE_INCLUDED
-
+// -*- C++ -*-
 //
 // This file is part of The Pivot framework.
-// Written by Gabriel Dos Reis <gdr@cs.tamu.edu>
+// Written by Gabriel Dos Reis.
+// See LICENSE for copright and license notices.
 // 
+
+#ifndef IPR_INTERFACE_INCLUDED
+#define IPR_INTERFACE_INCLUDED
 
 #include <utility>
 #include <iterator>
