@@ -13,6 +13,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <forward_list>
 
 // -----------------
 // -- Methodology --
@@ -35,6 +36,17 @@
 
 namespace ipr {
    namespace impl {
+      template<typename T>
+      struct stable_farm : std::forward_list<T> {
+         using std::forward_list<T>::forward_list;
+
+         template<typename... Args>
+         T* make(Args&&... args) {
+            this->emplace_front(std::forward<Args>(args)...);
+            return &this->front();
+         }
+      };
+
       // --------------------------------------
       // -- Implementations of ipr::Sequence --
       // --------------------------------------
@@ -82,27 +94,38 @@ namespace ipr {
       // the case of ref_sequence<T>).  
 
       template<class T, class Seq = Sequence<T>>
-      struct val_sequence : Seq, private util::slist<T> {
-         using Impl = util::slist<T>;
+      struct val_sequence : Seq, private stable_farm<T> {
+         using Impl = stable_farm<T>;
          using Iterator = typename Seq::Iterator;
 
          using Seq::operator[];
          using Seq::begin;
          using Seq::end;
 
-         using Impl::push_back;
+         val_sequence() : mark(this->before_begin()) { }
          
-         int size() const { return Impl::size(); }
+         int size() const override {
+            return std::distance(Impl::begin(), Impl::end());
+         }
+
+         template<typename... Args>
+         T* push_back(Args&&... args)
+         {
+            mark = this->emplace_after(mark, std::forward<Args>(args)...);
+            return &*mark;
+         }
          
          const T& get(int p) const
          {
-            if (p < 0 || p >= Impl::size())
+            if (p < 0 || p >= size())
                throw std::domain_error("val_sequence::get");
 
-            typename Impl::const_iterator b = Impl::begin();
+            auto b = Impl::begin();
             std::advance(b, p);
             return *b;
          }
+      private:
+         typename Impl::iterator mark;
       };
                                 // -- impl::empty_sequence --
       // There are various situations where the general notion of
@@ -132,7 +155,7 @@ namespace ipr {
       template<class T>
       struct Node : T {
          using Interface = T;
-         void accept(ipr::Visitor& v) const { v.visit(*this); }
+         void accept(ipr::Visitor& v) const override { v.visit(*this); }
       };
 
       // In various situations, we need to store nodes in ordered
@@ -1268,76 +1291,76 @@ namespace ipr {
          util::rb_tree::container<impl::Type_typeid> ttypeids;
          // <<<< Yuriy Solodkyy: 2008/07/10 
 
-         util::slist<impl::Phantom> phantoms;
+         stable_farm<impl::Phantom> phantoms;
          
-         util::slist<impl::Address> addresses;
-         util::slist<impl::Annotation> annotations;
-         util::slist<impl::Array_delete> array_deletes;
-         util::slist<impl::Complement> complements;
-         util::slist<impl::Delete> deletes;
-         util::slist<impl::Deref> derefs;
-         util::slist<impl::Expr_list> xlists;
-         util::slist<impl::Expr_sizeof> xsizeofs;
-         util::slist<impl::Expr_typeid> xtypeids;
-         util::slist<impl::Id_expr> id_exprs;
-         util::slist<impl::Initializer_list> init_lists;
-         util::slist<impl::Not> nots;
-         util::slist<impl::Pre_increment> pre_increments;
-         util::slist<impl::Pre_decrement> pre_decrements;
-         util::slist<impl::Post_increment> post_increments;
-         util::slist<impl::Post_decrement> post_decrements;
-         util::slist<impl::Paren_expr> parens;
-         util::slist<impl::Throw> throws;
-         util::slist<impl::Unary_minus> unary_minuses;
-         util::slist<impl::Unary_plus> unary_pluses;
+         stable_farm<impl::Address> addresses;
+         stable_farm<impl::Annotation> annotations;
+         stable_farm<impl::Array_delete> array_deletes;
+         stable_farm<impl::Complement> complements;
+         stable_farm<impl::Delete> deletes;
+         stable_farm<impl::Deref> derefs;
+         stable_farm<impl::Expr_list> xlists;
+         stable_farm<impl::Expr_sizeof> xsizeofs;
+         stable_farm<impl::Expr_typeid> xtypeids;
+         stable_farm<impl::Id_expr> id_exprs;
+         stable_farm<impl::Initializer_list> init_lists;
+         stable_farm<impl::Not> nots;
+         stable_farm<impl::Pre_increment> pre_increments;
+         stable_farm<impl::Pre_decrement> pre_decrements;
+         stable_farm<impl::Post_increment> post_increments;
+         stable_farm<impl::Post_decrement> post_decrements;
+         stable_farm<impl::Paren_expr> parens;
+         stable_farm<impl::Throw> throws;
+         stable_farm<impl::Unary_minus> unary_minuses;
+         stable_farm<impl::Unary_plus> unary_pluses;
 
-         util::slist<impl::And> ands;
-         util::slist<impl::Array_ref> array_refs;
-         util::slist<impl::Arrow> arrows;
-         util::slist<impl::Arrow_star> arrow_stars;
-         util::slist<impl::Assign> assigns;
-         util::slist<impl::Bitand> bitands;
-         util::slist<impl::Bitand_assign> bitand_assigns;
-         util::slist<impl::Bitor> bitors;
-         util::slist<impl::Bitor_assign> bitor_assigns;
-         util::slist<impl::Bitxor> bitxors;
-         util::slist<impl::Bitxor_assign> bitxor_assigns;
-         util::slist<impl::Cast> casts;
-         util::slist<impl::Call> calls;
-         util::slist<impl::Comma> commas;
-         util::slist<impl::Const_cast> ccasts;
-         util::slist<impl::Datum> data;
-         util::slist<impl::Div> divs;
-         util::slist<impl::Div_assign> div_assigns;
-         util::slist<impl::Dot> dots;
-         util::slist<impl::Dot_star> dot_stars;
-         util::slist<impl::Dynamic_cast> dcasts;
-         util::slist<impl::Equal> equals;
-         util::slist<impl::Greater> greaters;
-         util::slist<impl::Greater_equal> greater_equals;
-         util::slist<impl::Less> lesses;
-         util::slist<impl::Less_equal> less_equals;
-         util::slist<impl::Lshift> lshifts;
-         util::slist<impl::Lshift_assign> lshift_assigns;
-         util::slist<impl::Member_init> member_inits;
-         util::slist<impl::Minus> minuses;
-         util::slist<impl::Minus_assign> minus_assigns;
-         util::slist<impl::Modulo> modulos;
-         util::slist<impl::Modulo_assign> modulo_assigns;
-         util::slist<impl::Mul> muls;
-         util::slist<impl::Mul_assign> mul_assigns;
-         util::slist<impl::Not_equal> not_equals;
-         util::slist<impl::Or> ors;
-         util::slist<impl::Plus> pluses;
-         util::slist<impl::Plus_assign> plus_assigns;
-         util::slist<impl::Reinterpret_cast> rcasts;
-         util::slist<impl::Rshift> rshifts;
-         util::slist<impl::Rshift_assign> rshift_assigns;
-         util::slist<impl::Static_cast> scasts;
+         stable_farm<impl::And> ands;
+         stable_farm<impl::Array_ref> array_refs;
+         stable_farm<impl::Arrow> arrows;
+         stable_farm<impl::Arrow_star> arrow_stars;
+         stable_farm<impl::Assign> assigns;
+         stable_farm<impl::Bitand> bitands;
+         stable_farm<impl::Bitand_assign> bitand_assigns;
+         stable_farm<impl::Bitor> bitors;
+         stable_farm<impl::Bitor_assign> bitor_assigns;
+         stable_farm<impl::Bitxor> bitxors;
+         stable_farm<impl::Bitxor_assign> bitxor_assigns;
+         stable_farm<impl::Cast> casts;
+         stable_farm<impl::Call> calls;
+         stable_farm<impl::Comma> commas;
+         stable_farm<impl::Const_cast> ccasts;
+         stable_farm<impl::Datum> data;
+         stable_farm<impl::Div> divs;
+         stable_farm<impl::Div_assign> div_assigns;
+         stable_farm<impl::Dot> dots;
+         stable_farm<impl::Dot_star> dot_stars;
+         stable_farm<impl::Dynamic_cast> dcasts;
+         stable_farm<impl::Equal> equals;
+         stable_farm<impl::Greater> greaters;
+         stable_farm<impl::Greater_equal> greater_equals;
+         stable_farm<impl::Less> lesses;
+         stable_farm<impl::Less_equal> less_equals;
+         stable_farm<impl::Lshift> lshifts;
+         stable_farm<impl::Lshift_assign> lshift_assigns;
+         stable_farm<impl::Member_init> member_inits;
+         stable_farm<impl::Minus> minuses;
+         stable_farm<impl::Minus_assign> minus_assigns;
+         stable_farm<impl::Modulo> modulos;
+         stable_farm<impl::Modulo_assign> modulo_assigns;
+         stable_farm<impl::Mul> muls;
+         stable_farm<impl::Mul_assign> mul_assigns;
+         stable_farm<impl::Not_equal> not_equals;
+         stable_farm<impl::Or> ors;
+         stable_farm<impl::Plus> pluses;
+         stable_farm<impl::Plus_assign> plus_assigns;
+         stable_farm<impl::Reinterpret_cast> rcasts;
+         stable_farm<impl::Rshift> rshifts;
+         stable_farm<impl::Rshift_assign> rshift_assigns;
+         stable_farm<impl::Static_cast> scasts;
          
-         util::slist<impl::New> news;
-         util::slist<impl::Conditional> conds;
-         util::slist<impl::Mapping> mappings;
+         stable_farm<impl::New> news;
+         stable_farm<impl::Conditional> conds;
+         stable_farm<impl::Mapping> mappings;
 
          const ipr::String& get_string(const char*, int);
       };
@@ -1366,18 +1389,18 @@ namespace ipr {
       
       template<class Interface>
       struct decl_factory {
-         util::slist<decl_rep<Interface>> decls;
-         util::slist<master_decl_data<Interface>> master_info;
+         stable_farm<decl_rep<Interface>> decls;
+         stable_farm<master_decl_data<Interface>> master_info;
 
          // We have gotten an overload-set for a name, and we are about
          // to enter the first declaration for that name with the type T.
          decl_rep<Interface>* declare(Overload* ovl, const ipr::Type& t)
          {
             // Grab bookkeeping memory for this master declaration.
-            master_decl_data<Interface>* data = master_info.push_back(ovl, t);
+            master_decl_data<Interface>* data = master_info.make(ovl, t);
             // The actual representation for the declaration points back
             // to the master declaration bookkeeping store.
-            decl_rep<Interface>* master = decls.push_back(data);
+            decl_rep<Interface>* master = decls.make(data);
             // Inform the overload-set that we have a new master declaration.
             ovl->push_back(data);
 
@@ -1386,7 +1409,7 @@ namespace ipr {
          
          decl_rep<Interface>* redeclare(overload_entry* decl)
          {
-            return decls.push_back
+            return decls.make
                (static_cast<master_decl_data<Interface>*>(decl));
          }
       };
@@ -1614,7 +1637,7 @@ namespace ipr {
          Region(const ipr::Region*, const ipr::Type&);
 
       private:
-         util::slist<Region> subregions;
+         stable_farm<Region> subregions;
       };
 
 
@@ -1769,10 +1792,10 @@ namespace ipr {
          util::rb_tree::container<impl::Rvalue_reference> refrefs;
          util::rb_tree::container<impl::Sum> sums;
          util::rb_tree::container<impl::Template> templates;
-         util::slist<impl::Enum> enums;
-         util::slist<impl::Class> classes;
-         util::slist<impl::Union> unions;
-         util::slist<impl::Namespace> namespaces;
+         stable_farm<impl::Enum> enums;
+         stable_farm<impl::Class> classes;
+         stable_farm<impl::Union> unions;
+         stable_farm<impl::Namespace> namespaces;
       };
 
 
@@ -1909,23 +1932,23 @@ namespace ipr {
          impl::For_in* make_for_in();
 
       protected:
-         util::slist<impl::Break> breaks;
-         util::slist<impl::Continue> continues;
-         util::slist<impl::Empty_stmt> empty_stmts;
-         util::slist<impl::Block> blocks;
-         util::slist<impl::Expr_stmt> expr_stmts;
-         util::slist<impl::Goto> gotos;
-         util::slist<impl::Return> returns;
-         util::slist<impl::Ctor_body> ctor_bodies;
-         util::slist<impl::Do> dos;
-         util::slist<impl::If_then> ifs;
-         util::slist<impl::Handler> handlers;
-         util::slist<impl::Labeled_stmt> labeled_stmts;
-         util::slist<impl::Switch> switches;
-         util::slist<impl::While> whiles;
-         util::slist<impl::If_then_else> ifelses;
-         util::slist<impl::For> fors;
-         util::slist<impl::For_in> for_ins;
+         stable_farm<impl::Break> breaks;
+         stable_farm<impl::Continue> continues;
+         stable_farm<impl::Empty_stmt> empty_stmts;
+         stable_farm<impl::Block> blocks;
+         stable_farm<impl::Expr_stmt> expr_stmts;
+         stable_farm<impl::Goto> gotos;
+         stable_farm<impl::Return> returns;
+         stable_farm<impl::Ctor_body> ctor_bodies;
+         stable_farm<impl::Do> dos;
+         stable_farm<impl::If_then> ifs;
+         stable_farm<impl::Handler> handlers;
+         stable_farm<impl::Labeled_stmt> labeled_stmts;
+         stable_farm<impl::Switch> switches;
+         stable_farm<impl::While> whiles;
+         stable_farm<impl::If_then_else> ifelses;
+         stable_farm<impl::For> fors;
+         stable_farm<impl::For_in> for_ins;
       };
 
 
@@ -2072,7 +2095,7 @@ namespace ipr {
       private:
          void record_builtin_type(const ipr::As_type&);
 
-         using Filemap = util::slist<impl::String>;
+         using Filemap = stable_farm<impl::String>;
 
 
          Filemap filemap;

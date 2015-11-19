@@ -12,37 +12,14 @@
 #include <stdexcept>
 #include <iostream>
 
-// >>>> Yuriy Solodkyy: 2007/09/24 
-#if _MSC_VER >= 1400
-// This simple code doesn't compile in 2003 and I didn't have time to investigate
-// why. Since this is a function that is only used in debugger, we just skip
-// its definition for MSVC 2003.
-struct xpr_dumper : ipr::Printer, ipr::Visitor
-{
-   explicit xpr_dumper(std::ostream& os) : ipr::Printer(os) {}
-   void visit(const ipr::Node& n) { *this << "Unknown node"   << '\n'; }
-   void visit(const ipr::Expr& n) { *this << ipr::xpr_expr(n) << '\n'; }
-   void visit(const ipr::Type& n) { *this << ipr::xpr_type(n) << '\n'; }
-   void visit(const ipr::Stmt& n) { *this << ipr::xpr_expr(n) << '\n'; }
-   void visit(const ipr::Decl& n) { *this << ipr::xpr_decl(n) << '\n'; }
-};
-// Helper function to dump nodes in debugger
-void dumpxpr(const ipr::Node& node)
-{
-   xpr_dumper dumper(std::clog);
-   node.accept(dumper);
-}
-#endif
-// <<<< Yuriy Solodkyy: 2007/09/24 
-
 namespace ipr 
 {
    struct pp_base : Constant_visitor<Missing_overrider> {
       explicit pp_base(Printer& p) : pp(p) { }
       using Visitor::visit;
-      void visit(const Name& n) { visit(as<Expr>(n)); }
-      void visit(const Type& t) { visit(as<Expr>(t)); }
-      void visit(const Decl& d) { visit(as<Expr>(d)); }
+      void visit(const Name& n) override { visit(as<Expr>(n)); }
+      void visit(const Type& t) override { visit(as<Expr>(t)); }
+      void visit(const Decl& d) override { visit(as<Expr>(d)); }
       
    protected:
       Printer& pp;
@@ -265,7 +242,7 @@ namespace ipr
       struct Name : pp_base {
          Name(Printer& p, const ipr::Decl* d = 0) : pp_base(p), decl(d) { }
          
-         void visit(const Identifier& id)
+         void visit(const Identifier& id) override
          {
             pp << id;
          }
@@ -278,7 +255,7 @@ namespace ipr
          //          *  *=  /  /=  ^  ^=  &  &&  &=  |  ||  |=
          //          ~   ,  ()  []  <   <<  <<=   <=  >   >>
          //          >>=  >=  new  new[]   delete   delete[]
-         void visit(const Operator& o)
+         void visit(const Operator& o) override
          {
             pp << xpr_identifier("operator");
             
@@ -296,7 +273,7 @@ namespace ipr
          //        operator  type-id
          // -- NOTE: This production is very different from ISO Standard
          // --        production for conversion-function-id.
-         void visit(const Conversion& c)
+         void visit(const Conversion& c) override
          {
             // For now only regular cast, later we'll add support for overloading
             // dynamic_cast, reinterpret_cast, const_cast and static_cast
@@ -306,7 +283,7 @@ namespace ipr
          }
          
          // A type-id is just the spelling of the type expression.
-         void visit(const Type_id& n)
+         void visit(const Type_id& n) override
          {
             pp << xpr_type(n.type_expr());
          }
@@ -315,29 +292,29 @@ namespace ipr
          // -- qualified-id.  Here, it takes the production of
          //    scope-ref:
          //       @ name ( identifier )
-         void visit(const Scope_ref& n)
+         void visit(const Scope_ref& n) override
          {
             pp << xpr_expr(n.scope()) << token("::") << xpr_expr(n.member());
          }
          
          // -- template-id:
          //       primary-expression < expression-seq >
-         void visit(const Template_id& n)
+         void visit(const Template_id& n) override
          {
             pp << xpr_primary_expr(n.template_name())
-               << token('<|') << n.args() << token('|>');
+               << token("<|") << n.args() << token("|>");
          }
          
          // -- ctor-name:
          //        # ctor
-         void visit(const Ctor_name&)
+         void visit(const Ctor_name&) override
          {
             pp << xpr_identifier("#ctor");
          }
          
          // -- dtor-name
          //    # dtor
-         void visit(const Dtor_name&)
+         void visit(const Dtor_name&) override
          {
             pp << xpr_identifier("#dtor");
          }
@@ -351,7 +328,7 @@ namespace ipr
          // by one as the levels nest), and "position" is the position
          // of the parameter in the parameter list where it was bound
          // (starting 0 for the first parameter).
-         void visit(const Rname& rn)
+         void visit(const Rname& rn) override
          {
             pp << xpr_identifier("#(")
                << rn.level()
@@ -391,23 +368,23 @@ namespace ipr
       struct Primary_expr : xpr::Name {
          Primary_expr(Printer& pp) : xpr::Name(pp) { }
          
-         void visit(const Label& l) { xpr::Name::visit(l.name()); }
-         void visit(const Id_expr& id) { pp << xpr_name(id.name(), id.resolution()); }
-      void visit(const Literal&);
-         void visit(const As_type& t) { pp << xpr_primary_expr(t.expr()); }
-         void visit(const Phantom&) { } // nothing to print
-         void visit(const Paren_expr& e)
+         void visit(const Label& l) override { xpr::Name::visit(l.name()); }
+         void visit(const Id_expr& id) override { pp << xpr_name(id.name(), id.resolution()); }
+         void visit(const Literal&) override;
+         void visit(const As_type& t) override { pp << xpr_primary_expr(t.expr()); }
+         void visit(const Phantom&) override { } // nothing to print
+         void visit(const Paren_expr& e) override
          {
             pp << token('(') << xpr_expr(e.expr()) << token(')');
          }
-         void visit(const Initializer_list& e) {
+         void visit(const Initializer_list& e)  override {
             pp << token('{') << e.expr_list() << token('}');
          }
-         void visit(const Expr& e)
+         void visit(const Expr& e) override
          {
             pp << token('(') << xpr_expr(e) << token(')');
          }
-         void visit(const Decl& d) { d.name().accept(*this); }
+         void visit(const Decl& d) override { d.name().accept(*this); }
       };
       
       void
@@ -504,84 +481,84 @@ namespace ipr
          Postfix_expr(Printer& pp) : xpr::Primary_expr(pp) { }
          
          //        postfix-expression [ expression ]
-         void visit(const Array_ref& e)
+         void visit(const Array_ref& e) override
          {
             pp << xpr_postfix_expr(e.base())
                << token('[') << xpr_expr(e.member()) << token(']');
          }
          
          //        postfix-expression . primary-expression
-         void visit(const Dot& e)
+         void visit(const Dot& e) override 
          {
             pp << xpr_postfix_expr(e.base()) << token('.')
                << xpr_primary_expr(e.member());
          }
          
          //        postfix-expression -> primary-expression 
-         void visit(const Arrow& e)
+         void visit(const Arrow& e) override
          {
             pp << xpr_postfix_expr(e.base()) << token("->")
                << xpr_primary_expr(e.member());
          }
          
          //        postfix-expression ( expression-list )
-         void visit(const Call& e)
+         void visit(const Call& e) override
          {
             pp << xpr_postfix_expr(e.function())
                << token('(') << e.args() << token(')');
          }
          
-         void visit(const Datum& e)
+         void visit(const Datum& e) override
          {
             pp << xpr_type(e.type())
                << token('(') << e.args() << token(')');
          }
          
          //        postfix-expression --
-         void visit(const Post_decrement& e)
+         void visit(const Post_decrement& e) override
          {
             pp << xpr_postfix_expr(e.operand()) << token("--");
          }
          
          //        postfix-expression ++
-         void visit(const Post_increment& e)
+         void visit(const Post_increment& e) override
          {
             pp << xpr_postfix_expr(e.operand()) << token("++");
          }
          
          //        dynamic_cast < type > ( expression )
-         void visit(const Dynamic_cast& e)
+         void visit(const Dynamic_cast& e) override
          {
             new_style_cast(pp, e, "dynamic_cast");
          }
          
          //        static_cast < type > ( expression )
-         void visit(const Static_cast& e)
+         void visit(const Static_cast& e) override
          {
             new_style_cast(pp, e, "static_cast");
          }
          
          //        const_cast < type > ( expression )
-         void visit(const Const_cast& e)
+         void visit(const Const_cast& e) override
          {
             new_style_cast(pp, e, "const_cast");
          }
 
          //        reinterpret_cast < type > ( expression )
-         void visit(const Reinterpret_cast& e)
+         void visit(const Reinterpret_cast& e) override
          {
             new_style_cast(pp, e, "reinterpret_cast");
          }
          
          //        typeid ( expression )
-      void visit(const Expr_typeid& e)
+      void visit(const Expr_typeid& e) override
          {
             pp << xpr_identifier("typeid")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
          
          //        typeid ( type )
-         void visit(const Type_typeid& e)
+         void visit(const Type_typeid& e) override
          {
             pp << xpr_identifier("typeid")
                << token("<|") << xpr_type(e.operand()) << token("|>") << token('(') << token(')');
@@ -620,38 +597,38 @@ namespace ipr
       struct Unary_expr : xpr::Postfix_expr {
          Unary_expr(Printer& pp) : xpr::Postfix_expr(pp) { }
          
-         void visit(const Pre_decrement& e) { unary_operation(pp, e, "--"); }
+         void visit(const Pre_decrement& e) override { unary_operation(pp, e, "--"); }
          
-         void visit(const Pre_increment& e) { unary_operation(pp, e, "++"); }
+         void visit(const Pre_increment& e) override { unary_operation(pp, e, "++"); }
          
-         void visit(const Address& e) { unary_operation(pp, e, "&"); }
+         void visit(const Address& e) override { unary_operation(pp, e, "&"); }
          
-         void visit(const Complement& e) { unary_operation(pp, e, "~"); }
+         void visit(const Complement& e) override { unary_operation(pp, e, "~"); }
          
-         void visit(const Deref& e) { unary_operation(pp, e, "*"); }
+         void visit(const Deref& e) override { unary_operation(pp, e, "*"); }
          
-         void visit(const Unary_minus& e) { unary_operation(pp, e, "-"); }
+         void visit(const Unary_minus& e) override { unary_operation(pp, e, "-"); }
          
-         void visit(const Not& e) { unary_operation(pp, e, "!"); }
+         void visit(const Not& e) override { unary_operation(pp, e, "!"); }
          
-         void visit(const Expr_sizeof& e)
+         void visit(const Expr_sizeof& e) override
          {
             pp << xpr_identifier("sizeof")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
          
-         void visit(const Type_sizeof& e)
+         void visit(const Type_sizeof& e) override
          {
             pp << xpr_identifier("sizeof")
                << token("<|") << xpr_type(e.operand()) << token("|>") << token('(') << token(')');
          }
 
-         void visit(const Unary_plus& e)
+         void visit(const Unary_plus& e) override
          {
             pp << token('+') << xpr_expr(e.operand());
          }
          
-         void visit(const New& e)
+         void visit(const New& e) override
          {
             pp << xpr_identifier("new") << token(' ');
             
@@ -664,14 +641,14 @@ namespace ipr
                pp << token(" (") << e.initializer() << token(')');
          }
          
-         void visit(const Delete& e)
+         void visit(const Delete& e) override
          {
             pp << xpr_identifier("delete")
                << token(' ')
                << xpr_cast_expr(e.storage());
          }
       
-         void visit(const Array_delete& e)
+         void visit(const Array_delete& e) override
          {
             pp << xpr_identifier("delete[]")
                << token(' ')
@@ -698,7 +675,7 @@ namespace ipr
          // -- cast-expression
          //       unary-expression
          //       "(" type ")" cast-expression
-         void visit(const Cast& e)
+         void visit(const Cast& e) override
          {
             new_style_cast(pp, e, "cast");
          }
@@ -738,8 +715,8 @@ namespace ipr
       struct Pm_expr : xpr::Cast_expr {
          Pm_expr(Printer& p) : xpr::Cast_expr(p) { }
          
-         void visit(const Dot_star& e) { offset_with_pm(pp, e, ".*"); }
-         void visit(const Arrow_star& e) { offset_with_pm(pp, e, "->*"); }
+         void visit(const Dot_star& e) override { offset_with_pm(pp, e, ".*"); }
+         void visit(const Arrow_star& e) override { offset_with_pm(pp, e, "->*"); }
       };
    }
    
@@ -777,15 +754,15 @@ namespace ipr
       struct Mul_expr : xpr::Pm_expr {
          Mul_expr(Printer& p) : xpr::Pm_expr(p) { }
          
-         void visit(const Mul& e)
+         void visit(const Mul& e) override
          {
             binary_expression<xpr_mul_expr, xpr_pm_expr>(pp, e, '*');
          }
-         void visit(const Div& e)
+         void visit(const Div& e) override
          {
             binary_expression<xpr_mul_expr, xpr_pm_expr>(pp, e, '/');
          }
-         void visit(const Modulo& e)
+         void visit(const Modulo& e) override
          {
             binary_expression<xpr_mul_expr, xpr_pm_expr>(pp, e, '%');
          }
@@ -814,12 +791,12 @@ namespace ipr
       struct Add_expr : xpr::Mul_expr {
          Add_expr(Printer& p) : xpr::Mul_expr(p) { }
          
-         void visit(const Plus& e)
+         void visit(const Plus& e) override
          {
             binary_expression<xpr_add_expr, xpr_mul_expr>(pp, e, '+');
          }
          
-         void visit(const Minus& e)
+         void visit(const Minus& e) override
          {
             binary_expression<xpr_add_expr, xpr_mul_expr>(pp, e, '-');
          }
@@ -849,12 +826,12 @@ namespace ipr
       struct Shift_expr : xpr::Add_expr {
          Shift_expr(Printer& p) : xpr::Add_expr(p) { }
          
-         void visit(const Lshift& e)
+         void visit(const Lshift& e) override
          {
             binary_expression<xpr_shift_expr, xpr_add_expr>(pp, e, "<<");
          }
          
-         void visit(const Rshift& e)
+         void visit(const Rshift& e) override
          {
             binary_expression<xpr_shift_expr, xpr_add_expr>(pp, e, ">>");
          }
@@ -886,22 +863,22 @@ namespace ipr
       struct Rel_expr : xpr::Shift_expr {
          Rel_expr(Printer& p) : xpr::Shift_expr(p) { }
          
-         void visit(const Less& e)
+         void visit(const Less& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, '<');
          }
          
-         void visit(const Less_equal& e)
+         void visit(const Less_equal& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, "<=");
          }
          
-         void visit(const Greater& e)
+         void visit(const Greater& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, '>');
          }
          
-         void visit(const Greater_equal& e)
+         void visit(const Greater_equal& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, ">=");
          }
@@ -930,12 +907,12 @@ namespace ipr
       struct Eq_expr : xpr::Rel_expr {
          Eq_expr(Printer& p) : xpr::Rel_expr(p) { }
          
-         void visit(const Equal& e)
+         void visit(const Equal& e) override
          {
             binary_expression<xpr_eq_expr, xpr_rel_expr>(pp, e, "==");
          }
          
-         void visit(const Not_equal& e)
+         void visit(const Not_equal& e) override
          {
             binary_expression<xpr_eq_expr, xpr_rel_expr>(pp, e, "!=");
          }
@@ -964,7 +941,7 @@ namespace ipr
       struct And_expr : xpr::Eq_expr {
          And_expr(Printer& p) : xpr::Eq_expr(p) { }
          
-         void visit(const Bitand& e)
+         void visit(const Bitand& e) override
          {
             binary_expression<xpr_and_expr, xpr_eq_expr>(pp, e, '&');
          }
@@ -992,7 +969,7 @@ namespace ipr
       struct Xor_expr : xpr::And_expr {
          Xor_expr(Printer& p) : xpr::And_expr(p) { }
          
-         void visit(const Bitxor& e)
+         void visit(const Bitxor& e) override
          {
             binary_expression<xpr_xor_expr, xpr_and_expr>(pp, e, '^');
          }
@@ -1021,7 +998,7 @@ namespace ipr
       struct Ior_expr : xpr::Xor_expr {
          Ior_expr(Printer& p) : xpr::Xor_expr(p) { }
          
-         void visit(const Bitor& e)
+         void visit(const Bitor& e) override
          {
             binary_expression<xpr_ior_expr, xpr_xor_expr>(pp, e, '|');
          }
@@ -1050,7 +1027,7 @@ namespace ipr
       struct Land_expr : xpr::Ior_expr {
          Land_expr(Printer& p) : xpr::Ior_expr(p) { }
          
-         void visit(const And& e)
+         void visit(const And& e) override
          {
             binary_expression<xpr_land_expr, xpr_ior_expr>(pp, e, "&&");
          }
@@ -1079,7 +1056,7 @@ namespace ipr
       struct Lor_expr : xpr::Land_expr {
          Lor_expr(Printer& p) : xpr::Land_expr(p) { }
          
-         void visit(const Or& e)
+         void visit(const Or& e) override
          {
             binary_expression<xpr_lor_expr, xpr_land_expr>(pp, e, "||");
          }
@@ -1108,7 +1085,7 @@ namespace ipr
       struct Cond_expr : xpr::Lor_expr {
          Cond_expr(Printer& p) : xpr::Lor_expr(p) { }
          
-         void visit(const Conditional& e)
+         void visit(const Conditional& e) override
          {
             pp << xpr_lor_expr(e.condition())
                << token(" ? ")
@@ -1141,7 +1118,7 @@ namespace ipr
       const ipr::Mapping& map;
       xpr_mapping_expression_visitor(Printer& p, const ipr::Mapping& m) : pp_base(p), map(m) { }
 
-      void visit(const Function& t)
+      void visit(const Function& t) override
       {
          pp << token('(');
          pp << map.params();
@@ -1151,7 +1128,7 @@ namespace ipr
          pp << xpr_initializer(map.result());
       }
 
-      void visit(const Template&)
+      void visit(const Template&) override
       {
          pp << token('<');
          pp << map.params();
@@ -1181,68 +1158,68 @@ namespace ipr
       struct Assignment_expr : xpr::Cond_expr {
          Assignment_expr(Printer& p) : xpr::Cond_expr(p) { }
          
-         void visit(const Assign& e)
+         void visit(const Assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, '=');
          }
-         void visit(const Plus_assign& e)
+         void visit(const Plus_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "+=");
          }
-         void visit(const Bitand_assign& e)
+         void visit(const Bitand_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "&=");
          }
-         void visit(const Bitor_assign& e)
+         void visit(const Bitor_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "|=");
          }
-         void visit(const Bitxor_assign& e)
+         void visit(const Bitxor_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "^=");
          }
-         void visit(const Div_assign& e)
+         void visit(const Div_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "/=");
          }
-         void visit(const Modulo_assign& e)
+         void visit(const Modulo_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "%=");
          }
-         void visit(const Mul_assign& e)
+         void visit(const Mul_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "*=");
          }
-         void visit(const Lshift_assign& e)
+         void visit(const Lshift_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "<<=");
          }
-         void visit(const Rshift_assign& e)
+         void visit(const Rshift_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, ">>=");
          }
-         void visit(const Minus_assign& e)
+         void visit(const Minus_assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
                (pp, e, "-=");
          }
-         void visit(const Throw& e)
+         void visit(const Throw& e) override
          {
             pp << xpr_identifier("throw") << token(' ')
                << xpr_assignment_expression(e.operand());
          }
          
-         void visit(const Mapping& m)
+         void visit(const Mapping& m) override
          {
             pp << xpr_mapping_expression (m);
          }
@@ -1264,13 +1241,13 @@ namespace ipr
    struct xpr_expr_visitor : pp_base {
       xpr_expr_visitor(Printer& p) : pp_base(p) { }
 
-      void visit(const Comma& e)
+      void visit(const Comma& e) override
       {
          pp << xpr_expr(e.first()) << token("@, ")
             << xpr_assignment_expression(e.second());
       }
 
-      void visit(const Scope& s)
+      void visit(const Scope& s) override
       {
          const Sequence<Decl>& decls = s.members();
          const int n = decls.size();
@@ -1281,18 +1258,18 @@ namespace ipr
             }
       }
 
-      void visit(const Expr_list& e) { pp << e; }
+      void visit(const Expr_list& e) override { pp << e; }
 
-      void visit(const Member_init& e)
+      void visit(const Member_init& e) override
       {
          pp << xpr_expr(e.member())
             << token('(') << xpr_expr(e.initializer()) << token(')');
       }
 
-      void visit(const Type& t) { pp << xpr_type(t); }
-      void visit(const Expr& e) { pp << xpr_assignment_expression(e); }
-      void visit(const Stmt& s) { pp << xpr_stmt(s); }
-      void visit(const Decl& d)
+      void visit(const Type& t) override { pp << xpr_type(t); }
+      void visit(const Expr& e) override { pp << xpr_assignment_expression(e); }
+      void visit(const Stmt& s) override { pp << xpr_stmt(s); }
+      void visit(const Decl& d) override
       {
          // A declaration used as an expression must have appeared
          // as a primary-expression.
@@ -1372,18 +1349,18 @@ namespace ipr
    struct xpr_type_expr_visitor : pp_base {
       xpr_type_expr_visitor(Printer& p) : pp_base(p) { }
 
-      void visit(const Array& a)
+      void visit(const Array& a) override
       {
          pp << token('[') << xpr_expr(a.bound()) << token(']')
             << xpr_type(a.element_type());
       }
 
-      void visit(const As_type& t)
+      void visit(const As_type& t) override
       {
          pp << xpr_expr(t.expr());
       }
 
-      void visit(const Class& c)
+      void visit(const Class& c) override
       {
          pp << xpr_base_classes(c.bases())
             << token(' ')
@@ -1395,25 +1372,25 @@ namespace ipr
             << needs_newline();
       }
 
-      void visit(const Decltype& t)
+      void visit(const Decltype& t) override
       {
          pp << xpr_identifier("decltype") << token(' ')
             << token('(') << xpr_expr(t.expr()) << token(')');
       }
 
-      void visit(const Function& f)
+      void visit(const Function& f) override
       {
          pp << token('(') << f.source().operand() << token(')')
             << xpr_exception_spec(f.throws())
             << xpr_type(f.target());
       }
 
-      void visit(const Pointer& t)
+      void visit(const Pointer& t) override
       {
          pp << token('*') << xpr_type(t.points_to());
       }
 
-      void visit(const Ptr_to_member& t)
+      void visit(const Ptr_to_member& t) override
       {
          pp << token('*')
             << token('[')
@@ -1422,30 +1399,30 @@ namespace ipr
             << xpr_type(t.member_type());
       }
 
-      void visit(const Qualified& t)
+      void visit(const Qualified& t) override
       {
          pp << t.qualifiers()
             << xpr_type(t.main_variant());
       }
 
-      void visit(const Reference& t)
+      void visit(const Reference& t) override
       {
          pp << token('&') << xpr_type(t.refers_to());
       }
 
-      void visit(const Rvalue_reference& t)
+      void visit(const Rvalue_reference& t) override
       {
          pp << token('&') << token('&') << xpr_type(t.refers_to());
       }
 
-      void visit(const Template& t)
+      void visit(const Template& t) override
       {
          pp << token('<') << t.source().operand() << token('>')
             << token(' ')
             << xpr_type_expr(t.target());
       }
 
-      void visit(const Udt& t)
+      void visit(const Udt& t) override
       {
          pp << token(' ')
             << token('{')
@@ -1473,42 +1450,42 @@ namespace ipr
    struct xpr_type_visitor : pp_base {
       xpr_type_visitor(Printer& p) : pp_base(p) { }
 
-      void visit(const As_type& t)
+      void visit(const As_type& t) override
       { pp << xpr_expr(t.expr()); }
 
-      void visit(const Array& a)
+      void visit(const Array& a) override
       { pp << xpr_type_expr(a); }
 
-      void visit(const Function& f)
+      void visit(const Function& f) override
       { pp << xpr_type_expr(f); }
 
-      void visit(const Pointer& t)
+      void visit(const Pointer& t) override
       { pp << xpr_type_expr(t); }
 
-      void visit(const Ptr_to_member& t)
+      void visit(const Ptr_to_member& t) override
       { pp << xpr_type_expr(t); }
 
-      void visit(const Qualified& t)
+      void visit(const Qualified& t) override
       { pp << xpr_type_expr(t); }
 
-      void visit(const Reference& t)
+      void visit(const Reference& t) override
       { pp << xpr_type_expr(t); }
 
-      void visit(const Template& t)
+      void visit(const Template& t) override
       { pp << xpr_type_expr(t); }
 
-      void visit(const Type& t)
+      void visit(const Type& t) override
       {
          // FIXME: Check.
          pp << xpr_name(t.name());
       }
 
-      void visit(const Product& t)
+      void visit(const Product& t) override
       {
          pp << t.operand();
       }
 
-      void visit(const Sum& t)
+      void visit(const Sum& t) override
       {
          pp << t.operand();
       }
@@ -1531,22 +1508,22 @@ namespace ipr
       struct V : xpr::Assignment_expr {
          V(Printer& p) : xpr::Assignment_expr(p) { }
 
-         void visit(const ipr::Type& t)
+         void visit(const ipr::Type& t) override
          {
             pp << xpr_type_expr(t);
          }
 
-         void visit(const ipr::Expr& e)
+         void visit(const ipr::Expr& e) override
          {
             pp << xpr_expr(e);
          }
 
-         void visit(const ipr::Stmt& e)
+         void visit(const ipr::Stmt& e) override
          {
             pp << xpr_stmt(e);
          }
 
-         void visit(const ipr::Decl& e)
+         void visit(const ipr::Decl& e) override
          {
             pp << xpr_decl(e);
          }
@@ -1567,14 +1544,14 @@ namespace ipr
       struct Stmt : xpr::Assignment_expr {
          Stmt(Printer& p) : xpr::Assignment_expr(p) { }
 
-         void visit(const Expr_stmt& e)
+         void visit(const Expr_stmt& e) override
          {
             pp << xpr_expr(e.expr())
                << token(';')
                << needs_newline();
          }
 
-         void visit(const Labeled_stmt& s)
+         void visit(const Labeled_stmt& s) override
          {
             if (pp.needs_newline())
                pp << newline_and_indent(-3);
@@ -1590,7 +1567,7 @@ namespace ipr
                << needs_newline();
          }
 
-         void visit(const Block& s)
+         void visit(const Block& s) override
          {
             pp << token('{')
                << needs_newline() << indentation(3);
@@ -1609,7 +1586,7 @@ namespace ipr
                pp << xpr_stmt(handlers[i],false);
          }
 
-         void visit(const Ctor_body& b)
+         void visit(const Ctor_body& b) override
          {
             const Expr_list& inits = b.inits();
             if (inits.size() > 0)
@@ -1619,7 +1596,7 @@ namespace ipr
             pp << needs_newline() << xpr_stmt(b.block());
          }
 
-         void visit(const If_then& s)
+         void visit(const If_then& s) override
          {
             pp << xpr_identifier("if")
                << token(' ')
@@ -1632,7 +1609,7 @@ namespace ipr
                << indentation(-3) << needs_newline();
          }
 
-         void visit(const If_then_else& s)
+         void visit(const If_then_else& s) override
          {
             pp << xpr_identifier("if")
                << token(' ')
@@ -1646,7 +1623,7 @@ namespace ipr
                << indentation(-3) << needs_newline();
          }
 
-         void visit(const Return& s)
+         void visit(const Return& s) override
          {
             pp << xpr_identifier("return")
                << token(' ')
@@ -1655,7 +1632,7 @@ namespace ipr
                << needs_newline();
          }
 
-         void visit(const Switch& s)
+         void visit(const Switch& s) override
          {
             pp << xpr_identifier("switch")
                << token(' ')
@@ -1665,7 +1642,7 @@ namespace ipr
                << newline_and_indent(-3);
          }
 
-         void visit(const While& s)
+         void visit(const While& s) override
          {
             pp << xpr_identifier("while")
                << token(' ')
@@ -1675,7 +1652,7 @@ namespace ipr
                << needs_newline() << indentation(-3);
          }
 
-         void visit(const Do& s)
+         void visit(const Do& s) override
          {
             pp << xpr_identifier("do")
                << newline_and_indent(3)
@@ -1687,7 +1664,7 @@ namespace ipr
                << token(';') << needs_newline();
          }
 
-         void visit(const For& s)
+         void visit(const For& s) override
          {
             pp << xpr_identifier("for")
                << token(" (")
@@ -1702,7 +1679,8 @@ namespace ipr
                << indentation(-3) << needs_newline();
          }
 
-         void visit(const For_in& s) {
+         void visit(const For_in& s) override
+         {
             pp << xpr_identifier("for")
                << token(" (")
                << xpr_decl(s.variable())
@@ -1714,21 +1692,21 @@ namespace ipr
                << indentation(-3) << needs_newline();
          }
 
-         void visit(const Break&)
+         void visit(const Break&) override
          {
             pp << xpr_identifier("break")
                << token(';')
                << needs_newline();
          }
 
-         void visit(const Continue&)
+         void visit(const Continue&) override
          {
             pp << xpr_identifier("continue")
                << token(';')
                << needs_newline();
          }
 
-         void visit(const Goto& s)
+         void visit(const Goto& s) override
          {
             pp << xpr_identifier("goto")
                << token(' ')
@@ -1737,7 +1715,7 @@ namespace ipr
                << needs_newline();
          }
 
-         void visit(const Handler& s)
+         void visit(const Handler& s) override
          {
             pp << xpr_identifier("catch")
                << token(' ')
@@ -1752,7 +1730,7 @@ namespace ipr
                << newline_and_indent(-3);
          }
 
-         void visit(const Decl& d)
+         void visit(const Decl& d) override
          {
             // These are declaration statements, so they end u
             // with a semicolon.
@@ -1813,7 +1791,7 @@ namespace ipr
       struct Decl : xpr::Stmt {
          Decl(Printer& p) : xpr::Stmt(p) { }
 
-            void visit(const ipr::Alias& d)
+            void visit(const ipr::Alias& d) override
             {
                     assert(d.has_initializer()); // alias cannot be without initializer
 
@@ -1824,7 +1802,7 @@ namespace ipr
                             << xpr_expr(d.initializer());
             }
 
-         void visit(const ipr::Decl& d)
+         void visit(const ipr::Decl& d) override
          {
             pp << ipr::xpr_name(d)
                << token(" : ")
@@ -1839,7 +1817,7 @@ namespace ipr
                }
          }
 
-         void visit(const Typedecl& d)
+         void visit(const Typedecl& d) override
          {
             // >>>> Yuriy Solodkyy: 2006/07/20 
             //pp << xpr_identifier("let"); // begins new declaration
@@ -1852,14 +1830,14 @@ namespace ipr
                pp << xpr_type_expr(d.initializer());
          }
 
-         void visit(const Enumerator& e)
+         void visit(const Enumerator& e) override
          {
             e.name().accept(*this);
             if (e.has_initializer())
                pp << token('(') << xpr_expr(e.initializer()) << token(')');
          }
 
-         void visit(const Bitfield& b)
+         void visit(const Bitfield& b) override
          {
             b.name().accept(*this);
             pp << token(" : #")
@@ -1868,12 +1846,12 @@ namespace ipr
                << xpr_type(b.type());
          }
 
-         void visit(const Base_type& b)
+         void visit(const Base_type& b) override
          {
             pp << b.specifiers() << xpr_type(b.type());
          }
 
-         void visit(const Fundecl& f)
+         void visit(const Fundecl& f) override
          {
             pp << ipr::xpr_name(f)
                << token(" : ")
@@ -1889,7 +1867,7 @@ namespace ipr
                   << xpr_stmt(f.initializer());
          }
 
-         void visit(const Named_map& m)
+         void visit(const Named_map& m) override
          {
             m.name().accept(*this);
             pp << token(" : ")

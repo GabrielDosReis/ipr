@@ -36,11 +36,11 @@ namespace ipr {
    // A typical example of use is to throw an exception or do nothing.
    template<class F>
    struct Constant_visitor : Visitor, F {
-      void visit(const Node& n) { (*this)(n); }
-      void visit(const Expr& n) { (*this)(n); }
-      void visit(const Type& n) { (*this)(n); }
-      void visit(const Stmt& n) { (*this)(n); }
-      void visit(const Decl& n) { (*this)(n); }
+      void visit(const Node& n) override { (*this)(n); }
+      void visit(const Expr& n) override { (*this)(n); }
+      void visit(const Type& n) override { (*this)(n); }
+      void visit(const Stmt& n) override { (*this)(n); }
+      void visit(const Decl& n) override { (*this)(n); }
    };
 
    // This function object class implement "no-op" semantics.  Useful
@@ -56,19 +56,6 @@ namespace ipr {
    };
 
    namespace util {
-      // >>>> Yuriy Solodkyy: 2006/07/21 
-      // MSVC 7.1 has problem with taking address of n when this is a local class.
-      // Therefore this class was moved from being a local class of subsequent
-      // function to being just a regular class, which that function uses.
-      template <class T>
-      struct view_visitor : Constant_visitor<No_op> {
-        const T* result;
-        view_visitor() : result(0) { }
-        
-        void visit(const T& n) { result = &n; }
-      };
-      // <<<< Yuriy Solodkyy: 2006/07/21 
-
       // This helper function returns a pointer to its argument, if that
       // node is from the category indicated by the template parameter.
       // This is a cheap, specialized version of dynamic cast.
@@ -76,7 +63,13 @@ namespace ipr {
       const T*
       view(const Node& n)
       {
-         view_visitor<T> vis;
+         struct visitor : Constant_visitor<No_op> {
+            const T* result;
+            visitor() : result() { }
+            void visit(const T& n) override { result = &n; }
+         };
+         
+         visitor vis { };
          n.accept(vis);
          return vis.result;
       }

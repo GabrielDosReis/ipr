@@ -25,24 +25,6 @@ namespace ipr {
          return ptr;
       }
 
-      // >>>> Yuriy Solodkyy: 2008/12/12 
-      // This is a generic counter-measure to the above check function for those
-      // cases when there is no appropriate has_... member to check for existence
-      // of a member. This function is extremely slow and inefficient and should
-      // only be used for debated cases of whether has_... member function should
-      // be provided. The function is provided for the convenience of grepping
-      // for all such debated cases.
-      // This function is currently used in place of Mapping::has_result until 
-      // the issue whether it should be present or not inside Mapping is resolved.
-      template <class T, class S, class R>
-      inline bool node_has_member(const T& t, R (S::*method)() const)
-      {
-          bool has = true;
-          try { (t.*method)(); } catch (...) { has = false; }
-          return has;
-      }
-      // <<<< Yuriy Solodkyy: 2008/12/12 
-
       // --------------------
       // -- Red-back trees --
       // --------------------
@@ -58,7 +40,7 @@ namespace ipr {
       // Another reason is that, while the standard set is really a
       // a red-lack tree in disguise, there is no way one can have
       // access to that structure.  Furthermore, we use red-black
-      // trees in of both "intrusive" and "non-intrusive" forms.
+      // trees in both "intrusive" and "non-intrusive" forms.
 
       namespace rb_tree {
          // The type of the links used to chain together data in
@@ -68,15 +50,7 @@ namespace ipr {
             enum Color { Black, Red };
             enum Dir { Left, Right, Parent };
 
-            link() : arm(), color(Red)
-            {
-                // >>>> Yuriy Solodkyy: 2006/06/04
-                // the above arm() does not initialize arm with 0 in MSVC
-                arm[Left] = 0;
-                arm[Right] = 0;
-                arm[Parent] = 0;
-                // <<<< Yuriy Solodkyy: 2006/06/04
-            }
+            link() : arm(), color(Red) { }
 
             Node*& parent() { return arm[Parent]; }
             Node*& left() { return arm[Left]; }
@@ -200,22 +174,22 @@ namespace ipr {
          }
 
 
-         template<class _Node>
-         struct chain : core<_Node> {
+         template<class Node>
+         struct chain : core<Node> {
             template<class Comp>
-            _Node* insert(_Node*, Comp);
+            Node* insert(Node*, Comp);
 
             template<typename Key, class Comp>
-            _Node* find(const Key&, Comp) const;
+            Node* find(const Key&, Comp) const;
          };
 
-         template<class _Node>
+         template<class Node>
          template<typename Key, class Comp>
-         _Node*
-         chain<_Node>::find(const Key& key, Comp comp) const
+         Node*
+         chain<Node>::find(const Key& key, Comp comp) const
          {
             bool found = false;
-            _Node* result = this->root;
+            Node* result = this->root;
             while (result != 0 && !found) {
                int ordering = comp(key, *result) ;
                if (ordering < 0)
@@ -229,13 +203,13 @@ namespace ipr {
             return result;
          }
 
-         template<class _Node>
+         template<class Node>
          template<class Comp>
-         _Node*
-         chain<_Node>::insert(_Node* z, Comp comp)
+         Node*
+         chain<Node>::insert(Node* z, Comp comp)
          {
-            _Node** slot = &this->root;
-            _Node* up = 0;
+            Node** slot = &this->root;
+            Node* up = 0;
 
             bool found = false;
             while (!found && *slot != 0) {
@@ -255,13 +229,13 @@ namespace ipr {
             if (this->root == 0) {
                // This is the first time we're inserting into the tree.
                this->root = z;
-               z->color = _Node::Black;
+               z->color = Node::Black;
             }
             else if (*slot == 0) {
                // key is not present, do what we're asked to do.
                *slot = z;
                z->parent() = up;
-               z->color = _Node::Red;
+               z->color = Node::Red;
                this->fixup_insert(z);
             }
 
@@ -378,234 +352,6 @@ namespace ipr {
             }
 
             return &where->data;
-         }
-      }
-
-
-      template<class T>
-      struct slist_node {
-         slist_node* next;
-         T data;
-      };
-
-      template<typename T>
-      struct slist_iterator : std::iterator<std::forward_iterator_tag, T> {
-         explicit slist_iterator(slist_node<T>* n = 0) : node(n) { }
-
-         slist_iterator& operator++()
-         {
-            node = node->next;
-            return *this;
-         }
-
-         slist_iterator operator++(int)
-         {
-            slist_node<T>* tmp = node;
-            node = node->next;
-            return slist_iterator(tmp);
-         }
-
-         T& operator*() const
-         {
-            return node->data;
-         }
-
-         T* operator->() const
-         {
-            return &node->data;
-         }
-
-         bool operator==(slist_iterator that) const
-         {
-            return node == that.node;
-         }
-
-         bool operator!=(slist_iterator that) const
-         {
-            return node != that.node;
-         }
-
-      private:
-         slist_node<T>* node;
-      };
-      template<typename T>
-      struct const_slist_iterator : std::iterator<std::forward_iterator_tag,
-                                                  const T> {
-         explicit const_slist_iterator(slist_node<T>* n = 0) : node(n) { }
-
-         const_slist_iterator& operator++()
-         {
-            node = node->next;
-            return *this;
-         }
-
-         const_slist_iterator operator++(int)
-         {
-            slist_node<T>* tmp = node;
-            node = node->next;
-            return const_slist_iterator(tmp);
-         }
-
-         const T& operator*() const
-         {
-            return node->data;
-         }
-
-         const T* operator->() const
-         {
-            return &node->data;
-         }
-
-         bool operator==(const_slist_iterator that) const
-         {
-            return node == that.node;
-         }
-
-         bool operator!=(const_slist_iterator that) const
-         {
-            return node != that.node;
-         }
-
-      private:
-         slist_node<T>* node;
-      };
-
-      template<typename T>
-      struct slist {
-         slist() : first(0), last(0), count(0) { }
-         ~slist();
-
-         using iterator = slist_iterator<T>;
-         using const_iterator = const_slist_iterator<T>;
-
-         iterator begin()
-         {
-            return iterator(first);
-         }
-
-         const_iterator begin() const
-         {
-            return const_iterator(first);
-         }
-
-         iterator end()
-         {
-            return iterator(last);
-         }
-
-         const_iterator end() const
-         {
-            return const_iterator(last);
-         }
-
-
-         T* push_back();
-
-         template<typename U>
-         T* push_back(const U&);
-
-         template<typename U, typename V>
-         T* push_back(const U&, const V&);
-
-         template<typename U, typename V, typename W>
-         T* push_back(const U&, const V&, const W&);
-
-         int size() const { return count; }
-
-      private:
-         using node = slist_node<T>;
-         node* first;
-         node* last;
-         int count;
-
-         slist_node<T>* allocate() {
-            slist_node<T>* n = static_cast<slist_node<T>*>
-               (operator new (sizeof (slist_node<T>)));
-            n->next = 0;
-            return n;
-         }
-
-         void deallocate(slist_node<T>* n) {
-            operator delete(n);
-         }
-      };
-
-      template<typename T>
-      T*
-      slist<T>::push_back()
-      {
-         node* n = allocate();
-
-         if (first == 0)
-            first = n;
-         else
-            last->next = n;
-         last = n;
-         new (&n->data) T();
-
-         ++count;
-         return &n->data;
-      }
-
-      template<typename T>
-      template<typename U>
-      T*
-      slist<T>::push_back(const U& u)
-      {
-         node* n = allocate();
-
-         if (first == 0)
-            first = n;
-         else
-            last->next = n;
-         last = n;
-         new (&n->data) T(u);
-
-         ++count;
-         return &n->data;
-      }
-
-      template<typename T>
-      template<typename U, typename V>
-      T*
-      slist<T>::push_back(const U& u, const V& v)
-      {
-         node* n = allocate();
-         if (first == 0)
-            first = n;
-         else
-            last->next = n;
-         last = n;
-         new (&n->data) T(u, v);
-
-         ++count;
-         return &n->data;
-      }
-
-      template<typename T>
-      template<typename U, typename V, typename W>
-      T*
-      slist<T>::push_back(const U& u, const V& v, const W& w)
-      {
-         node* n = allocate();
-         if (first == 0)
-            first = n;
-         else
-            last->next = n;
-         last = n;
-         new (&n->data) T(u, v, w);
-
-         ++count;
-         return &n->data;
-      }
-
-      template<typename T>
-      slist<T>::~slist()
-      {
-         while (node* n = first) {
-            first = first->next;
-            n->~slist_node<T>();
-            this->deallocate(n);
          }
       }
 

@@ -1,3 +1,10 @@
+2015-11-19  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* impl.hxx (impl::stable_farm<>): New.
+	Use in lieu of homegrown util::slist<T>.
+	(util::slist<>): Remove.
+	* traversal.hxx (ipr): Remove workarounds for ancient VC++.
+
 2010-11-13  Gabriel Dos Reis  <gdr@cs.tamu.edu>
 
 	* impl.H (expr_factory::make_phantom): Add overload taking a type
