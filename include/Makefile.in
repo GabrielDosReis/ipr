@@ -96,7 +96,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ipr.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(noinst_HEADERS) \
+DIST_COMMON = $(srcdir)/Makefile.am $(nobase_include_HEADERS) \
 	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
@@ -120,7 +120,35 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(noinst_HEADERS)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+am__installdirs = "$(DESTDIR)$(includedir)"
+HEADERS = $(nobase_include_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -263,30 +291,17 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-STAMP = echo timestamp >
 
-# We want this path to be absolute, and not relative, because otheriwse
-# symbolic links will not work properly.
-ipr_header_srcdir = @abs_srcdir@
+# List of publically installed IPR headers.
+nobase_include_HEADERS = \
+	ipr/interface \
+	ipr/impl \
+	ipr/utility \
+	ipr/io \
+	ipr/traversal \
+	ipr/node-category \
+	ipr/lexer
 
-# By symmetry, we apply the above requirement to the build dir.
-ipr_header_builddir = @abs_builddir@/ipr
-
-# Headers from the IPR source code; they are not installed
-# dorectly as.  See install-data-local for the rules governing
-# their installation.  We list them here, otherwise they would
-# be missed by `make dist'.
-ipr_header_srcfiles = interface.hxx \
-		      impl.hxx \
-		      io.hxx traversal.hxx \
-		      utility.hxx \
-		      node-category.def \
-		      lexer.hxx
-
-noinst_HEADERS = $(ipr_header_srcfiles) 
-
-# Header file names as we publically advertise them
-ipr_public_header_files = interface impl io traversal utility lexer
 all: all-am
 
 .SUFFIXES:
@@ -325,6 +340,30 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-nobase_includeHEADERS: $(nobase_include_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(nobase_include_HEADERS)'; test -n "$(includedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(includedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(includedir)" || exit 1; \
+	fi; \
+	$(am__nobase_list) | while read dir files; do \
+	  xfiles=; for file in $$files; do \
+	    if test -f "$$file"; then xfiles="$$xfiles $$file"; \
+	    else xfiles="$$xfiles $(srcdir)/$$file"; fi; done; \
+	  test -z "$$xfiles" || { \
+	    test "x$$dir" = x. || { \
+	      echo " $(MKDIR_P) '$(DESTDIR)$(includedir)/$$dir'"; \
+	      $(MKDIR_P) "$(DESTDIR)$(includedir)/$$dir"; }; \
+	    echo " $(INSTALL_HEADER) $$xfiles '$(DESTDIR)$(includedir)/$$dir'"; \
+	    $(INSTALL_HEADER) $$xfiles "$(DESTDIR)$(includedir)/$$dir" || exit $$?; }; \
+	done
+
+uninstall-nobase_includeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(nobase_include_HEADERS)'; test -n "$(includedir)" || list=; \
+	$(am__nobase_strip_setup); files=`$(am__nobase_strip)`; \
+	dir='$(DESTDIR)$(includedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -410,8 +449,11 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(HEADERS) all-local
+all-am: Makefile $(HEADERS)
 installdirs:
+	for dir in "$(DESTDIR)$(includedir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -444,7 +486,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -462,7 +504,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-data-local
+install-data-am: install-nobase_includeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -506,55 +548,26 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-nobase_includeHEADERS
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am all-local check check-am clean \
-	clean-generic clean-libtool clean-local cscopelist-am ctags \
-	ctags-am distclean distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-data-local install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
+	clean-libtool cscopelist-am ctags ctags-am distclean \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man \
+	install-nobase_includeHEADERS install-pdf install-pdf-am \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am
+	uninstall-am uninstall-nobase_includeHEADERS
 
 .PRECIOUS: Makefile
 
-
-# Rule for building header files.
-all-local: stamp-ipr
-
-# Rename IPR source header files from foo.h to ipr/foo
-stamp-ipr: $(ipr_header_srcfiles) Makefile
-	if [ ! -d ${ipr_header_builddir} ]; then \
-	    mkdir -p -- ${ipr_header_builddir} || exit 1;\
-	fi ;\
-	if [ ! -f stamp-ipr ]; then \
-	   for h in $(ipr_public_header_files); do \
-              $(LN_S) ${ipr_header_srcdir}/$$h.hxx \
-                      ${ipr_header_builddir}/$$h || exit 1;\
-	    done ;\
-	$(LN_S) ${ipr_header_srcdir}/node-category.def \
-		${ipr_header_builddir}/node-category || exit 1;\
-	$(STAMP) stamp-ipr;\
-	fi ;
-
-install-data-local:
-	$(mkinstalldirs) $(includedir)/ipr
-	for h in ${ipr_public_header_files}; do \
-	  $(INSTALL_DATA) ${ipr_header_builddir}/$$h $(includedir)/ipr ;\
-	done;\
-	$(INSTALL_DATA) ${ipr_header_builddir}/node-category $(includedir)/ipr
-
-clean-local:
-	rm -rf $(ipr_header_builddir);\
-	rm -f stamp-ipr;
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

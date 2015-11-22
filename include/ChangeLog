@@ -1,3 +1,8 @@
+2015-11-22  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* Move all source header files into dedicated ipr/ directory.
+	Simplifies build and installation setup.
+
 2015-11-19  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* impl.hxx (impl::stable_farm<>): New.
