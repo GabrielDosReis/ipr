@@ -117,7 +117,7 @@ namespace ipr {
             return &*mark;
          }
          
-         const T& get(int p) const
+         const T& get(int p) const override
          {
             if (p < 0 || p >= size())
                throw std::domain_error("val_sequence::get");
@@ -717,16 +717,17 @@ namespace ipr {
          const ipr::Named_map& generating_map() const override
          { return *util::check(pat); }
 
-         const ipr::Linkage& lang_linkage() const
+         const ipr::Linkage& lang_linkage() const override
          {
             return *util::check(util::check(decl_data.master_data)->langlinkage);
          }
 
-         const ipr::Region& home_region() const {
+         const ipr::Region& home_region() const override {
             return *util::check(util::check(decl_data.master_data)->home);
          }
 
          // Set declaration specifiers for this decl.
+         using D::specifiers;
          void specifiers(ipr::Decl::Specifier s) {
             decl_data.spec = s;
          }
@@ -755,9 +756,9 @@ namespace ipr {
                          pat(0)
          { }
 
-         ipr::Decl::Specifier specifiers() const { return spec; }
-         const ipr::Decl& master() const { return *this; }
-         const ipr::Linkage& lang_linkage() const
+         ipr::Decl::Specifier specifiers() const override { return spec; }
+         const ipr::Decl& master() const override { return *this; }
+         const ipr::Linkage& lang_linkage() const override
          {
             return *util::check(langlinkage);
          }
@@ -1126,9 +1127,7 @@ namespace ipr {
          Mapping(const ipr::Region&, const ipr::Type&, int);
          
          const ipr::Parameter_list& params() const override;
-
-         // Implement ipr::Mapping::result_type.
-         const ipr::Type& result_type() const;
+         const ipr::Type& result_type() const override;
          const ipr::Expr& result() const override;
          int depth() const override;
          impl::Parameter* param(const ipr::Name&, const impl::Rname&);
@@ -1461,8 +1460,8 @@ namespace ipr {
          // Override ipr::Decl::lexical_region.  Which is the
          // same as home_region for a Field.  Note that fields
          // are always nonstatic data members.
-         const ipr::Region& lexical_region() const;
-         const ipr::Region& home_region() const;
+         const ipr::Region& lexical_region() const override;
+         const ipr::Region& home_region() const override;
          const ipr::Expr& initializer() const override;
       };
 
@@ -1480,8 +1479,8 @@ namespace ipr {
          Bitfield();
 
          const ipr::Expr& precision() const override;
-         const ipr::Region& lexical_region() const;
-         const ipr::Region& home_region() const;
+         const ipr::Region& lexical_region() const override;
+         const ipr::Region& home_region() const override;
          const ipr::Udt& membership() const override;
          bool has_initializer() const override;
          const ipr::Expr& initializer() const override;
@@ -1503,7 +1502,7 @@ namespace ipr {
          const ipr::Expr& initializer() const override;
          bool has_initializer() const override;
 
-         const ipr::Region& lexical_region() const;
+         const ipr::Region& lexical_region() const override;
       };
 
       template<>
@@ -1522,7 +1521,7 @@ namespace ipr {
          const ipr::Udt& membership() const override;
          const ipr::Expr& initializer() const override;
          bool has_initializer() const override;
-         const ipr::Region& lexical_region() const;
+         const ipr::Region& lexical_region() const override;
       };
 
       template<>

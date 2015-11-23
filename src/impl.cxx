@@ -14,6 +14,7 @@
 #include <iterator>
 #include <utility>
 #include <cstring>
+#include <string>
 namespace ipr {
    namespace impl {
 

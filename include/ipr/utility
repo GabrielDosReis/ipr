@@ -22,7 +22,7 @@ namespace ipr {
       template<typename T>
       inline T* check(T* ptr)
       {
-         if (ptr == 0)
+         if (ptr == nullptr)
             throw std::logic_error("attempt to dereference a null pointer");
          return ptr;
       }
@@ -64,7 +64,7 @@ namespace ipr {
 
          template<class Node>
          struct core {
-            core() : root(0), count(0) { }
+            core() : root{ }, count{ } { }
 
             int size() const { return count; }
 
@@ -91,12 +91,12 @@ namespace ipr {
             Node* y = x->right();
             // Make y's left a subtree of x's right subtree.
             x->right() = y->left();
-            if (y->left() != 0)
+            if (y->left() != nullptr)
                y->left()->parent() = x;
 
             // Update y's parent and its left or right arms.
             y->parent() = x->parent();
-            if (x->parent() == 0)
+            if (x->parent() == nullptr)
                // x was the root of the tree; make y the new root.
                this->root = y;
             else if (x->parent()->left() == x)
@@ -116,11 +116,11 @@ namespace ipr {
             Node* y = x->left();
 
             x->left() = y->right();
-            if (y->right() != 0)
+            if (y->right() != nullptr)
                y->right()->parent() = x;
 
             y->parent() = x->parent();
-            if (x->parent() == 0)
+            if (x->parent() == nullptr)
                this->root = y;
             else if (x->parent()->right() == x)
                x->parent()->right() = y;
@@ -138,7 +138,7 @@ namespace ipr {
             while (z != root && z->parent()->color == Node::Red) {
                if (z->parent() == z->parent()->parent()->left()) {
                   Node* y = z->parent()->parent()->right();
-                  if (y != 0 && y->color == Node::Red) {
+                  if (y != nullptr && y->color == Node::Red) {
                      z->parent()->color = Node::Black;
                      y->color = Node::Black;
                      z->parent()->parent()->color = Node::Red;
@@ -154,7 +154,7 @@ namespace ipr {
                   }
                } else {
                   Node* y = z->parent()->parent()->left();
-                  if (y != 0 && y->color == Node::Red) {
+                  if (y != nullptr && y->color == Node::Red) {
                      z->parent()->color = Node::Black;
                      y->color = Node::Black;
                      z->parent()->parent()->color = Node::Red;
@@ -192,7 +192,7 @@ namespace ipr {
          {
             bool found = false;
             Node* result = this->root;
-            while (result != 0 && !found) {
+            while (result != nullptr && !found) {
                int ordering = comp(key, *result) ;
                if (ordering < 0)
                   result = result->left();
@@ -211,10 +211,10 @@ namespace ipr {
          chain<Node>::insert(Node* z, Comp comp)
          {
             Node** slot = &this->root;
-            Node* up = 0;
+            Node* up = nullptr;
 
             bool found = false;
-            while (!found && *slot != 0) {
+            while (!found && *slot != nullptr) {
                int ordering = comp(*z, **slot);
                if (ordering < 0) {
                   up = *slot;
@@ -228,12 +228,12 @@ namespace ipr {
                   found = true;
             }
 
-            if (this->root == 0) {
+            if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
                this->root = z;
                z->color = Node::Black;
             }
-            else if (*slot == 0) {
+            else if (*slot == nullptr) {
                // key is not present, do what we're asked to do.
                *slot = z;
                z->parent() = up;
@@ -265,14 +265,7 @@ namespace ipr {
 
          private:
             node<T>* allocate() {
-               node<T> * n = static_cast<node<T>*>
-                  (operator new (sizeof(node<T>)));
-
-               n->arm[node<T>::Left] = 0;
-               n->arm[node<T>::Right] = 0;
-               n->arm[node<T>::Parent] = 0;
-
-               return n;
+               return static_cast<node<T>*>(operator new (sizeof(node<T>)));
             }
 
             void deallocate(node<T>* n) {
@@ -283,12 +276,15 @@ namespace ipr {
             node<T>* make_node(const U& u) {
                node<T>* n = allocate();
                new (&n->data) T(u);
+               n->arm[node<T>::Left] = nullptr;
+               n->arm[node<T>::Right] = nullptr;
+               n->arm[node<T>::Parent] = nullptr;
                return n;
             }
 
             void destroy_node(node<T>* n) {
-               if (n != 0) {
-                  n->~node<T>();
+               if (n != nullptr) {
+                  n->data.~T();
                   this->deallocate(n);
                }
             }
@@ -299,7 +295,7 @@ namespace ipr {
          T*
          container<T>::find(const Key& key, Comp comp) const
          {
-            for (node<T>* x = this->root; x != 0; ) {
+            for (node<T>* x = this->root; x != nullptr; ) {
                int ordering = comp(key, x->data);
                if (ordering < 0)
                   x = x->left();
@@ -309,7 +305,7 @@ namespace ipr {
                   return &x->data;
             }
 
-            return 0;
+            return nullptr;
          }
 
          template<typename T>
@@ -317,7 +313,7 @@ namespace ipr {
          T*
          container<T>::insert(const Key& key, Comp comp)
          {
-            if (this->root == 0) {
+            if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
                this->root = make_node(key);
                this->root->color = node<T>::Black;
@@ -326,11 +322,11 @@ namespace ipr {
             }
 
             node<T>** slot = &this->root;
-            node<T>* parent = 0;
-            node<T>* where = 0;
+            node<T>* parent = nullptr;
+            node<T>* where = nullptr;
             bool found = false;
 
-            for (where = this->root; where != 0 && !found; where = *slot) {
+            for (where = this->root; where != nullptr && !found; where = *slot) {
                int ordering = comp(key, where->data);
                if (ordering < 0) {
                   parent = where;
@@ -344,7 +340,7 @@ namespace ipr {
                   found = true;
             }
 
-            if (where == 0) {
+            if (where == nullptr) {
                // key is not present, do what we're asked to do.
                where = *slot = make_node(key);
                where->parent() = parent;
