@@ -745,7 +745,9 @@ namespace ipr {
       // -- impl::Enum --
       // ----------------
 
-      Enum::Enum(const ipr::Region& r, const ipr::Type& t) : body(r, t) {
+      Enum::Enum(const ipr::Region& r, const ipr::Type& t, Kind k)
+            : body(r, t), enum_kind(k)
+      {
          body.owned_by = this;
       }
 
@@ -758,6 +760,8 @@ namespace ipr {
       Enum::members() const {
          return body.scope.decls.seq;
       }
+
+      Enum::Kind Enum::kind() const { return enum_kind; }
 
       impl::Enumerator*
       Enum::add_member(const ipr::Name& n) {
@@ -1064,8 +1068,8 @@ namespace ipr {
       }
 
       impl::Enum*
-      type_factory::make_enum(const ipr::Region& pr, const ipr::Type& t) {
-         return enums.make(pr, t);
+      type_factory::make_enum(const ipr::Region& pr, const ipr::Type& t, Enum::Kind k) {
+         return enums.make(pr, t, k);
       }
 
       impl::Class*
@@ -2428,8 +2432,8 @@ namespace ipr {
       }
 
       impl::Enum*
-      Unit::make_enum(const ipr::Region& pr) {
-         impl::Enum* e = types.make_enum(pr, anytype);
+      Unit::make_enum(const ipr::Region& pr, Enum::Kind k) {
+         impl::Enum* e = types.make_enum(pr, anytype, k);
          e->constraint = &enumtype;
          return e;
       }

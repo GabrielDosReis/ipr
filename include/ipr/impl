@@ -1723,13 +1723,15 @@ namespace ipr {
 
       struct Enum : impl::Type<ipr::Enum> {
          homogeneous_region<ipr::Enumerator> body;
+         const Kind enum_kind;
 
-         const ipr::Region& region() const;
-         const Sequence<ipr::Enumerator>& members() const;
+         const ipr::Region& region() const override;
+         const Sequence<ipr::Enumerator>& members() const override;
+         Kind kind() const override;
 
          impl::Enumerator* add_member(const ipr::Name&);
          
-         explicit Enum(const ipr::Region&, const ipr::Type&);
+         Enum(const ipr::Region&, const ipr::Type&, Kind);
       };
 
       using Union = Udt<ipr::Union>;
@@ -1775,7 +1777,7 @@ namespace ipr {
          impl::Sum* make_sum(const ipr::Sequence<ipr::Type>&);
          impl::Template* make_template(const ipr::Product&, const ipr::Type&);
 
-         impl::Enum* make_enum(const ipr::Region&, const ipr::Type&);
+         impl::Enum* make_enum(const ipr::Region&, const ipr::Type&, Enum::Kind);
          impl::Class* make_class(const ipr::Region&, const ipr::Type&);
          impl::Union* make_union(const ipr::Region&, const ipr::Type&);
          impl::Namespace* make_namespace(const ipr::Region*, const ipr::Type&);
@@ -2086,7 +2088,7 @@ namespace ipr {
                                          impl::Mapping&);
 
          impl::Class* make_class(const ipr::Region&);
-         impl::Enum* make_enum(const ipr::Region&);
+         impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
          impl::Namespace* make_namespace(const ipr::Region&);
          impl::Union* make_union(const ipr::Region&);
 

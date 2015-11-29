@@ -1,3 +1,8 @@
+2015-11-29  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* ipr/interfce: Modify ipr::Enum to account for scoped enumerations.
+	* ipr/impl: Implement modifications.
+
 2015-11-22  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* Move all source header files into dedicated ipr/ directory.

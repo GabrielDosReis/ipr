@@ -1055,8 +1055,13 @@ namespace ipr {
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
    struct Enum : Category<enum_cat, Udt> {
+      enum class Kind : uint8_t {     // The kind of enum.
+         Legacy,                      // traditional C-style enum
+         Scoped                       // scoped enum (C++11)
+      };
       using Member = Enumerator;      // -- type of members of this type.
       virtual const Sequence<Enumerator>& members() const = 0;
+      virtual Kind kind() const = 0;
    };
 
 
