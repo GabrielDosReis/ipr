@@ -2,7 +2,7 @@
 //
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
-// See LICENSE for copright and license notices.
+// See LICENSE for copyright and license notices.
 // 
 
 #ifndef IPR_IMPL_INCLUDED
@@ -26,7 +26,7 @@
 // this file.  That rule applies to all abstract interfaces such as
 // "ipr::Expr", as well as more concrete ones like "ipr::Address".
 //    Implementations for the abstract interfaces usually consists in
-// prodiving implementations for common operations on some set of
+// providing implementations for common operations on some set of
 // interfaces.  For instance, "impl::Expr provides implementation for
 // the ipr::Expr::type() operation.
 //    For that to work properly, without using virtual inheritance,
@@ -54,7 +54,7 @@ namespace ipr {
       // --------------------------------------
                                 // -- ipr::Sequence --
       // The Sequence<> interface admits various implementations.
-      // Here is the list of the implemenations currently in use:
+      // Here is the list of the implementations currently in use:
       //   (a) ref_sequence<>; (b) val_sequence<>; 
       //   (c) empty_sequence<T>. 
       // Variants exist in form of
@@ -65,7 +65,7 @@ namespace ipr {
       // The class ref_sequence<T> implements Sequence<T> by storing
       // references (e.g. pointers) to data of type T, allocated
       // somewhere else.  That for example if useful when keeping track
-      // of redelcarations in decl-sets.
+      // of redeclarations in decl-sets.
       // In general, it can be used to implement the notion of sub-sequence.
 
       template<class T, class Seq = Sequence<T>>
@@ -131,7 +131,7 @@ namespace ipr {
       };
                                 // -- impl::empty_sequence --
       // There are various situations where the general notion of
-      // sequence leads to consider empty sequence in implmentations.
+      // sequence leads to consider empty sequence in implementations.
       // We could just use the generic ref_sequence<> or val_sequence<>;
       // however, this specialization will help control data size
       // inflation, as the general sequences need at least two words
@@ -162,7 +162,7 @@ namespace ipr {
 
       // In various situations, we need to store nodes in ordered
       // containers.  We could of course use the addresses of Nodes as
-      // keys.  However, for simplicity and persistency reasons, we chose
+      // keys.  However, for simplicity and persistence reasons, we chose
       // to used an integer identifier. (Each node  acquires such an
       // identifier at its creation and retain it unchanged till the
       // end of the program.)  An obvious benefit is that ordering comes
@@ -183,20 +183,25 @@ namespace ipr {
          using typename Interface::Arg_type;
          Arg_type rep;
 
-         explicit Unary(Arg_type a) : rep(a) { }
+         explicit Unary(Arg_type a) : rep{ a } { }
 
          Arg_type operand() const override { return rep; }
       };
 
+      // FIXME: This class template logically inherits from impl::Unary<T>,
+      // FIXME as it was in previous versions.
+      // FIXME: However, VC++2015 got utterly confused.
       template<class Interface>
-      struct type_from_operand : impl::Unary<Interface> {
+      struct type_from_operand : Interface {
          using typename Interface::Arg_type;
+	 Arg_type rep;
 
-         explicit type_from_operand(Arg_type a) : impl::Unary<Interface>(a) { }
+         explicit type_from_operand(Arg_type a) : rep(a) { }
          const ipr::Type& type() const override
          {
-            return this->rep.type();
+            return rep.type();
          }
+         Arg_type operand() const override { return rep; }
       };
       
       template<class Interface>
@@ -206,30 +211,39 @@ namespace ipr {
          struct Rep {
             Arg1_type first;
             Arg2_type second;
-            Rep(Arg1_type f, Arg2_type s) : first(f), second(s) { }
          };
          Rep rep;
 
          Binary(const Rep& r) : rep(r) { }
-         Binary(Arg1_type f, Arg2_type s) : rep(f, s) { }
+         Binary(Arg1_type f, Arg2_type s) : rep{ f, s } { }
 
          Arg1_type first() const override { return rep.first; }
 
          Arg2_type second() const override { return rep.second; }
       };
 
+      // FIXME: see comment on type_from_operand.  VC++2015 bug.
+      // FIXME: This class template logically inherits from impl::Binary<T>,
+      // FIXME as it was in previous versions.
+      // FIXME: However, VC++2015 got utterly confused.
       template<class Interface>
-      struct type_from_second : impl::Binary<Interface> {
+      struct type_from_second : Interface {
          using typename Interface::Arg1_type;
          using typename Interface::Arg2_type;
+         struct Rep {
+            Arg1_type first;
+            Arg2_type second;
+         };
+         Rep rep;
 
-         type_from_second(Arg1_type f, Arg2_type s)
-               : impl::Binary<Interface>(f, s) { }
+         type_from_second(Arg1_type f, Arg2_type s) : rep{ f, s } { }
 
          const ipr::Type& type() const override
          {
             return this->rep.second.type();
          }
+         Arg1_type first() const override { return rep.first; }
+         Arg2_type second() const override { return rep.second; }
       };
 
 
@@ -242,14 +256,11 @@ namespace ipr {
             Arg1_type first;
             Arg2_type second;
             Arg3_type third;
-            Rep(Arg1_type f, Arg2_type s, Arg3_type t)
-                  : first(f), second(s), third(t)
-            { }
          };
          Rep rep;
 
          Ternary(const Rep& r) : rep(r) { }
-         Ternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep(f, s, t) { }
+         Ternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep{ f, s, t } { }
 
          Arg1_type first() const override { return rep.first; }
          Arg2_type second() const override { return rep.second; }
@@ -267,14 +278,11 @@ namespace ipr {
             Arg2_type second;
             Arg3_type third;
             Arg4_type fourth;
-            Rep(Arg1_type f, Arg2_type s, Arg3_type t, Arg4_type l)
-                  : first(f), second(s), third(t), fourth(l)
-            { }
          };
          Rep rep;
 
          Quaternary(const Rep& r) : rep(r) { }
-         Quaternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep(f, s, t) { }
+         Quaternary(Arg1_type f, Arg2_type s, Arg3_type t, Arg4_type u) : rep{ f, s, t, u } { }
 
          Arg1_type first() const override { return rep.first; }
          Arg2_type second() const override { return rep.second; }
@@ -370,14 +378,14 @@ namespace ipr {
       // the first seen declaration of a decl-set.
       //
       // There are few special cases of the above general description.
-      // Parameters, base-classes and enumerators cannot be mutiply
+      // Parameters, base-classes and enumerators cannot be multiply
       // declared.  Therefore within a parameter-lits, a base-class
       // list or an enumeration definition, each decl-set is
       // singleton whose sole element is the master declaration.
       //
       // A scope chains declaration together.  A declaration in a
       // Scope has a "position", that uniquely identifies it as a member
-      // of a sequence.  To provide a relatively fast "subcription by position"
+      // of a sequence.  To provide a relatively fast "subscription by position"
       // operation on a scope, the chain of declaration is
       // organized as a red-back tree where the position is used as key.
       // And alternative is a hash table, when we get there.
@@ -420,7 +428,7 @@ namespace ipr {
       // A singleton_declset is a specialization of decl_sequence
       // that contains only a single declaration.  It is mostly used
       // to support the general interface of ipr::Scope as inherited
-      // in parameter-list or enmerator definitions.
+      // in parameter-list or enumerator definitions.
 
       template<class T>
       struct singleton_declset : ipr::Sequence<ipr::Decl> {
@@ -454,7 +462,7 @@ namespace ipr {
       struct Overload;
 
       // An entry in an overload set.  Part of the data that a
-      // master declataion manages.  It is determined, within
+      // master declaration manages.  It is determined, within
       // an overload set, by its type.  All redeclarations must
       // register themselves before the master declaration, at
       // the creation time.
@@ -612,7 +620,7 @@ namespace ipr {
 
       // impl::Type<T> implements the common operations supported
       // by all operations.  In particular, it implements only
-      // main-variant types; qualified types are handled elsewere.
+      // main-variant types; qualified types are handled elsewhere.
 
       template<class T>
       struct Type : impl::Expr<T> {
@@ -1740,7 +1748,7 @@ namespace ipr {
       struct Class : impl::Udt<ipr::Class> {
          homogeneous_region<ipr::Base_type> base_subobjects;
          
-         explicit Class(const ipr::Region&, const ipr::Type&);
+         Class(const ipr::Region&, const ipr::Type&);
 
          const ipr::Sequence<ipr::Base_type>& bases() const override;
 

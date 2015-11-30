@@ -940,7 +940,7 @@ namespace ipr {
       type_factory::make_array(const ipr::Type& t, const ipr::Expr& b)
       {
          using rep = impl::Array::Rep;
-         return arrays.insert(rep(t, b), binary_compare());
+         return arrays.insert(rep{ t, b }, binary_compare());
       }
 
       impl::Qualified*
@@ -954,7 +954,7 @@ namespace ipr {
                ("type_factoy::make_qualified: no qualifier");
 
          using rep = impl::Qualified::Rep;
-         return qualifieds.insert(rep(cv, t), binary_compare());
+         return qualifieds.insert(rep{ cv, t }, binary_compare());
       }
 
 
@@ -968,7 +968,7 @@ namespace ipr {
       type_factory::make_as_type(const ipr::Expr& e, const ipr::Linkage& l)
       {
          using Rep = impl::As_type::Rep;
-         return type_refs.insert(Rep(e, l), binary_compare());
+         return type_refs.insert(Rep{ e, l }, binary_compare());
       }
 
       struct ternary_compare {
@@ -1022,7 +1022,7 @@ namespace ipr {
                                   const ipr::Sum& e, const ipr::Linkage& l)
       {
          using rep = impl::Function::Rep;
-         return functions.insert(rep(s, t, e, l), quaternary_compare());
+         return functions.insert(rep{ s, t, e, l }, quaternary_compare());
       }
 
       impl::Pointer*
@@ -1043,7 +1043,7 @@ namespace ipr {
       type_factory::make_ptr_to_member(const ipr::Type& c, const ipr::Type& t)
       {
          using rep = impl::Ptr_to_member::Rep;
-         return member_ptrs.insert(rep(c, t), binary_compare());
+         return member_ptrs.insert(rep{ c, t }, binary_compare());
       }
 
       impl::Reference*
@@ -1064,7 +1064,7 @@ namespace ipr {
       impl::Template*
       type_factory::make_template(const ipr::Product& s, const ipr::Type& t) {
          using rep = impl::Template::Rep;
-         return templates.insert(rep(s, t), binary_compare());
+         return templates.insert(rep{ s, t }, binary_compare());
       }
 
       impl::Enum*
@@ -1774,7 +1774,7 @@ namespace ipr {
       impl::Literal*
       expr_factory::make_literal(const ipr::Type& t, const ipr::String& s) {
          using rep = impl::Literal::Rep;
-         return lits.insert(rep(t, s), binary_compare());
+		 return lits.insert(rep{ t, s }, binary_compare());
       }
 
       impl::Literal*
@@ -1867,7 +1867,7 @@ namespace ipr {
       expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r)
       {
          using Rep = impl::Scope_ref::Rep;
-         return scope_refs.insert(Rep(l, r), binary_compare());
+         return scope_refs.insert(Rep{ l, r }, binary_compare());
       }
 
       impl::Rshift*
@@ -1885,7 +1885,7 @@ namespace ipr {
       expr_factory::make_template_id(const ipr::Name& n,
                                      const ipr::Expr_list& args) {
          using Rep = impl::Template_id::Rep;
-         return template_ids.insert(Rep(n, args), binary_compare());
+         return template_ids.insert(Rep{ n, args }, binary_compare());
       }
 
       impl::Static_cast*
@@ -1909,7 +1909,7 @@ namespace ipr {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         return rnames.insert(Rep(t, map.nesting_level, map.parameters.size()),
+         return rnames.insert(Rep{ t, map.nesting_level, map.parameters.size() },
                               ternary_compare());
       }
 
