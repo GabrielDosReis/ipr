@@ -1754,12 +1754,12 @@ namespace ipr {
    struct Decl : Stmt {
       enum Specifier {
          None = 0,
-         Auto       = 1 << 0,
-         Register   = 1 << 1,
-         Static     = 1 << 2,
-         Extern     = 1 << 3,
-         Mutable    = 1 << 4,
-         StorageClass  = Auto | Register | Static | Extern | Mutable,
+         Register   = 1 << 0,   // Banned from C++17.
+         Static     = 1 << 1,
+         Extern     = 1 << 2,
+         Mutable    = 1 << 3,
+         Thread     = 1 << 4,
+         StorageClass  = Register | Static | Extern | Mutable | Thread,
 
          Inline     = 1 << 5,
          Virtual    = 1 << 6,   // also used as storage class specifier
@@ -1776,8 +1776,8 @@ namespace ipr {
          Private    = 1 << 13,
          AccessProtection = Public | Protected | Private,
 
-         Export     = 1 << 14,  // for exported template declarations.
-         Constexpr  = 1 << 15   // C++ 0x
+         Export     = 1 << 14,  // For exported declarations.
+         Constexpr  = 1 << 15   // C++ 11
       };
 
       virtual Specifier specifiers() const = 0;

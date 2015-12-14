@@ -1,5 +1,10 @@
 2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
 
+	* ipr/interface: 'auto' is no longer a storage-class specifier in
+	C++11 and up.
+
+2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
+
 	* ipr/interface: Move Type::Qualifier to toplevel.  Rename to
 	Type_qualifier. Adjust users.
 
