@@ -34,6 +34,7 @@ sum_cat,                                // ipr::Sum
 template_cat,                           // ipr::Template
 udt_cat,                                // ipr::Udt     -- abstract
 union_cat,                              // ipr::Union
+auto_cat,                               // ipr::Auto
 
 name_cat,                               // ipr::Name    -- abstract
 identifier_cat,                         // ipr::Identifier

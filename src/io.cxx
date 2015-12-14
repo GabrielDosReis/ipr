@@ -1757,8 +1757,6 @@ namespace ipr
    {
       if (spec & Decl::Export)
          printer << xpr_identifier("export");
-      if (spec & Decl::Auto)
-         printer << xpr_identifier("auto");
       if (spec & Decl::Register)
          printer << xpr_identifier("register");
       if (spec & Decl::Static)

@@ -92,6 +92,7 @@ namespace ipr {
    struct Sum;                   // sum type - not ISO C++ type
    struct Template;              // type of a template - Not ISO C++ type
    struct Union;                 // user-defined type - union
+   struct Auto;                  // "auto" -- each occurence is generative
 
    // ------------------------------------------
    // -- results of name constructor constants --
@@ -1119,6 +1120,9 @@ namespace ipr {
       virtual Kind kind() const = 0;
    };
 
+                                // -- Auto --
+   struct Auto : Category<auto_cat, Type> {
+   };
 
                                 // -- Phantom --
    // This nodes represents the "bound" of an array type with
@@ -2054,6 +2058,7 @@ namespace ipr {
       virtual void visit(const Template&);
       virtual void visit(const Union&);
       virtual void visit(const Udt&);
+      virtual void visit(const Auto&);
 
       virtual void visit(const Expr_list&);
       virtual void visit(const Overload&);

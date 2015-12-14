@@ -1775,7 +1775,8 @@ namespace ipr {
 
       };
 
-
+      struct Auto : impl::Type<ipr::Auto> {
+      };
 
       // This class is responsible for creating nodes that
       // represent types.  It is responsible for the storage
@@ -2126,6 +2127,8 @@ namespace ipr {
                                        const Source_location&,
                                        TokenValue, TokenCategory);
 
+         const ipr::Auto& get_auto();
+
       private:
          void record_builtin_type(const ipr::As_type&);
 
@@ -2138,6 +2141,7 @@ namespace ipr {
          util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
          util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
          util::rb_tree::container<node_ref<ipr::As_type>> builtin_map;
+         stable_farm<impl::Auto> autos;
 
          const impl::Builtin<ipr::As_type> anytype;
          const impl::Builtin<ipr::As_type> classtype;

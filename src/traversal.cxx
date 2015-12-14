@@ -252,6 +252,12 @@ ipr::Visitor::visit(const Udt& t)
 }
 
 void
+ipr::Visitor::visit(const Auto& t)
+{
+   visit(as<Type>(t));
+}
+
+void
 ipr::Visitor::visit(const Union& t)
 {
    visit(as<Udt>(t));

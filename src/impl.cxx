@@ -2014,9 +2014,7 @@ namespace ipr {
          record_builtin_type(longdoubletype);
 
          record_builtin_type(ellipsistype);
-		 // >>>> Yuriy Solodkyy: 2007/01/26
-		 global_ns.id = &get_identifier("");
-		 // <<<< Yuriy Solodkyy: 2007/01/26
+         global_ns.id = &get_identifier("");
       }
 
       // -----------------------
@@ -2465,6 +2463,13 @@ namespace ipr {
       Unit::make_parameter(const ipr::Name& n, const ipr::Type& t,
                            impl::Mapping& m) {
          return m.param(n, *rname_for_next_param(m, t));
+      }
+
+      const ipr::Auto& Unit::get_auto()
+      {
+         auto t = autos.make();
+         t->id = &get_identifier("auto");
+         return *t;
       }
 
 //       int
