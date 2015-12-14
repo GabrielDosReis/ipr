@@ -949,12 +949,11 @@ namespace ipr {
       }
 
       impl::Qualified*
-      type_factory::make_qualified(ipr::Type::Qualifier cv,
-                                   const ipr::Type& t)
+      type_factory::make_qualified(ipr::Type_qualifier cv, const ipr::Type& t)
       {
          // It is an error to call this function if there is no real
          // qualified.
-         if (cv == ipr::Type::None)
+         if (cv == ipr::Type_qualifier::None)
             throw std::domain_error
                ("type_factoy::make_qualified: no qualifier");
 
@@ -2387,8 +2386,8 @@ namespace ipr {
       // -------------------------------
 
       const ipr::Qualified&
-      Unit::get_qualified(ipr::Type::Qualifier cv, const ipr::Type& t) {
-         assert (cv != ipr::Type::None);
+      Unit::get_qualified(ipr::Type_qualifier cv, const ipr::Type& t) {
+         assert (cv != ipr::Type_qualifier::None);
          return *finish_type(types.make_qualified(cv, t));
       }
 

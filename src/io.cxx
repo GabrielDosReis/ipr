@@ -1323,13 +1323,13 @@ namespace ipr
    }
 
    Printer&
-   operator<<(Printer& printer, Type::Qualifier cv)
+   operator<<(Printer& printer, Type_qualifier cv)
    {
-      if (cv & Type::Const)
+      if (implies(cv, Type_qualifier::Const))
          printer << xpr_identifier("const");
-      if (cv & Type::Volatile)
+      if (implies(cv, Type_qualifier::Volatile))
          printer << xpr_identifier("volatile");
-      if (cv & Type::Restrict)
+      if (implies(cv, Type_qualifier::Restrict))
          printer << xpr_identifier("restrict");
       
       return printer;

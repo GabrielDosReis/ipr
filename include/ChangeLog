@@ -1,5 +1,10 @@
 2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
 
+	* ipr/interface: Move Type::Qualifier to toplevel.  Rename to
+	Type_qualifier. Adjust users.
+
+2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
+
 	* ipr/interface: Add TokenCategory, TokenValue, Token, Attribute,
 	BasicAttribute, ScopedAttribute, LabeledAttribute,
 	CalledAttribute, and Attribute::Visitor.

@@ -860,18 +860,7 @@ namespace ipr {
    // "classic type").  In particular, in IPR, namespace is a type.
    // Simirlary, an overload-set has a type.
    struct Type : Expr {
-      // cv-qualifiers are actually type operators.  Much of these operators
-      // currently make sense only for classic type -- although it might
-      // be interesting to explore the notion of pointer to overload-set
-      // or reference to such an expression.
-      enum Qualifier { 
-         None             = 0,
-         Const            = 1 << 0,
-         Volatile         = 1 << 1,
-         Restrict         = 1 << 2        // not standard C++
-      };
-
-      // All types have have names.
+      // All types have names.
       virtual const Name& name() const = 0;
 
    protected:
@@ -879,42 +868,56 @@ namespace ipr {
       { }
    };
 
-   // These overloads for Type::Qualifier are necessary because there
-   // is no implicit conversion from integers to enums in C++.
-   inline Type::Qualifier
-   operator|(Type::Qualifier a, Type::Qualifier b)
+   // cv-qualifiers are actually type operators.  Much of these operators
+   // currently make sense only for classic type -- although it might
+   // be interesting to explore the notion of pointer to overload-set
+   // or reference to such an expression.
+   enum class Type_qualifier : uint8_t {
+      None             = 0,
+      Const            = 1 << 0,
+      Volatile         = 1 << 1,
+      Restrict         = 1 << 2        // not standard C++
+   };
+
+   constexpr Type_qualifier
+   operator|(Type_qualifier a, Type_qualifier b)
    {
-      return Type::Qualifier(int(a) | int(b));
+      return Type_qualifier(uint8_t(a) | uint8_t(b));
    }
 
-   inline Type::Qualifier&
-   operator|=(Type::Qualifier& a, Type::Qualifier b)
+   inline Type_qualifier&
+   operator|=(Type_qualifier& a, Type_qualifier b)
    {
-      return a = Type::Qualifier(int(a) | int(b));
+      return a = a | b;
    }
 
-   inline Type::Qualifier
-   operator&(Type::Qualifier a, Type::Qualifier b)
+   constexpr Type_qualifier
+   operator&(Type_qualifier a, Type_qualifier b)
    {
-      return Type::Qualifier(int(a) & int(b));
+      return Type_qualifier(uint8_t(a) & uint8_t(b));
    }
 
-   inline Type::Qualifier&
-   operator&=(Type::Qualifier& a, Type::Qualifier b)
+   inline Type_qualifier&
+   operator&=(Type_qualifier& a, Type_qualifier b)
    {
-      return a = Type::Qualifier(int(a) & int(b));
+      return a = a & b;
    }
 
-   inline Type::Qualifier
-   operator^(Type::Qualifier a, Type::Qualifier b)
+   constexpr Type_qualifier
+   operator^(Type_qualifier a, Type_qualifier b)
    {
-      return Type::Qualifier(int(a) ^ int(b));
+      return Type_qualifier(uint8_t(a) ^ uint8_t(b));
    }
 
-   inline Type::Qualifier&
-   operator^=(Type::Qualifier& a, Type::Qualifier b)
+   inline Type_qualifier&
+   operator^=(Type_qualifier& a, Type_qualifier b)
    {
-      return a = Type::Qualifier(int(a) ^ int(b));
+      return a = a ^ b;
+   }
+
+   constexpr bool implies(Type_qualifier a, Type_qualifier b)
+   {
+      return (a & b) == b;
    }
                                 // -- Type_id --
    // This node is used for elaborated expressions that designate types.
@@ -1022,7 +1025,7 @@ namespace ipr {
    // We also maintain the invariant that Qualified::qualifiers is never
    // Type::None, consequently it is an error to attempt to create such a node.
    struct Qualified : Binary<Category<qualified_cat, Type>,
-                             ipr::Type::Qualifier, const Type&> {
+                             ipr::Type_qualifier, const Type&> {
       Arg1_type qualifiers() const { return first(); }
       Arg2_type main_variant() const { return second(); }
    };

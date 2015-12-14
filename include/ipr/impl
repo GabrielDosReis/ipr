@@ -186,12 +186,13 @@ namespace ipr {
       // identifier at its creation and retain it unchanged till the
       // end of the program.)  An obvious benefit is that ordering comes
       // for free.
-      inline int compare(int lhs, int rhs)
+      template<typename T>
+      constexpr int compare(T lhs, T rhs)
       {
          return lhs < rhs ? -1 : (lhs > rhs ? 1 : 0);
       }
 
-      inline int compare(const ipr::Node& lhs, const ipr::Node& rhs)
+      constexpr int compare(const ipr::Node& lhs, const ipr::Node& rhs)
       {
          return compare(lhs.node_id, rhs.node_id);
       }
@@ -1789,7 +1790,7 @@ namespace ipr {
          impl::As_type* make_as_type(const ipr::Expr&, const ipr::Linkage&);
 
          impl::Array* make_array(const ipr::Type&, const ipr::Expr&);
-         impl::Qualified* make_qualified(ipr::Type::Qualifier,
+         impl::Qualified* make_qualified(ipr::Type_qualifier,
                                          const ipr::Type&);
          impl::Decltype* make_decltype(const ipr::Expr&);
          impl::Function* make_function(const ipr::Product&, const ipr::Type&,
@@ -2096,7 +2097,7 @@ namespace ipr {
          const ipr::Reference& get_reference(const ipr::Type&);
          const ipr::Rvalue_reference& get_rvalue_reference(const ipr::Type&);
 
-         const ipr::Qualified& get_qualified(ipr::Type::Qualifier,
+         const ipr::Qualified& get_qualified(ipr::Type_qualifier,
                                              const ipr::Type&);
 
          const ipr::Sum& get_sum(const ref_sequence<ipr::Type>&);
