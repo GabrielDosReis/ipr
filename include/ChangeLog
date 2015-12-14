@@ -1,5 +1,10 @@
 2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
 
+	* ipr/interface: Move Decl::Specifier to toplevel.  Rename to
+	DeclSpecifiers. Now an enum class with fixed underlying type.
+
+2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
+
 	* ipr/interface: Add ipr::Auto type node.
 
 2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>

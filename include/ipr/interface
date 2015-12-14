@@ -1736,6 +1736,70 @@ namespace ipr {
       const Expr* expr;
    };
 
+                                // -- DeclSpecifiers --
+   enum class DeclSpecifiers : uint32_t {
+      None       = 0,
+      Register   = 1 << 0,   // Banned from C++17.
+      Static     = 1 << 1,
+      Extern     = 1 << 2,
+      Mutable    = 1 << 3,
+      Thread     = 1 << 4,
+      StorageClass  = Register | Static | Extern | Mutable | Thread,
+
+      Inline     = 1 << 5,
+      Virtual    = 1 << 6,   // also used as storage class specifier
+                             // for virtual base subobjects
+      Explicit   = 1 << 7,
+      Pure       = 1 << 8,
+      FunctionSpecifier = Inline | Virtual | Explicit | Pure,
+      
+      Friend     = 1 << 9,
+      Typedef    = 1 << 10,
+
+      Public     = 1 << 11,
+      Protected  = 1 << 12,
+      Private    = 1 << 13,
+      AccessProtection = Public | Protected | Private,
+
+      Export     = 1 << 14,  // For exported declarations.
+      Constexpr  = 1 << 15   // C++ 11
+   };
+
+   constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
+   }
+
+   inline DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a | b;
+   }
+
+   constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
+   }
+
+   inline DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a & b;
+   }
+
+   constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
+   }
+
+   inline DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a ^ b;
+   }
+
+   constexpr bool implies(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return (a & b) == b;
+   }
+
                                 // -- Decl --
    // Only declaration-statements are statements.  But we find it simpler
    // just to take the general rule that a declaration is a statement.
@@ -1756,35 +1820,7 @@ namespace ipr {
    //     (a) a primary template; or
    //     (b) a non-template declaration.
    struct Decl : Stmt {
-      enum Specifier {
-         None = 0,
-         Register   = 1 << 0,   // Banned from C++17.
-         Static     = 1 << 1,
-         Extern     = 1 << 2,
-         Mutable    = 1 << 3,
-         Thread     = 1 << 4,
-         StorageClass  = Register | Static | Extern | Mutable | Thread,
-
-         Inline     = 1 << 5,
-         Virtual    = 1 << 6,   // also used as storage class specifier
-                                // for virtual base subobjects
-         Explicit   = 1 << 7,
-         Pure       = 1 << 8,
-         FunctionSpecifier = Inline | Virtual | Explicit | Pure,
-      
-         Friend     = 1 << 9,
-         Typedef    = 1 << 10,
-
-         Public     = 1 << 11,
-         Protected  = 1 << 12,
-         Private    = 1 << 13,
-         AccessProtection = Public | Protected | Private,
-
-         Export     = 1 << 14,  // For exported declarations.
-         Constexpr  = 1 << 15   // C++ 11
-      };
-
-      virtual Specifier specifiers() const = 0;
+      virtual DeclSpecifiers specifiers() const = 0;
       virtual const Linkage& lang_linkage() const = 0;
 
       virtual const Name& name() const = 0;
@@ -1818,30 +1854,6 @@ namespace ipr {
       Decl(Category_code c) : Stmt(c)
       { }
    };
-
-   inline Decl::Specifier
-   operator|(Decl::Specifier a, Decl::Specifier b)
-   { return Decl::Specifier(int(a) | int(b)); }
-
-   inline Decl::Specifier&
-   operator|=(Decl::Specifier& a, Decl::Specifier b)
-   { return a = Decl::Specifier(int(a) | int(b)); }
-
-   inline Decl::Specifier
-   operator&(Decl::Specifier a, Decl::Specifier b)
-   { return Decl::Specifier(int(a) & int(b)); }
-
-   inline Decl::Specifier&
-   operator&=(Decl::Specifier& a, Decl::Specifier b)
-   { return a = Decl::Specifier(int(a) & int(b)); }
-
-   inline Decl::Specifier
-   operator^(Decl::Specifier a, Decl::Specifier b)
-   { return Decl::Specifier(int(a) ^ int(b)); }
-
-   inline Decl::Specifier&
-   operator^=(Decl::Specifier& a, Decl::Specifier b)
-   { return a = Decl::Specifier(int(a) ^ int(b)); }
 
                                 // -- Named_map --
    // This represents a parameterized declaration.  If its

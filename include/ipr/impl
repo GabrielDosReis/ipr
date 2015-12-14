@@ -417,13 +417,14 @@ namespace ipr {
          int scope_pos;
 
          // The specifiers for this declaration.  S
-         ipr::Decl::Specifier spec;
+         ipr::DeclSpecifiers spec;
 
          // Back-pointer to this declaration.  It shall be set at
          // the declaration creation.
          const ipr::Decl* decl; 
 
-         scope_datum() : scope_pos(-1), spec(ipr::Decl::None), decl(0)
+         scope_datum()
+               : scope_pos{ -1 }, spec{ ipr::DeclSpecifiers::None }, decl{ }
          { }
 
          // A comparator object type, implements ordering on declaration
@@ -758,7 +759,7 @@ namespace ipr {
 
          // Set declaration specifiers for this decl.
          using D::specifiers;
-         void specifiers(ipr::Decl::Specifier s) {
+         void specifiers(ipr::DeclSpecifiers s) {
             decl_data.spec = s;
          }
       };
@@ -774,19 +775,19 @@ namespace ipr {
       
       template<class Interface>
       struct unique_decl : impl::Stmt<Node<Interface>> {
-         ipr::Decl::Specifier spec;
+         ipr::DeclSpecifiers spec;
          const ipr::Linkage* langlinkage;
          singleton_overload overload;
          ipr::Named_map* pat;
          val_sequence<ipr::Substitution> args;
 
-         unique_decl() : spec(ipr::Decl::None),
-                         langlinkage(0),
+         unique_decl() : spec(ipr::DeclSpecifiers::None),
+                         langlinkage{ },
                          overload(*this),
-                         pat(0)
+                         pat{ }
          { }
 
-         ipr::Decl::Specifier specifiers() const final { return spec; }
+         ipr::DeclSpecifiers specifiers() const final { return spec; }
          const ipr::Decl& master() const final { return *this; }
          const ipr::Linkage& lang_linkage() const final
          {
@@ -1007,7 +1008,7 @@ namespace ipr {
             return this->decl_data.master_data->overload->name;
          }
          
-         ipr::Decl::Specifier specifiers() const
+         ipr::DeclSpecifiers specifiers() const
          {
             return this->decl_data.spec;
          }

@@ -1753,31 +1753,31 @@ namespace ipr
 
 
    Printer&
-   operator<<(Printer& printer, Decl::Specifier spec)
+   operator<<(Printer& printer, DeclSpecifiers spec)
    {
-      if (spec & Decl::Export)
+      if (implies(spec, DeclSpecifiers::Export))
          printer << xpr_identifier("export");
-      if (spec & Decl::Register)
+      if (implies(spec, DeclSpecifiers::Register))
          printer << xpr_identifier("register");
-      if (spec & Decl::Static)
+      if (implies(spec, DeclSpecifiers::Static))
          printer << xpr_identifier("static");
-      if (spec & Decl::Extern)
+      if (implies(spec, DeclSpecifiers::Extern))
          printer << xpr_identifier("extern");
-      if (spec & Decl::Mutable)
+      if (implies(spec, DeclSpecifiers::Mutable))
          printer << xpr_identifier("mutable");
-      if (spec & Decl::Inline)
+      if (implies(spec, DeclSpecifiers::Inline))
          printer << xpr_identifier("inline");
-      if (spec & Decl::Virtual)
+      if (implies(spec, DeclSpecifiers::Virtual))
          printer << xpr_identifier("virtual");
-      if (spec & Decl::Explicit)
+      if (implies(spec, DeclSpecifiers::Explicit))
          printer << xpr_identifier("explicit");
-      if (spec & Decl::Friend)
+      if (implies(spec, DeclSpecifiers::Friend))
          printer << xpr_identifier("friend");
-      if (spec & Decl::Public)
+      if (implies(spec, DeclSpecifiers::Public))
          printer << xpr_identifier("public");
-      if (spec & Decl::Protected)
+      if (implies(spec, DeclSpecifiers::Protected))
          printer << xpr_identifier("protected");
-      if (spec & Decl::Private)
+      if (implies(spec, DeclSpecifiers::Private))
          printer << xpr_identifier("private");
 
       return printer;
