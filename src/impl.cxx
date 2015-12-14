@@ -18,6 +18,11 @@
 namespace ipr {
    namespace impl {
 
+      Token::Token(const ipr::String& s, const Source_location& l,
+                   TokenValue v, TokenCategory c)
+            : text{ s }, location{ l }, token_value{ v }, token_category{ c }
+      { }
+
       struct scope_datum::comp {
          int operator()(const scope_datum& lhs, const scope_datum& rhs) const
          {

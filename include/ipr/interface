@@ -8,6 +8,7 @@
 #ifndef IPR_INTERFACE_INCLUDED
 #define IPR_INTERFACE_INCLUDED
 
+#include <stdint.h>
 #include <utility>
 #include <iterator>
 #include <stdexcept>
@@ -299,22 +300,19 @@ namespace ipr {
    // unit-names to IDs (integers).  That mapping is managed by the Unit
    // instance.
    struct Basic_location {
-      int line;
-      int column;
-
-      Basic_location() : line(0), column(0) { }
+      int line = { };
+      int column = { };
    };
 
    struct Source_location : Basic_location {
-      int file;                 // ID of the file
-      Source_location() : file(0) { }
+      int file = { };           // ID of the file
    };
 
    struct Unit_location : Basic_location {
-      int unit;                 // ID of the unit
-      Unit_location() : unit(0) { }
+      int unit = { };           // ID of the unit
    };
 
+   // -- General structural utility types.
 
    template<Category_code Cat, class T = Expr>
    struct Category : T {
@@ -503,6 +501,66 @@ namespace ipr {
       virtual Second second() const = 0;
       virtual Third third() const = 0;
       virtual Fourth fourth() const = 0;
+   };
+
+
+   // -----------------------------------
+   // -- Basic syntactic units: Tokens --
+   // -----------------------------------
+   // The IPR focuses primarily on semantic aspects of C++ constructs.
+   // Certain constructs, such as uninstantiated template definitions,
+   // are primarily syntactic with minimal semantic processing.  IPR nodes
+   // can fully represent those structurally well-defined syntactic entities.
+   // However, C++11 added attributes which essentially token soups.  These
+   // attributes make the IPR interface less abstract than wanted.
+
+   enum class TokenCategory : uint8_t { };
+
+   enum class TokenValue : uint16_t { };
+
+   struct Lexeme {
+      virtual const String& spelling() const = 0;
+      virtual const Source_location& locus() const = 0;
+   };
+
+   struct Token {
+      virtual const Lexeme& lexeme() const = 0;
+      virtual TokenValue value() const = 0;
+      virtual TokenCategory category() const = 0;
+   };
+
+   struct Attribute {
+      struct Visitor;
+      virtual void accept(Visitor&) const = 0;
+   };
+
+   struct BalancedAttributeSequence : Sequence<Attribute> {
+   };
+
+   struct BasicAttribute : Attribute {
+      virtual const Token& token() const = 0;
+   };
+
+   struct ScopedAttribute : Attribute {
+      virtual const Token& scope() const = 0;
+      virtual const Token& member() const = 0;
+   };
+
+   struct LabeledAttribute : Attribute {
+      virtual const Token& label() const = 0;
+      virtual const Attribute& attribute() const = 0;
+   };
+
+   struct CalledAttribute : Attribute {
+      virtual const Token& callee() const = 0;
+      virtual const BalancedAttributeSequence& arguments() const = 0;
+   };
+
+   struct Attribute::Visitor {
+      virtual void visit(const BasicAttribute&) = 0;
+      virtual void visit(const ScopedAttribute&) = 0;
+      virtual void visit(const LabeledAttribute&) = 0;
+      virtual void visit(const CalledAttribute&) = 0;
    };
 
                                 // -- Node --
@@ -812,12 +870,6 @@ namespace ipr {
          Volatile         = 1 << 1,
          Restrict         = 1 << 2        // not standard C++
       };
-
-      // A type can be decomposed into two canonical components:
-      //   (1) its cv-qualifiers;
-      //   (2) the cv-unqualified part, also called the "main variant".
-//      virtual Qualifier qualifiers() const = 0;
-//      virtual const Type& main_variant() const = 0;
 
       // All types have have names.
       virtual const Name& name() const = 0;
@@ -1522,8 +1574,8 @@ namespace ipr {
       // The location of this statement in its unit.
       virtual const Unit_location& unit_location() const = 0;
       virtual const Source_location& source_location() const = 0;
-      // virtual bool has_source_location() const = 0;
       virtual const Sequence<Annotation>& annotation() const = 0;
+      virtual const Sequence<Attribute>& attributes() const = 0;
 
    protected:
       Stmt(Category_code c) : Expr(c)
