@@ -1117,6 +1117,7 @@ namespace ipr {
       using Type_typeid = Unary<Classic<Expr<ipr::Type_typeid>>>;
       using Unary_minus = Unary<Classic<Expr<ipr::Unary_minus>>>;
       using Unary_plus = Unary<Classic<Expr<ipr::Unary_plus>>>;
+      using Expansion = Unary<Classic<Expr<ipr::Expansion>>>;
 
       using And = Binary<Classic<Expr<ipr::And>>>;
       using Annotation = Binary<Node<ipr::Annotation>>;
@@ -1243,6 +1244,7 @@ namespace ipr {
          Type_typeid* make_type_typeid(const ipr::Type&);
          Unary_minus* make_unary_minus(const ipr::Expr&);
          Unary_plus* make_unary_plus(const ipr::Expr&);
+         Expansion* make_expansion(const ipr::Expr&);
 
          And* make_and(const ipr::Expr&, const ipr::Expr&);
          Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&);
@@ -1345,6 +1347,7 @@ namespace ipr {
          stable_farm<impl::Throw> throws;
          stable_farm<impl::Unary_minus> unary_minuses;
          stable_farm<impl::Unary_plus> unary_pluses;
+         stable_farm<impl::Expansion> expansions;
 
          stable_farm<impl::And> ands;
          stable_farm<impl::Array_ref> array_refs;

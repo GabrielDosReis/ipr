@@ -1640,6 +1640,11 @@ namespace ipr {
          return unary_pluses.make(e);
       }
 
+      impl::Expansion*
+      expr_factory::make_expansion(const ipr::Expr& e) {
+         return expansions.make(e);
+      }
+
       impl::And*
       expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r) {
          return ands.make(l, r);

@@ -138,6 +138,7 @@ namespace ipr {
    struct Type_typeid;           // typeidof a type           typeid (int)
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
+   struct Expansion;             // pack expansion                    t...
 
    // --------------------------------------------------------
    // -- results of binary expression constructor constants --
@@ -1254,6 +1255,12 @@ namespace ipr {
    // unary-plus-expression -- "+expr"
    struct Unary_plus : Unary<Category<unary_plus_cat, Classic>> { };
 
+                                // -- Expansion --
+   // Pack expansion.  The operand can be both a classic expression
+   // or a type.  Standard C++ does not permit overloading of expansion
+   // operator, but the general IPR model here allows it.
+   struct Expansion : Unary<Category<expansion_cat, Classic>> { };
+
                                 // -- Member_selection<> --
    // This class factorizes the commonalities of various object member
    // selection operation.
@@ -2098,7 +2105,8 @@ namespace ipr {
       virtual void visit(const Type_sizeof&); 
       virtual void visit(const Type_typeid&); 
       virtual void visit(const Unary_minus&); 
-      virtual void visit(const Unary_plus&); 
+      virtual void visit(const Unary_plus&);
+      virtual void visit(const Expansion&);
 
       virtual void visit(const And&); 
       virtual void visit(const Array_ref&);

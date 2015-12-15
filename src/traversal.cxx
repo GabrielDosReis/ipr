@@ -416,6 +416,12 @@ ipr::Visitor::visit(const Unary_plus& e)
 }
 
 void
+ipr::Visitor::visit(const Expansion& e)
+{
+   visit(as<Classic>(e));
+}
+
+void
 ipr::Visitor::visit(const Plus& e)
 {
    visit(as<Classic>(e));

@@ -70,6 +70,7 @@ type_sizeof_cat,                        // ipr::Type_sizeof
 type_typeid_cat,                        // ipr::Type_typeid
 unary_minus_cat,                        // ipr::Unary_minus
 unary_plus_cat,                         // ipr::Unary_plus;
+expansion_cat,                          // ipr::Expansion
 
 plus_cat,                               // ipr::Plus
 plus_assign_cat,                        // ipr::Plus_assign
