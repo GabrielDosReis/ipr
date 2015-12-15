@@ -348,8 +348,8 @@ namespace ipr {
       using iterator = Iterator;
 
       virtual int size() const = 0;
-      virtual Iterator begin() const;
-      virtual Iterator end() const;
+      Iterator begin() const;
+      Iterator end() const;
 
       Iterator position(int) const;
       const T& operator[](int) const;
@@ -366,9 +366,9 @@ namespace ipr {
    struct Sequence<T>::Iterator
       : std::iterator<std::bidirectional_iterator_tag, const T>  {
 
-      Iterator() : seq(0), index(0) {}
+      Iterator() : seq{ }, index{ } {}
 
-      Iterator(const Sequence* s, int i) : seq(s), index(i) { }
+      Iterator(const Sequence* s, int i) : seq{ s }, index{ i } { }
 
       const T& operator*() const
       { return seq->get(index); }
@@ -416,17 +416,17 @@ namespace ipr {
    template<class T>
    inline typename Sequence<T>::Iterator
    Sequence<T>::position(int i) const
-   { return Iterator(this, i); }
+   { return { this, i }; }
 
    template<class T>
    inline typename Sequence<T>::Iterator
    Sequence<T>::begin() const
-   { return Iterator(this, 0); }
+   { return { this, 0 }; }
 
    template<class T>
    inline typename Sequence<T>::Iterator
    Sequence<T>::end() const
-   { return Iterator(this, size()); }
+   { return { this, size() }; }
 
    template<class T>
    inline const T&

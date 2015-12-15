@@ -1,5 +1,11 @@
 2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
 
+	* ipr/interface: Sequence<T>::begin and Sequence<T>::end no longer
+	virtual -- they shouldn't have been ever since get() was
+	customization point.
+
+2015-12-14  Gabriel Dos Reis  <gdr@axiomatics.org>
+
 	* ipr/interface: Move Decl::Specifier to toplevel.  Rename to
 	DeclSpecifiers. Now an enum class with fixed underlying type.
 
