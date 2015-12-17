@@ -1,3 +1,9 @@
+2015-12-16  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* ipr/interface: Replace Type_sizeof and Expr_sizeof with Sizeof.
+	Similarly, replace Type_typeid and Expr_typeid with Typeid.
+	* ipr/impl: Propagate changes.  Implement.
+
 2015-12-15  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* ipr/interface: Add Expansion for pack expansions.

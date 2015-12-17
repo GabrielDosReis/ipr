@@ -55,8 +55,8 @@ complement_cat,                         // ipr::Complement
 delete_cat,                             // ipr::Delete
 deref_cat,                              // ipr::Deref
 expr_list_cat,                          // ipr::Expr_list
-expr_sizeof_cat,                        // ipr::Expr_sizeof
-expr_typeid_cat,                        // ipr::Expr_typeid
+sizeof_cat,                             // ipr::Sizeof
+typeid_cat,                             // ipr::Typeid
 id_expr_cat,                            // ipr::Id_expr
 label_cat,                              // ipr::Label
 not_cat,                                // ipr::Not
@@ -66,8 +66,6 @@ post_increment_cat,                     // ipr::Post_increment
 pre_decrement_cat,                      // ipr::Pre_decrement
 pre_increment_cat,                      // ipr::Pre_increment
 throw_cat,                              // ipr::Throw
-type_sizeof_cat,                        // ipr::Type_sizeof
-type_typeid_cat,                        // ipr::Type_typeid
 unary_minus_cat,                        // ipr::Unary_minus
 unary_plus_cat,                         // ipr::Unary_plus;
 expansion_cat,                          // ipr::Expansion

@@ -1521,16 +1521,6 @@ namespace ipr {
          return xlists.make();
       }
 
-      impl::Expr_sizeof*
-      expr_factory::make_expr_sizeof(const ipr::Expr& e) {
-         return xsizeofs.make(e);
-      }
-
-      impl::Expr_typeid*
-      expr_factory::make_expr_typeid(const ipr::Expr& e) {
-         return xtypeids.make(e);
-      }
-
       impl::Identifier*
       expr_factory::make_identifier(const ipr::String& s) {
          return ids.insert(s, id_compare());
@@ -1617,17 +1607,17 @@ namespace ipr {
 
       impl::Type_id*
       expr_factory::make_type_id(const ipr::Type& t) {
-         return typeids.insert(t, unary_compare());
+         return type_ids.insert(t, unary_compare());
       }
 
-      impl::Type_sizeof*
-      expr_factory::make_type_sizeof(const ipr::Type& t) {
-         return tsizeofs.insert(t, unified_type_compare());
+      impl::Sizeof*
+      expr_factory::make_sizeof(const ipr::Expr& t) {
+         return sizeofs.insert(t, unary_compare());
       }
 
-      impl::Type_typeid*
-      expr_factory::make_type_typeid(const ipr::Type& t) {
-         return ttypeids.insert(t, unified_type_compare());
+      impl::Typeid*
+      expr_factory::make_typeid(const ipr::Expr& t) {
+         return xtypeids.insert(t, unary_compare());
       }
 
       impl::Unary_minus*

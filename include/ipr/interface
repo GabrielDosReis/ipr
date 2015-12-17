@@ -122,8 +122,8 @@ namespace ipr {
    struct Delete;                // delete-expression             delete p
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // expression list        
-   struct Expr_sizeof;           // sizeof an expression         sizeof *p
-   struct Expr_typeid;           // typeid of an expression    typeid (*p)
+   struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
+   struct Typeid;                // typeid expression, like sizeof expression
    struct Id_expr;               // an identifier used in an expression
    struct Label;                 // a label - target of a goto-statement
                                  //         or entry of a switch-statement
@@ -134,8 +134,6 @@ namespace ipr {
    struct Pre_decrement;         // pre-increment                      ++p
    struct Pre_increment;         // pre-decrement                      --p
    struct Throw;                 // throw expression           throw Bad()
-   struct Type_sizeof;           // sizeof a type             sizeof (int)
-   struct Type_typeid;           // typeidof a type           typeid (int)
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
    struct Expansion;             // pack expansion                    t...
@@ -1187,13 +1185,13 @@ namespace ipr {
       const Expr& operator[](int i) const { return elements()[i]; }
    };
 
-                                // -- Expr_sizeof --
-   // sizeof-expression -- "sizeof (expr)"
-   struct Expr_sizeof : Unary<Category<expr_sizeof_cat, Classic>> { };
+                                // -- Sizeof --
+   // sizeof-expression -- "sizeof expr" or "sizeof (int)"
+   struct Sizeof : Unary<Category<sizeof_cat>> { };
 
-                                // -- Expr_typeid --
-   // typeid-expression -- "typeid (expr)"
-   struct Expr_typeid : Unary<Category<expr_typeid_cat, Classic>> { };
+                                // -- Typeid --
+   // typeid-expression -- "typeid (expr)", or "typeid (int)"
+   struct Typeid : Unary<Category<typeid_cat>> { };
 
                                 // -- Id_expr --
    // This node represents use of a name to designate an entity.
@@ -1238,14 +1236,6 @@ namespace ipr {
    struct Throw : Unary<Category<throw_cat, Classic>> {
       const Expr& exception() const { return operand(); }
    };
-
-                                // -- Type_sizeof --
-   // sizeof-expression -- "sizeof (type)"
-   struct Type_sizeof : Unary<Category<type_sizeof_cat, Classic>, const Type&> { };
-
-                                // -- Type_typeid --
-   // typeid-expression -- "typeid (type)"
-   struct Type_typeid : Unary<Category<type_typeid_cat, Classic>, const Type&> { };
 
                                 // -- Unary_minus --
    // unary-minus-expression -- "-expr"
@@ -2091,9 +2081,9 @@ namespace ipr {
       virtual void visit(const Delete&); 
       virtual void visit(const Deref&);
       virtual void visit(const Paren_expr&);
-      virtual void visit(const Expr_sizeof&);
+      virtual void visit(const Sizeof&);
       virtual void visit(const Expr_stmt&);
-      virtual void visit(const Expr_typeid&);
+      virtual void visit(const Typeid&);
       virtual void visit(const Id_expr&);
       virtual void visit(const Label&);
       virtual void visit(const Not&); 
@@ -2102,8 +2092,6 @@ namespace ipr {
       virtual void visit(const Pre_decrement&); 
       virtual void visit(const Pre_increment&); 
       virtual void visit(const Throw&);
-      virtual void visit(const Type_sizeof&); 
-      virtual void visit(const Type_typeid&); 
       virtual void visit(const Unary_minus&); 
       virtual void visit(const Unary_plus&);
       virtual void visit(const Expansion&);

@@ -552,17 +552,10 @@ namespace ipr
          }
          
          //        typeid ( expression )
-      void visit(const Expr_typeid& e) override
+         void visit(const Typeid& e) override
          {
             pp << xpr_identifier("typeid")
                << token('(') << xpr_expr(e.operand()) << token(')');
-         }
-         
-         //        typeid ( type )
-         void visit(const Type_typeid& e) override
-         {
-            pp << xpr_identifier("typeid")
-               << token("<|") << xpr_type(e.operand()) << token("|>") << token('(') << token(')');
          }
       };
    }
@@ -575,11 +568,6 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   struct xpr_unary_expr {
-      const Expr& expr;
-      explicit xpr_unary_expr(const Expr& e) : expr(e) { }
-   };
    
    // -- unary-expression:
    //         -- cast-expression
@@ -612,16 +600,10 @@ namespace ipr
          
          void visit(const Not& e) override { unary_operation(pp, e, "!"); }
          
-         void visit(const Expr_sizeof& e) override
+         void visit(const Sizeof& e) override
          {
             pp << xpr_identifier("sizeof")
-               << token('(') << xpr_expr(e.operand()) << token(')');
-         }
-         
-         void visit(const Type_sizeof& e) override
-         {
-            pp << xpr_identifier("sizeof")
-               << token("<|") << xpr_type(e.operand()) << token("|>") << token('(') << token(')');
+               << token(' ') << xpr_expr(e.operand());
          }
 
          void visit(const Unary_plus& e) override
@@ -657,15 +639,6 @@ namespace ipr
          }
       };
    };
-   
-   static inline Printer&
-   operator<<(Printer& printer, xpr_unary_expr x)
-   {
-      xpr::Unary_expr pp(printer);
-      x.expr.accept(pp);
-      return printer;
-   }
-   
 
    static Printer& operator<<(Printer&, xpr_cast_expr);
    
@@ -1076,11 +1049,6 @@ namespace ipr
    // -- conditional-expression
    //          logical-or-expression
    //          logical-or-expression ? expression : assignment-expression
-
-   struct xpr_cond_expr {
-      const Expr& expr;
-      explicit xpr_cond_expr(const Expr& e) : expr(e) { }
-   };
    
    namespace xpr {
       struct Cond_expr : xpr::Lor_expr {
@@ -1096,15 +1064,6 @@ namespace ipr
          }
       };
    }
-   
-   static inline Printer&
-   operator<<(Printer& printer, xpr_cond_expr x)
-   {
-      xpr::Cond_expr pp(printer);
-      x.expr.accept(pp);
-      return printer;
-   }
-   
 
    struct xpr_mapping_expression {
       const Mapping& mapping;

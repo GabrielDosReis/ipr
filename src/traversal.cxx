@@ -332,15 +332,15 @@ ipr::Visitor::visit(const Paren_expr& e)
 }
 
 void
-ipr::Visitor::visit(const Expr_sizeof& e)
+ipr::Visitor::visit(const Sizeof& e)
 {
-   visit(as<Classic>(e));
+   visit(as<Expr>(e));
 }
 
 void
-ipr::Visitor::visit(const Expr_typeid& e)
+ipr::Visitor::visit(const Typeid& e)
 {
-   visit(as<Classic>(e));
+   visit(as<Expr>(e));
 }
 
 void
@@ -393,18 +393,6 @@ ipr::Visitor::visit(const Pre_increment& e)
 
 void
 ipr::Visitor::visit(const Throw& e)
-{
-   visit(as<Classic>(e));
-}
-
-void
-ipr::Visitor::visit(const Type_sizeof& e)
-{
-   visit(as<Classic>(e));
-}
-
-void
-ipr::Visitor::visit(const Type_typeid& e)
 {
    visit(as<Classic>(e));
 }

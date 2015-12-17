@@ -1089,8 +1089,8 @@ namespace ipr {
       };
 
       using Initializer_list = Unary<Classic<Expr<ipr::Initializer_list>>>;
-      using Expr_sizeof = Unary<Classic<Expr<ipr::Expr_sizeof>>>;
-      using Expr_typeid = Unary<Classic<Expr<ipr::Expr_typeid>>>;
+      using Sizeof = Unary<Expr<ipr::Sizeof>>;
+      using Typeid = Unary<Expr<ipr::Typeid>>;
       using Identifier = Unary<Classic<Expr<ipr::Identifier>>>;
 
       struct Id_expr : impl::Unary<Expr<ipr::Id_expr>> {
@@ -1113,8 +1113,6 @@ namespace ipr {
       using Throw = Unary<Classic<Expr<ipr::Throw>>>;
       using Type_id = type_from_operand<Node<ipr::Type_id>>;
 
-      using Type_sizeof = Unary<Classic<Expr<ipr::Type_sizeof>>>;
-      using Type_typeid = Unary<Classic<Expr<ipr::Type_typeid>>>;
       using Unary_minus = Unary<Classic<Expr<ipr::Unary_minus>>>;
       using Unary_plus = Unary<Classic<Expr<ipr::Unary_plus>>>;
       using Expansion = Unary<Classic<Expr<ipr::Expansion>>>;
@@ -1227,8 +1225,8 @@ namespace ipr {
          Deref* make_deref(const ipr::Expr&);
          Dtor_name* make_dtor_name(const ipr::Type&);
          Expr_list* make_expr_list();
-         Expr_sizeof* make_expr_sizeof(const ipr::Expr&);
-         Expr_typeid* make_expr_typeid(const ipr::Expr&);
+         Sizeof* make_sizeof(const ipr::Expr&);
+         Typeid* make_typeid(const ipr::Expr&);
          Initializer_list* make_initializer_list(const ipr::Expr_list&);
          impl::Id_expr* make_id_expr(const ipr::Name&);
          Id_expr* make_id_expr(const ipr::Decl&);
@@ -1240,8 +1238,6 @@ namespace ipr {
          Pre_decrement* make_pre_decrement(const ipr::Expr&);
          Throw* make_throw(const ipr::Expr&);
          Type_id* make_type_id(const ipr::Type&);
-         Type_sizeof* make_type_sizeof(const ipr::Type&);
-         Type_typeid* make_type_typeid(const ipr::Type&);
          Unary_minus* make_unary_minus(const ipr::Expr&);
          Unary_plus* make_unary_plus(const ipr::Expr&);
          Expansion* make_expansion(const ipr::Expr&);
@@ -1318,12 +1314,9 @@ namespace ipr {
          util::rb_tree::container<impl::Rname> rnames;
          util::rb_tree::container<impl::Scope_ref> scope_refs;
          util::rb_tree::container<Template_id> template_ids;
-         util::rb_tree::container<impl::Type_id> typeids;
-         // >>>> Yuriy Solodkyy: 2008/07/10 
-         // Made sizeof(T) and typeid(T) unified.
-         util::rb_tree::container<impl::Type_sizeof> tsizeofs;
-         util::rb_tree::container<impl::Type_typeid> ttypeids;
-         // <<<< Yuriy Solodkyy: 2008/07/10 
+         util::rb_tree::container<impl::Type_id> type_ids;
+         util::rb_tree::container<impl::Sizeof> sizeofs;
+         util::rb_tree::container<impl::Typeid> xtypeids;
 
          stable_farm<impl::Phantom> phantoms;
          
@@ -1334,8 +1327,6 @@ namespace ipr {
          stable_farm<impl::Delete> deletes;
          stable_farm<impl::Deref> derefs;
          stable_farm<impl::Expr_list> xlists;
-         stable_farm<impl::Expr_sizeof> xsizeofs;
-         stable_farm<impl::Expr_typeid> xtypeids;
          stable_farm<impl::Id_expr> id_exprs;
          stable_farm<impl::Initializer_list> init_lists;
          stable_farm<impl::Not> nots;
