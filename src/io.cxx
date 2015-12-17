@@ -1493,12 +1493,6 @@ namespace ipr
       return printer;
    }
 
-   bool is_ellipsis_handler(const Handler& s)
-   {
-      const Var* pVar = dynamic_cast<const Var*>(&s.exception());
-      return pVar && dynamic_cast<const Ellipsis*>(&pVar->type());
-   }
-
    //  -- Statements --
    namespace xpr {
       struct Stmt : xpr::Assignment_expr {
@@ -1679,12 +1673,9 @@ namespace ipr
          {
             pp << xpr_identifier("catch")
                << token(' ')
-               << token('(');
-            if (is_ellipsis_handler(s))
-                pp << token("...");
-            else
-                pp << xpr_decl(s.exception());
-            pp << token(')')
+               << token('(')
+               << xpr_decl(s.exception())
+               << token(')')
                << newline_and_indent(3)
                << xpr_stmt(s.body())
                << newline_and_indent(-3);

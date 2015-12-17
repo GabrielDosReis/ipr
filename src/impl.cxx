@@ -2072,93 +2072,75 @@ namespace ipr {
       // -- impl::Unit::get_void --
       // --------------------------
 
-      const ipr::Void&
-      Unit::get_void() const {
+      const ipr::Type& Unit::get_void() const {
          return voidtype;
       }
 
-      const ipr::Bool&
-      Unit::get_bool() const {
+      const ipr::Type& Unit::get_bool() const {
          return booltype;
       }
 
-      const ipr::Char&
-      Unit::get_char() const {
+      const ipr::Type& Unit::get_char() const {
          return chartype;
       }
 
-      const ipr::sChar&
-      Unit::get_schar() const {
+      const ipr::Type& Unit::get_schar() const {
          return schartype;
       }
 
-      const ipr::uChar&
-      Unit::get_uchar() const {
+      const ipr::Type& Unit::get_uchar() const {
          return uchartype;
       }
 
-      const ipr::Wchar_t&
-      Unit::get_wchar_t() const {
+      const ipr::Type& Unit::get_wchar_t() const {
          return wchar_ttype;
       }
 
-      const ipr::Short&
-      Unit::get_short() const {
+      const ipr::Type& Unit::get_short() const {
          return shorttype;
       }
 
-      const ipr::uShort&
-      Unit::get_ushort() const {
+      const ipr::Type& Unit::get_ushort() const {
          return ushorttype;
       }
 
-      const ipr::Int&
-      Unit::get_int() const {
+      const ipr::Type& Unit::get_int() const {
          return inttype;
       }
 
-      const ipr::uInt&
-      Unit::get_uint() const {
+      const ipr::Type& Unit::get_uint() const {
          return uinttype;
       }
 
-      const ipr::Long&
-      Unit::get_long() const {
+      const ipr::Type& Unit::get_long() const {
          return longtype;
       }
 
-      const ipr::uLong&
-      Unit::get_ulong() const {
+      const ipr::Type& Unit::get_ulong() const {
          return ulongtype;
       }
 
-      const ipr::Long_long&
-      Unit::get_long_long() const {
+      const ipr::Type& Unit::get_long_long() const {
          return longlongtype;
       }
 
-      const ipr::uLong_long&
-      Unit::get_ulong_long() const {
+      const ipr::Type& Unit::get_ulong_long() const {
          return ulonglongtype;
       }
 
-      const ipr::Float&
-      Unit::get_float() const {
+      const ipr::Type& Unit::get_float() const {
          return floattype;
       }
 
-      const ipr::Double&
-      Unit::get_double() const {
+      const ipr::Type& Unit::get_double() const {
          return doubletype;
       }
 
-      const ipr::Long_double&
-      Unit::get_long_double() const {
+      const ipr::Type& Unit::get_long_double() const {
          return longdoubletype;
       }
 
-      const ipr::Ellipsis&
-      Unit::get_ellipsis() const {
+      const ipr::Type& Unit::get_ellipsis() const {
          return ellipsistype;
       }
 

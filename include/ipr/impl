@@ -2031,37 +2031,37 @@ namespace ipr {
          const ipr::Literal& get_literal(const ipr::Type&, const std::string&);
          const ipr::Literal& get_literal(const ipr::Type&, const ipr::String&);
          
-         const ipr::Void& get_void() const;
-         const ipr::Bool& get_bool() const;
+         const ipr::Type& get_void() const final;
+         const ipr::Type& get_bool() const final;
 
-         const ipr::Char& get_char() const;
-         const ipr::sChar& get_schar() const;
-         const ipr::uChar& get_uchar() const;
-         const ipr::Wchar_t& get_wchar_t() const;
+         const ipr::Type& get_char() const final;
+         const ipr::Type& get_schar() const final;
+         const ipr::Type& get_uchar() const final;
+         const ipr::Type& get_wchar_t() const final;
 
-         const ipr::Short& get_short() const;
-         const ipr::uShort& get_ushort() const;
+         const ipr::Type& get_short() const final;
+         const ipr::Type& get_ushort() const final;
 
-         const ipr::Int& get_int() const;
-         const ipr::uInt& get_uint() const;
+         const ipr::Type& get_int() const final;
+         const ipr::Type& get_uint() const final;
 
-         const ipr::Long& get_long() const;
-         const ipr::uLong& get_ulong() const;
+         const ipr::Type& get_long() const final;
+         const ipr::Type& get_ulong() const final;
 
-         const ipr::Long_long& get_long_long() const;
-         const ipr::uLong_long& get_ulong_long() const;
+         const ipr::Type& get_long_long() const final;
+         const ipr::Type& get_ulong_long() const final;
 
-         const ipr::Float& get_float() const;
-         const ipr::Double& get_double() const;
-         const ipr::Long_double& get_long_double() const;
+         const ipr::Type& get_float() const final;
+         const ipr::Type& get_double() const final;
+         const ipr::Type& get_long_double() const final;
 
-         const ipr::Ellipsis& get_ellipsis() const;
+         const ipr::Type& get_ellipsis() const final;
 
-         const ipr::Type& get_typename() const;
-         const ipr::Type& get_class() const;
-         const ipr::Type& get_union() const;
-         const ipr::Type& get_enum() const;
-         const ipr::Type& get_namespace() const;
+         const ipr::Type& get_typename() const final;
+         const ipr::Type& get_class() const final;
+         const ipr::Type& get_union() const final;
+         const ipr::Type& get_enum() const final;
+         const ipr::Type& get_namespace() const final;
 
          const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 
@@ -2143,24 +2143,24 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> uniontype;
          const impl::Builtin<ipr::As_type> enumtype;
          const impl::Builtin<ipr::As_type> namespacetype;
-         const impl::Builtin<ipr::Void> voidtype;
-         const impl::Builtin<ipr::Bool> booltype;
-         const impl::Builtin<ipr::Char> chartype;
-         const impl::Builtin<ipr::sChar> schartype;
-         const impl::Builtin<ipr::uChar> uchartype;
-         const impl::Builtin<ipr::Wchar_t> wchar_ttype;
-         const impl::Builtin<ipr::Short> shorttype;
-         const impl::Builtin<ipr::uShort> ushorttype;
-         const impl::Builtin<ipr::Int> inttype;
-         const impl::Builtin<ipr::uInt> uinttype;
-         const impl::Builtin<ipr::Long> longtype;
-         const impl::Builtin<ipr::uLong> ulongtype;
-         const impl::Builtin<ipr::Long_long> longlongtype;
-         const impl::Builtin<ipr::uLong_long> ulonglongtype;
-         const impl::Builtin<ipr::Float> floattype;
-         const impl::Builtin<ipr::Double> doubletype;
-         const impl::Builtin<ipr::Long_double> longdoubletype;
-         const impl::Builtin<ipr::Ellipsis> ellipsistype;
+         const impl::Builtin<ipr::As_type> voidtype;
+         const impl::Builtin<ipr::As_type> booltype;
+         const impl::Builtin<ipr::As_type> chartype;
+         const impl::Builtin<ipr::As_type> schartype;
+         const impl::Builtin<ipr::As_type> uchartype;
+         const impl::Builtin<ipr::As_type> wchar_ttype;
+         const impl::Builtin<ipr::As_type> shorttype;
+         const impl::Builtin<ipr::As_type> ushorttype;
+         const impl::Builtin<ipr::As_type> inttype;
+         const impl::Builtin<ipr::As_type> uinttype;
+         const impl::Builtin<ipr::As_type> longtype;
+         const impl::Builtin<ipr::As_type> ulongtype;
+         const impl::Builtin<ipr::As_type> longlongtype;
+         const impl::Builtin<ipr::As_type> ulonglongtype;
+         const impl::Builtin<ipr::As_type> floattype;
+         const impl::Builtin<ipr::As_type> doubletype;
+         const impl::Builtin<ipr::As_type> longdoubletype;
+         const impl::Builtin<ipr::As_type> ellipsistype;
 
          template<class T> T* finish_type(T*);
 

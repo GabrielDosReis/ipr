@@ -238,28 +238,6 @@ namespace ipr {
    struct Unit;                  // translation unit
 
 
-   // --------------------------------
-   // -- Special built-in constants --
-   // --------------------------------
-   struct Void;                  // "void"
-   struct Bool;                  // "bool"
-   struct Char;                  // "char"
-   struct sChar;                 // "signed char"
-   struct uChar;                 // "unsigned char";
-   struct Wchar_t;               // "wchar_t";
-   struct Short;                 // "short"
-   struct uShort;                // "unsigned short"
-   struct Int;                   // "int"
-   struct uInt;                  // "unsigned int"
-   struct Long;                  // "long"
-   struct uLong;                 // "unsigned long"
-   struct Long_long;             // "long long"
-   struct uLong_long;            // "unsigned long long"
-   struct Float;                 // "float"
-   struct Double;                // "double"
-   struct Long_double;           // "long double"
-   struct Ellipsis;              // "..."
-
    // ----------------------------------
    // -- built-ins, but not constants --
    // ----------------------------------
@@ -1961,24 +1939,24 @@ namespace ipr {
    struct Unit : Category<unit_cat, Node> {
       virtual const ipr::Global_scope& get_global_scope() const = 0;
 
-      virtual const Void& get_void() const = 0;
-      virtual const Bool& get_bool() const = 0;
-      virtual const Char& get_char() const = 0;
-      virtual const sChar& get_schar() const = 0;
-      virtual const uChar& get_uchar() const = 0;
-      virtual const Wchar_t& get_wchar_t() const = 0;
-      virtual const Short& get_short() const = 0;
-      virtual const uShort& get_ushort() const = 0;
-      virtual const Int& get_int() const = 0;
-      virtual const uInt& get_uint() const = 0;
-      virtual const Long& get_long() const = 0;
-      virtual const uLong& get_ulong() const = 0;
-      virtual const Long_long& get_long_long() const = 0;
-      virtual const uLong_long& get_ulong_long() const = 0;
-      virtual const Float& get_float() const = 0;
-      virtual const Double& get_double() const = 0;
-      virtual const Long_double& get_long_double() const = 0;
-      virtual const Ellipsis& get_ellipsis() const = 0;
+      virtual const Type& get_void() const = 0;
+      virtual const Type& get_bool() const = 0;
+      virtual const Type& get_char() const = 0;
+      virtual const Type& get_schar() const = 0;
+      virtual const Type& get_uchar() const = 0;
+      virtual const Type& get_wchar_t() const = 0;
+      virtual const Type& get_short() const = 0;
+      virtual const Type& get_ushort() const = 0;
+      virtual const Type& get_int() const = 0;
+      virtual const Type& get_uint() const = 0;
+      virtual const Type& get_long() const = 0;
+      virtual const Type& get_ulong() const = 0;
+      virtual const Type& get_long_long() const = 0;
+      virtual const Type& get_ulong_long() const = 0;
+      virtual const Type& get_float() const = 0;
+      virtual const Type& get_double() const = 0;
+      virtual const Type& get_long_double() const = 0;
+      virtual const Type& get_ellipsis() const = 0;
       virtual const Type& get_typename() const = 0;
       virtual const Type& get_class() const = 0;
       virtual const Type& get_union() const = 0;
@@ -1992,34 +1970,6 @@ namespace ipr {
                                 // -- Built-in type constants --
 
    struct Primitive : As_type { };
-
-   struct Void : As_type { };   
-
-   struct Bool : As_type { };  
-
-   struct Char : As_type { };
-   struct sChar : As_type { };
-   struct uChar : As_type { };
-
-   struct Wchar_t : As_type { };
-
-   struct Short : As_type { };
-   struct uShort : As_type { };
-
-   struct Int : As_type { };
-   struct uInt : As_type { };
-
-   struct Long : As_type { };
-   struct uLong : As_type { };
-
-   struct Long_long : As_type { };
-   struct uLong_long : As_type { };
-
-   struct Float : As_type { };
-   struct Double : As_type { };
-   struct Long_double : As_type { };
-
-   struct Ellipsis : As_type { };
 
    struct Global_scope : Namespace { };
 
@@ -2177,24 +2127,6 @@ namespace ipr {
       virtual void visit(const Asm&);
 
       virtual void visit(const Unit&);
-
-      virtual void visit(const Void&);
-      virtual void visit(const Bool&);
-      virtual void visit(const Char&);
-      virtual void visit(const sChar&);
-      virtual void visit(const uChar&);
-      virtual void visit(const Short&);
-      virtual void visit(const uShort&);
-      virtual void visit(const Int&);
-      virtual void visit(const uInt&);
-      virtual void visit(const Long&);
-      virtual void visit(const uLong&);
-      virtual void visit(const Long_long&);
-      virtual void visit(const uLong_long&);
-      virtual void visit(const Float&);
-      virtual void visit(const Double&);
-      virtual void visit(const Long_double&);
-      virtual void visit(const Ellipsis&);
 
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);
