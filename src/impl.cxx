@@ -182,14 +182,8 @@ namespace ipr {
       Alias::Alias() : aliasee(0), lexreg(0)
       { }
 
-      const ipr::Expr&
-      Alias::initializer() const {
-         return *util::check(aliasee);
-      }
-
-      bool
-      Alias::has_initializer() const {
-         return aliasee != 0;;
+      Optional<ipr::Expr> Alias::initializer() const {
+         return { aliasee };
       }
 
       const ipr::Region&
@@ -214,14 +208,8 @@ namespace ipr {
          return *util::check(member_of);
       }
 
-      const ipr::Expr&
-      Bitfield::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Bitfield::has_initializer() const {
-         return init != 0;;
+      Optional<ipr::Expr> Bitfield::initializer() const {
+         return { init };
       }
 
       const ipr::Region&
@@ -262,14 +250,9 @@ namespace ipr {
          return scope_pos;
       }
 
-      const ipr::Expr&
+      Optional<ipr::Expr>
       Base_type::initializer() const {
          throw std::domain_error("impl::Base_type::initializer");
-      }
-
-      bool
-      Base_type::has_initializer() const {
-         return false;
       }
 
       const ipr::Sequence<ipr::Decl>&
@@ -315,14 +298,8 @@ namespace ipr {
          return scope_pos;
       }
 
-      const ipr::Expr&
-      Enumerator::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Enumerator::has_initializer() const {
-         return init != 0;
+      Optional<ipr::Expr> Enumerator::initializer() const {
+         return { init };
       }
 
       // -----------------
@@ -333,14 +310,8 @@ namespace ipr {
             : member_of(0), init(0)
       { }
 
-      const ipr::Expr&
-      Field::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Field::has_initializer() const {
-         return init != 0;
+      Optional<ipr::Expr> Field::initializer() const {
+         return { init };
       }
 
       const ipr::Udt&
@@ -376,14 +347,8 @@ namespace ipr {
          return *util::check(member_of);
       }
 
-      const ipr::Expr&
-      Fundecl::initializer() const {
-         return *util::check(util::check(init)->body);
-      }
-
-      bool
-      Fundecl::has_initializer() const {
-         return init != 0 && init->body != 0;
+      Optional<ipr::Expr> Fundecl::initializer() const {
+         return { util::check(init)->body };
       }
 
       const ipr::Region&
@@ -412,14 +377,8 @@ namespace ipr {
          return *util::check(init);
       }
 
-      const ipr::Expr&
-      Named_map::initializer() const {
-         return *util::check(util::check(init)->body);
-      }
-
-      bool
-      Named_map::has_initializer() const {
-         return init != 0 && init->body != 0;
+      Optional<ipr::Expr> Named_map::initializer() const {
+         return { util::check(init)->body };
       }
 
       const ipr::Region&
@@ -471,14 +430,8 @@ namespace ipr {
          return abstract_name.rep.second;
       }
 
-      const ipr::Expr&
-      Parameter::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Parameter::has_initializer() const {
-         return init != 0;
+      Optional<ipr::Expr> Parameter::initializer() const {
+         return { init };
       }
 
       // --------------------
@@ -488,14 +441,8 @@ namespace ipr {
       Typedecl::Typedecl() : init(0), member_of(0), lexreg(0)
       { }
 
-      const ipr::Expr&
-      Typedecl::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Typedecl::has_initializer() const {
-         return init != 0;
+      Optional<ipr::Expr> Typedecl::initializer() const {
+         return { init };
       }
 
       const ipr::Udt&
@@ -518,14 +465,8 @@ namespace ipr {
       Var::Var() : init(0), lexreg(0)
       { }
 
-      const ipr::Expr&
-      Var::initializer() const {
-         return *util::check(init);
-      }
-
-      bool
-      Var::has_initializer() const {
-         return init != 0;
+      Optional<ipr::Expr> Var::initializer() const {
+         return { init };
       }
 
       const ipr::Region&

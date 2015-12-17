@@ -1742,13 +1742,11 @@ namespace ipr
 
             void visit(const ipr::Alias& d) override
             {
-                    assert(d.has_initializer()); // alias cannot be without initializer
-
-                    pp << ipr::xpr_name(d)
-             << token(" : ")
-                            << d.specifiers()
-                            << token(" typedef ")
-                            << xpr_expr(d.initializer());
+               pp << ipr::xpr_name(d)
+                  << token(" : ")
+                  << d.specifiers()
+                  << token(" typedef ")
+                  << xpr_expr(d.initializer().get());
             }
 
          void visit(const ipr::Decl& d) override
@@ -1757,33 +1755,30 @@ namespace ipr
                << token(" : ")
                << d.specifiers()
                << xpr_type(d.type());
-
-            if (d.has_initializer())
+            
+            if (auto init = d.initializer())
                {
                   pp << token('(')
-                     << xpr_expr(d.initializer())
+                     << xpr_expr(init.get())
                      << token(')');
                }
          }
 
          void visit(const Typedecl& d) override
          {
-            // >>>> Yuriy Solodkyy: 2006/07/20 
-            //pp << xpr_identifier("let"); // begins new declaration
-            // <<<< Yuriy Solodkyy: 2006/07/20 
             pp << ipr::xpr_name(d)
                << token(" : ")
                << xpr_type(d.type());
 
-            if (d.has_initializer())
-               pp << xpr_type_expr(d.initializer());
+            if (auto init = d.initializer())
+               pp << xpr_type_expr(init.get());
          }
 
          void visit(const Enumerator& e) override
          {
             e.name().accept(*this);
-            if (e.has_initializer())
-               pp << token('(') << xpr_expr(e.initializer()) << token(')');
+            if (auto init = e.initializer())
+               pp << token('(') << xpr_expr(init.get()) << token(')');
          }
 
          void visit(const Bitfield& b) override
@@ -1811,9 +1806,9 @@ namespace ipr
             if (pfn)
                 pp << xpr_type(pfn->target()); // dump result type
 
-            if (f.has_initializer())
+            if (auto init = f.initializer())
                pp << needs_newline()
-                  << xpr_stmt(f.initializer());
+                  << xpr_stmt(init.get());
          }
 
          void visit(const Named_map& m) override

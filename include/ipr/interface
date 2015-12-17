@@ -12,6 +12,7 @@
 #include <utility>
 #include <iterator>
 #include <stdexcept>
+#include <ipr/utility>
 
 namespace ipr {
    // IPR is designed to be regular, fully general enough to
@@ -410,6 +411,19 @@ namespace ipr {
    Sequence<T>::operator[](int p) const
    { return get(p); }
 
+                                // -- Optional<> --
+   // Occasionally, a node has an optional property (e.g. a variable
+   // has an optional initializer).  This class template captures
+   // that commonality and provides a checked access.
+   template<typename T>
+   struct Optional {
+      Optional(const T* p = nullptr) : ptr { p } { }
+      const T& get() const { return *util::check(ptr); }
+      bool is_valid() const { return ptr != nullptr; }
+      explicit operator bool() const { return is_valid(); }
+   private:
+      const T* ptr;
+   };
 
                                 // -- Unary<> --
    // A unary-expression is a specification of an operation that takes
@@ -656,12 +670,9 @@ namespace ipr {
    // we define this class to represent the idea that an expression
    // has a user-supplied meaning.
    struct Classic : Expr {
-      // This is true if and only if, this is an overloaded operator
-      // with user-defined declaration.
-      virtual bool has_impl_decl() const = 0;
-
-      // The declaration for the corresponding operator function.
-      virtual const ipr::Decl& impl_decl() const = 0;
+      // For an operation implemented by an overloaded operator, retrieve
+      // the implementation.
+      virtual Optional<Decl> implementation() const = 0;
 
    protected:
       Classic(Category_code c) : Expr(c)
@@ -1481,11 +1492,7 @@ namespace ipr {
       // use_placement is true when this new-expression uses a placement.
       bool use_placement() const { return first().size() != 0; }
       Arg1_type placement() const { return first(); }
-      
       Arg2_type allocated_type() const { return second(); }
-      
-      // has_initializer is true when the new-expression specifies
-      // an initializer-list
       bool has_initializer() const { return third().size() != 0; }
       Arg3_type initializer() const { return third(); }
    };
@@ -1810,8 +1817,7 @@ namespace ipr {
       // outside of their enclosing class or namespaces.
       virtual const Region& lexical_region() const = 0;
 
-      virtual bool has_initializer() const = 0;
-      virtual const Expr& initializer() const = 0;
+      virtual Optional<Expr> initializer() const = 0;
 
       virtual const Named_map& generating_map() const = 0;
       virtual const Sequence<Substitution>& substitutions() const = 0;
@@ -1871,7 +1877,7 @@ namespace ipr {
    // An alias is always initialized -- with what it is an alias for.
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<alias_cat, Decl> {
-      const Type& type() const { return initializer().type(); }
+      const Type& type() const { return initializer().get().type(); }
    };
 
                                 // -- Base_type --
@@ -1893,7 +1899,7 @@ namespace ipr {
    // a parameter list.
    struct Parameter : Category<parameter_cat, Decl> {
       virtual const Parameter_list& membership() const = 0;
-      const Expr& default_value() const { return initializer(); }
+      Optional<Expr> default_value() const { return initializer(); }
    };
 
                                 // -- Fundecl --

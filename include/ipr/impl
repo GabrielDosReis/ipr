@@ -318,16 +318,11 @@ namespace ipr {
       template<class Operation>
       struct Classic : Operation {
          const ipr::Decl* op_impl;
-         Classic() : op_impl(0) { }
+         Classic() : op_impl{ } { }
 
-         bool has_impl_decl() const
+         Optional<ipr::Decl> implementation() const final
          {
-            return op_impl != 0;
-         }
-
-         const ipr::Decl& impl_decl() const
-         {
-            return *util::check(op_impl);
+            return { op_impl };
          }
       };
 
@@ -815,8 +810,7 @@ namespace ipr {
          const ipr::Region& lexical_region() const;
          const ipr::Sequence<ipr::Decl>& decl_set() const;
          int position() const;
-         const ipr::Expr& initializer() const;
-         bool has_initializer() const;
+         Optional<ipr::Expr>initializer() const final;
          // FIXME: This should go away.
          const Parameter_list& membership() const;
       };
@@ -831,8 +825,7 @@ namespace ipr {
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
          int position() const;
-         const ipr::Expr& initializer() const;
-         bool has_initializer() const;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Sequence<ipr::Decl>& decl_set() const;
       };
 
@@ -849,8 +842,7 @@ namespace ipr {
          const ipr::Region& home_region() const;
          const ipr::Sequence<ipr::Decl>& decl_set() const;
          int position() const;
-         const ipr::Expr& initializer() const;
-         bool has_initializer() const;
+         Optional<ipr::Expr> initializer() const final;
          // FIXME: this should go away.
          const ipr::Enum& membership() const;
       };
@@ -1091,7 +1083,7 @@ namespace ipr {
       using Initializer_list = Unary<Classic<Expr<ipr::Initializer_list>>>;
       using Sizeof = Unary<Expr<ipr::Sizeof>>;
       using Typeid = Unary<Expr<ipr::Typeid>>;
-      using Identifier = Unary<Classic<Expr<ipr::Identifier>>>;
+      using Identifier = Unary<Expr<ipr::Identifier>>;
 
       struct Id_expr : impl::Unary<Expr<ipr::Id_expr>> {
          const ipr::Decl* decl;
@@ -1103,7 +1095,7 @@ namespace ipr {
 
       using Not = Unary<Classic<Expr<ipr::Not>>>;
 
-      using Operator = Unary<Classic<Expr<ipr::Operator>>>;
+      using Operator = Unary<Expr<ipr::Operator>>;
       using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
       
       using Pre_decrement = Unary<Classic<Expr<ipr::Pre_decrement>>>;
@@ -1403,8 +1395,7 @@ namespace ipr {
          const ipr::Named_map& primary_named_map() const;
          const ipr::Sequence<ipr::Decl>& specializations() const;
          const ipr::Mapping& mapping() const;
-         const ipr::Expr& initializer() const;
-         bool has_initializer() const;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const;
       };
 
@@ -1446,8 +1437,7 @@ namespace ipr {
          const ipr::Region* lexreg;
 
          Alias();
-         const ipr::Expr& initializer() const;
-         bool has_initializer() const;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const;
       };
 
@@ -1462,8 +1452,7 @@ namespace ipr {
 
          Var();
 
-         bool has_initializer() const final;
-         const ipr::Expr& initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
 
@@ -1480,14 +1469,13 @@ namespace ipr {
          Field();
 
          const ipr::Udt& membership() const final;
-         bool has_initializer() const final;
 
          // Override ipr::Decl::lexical_region.  Which is the
          // same as home_region for a Field.  Note that fields
          // are always nonstatic data members.
          const ipr::Region& lexical_region() const final;
          const ipr::Region& home_region() const final;
-         const ipr::Expr& initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
       };
 
       template<>
@@ -1507,8 +1495,7 @@ namespace ipr {
          const ipr::Region& lexical_region() const final;
          const ipr::Region& home_region() const final;
          const ipr::Udt& membership() const final;
-         bool has_initializer() const final;
-         const ipr::Expr& initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
       };
 
       template<>
@@ -1524,8 +1511,7 @@ namespace ipr {
          Typedecl();
 
          const ipr::Udt& membership() const final;
-         const ipr::Expr& initializer() const final;
-         bool has_initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
 
@@ -1543,8 +1529,7 @@ namespace ipr {
          
          const ipr::Mapping& mapping() const final;
          const ipr::Udt& membership() const final;
-         const ipr::Expr& initializer() const final;
-         bool has_initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
 

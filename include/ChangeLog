@@ -1,3 +1,9 @@
+2015-12-17  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* ipr/interface: Add Optional<T>.  Use it to capture commonality
+	of optional node properties.
+	* ipr/impl: Propagate changes.
+
 2015-12-16  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* ipr/interface: Replace Type_sizeof and Expr_sizeof with Sizeof.
