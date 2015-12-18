@@ -40,6 +40,18 @@ namespace ipr {
          }
       };
 
+      // -- impl::New --
+      New::New(const ipr::Expr_list* where, const ipr::Type& what,
+               const ipr::Expr_list* args)
+            : where{ where }, what{ what }, args{ args }
+      { }
+
+      Optional<ipr::Expr_list> New::placement() const { return { where }; }
+
+      const ipr::Type& New::allocated_type() const { return what; }
+
+      Optional<ipr::Expr_list> New::initializer() const { return { args }; }
+
       // --------------------------------------
       // -- master_decl_data<ipr::Named_map> --
       // --------------------------------------
@@ -1834,9 +1846,19 @@ namespace ipr {
       }
 
       impl::New*
+      expr_factory::make_new(const ipr::Type& t) {
+         return news.make(nullptr, t, nullptr);
+      }
+
+      impl::New*
+      expr_factory::make_new(const ipr::Type& t, const ipr::Expr_list& i) {
+         return news.make(nullptr, t, &i);
+      }
+
+      impl::New*
       expr_factory::make_new(const ipr::Expr_list& p, const ipr::Type& t,
                              const ipr::Expr_list& i) {
-         return news.make(p, t, i);
+         return news.make(&p, t, &i);
       }
 
       impl::Conditional*

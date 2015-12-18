@@ -615,13 +615,13 @@ namespace ipr
          {
             pp << xpr_identifier("new") << token(' ');
             
-            if (e.use_placement())
-               pp << token('(') << e.placement() << token(") ");
+            if (auto p = e.placement())
+               pp << token('(') << p.get() << token(") ");
             
             pp << xpr_type(e.allocated_type());
             
-            if (e.has_initializer())
-               pp << token(" (") << e.initializer() << token(')');
+            if (auto init = e.initializer())
+               pp << token(" (") << init.get() << token(')');
          }
          
          void visit(const Delete& e) override

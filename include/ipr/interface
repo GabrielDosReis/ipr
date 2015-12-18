@@ -1487,14 +1487,10 @@ namespace ipr {
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
    //    ::_opt new new-placement_opt ( type-id ) new-initializer_opt
-   struct New : Ternary<Category<new_cat, Classic>,
-                        const Expr_list&, const Type&, const Expr_list&> {
-      // use_placement is true when this new-expression uses a placement.
-      bool use_placement() const { return first().size() != 0; }
-      Arg1_type placement() const { return first(); }
-      Arg2_type allocated_type() const { return second(); }
-      bool has_initializer() const { return third().size() != 0; }
-      Arg3_type initializer() const { return third(); }
+   struct New : Category<new_cat, Classic> { 
+      virtual Optional<Expr_list> placement() const = 0;
+      virtual const Type& allocated_type() const = 0;
+      virtual Optional<Expr_list> initializer() const = 0;
    };
 
                                 // -- Conditional --

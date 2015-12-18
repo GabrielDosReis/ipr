@@ -1173,8 +1173,18 @@ namespace ipr {
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary<Expr<ipr::Template_id>>;
 
-      using New = Ternary<Classic<Expr<ipr::New>>>;
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
+
+      struct New : Classic<Expr<ipr::New>> {
+         const ipr::Expr_list* where;
+         const ipr::Type& what;
+         const ipr::Expr_list* args;
+
+         New(const ipr::Expr_list*, const ipr::Type&, const ipr::Expr_list*);
+         Optional<ipr::Expr_list> placement() const final;
+         const ipr::Type& allocated_type() const final;
+         Optional<ipr::Expr_list> initializer() const final;
+      };
 
       struct expr_factory {
          // Returns an IPR node for unified string literals.
@@ -1281,6 +1291,8 @@ namespace ipr {
          Template_id* make_template_id(const ipr::Name&,
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
+         New* make_new(const ipr::Type&);
+         New* make_new(const ipr::Type&, const ipr::Expr_list&);
          New* make_new(const ipr::Expr_list&, const ipr::Type&,
                        const ipr::Expr_list&);
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
