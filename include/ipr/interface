@@ -1941,32 +1941,32 @@ namespace ipr {
    struct Unit : Category<unit_cat, Node> {
       virtual const ipr::Global_scope& get_global_scope() const = 0;
 
-      virtual const Type& get_void() const = 0;
-      virtual const Type& get_bool() const = 0;
-      virtual const Type& get_char() const = 0;
-      virtual const Type& get_schar() const = 0;
-      virtual const Type& get_uchar() const = 0;
-      virtual const Type& get_wchar_t() const = 0;
-      virtual const Type& get_short() const = 0;
-      virtual const Type& get_ushort() const = 0;
-      virtual const Type& get_int() const = 0;
-      virtual const Type& get_uint() const = 0;
-      virtual const Type& get_long() const = 0;
-      virtual const Type& get_ulong() const = 0;
-      virtual const Type& get_long_long() const = 0;
-      virtual const Type& get_ulong_long() const = 0;
-      virtual const Type& get_float() const = 0;
-      virtual const Type& get_double() const = 0;
-      virtual const Type& get_long_double() const = 0;
-      virtual const Type& get_ellipsis() const = 0;
-      virtual const Type& get_typename() const = 0;
-      virtual const Type& get_class() const = 0;
-      virtual const Type& get_union() const = 0;
-      virtual const Type& get_enum() const = 0;
-      virtual const Type& get_namespace() const = 0;
+      virtual const Type& void_type() const = 0;
+      virtual const Type& bool_type() const = 0;
+      virtual const Type& char_type() const = 0;
+      virtual const Type& schar_type() const = 0;
+      virtual const Type& uchar_type() const = 0;
+      virtual const Type& wchar_t_type() const = 0;
+      virtual const Type& short_type() const = 0;
+      virtual const Type& ushort_type() const = 0;
+      virtual const Type& int_type() const = 0;
+      virtual const Type& uint_type() const = 0;
+      virtual const Type& long_type() const = 0;
+      virtual const Type& ulong_type() const = 0;
+      virtual const Type& long_long_type() const = 0;
+      virtual const Type& ulong_long_type() const = 0;
+      virtual const Type& float_type() const = 0;
+      virtual const Type& double_type() const = 0;
+      virtual const Type& long_double_type() const = 0;
+      virtual const Type& ellipsis_type() const = 0;
+      virtual const Type& typename_type() const = 0;
+      virtual const Type& class_type() const = 0;
+      virtual const Type& union_type() const = 0;
+      virtual const Type& enum_type() const = 0;
+      virtual const Type& namespace_type() const = 0;
 
-      virtual const Linkage& get_cxx_linkage() const = 0;
-      virtual const Linkage& get_c_linkage() const = 0;
+      virtual const Linkage& cxx_linkage() const = 0;
+      virtual const Linkage& c_linkage() const = 0;
    };
 
                                 // -- Built-in type constants --

@@ -2000,8 +2000,8 @@ namespace ipr {
          Unit();
          ~Unit();
 
-         const ipr::Linkage& get_cxx_linkage() const;
-         const ipr::Linkage& get_c_linkage() const;
+         const ipr::Linkage& cxx_linkage() const final;
+         const ipr::Linkage& c_linkage() const final;
          
          const ipr::Global_scope& get_global_scope() const;
 
@@ -2028,37 +2028,37 @@ namespace ipr {
          const ipr::Literal& get_literal(const ipr::Type&, const std::string&);
          const ipr::Literal& get_literal(const ipr::Type&, const ipr::String&);
          
-         const ipr::Type& get_void() const final;
-         const ipr::Type& get_bool() const final;
+         const ipr::Type& void_type() const final;
+         const ipr::Type& bool_type() const final;
 
-         const ipr::Type& get_char() const final;
-         const ipr::Type& get_schar() const final;
-         const ipr::Type& get_uchar() const final;
-         const ipr::Type& get_wchar_t() const final;
+         const ipr::Type& char_type() const final;
+         const ipr::Type& schar_type() const final;
+         const ipr::Type& uchar_type() const final;
+         const ipr::Type& wchar_t_type() const final;
 
-         const ipr::Type& get_short() const final;
-         const ipr::Type& get_ushort() const final;
+         const ipr::Type& short_type() const final;
+         const ipr::Type& ushort_type() const final;
 
-         const ipr::Type& get_int() const final;
-         const ipr::Type& get_uint() const final;
+         const ipr::Type& int_type() const final;
+         const ipr::Type& uint_type() const final;
 
-         const ipr::Type& get_long() const final;
-         const ipr::Type& get_ulong() const final;
+         const ipr::Type& long_type() const final;
+         const ipr::Type& ulong_type() const final;
 
-         const ipr::Type& get_long_long() const final;
-         const ipr::Type& get_ulong_long() const final;
+         const ipr::Type& long_long_type() const final;
+         const ipr::Type& ulong_long_type() const final;
 
-         const ipr::Type& get_float() const final;
-         const ipr::Type& get_double() const final;
-         const ipr::Type& get_long_double() const final;
+         const ipr::Type& float_type() const final;
+         const ipr::Type& double_type() const final;
+         const ipr::Type& long_double_type() const final;
 
-         const ipr::Type& get_ellipsis() const final;
+         const ipr::Type& ellipsis_type() const final;
 
-         const ipr::Type& get_typename() const final;
-         const ipr::Type& get_class() const final;
-         const ipr::Type& get_union() const final;
-         const ipr::Type& get_enum() const final;
-         const ipr::Type& get_namespace() const final;
+         const ipr::Type& typename_type() const final;
+         const ipr::Type& class_type() const final;
+         const ipr::Type& union_type() const final;
+         const ipr::Type& enum_type() const final;
+         const ipr::Type& namespace_type() const final;
 
          const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 

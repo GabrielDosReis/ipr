@@ -1887,12 +1887,12 @@ namespace ipr {
       // ----------------
 
       const ipr::Linkage&
-      Unit::get_cxx_linkage() const {
+      Unit::cxx_linkage() const {
          return const_cast<Unit*>(this)->get_linkage("C++");
       }
 
       const ipr::Linkage&
-      Unit::get_c_linkage() const {
+      Unit::c_linkage() const {
          return const_cast<Unit*>(this)->get_linkage("C");
       }
 
@@ -1911,34 +1911,34 @@ namespace ipr {
       // ----------------------
 
       Unit::Unit()
-            : anytype(get_identifier("typename"), get_cxx_linkage(), anytype),
-              classtype(get_identifier("class"), get_cxx_linkage(), anytype),
-              uniontype(get_identifier("union"), get_cxx_linkage(), anytype),
-              enumtype(get_identifier("enum"), get_cxx_linkage(), anytype),
-              namespacetype(get_identifier("namespace"), get_cxx_linkage(), anytype),
+            : anytype(get_identifier("typename"), cxx_linkage(), anytype),
+              classtype(get_identifier("class"), cxx_linkage(), anytype),
+              uniontype(get_identifier("union"), cxx_linkage(), anytype),
+              enumtype(get_identifier("enum"), cxx_linkage(), anytype),
+              namespacetype(get_identifier("namespace"), cxx_linkage(), anytype),
 
-              voidtype(get_identifier("void"), get_cxx_linkage(), anytype),
-              booltype(get_identifier("bool"), get_cxx_linkage(), anytype),
-              chartype(get_identifier("char"), get_cxx_linkage(), anytype),
-              schartype(get_identifier("signed char"), get_cxx_linkage(), anytype),
-              uchartype(get_identifier("unsigned char"), get_cxx_linkage(), anytype),
-              wchar_ttype(get_identifier("wchar_t"), get_cxx_linkage(), anytype),
-              shorttype(get_identifier("short"), get_cxx_linkage(), anytype),
+              voidtype(get_identifier("void"), cxx_linkage(), anytype),
+              booltype(get_identifier("bool"), cxx_linkage(), anytype),
+              chartype(get_identifier("char"), cxx_linkage(), anytype),
+              schartype(get_identifier("signed char"), cxx_linkage(), anytype),
+              uchartype(get_identifier("unsigned char"), cxx_linkage(), anytype),
+              wchar_ttype(get_identifier("wchar_t"), cxx_linkage(), anytype),
+              shorttype(get_identifier("short"), cxx_linkage(), anytype),
               ushorttype(get_identifier("unsigned short"),
-                         get_cxx_linkage(), anytype),
-              inttype(get_identifier("int"), get_cxx_linkage(), anytype),
-              uinttype(get_identifier("unsigned int"), get_cxx_linkage(), anytype),
-              longtype(get_identifier("long"), get_cxx_linkage(), anytype),
+                         cxx_linkage(), anytype),
+              inttype(get_identifier("int"), cxx_linkage(), anytype),
+              uinttype(get_identifier("unsigned int"), cxx_linkage(), anytype),
+              longtype(get_identifier("long"), cxx_linkage(), anytype),
               ulongtype(get_identifier("unsigned long"),
-                        get_cxx_linkage(), anytype),
-              longlongtype(get_identifier("long long"), get_cxx_linkage(), anytype),
+                        cxx_linkage(), anytype),
+              longlongtype(get_identifier("long long"), cxx_linkage(), anytype),
               ulonglongtype(get_identifier("unsigned long long"),
-                            get_cxx_linkage(), anytype),
-              floattype(get_identifier("float"), get_cxx_linkage(), anytype),
-              doubletype(get_identifier("double"), get_cxx_linkage(), anytype),
+                            cxx_linkage(), anytype),
+              floattype(get_identifier("float"), cxx_linkage(), anytype),
+              doubletype(get_identifier("double"), cxx_linkage(), anytype),
               longdoubletype(get_identifier("long double"),
-                             get_cxx_linkage(), anytype),
-              ellipsistype(get_identifier("..."), get_cxx_linkage(), anytype),
+                             cxx_linkage(), anytype),
+              ellipsistype(get_identifier("..."), cxx_linkage(), anytype),
               global_ns(0, namespacetype)
       {
          record_builtin_type(anytype);
@@ -2031,107 +2031,54 @@ namespace ipr {
          return global_ns;
       }
 
-      // --------------------------
-      // -- impl::Unit::get_void --
-      // --------------------------
+      const ipr::Type& Unit::void_type() const {  return voidtype;  }
 
-      const ipr::Type& Unit::get_void() const {
-         return voidtype;
-      }
+      const ipr::Type& Unit::bool_type() const { return booltype; }
 
-      const ipr::Type& Unit::get_bool() const {
-         return booltype;
-      }
+      const ipr::Type& Unit::char_type() const { return chartype; }
 
-      const ipr::Type& Unit::get_char() const {
-         return chartype;
-      }
+      const ipr::Type& Unit::schar_type() const { return schartype; }
 
-      const ipr::Type& Unit::get_schar() const {
-         return schartype;
-      }
+      const ipr::Type& Unit::uchar_type() const { return uchartype; }
 
-      const ipr::Type& Unit::get_uchar() const {
-         return uchartype;
-      }
+      const ipr::Type& Unit::wchar_t_type() const { return wchar_ttype; }
 
-      const ipr::Type& Unit::get_wchar_t() const {
-         return wchar_ttype;
-      }
+      const ipr::Type& Unit::short_type() const { return shorttype; }
 
-      const ipr::Type& Unit::get_short() const {
-         return shorttype;
-      }
+      const ipr::Type& Unit::ushort_type() const { return ushorttype; }
 
-      const ipr::Type& Unit::get_ushort() const {
-         return ushorttype;
-      }
+      const ipr::Type& Unit::int_type() const { return inttype; }
 
-      const ipr::Type& Unit::get_int() const {
-         return inttype;
-      }
+      const ipr::Type& Unit::uint_type() const { return uinttype; }
 
-      const ipr::Type& Unit::get_uint() const {
-         return uinttype;
-      }
+      const ipr::Type& Unit::long_type() const { return longtype; }
 
-      const ipr::Type& Unit::get_long() const {
-         return longtype;
-      }
+      const ipr::Type& Unit::ulong_type() const { return ulongtype; }
 
-      const ipr::Type& Unit::get_ulong() const {
-         return ulongtype;
-      }
+      const ipr::Type& Unit::long_long_type() const { return longlongtype; }
 
-      const ipr::Type& Unit::get_long_long() const {
-         return longlongtype;
-      }
+      const ipr::Type& Unit::ulong_long_type() const { return ulonglongtype; }
 
-      const ipr::Type& Unit::get_ulong_long() const {
-         return ulonglongtype;
-      }
+      const ipr::Type& Unit::float_type() const { return floattype; }
 
-      const ipr::Type& Unit::get_float() const {
-         return floattype;
-      }
+      const ipr::Type& Unit::double_type() const { return doubletype; }
 
-      const ipr::Type& Unit::get_double() const {
-         return doubletype;
-      }
-
-      const ipr::Type& Unit::get_long_double() const {
+      const ipr::Type& Unit::long_double_type() const {
          return longdoubletype;
       }
 
-      const ipr::Type& Unit::get_ellipsis() const {
-         return ellipsistype;
-      }
+      const ipr::Type& Unit::ellipsis_type() const { return ellipsistype; }
 
 
-      const ipr::Type&
-      Unit::get_typename() const {
-         return anytype;
-      }
+      const ipr::Type& Unit::typename_type() const { return anytype; }
 
-      const ipr::Type&
-      Unit::get_class() const {
-         return classtype;
-      }
+      const ipr::Type& Unit::class_type() const { return classtype; }
 
-      const ipr::Type&
-      Unit::get_union() const {
-         return uniontype;
-      }
+      const ipr::Type& Unit::union_type() const { return uniontype; }
 
-      const ipr::Type&
-      Unit::get_enum() const {
-         return enumtype;
-      }
+      const ipr::Type& Unit::enum_type() const { return enumtype; }
 
-      const ipr::Type&
-      Unit::get_namespace() const {
-         return namespacetype;
-      }
+      const ipr::Type& Unit::namespace_type() const { return namespacetype; }
 
       // -----------------------------
       // -- impl::Unit::finish_type --
@@ -2246,7 +2193,7 @@ namespace ipr {
 
       const ipr::As_type&
       Unit::get_as_type(const ipr::Expr& e) {
-         return get_as_type(e, get_cxx_linkage());
+         return get_as_type(e, cxx_linkage());
       }
 
       const ipr::As_type&
@@ -2276,7 +2223,7 @@ namespace ipr {
       const ipr::Function&
       Unit::get_function(const ipr::Product& p, const ipr::Type& t,
                          const ipr::Sum& s) {
-         return get_function(p, t, s, get_cxx_linkage());
+         return get_function(p, t, s, cxx_linkage());
       }
 
       const ipr::Function&
@@ -2289,7 +2236,7 @@ namespace ipr {
 
       const ipr::Function&
       Unit::get_function(const ipr::Product& p, const ipr::Type& t) {
-         return get_function(p, t, get_cxx_linkage());
+         return get_function(p, t, cxx_linkage());
       }
       // -----------------------------
       // -- impl::Unit::get_pointer --
