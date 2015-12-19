@@ -1,3 +1,8 @@
+2015-12-19  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* ipr/interface: Introduce ipr::Lexicon, split from ipr::Unit.
+	* ipr/impl: Implement.
+
 2015-12-17  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* ipr/interface: Add Optional<T>.  Use it to capture commonality

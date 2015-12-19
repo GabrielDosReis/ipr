@@ -1882,35 +1882,21 @@ namespace ipr {
       }
 
 
-      // ----------------
-      // -- impl::Unit --
-      // ----------------
+      // -- impl::Lexicon --
 
-      const ipr::Linkage&
-      Unit::cxx_linkage() const {
-         return const_cast<Unit*>(this)->get_linkage("C++");
+      const ipr::Linkage& Lexicon::cxx_linkage() const {
+         return const_cast<Lexicon*>(this)->get_linkage("C++");
       }
 
-      const ipr::Linkage&
-      Unit::c_linkage() const {
-         return const_cast<Unit*>(this)->get_linkage("C");
+      const ipr::Linkage& Lexicon::c_linkage() const {
+         return const_cast<Lexicon*>(this)->get_linkage("C");
       }
 
-      // -------------------------------------
-      // -- impl::Unit::record_builtin_type --
-      // -------------------------------------
-
-      void
-      Unit::record_builtin_type(const ipr::As_type& t) {
+      void Lexicon::record_builtin_type(const ipr::As_type& t) {
          builtin_map.insert(t, unary_compare());
       }
 
-
-      // ----------------------
-      // -- impl::Unit::Unit --
-      // ----------------------
-
-      Unit::Unit()
+      Lexicon::Lexicon()
             : anytype(get_identifier("typename"), cxx_linkage(), anytype),
               classtype(get_identifier("class"), cxx_linkage(), anytype),
               uniontype(get_identifier("union"), cxx_linkage(), anytype),
@@ -1938,8 +1924,7 @@ namespace ipr {
               doubletype(get_identifier("double"), cxx_linkage(), anytype),
               longdoubletype(get_identifier("long double"),
                              cxx_linkage(), anytype),
-              ellipsistype(get_identifier("..."), cxx_linkage(), anytype),
-              global_ns(0, namespacetype)
+              ellipsistype(get_identifier("..."), cxx_linkage(), anytype)
       {
          record_builtin_type(anytype);
          record_builtin_type(classtype);
@@ -1972,121 +1957,93 @@ namespace ipr {
          record_builtin_type(longdoubletype);
 
          record_builtin_type(ellipsistype);
-         global_ns.id = &get_identifier("");
       }
 
-      // -----------------------
-      // -- impl::Unit::~Unit --
-      // -----------------------
-
-      Unit::~Unit() { }
-
-      // -----------------------------
-      // -- impl::Unit::get_literal --
-      // -----------------------------
+      Lexicon::~Lexicon() { }
 
       const ipr::Literal&
-      Unit::get_literal(const ipr::Type& t, const char* s) {
+      Lexicon::get_literal(const ipr::Type& t, const char* s) {
          return get_literal(t, get_string(s));
       }
 
       const ipr::Literal&
-      Unit::get_literal(const ipr::Type& t, const std::string& s) {
+      Lexicon::get_literal(const ipr::Type& t, const std::string& s) {
          return get_literal(t, get_string(s));
       }
 
       const ipr::Literal&
-      Unit::get_literal(const ipr::Type& t, const ipr::String& s) {
+      Lexicon::get_literal(const ipr::Type& t, const ipr::String& s) {
          return *make_literal(t, s);
       }
 
-      // --------------------------------
-      // -- impl::Unit::get_identifier --
-      // --------------------------------
-
       const ipr::Identifier&
-      Unit::get_identifier(const char* s) {
+      Lexicon::get_identifier(const char* s) {
          return get_identifier(get_string(s));
       }
 
       const ipr::Identifier&
-      Unit::get_identifier(const std::string& s) {
+      Lexicon::get_identifier(const std::string& s) {
          return get_identifier(get_string(s));
       }
 
       const ipr::Identifier&
-      Unit::get_identifier(const ipr::String& s) {
+      Lexicon::get_identifier(const ipr::String& s) {
          impl::Identifier* id = expr_factory::make_identifier(s);
          if (id->constraint == 0)
             id->constraint = &get_decltype(*id);
          return *id;
       }
+      
+      const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
 
-      // ----------------------------------
-      // -- impl::Unit::get_global_scope --
-      // ----------------------------------
+      const ipr::Type& Lexicon::bool_type() const { return booltype; }
 
-      const ipr::Global_scope&
-      Unit::get_global_scope() const {
-         return global_ns;
-      }
+      const ipr::Type& Lexicon::char_type() const { return chartype; }
 
-      const ipr::Type& Unit::void_type() const {  return voidtype;  }
+      const ipr::Type& Lexicon::schar_type() const { return schartype; }
 
-      const ipr::Type& Unit::bool_type() const { return booltype; }
+      const ipr::Type& Lexicon::uchar_type() const { return uchartype; }
 
-      const ipr::Type& Unit::char_type() const { return chartype; }
+      const ipr::Type& Lexicon::wchar_t_type() const { return wchar_ttype; }
 
-      const ipr::Type& Unit::schar_type() const { return schartype; }
+      const ipr::Type& Lexicon::short_type() const { return shorttype; }
 
-      const ipr::Type& Unit::uchar_type() const { return uchartype; }
+      const ipr::Type& Lexicon::ushort_type() const { return ushorttype; }
 
-      const ipr::Type& Unit::wchar_t_type() const { return wchar_ttype; }
+      const ipr::Type& Lexicon::int_type() const { return inttype; }
 
-      const ipr::Type& Unit::short_type() const { return shorttype; }
+      const ipr::Type& Lexicon::uint_type() const { return uinttype; }
 
-      const ipr::Type& Unit::ushort_type() const { return ushorttype; }
+      const ipr::Type& Lexicon::long_type() const { return longtype; }
 
-      const ipr::Type& Unit::int_type() const { return inttype; }
+      const ipr::Type& Lexicon::ulong_type() const { return ulongtype; }
 
-      const ipr::Type& Unit::uint_type() const { return uinttype; }
+      const ipr::Type& Lexicon::long_long_type() const { return longlongtype; }
 
-      const ipr::Type& Unit::long_type() const { return longtype; }
+      const ipr::Type& Lexicon::ulong_long_type() const { return ulonglongtype; }
 
-      const ipr::Type& Unit::ulong_type() const { return ulongtype; }
+      const ipr::Type& Lexicon::float_type() const { return floattype; }
 
-      const ipr::Type& Unit::long_long_type() const { return longlongtype; }
+      const ipr::Type& Lexicon::double_type() const { return doubletype; }
 
-      const ipr::Type& Unit::ulong_long_type() const { return ulonglongtype; }
-
-      const ipr::Type& Unit::float_type() const { return floattype; }
-
-      const ipr::Type& Unit::double_type() const { return doubletype; }
-
-      const ipr::Type& Unit::long_double_type() const {
+      const ipr::Type& Lexicon::long_double_type() const {
          return longdoubletype;
       }
 
-      const ipr::Type& Unit::ellipsis_type() const { return ellipsistype; }
+      const ipr::Type& Lexicon::ellipsis_type() const { return ellipsistype; }
 
+      const ipr::Type& Lexicon::typename_type() const { return anytype; }
 
-      const ipr::Type& Unit::typename_type() const { return anytype; }
+      const ipr::Type& Lexicon::class_type() const { return classtype; }
 
-      const ipr::Type& Unit::class_type() const { return classtype; }
+      const ipr::Type& Lexicon::union_type() const { return uniontype; }
 
-      const ipr::Type& Unit::union_type() const { return uniontype; }
+      const ipr::Type& Lexicon::enum_type() const { return enumtype; }
 
-      const ipr::Type& Unit::enum_type() const { return enumtype; }
-
-      const ipr::Type& Unit::namespace_type() const { return namespacetype; }
-
-      // -----------------------------
-      // -- impl::Unit::finish_type --
-      // -----------------------------
+      const ipr::Type& Lexicon::namespace_type() const { return namespacetype; }
 
       template<class T>
-      T*
-      Unit::finish_type(T* t) {
+      T* Lexicon::finish_type(T* t) {
          if (t->constraint == 0)
             t->constraint = &anytype;
 
@@ -2096,268 +2053,210 @@ namespace ipr {
          return t;
       }
 
-      // -------------------------------
-      // -- impl::Unit::get_ctor_name --
-      // -------------------------------
-
       const ipr::Ctor_name&
-      Unit::get_ctor_name(const ipr::Type& t) {
+      Lexicon::get_ctor_name(const ipr::Type& t) {
          impl::Ctor_name* id = expr_factory::make_ctor_name(t);
          if (id->constraint == 0)
             id->constraint = &get_decltype(*id);
          return *id;
       }
 
-      // -------------------------------
-      // -- impl::Unit::get_dtor_name --
-      // -------------------------------
-
       const ipr::Dtor_name&
-      Unit::get_dtor_name(const ipr::Type& t) {
+      Lexicon::get_dtor_name(const ipr::Type& t) {
          impl::Dtor_name* id = expr_factory::make_dtor_name(t);
          if (id->constraint == 0)
             id->constraint = &get_decltype(*id);
          return *id;
       }
 
-      // ------------------------------
-      // -- impl::Unit::get_operator --
-      // ------------------------------
-
       const ipr::Operator&
-      Unit::get_operator(const char* s) {
+      Lexicon::get_operator(const char* s) {
          return get_operator(get_string(s));
       }
 
       const ipr::Operator&
-      Unit::get_operator(const std::string& s) {
+      Lexicon::get_operator(const std::string& s) {
          return get_operator(get_string(s));
       }
 
       const ipr::Operator&
-      Unit::get_operator(const ipr::String& s) {
+      Lexicon::get_operator(const ipr::String& s) {
          impl::Operator* op = expr_factory::make_operator(s);
          if (op->constraint == 0)
             op->constraint = &get_decltype(*op);
          return *op;
       }
 
-      // --------------------------------
-      // -- impl::Unit::get_conversion --
-      // --------------------------------
-
       const ipr::Conversion&
-      Unit::get_conversion(const ipr::Type& t) {
+      Lexicon::get_conversion(const ipr::Type& t) {
          impl::Conversion* conv = expr_factory::make_conversion(t);
          if (conv->constraint == 0)
             conv->constraint = &get_decltype(*conv);
          return *conv;
       }
 
-      // -------------------------------
-      // -- impl::Unit::get_scope_ref --
-      // -------------------------------
-
       const ipr::Scope_ref&
-      Unit::get_scope_ref(const ipr::Expr& s, const ipr::Expr& m) {
+      Lexicon::get_scope_ref(const ipr::Expr& s, const ipr::Expr& m) {
          impl::Scope_ref* sr = expr_factory::make_scope_ref(s, m);
          if (sr->constraint == 0)
             sr->constraint = &get_decltype(*sr);
          return *sr;
       }
 
-      // ---------------------------------
-      // -- impl::Unit::get_template_id --
-      // ---------------------------------
-
       const ipr::Template_id&
-      Unit::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
+      Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
          impl::Template_id* tid = expr_factory::make_template_id(t, a);
          if (tid->constraint == 0)
             tid->constraint = &get_decltype(*tid);
          return *tid;
       }
 
-      // ---------------------------
-      // -- impl::Unit::get_array --
-      // ---------------------------
-
       const ipr::Array&
-      Unit::get_array(const ipr::Type& t, const ipr::Expr& b) {
+      Lexicon::get_array(const ipr::Type& t, const ipr::Expr& b) {
          return *finish_type(types.make_array(t, b));
       }
 
-      // -----------------------------
-      // -- impl::Unit::get_as_type --
-      // -----------------------------
-
       const ipr::As_type&
-      Unit::get_as_type(const ipr::Expr& e) {
+      Lexicon::get_as_type(const ipr::Expr& e) {
          return get_as_type(e, cxx_linkage());
       }
 
       const ipr::As_type&
-      Unit::get_as_type(const ipr::Expr& e, const ipr::Linkage& l) {
+      Lexicon::get_as_type(const ipr::Expr& e, const ipr::Linkage& l) {
          return *finish_type(types.make_as_type(e, l));
       }
 
-      // ------------------------------
-      // -- impl::Unit::get_decltype --
-      // ------------------------------
-
       const ipr::Decltype&
-      Unit::get_decltype(const ipr::Expr& e) {
+      Lexicon::get_decltype(const ipr::Expr& e) {
          return *finish_type(types.make_decltype(e));
       }
 
-      // ------------------------------
-      // -- impl::Unit::get_function --
-      // ------------------------------
-
       const ipr::Function&
-      Unit::get_function(const ipr::Product& p, const ipr::Type& t,
-                         const ipr::Sum& s, const ipr::Linkage& l) {
+      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
+                            const ipr::Sum& s, const ipr::Linkage& l) {
          return *finish_type(types.make_function(p, t, s, l));
       }
 
       const ipr::Function&
-      Unit::get_function(const ipr::Product& p, const ipr::Type& t,
-                         const ipr::Sum& s) {
+      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
+                            const ipr::Sum& s) {
          return get_function(p, t, s, cxx_linkage());
       }
 
       const ipr::Function&
-      Unit::get_function(const ipr::Product& p, const ipr::Type& t,
-                         const ipr::Linkage& l) {
+      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
+                            const ipr::Linkage& l) {
          ref_sequence<ipr::Type> ex;
          ex.push_back(&ellipsistype);
          return get_function(p, t, get_sum(ex), l);
       }
 
       const ipr::Function&
-      Unit::get_function(const ipr::Product& p, const ipr::Type& t) {
+      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t) {
          return get_function(p, t, cxx_linkage());
       }
-      // -----------------------------
-      // -- impl::Unit::get_pointer --
-      // -----------------------------
 
       const ipr::Pointer&
-      Unit::get_pointer(const ipr::Type& t) {
+      Lexicon::get_pointer(const ipr::Type& t) {
          return *finish_type(types.make_pointer(t));
       }
 
-      // -----------------------------
-      // -- impl::Unit::get_product --
-      // -----------------------------
-
       const ipr::Product&
-      Unit::get_product(const ref_sequence<ipr::Type>& s) {
+      Lexicon::get_product(const ref_sequence<ipr::Type>& s) {
          return *finish_type
             (types.make_product(*type_seqs.insert(s, unary_compare())));
       }
 
-      // -----------------------------------
-      // -- impl::Unit::get_ptr_to_member --
-      // -----------------------------------
-
       const ipr::Ptr_to_member&
-      Unit::get_ptr_to_member(const ipr::Type& s, const ipr::Type& t) {
+      Lexicon::get_ptr_to_member(const ipr::Type& s, const ipr::Type& t) {
          return *finish_type(types.make_ptr_to_member(s, t));
       }
 
-      // -------------------------------
-      // -- impl::Unit::get_qualified --
-      // -------------------------------
-
       const ipr::Qualified&
-      Unit::get_qualified(ipr::Type_qualifier cv, const ipr::Type& t) {
+      Lexicon::get_qualified(ipr::Type_qualifier cv, const ipr::Type& t) {
          assert (cv != ipr::Type_qualifier::None);
          return *finish_type(types.make_qualified(cv, t));
       }
 
-      // -------------------------------
-      // -- impl::Unit::get_reference --
-      // -------------------------------
-
       const ipr::Reference&
-      Unit::get_reference(const ipr::Type& t) {
+      Lexicon::get_reference(const ipr::Type& t) {
          return *finish_type(types.make_reference(t));
       }
 
-      // -------------------------------------
-      // -- impl::Unit::get_value_reference --
-      // -------------------------------------
-
       const ipr::Rvalue_reference&
-      Unit::get_rvalue_reference(const ipr::Type& t) {
+      Lexicon::get_rvalue_reference(const ipr::Type& t) {
          return *finish_type(types.make_rvalue_reference(t));
       }
 
-      // -------------------------
-      // -- impl::Unit::get_sum --
-      // -------------------------
-
       const ipr::Sum&
-      Unit::get_sum(const ref_sequence<ipr::Type>& s) {
+      Lexicon::get_sum(const ref_sequence<ipr::Type>& s) {
          return *finish_type
             (types.make_sum(*type_seqs.insert(s, unary_compare())));
       }
 
-      // ------------------------------
-      // -- impl::Unit::get_template --
-      // ------------------------------
-
       const ipr::Template&
-      Unit::get_template(const ipr::Product& p, const ipr::Type& t) {
+      Lexicon::get_template(const ipr::Product& p, const ipr::Type& t) {
          return *finish_type(types.make_template(p, t));
       }
 
       impl::Class*
-      Unit::make_class(const ipr::Region& pr) {
+      Lexicon::make_class(const ipr::Region& pr) {
          impl::Class* c = types.make_class(pr, anytype);
          c->constraint = &classtype;
          return c;
       }
 
       impl::Enum*
-      Unit::make_enum(const ipr::Region& pr, Enum::Kind k) {
+      Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
          impl::Enum* e = types.make_enum(pr, anytype, k);
          e->constraint = &enumtype;
          return e;
       }
 
       impl::Namespace*
-      Unit::make_namespace(const ipr::Region& pr) {
+      Lexicon::make_namespace(const ipr::Region& pr) {
          impl::Namespace* ns = types.make_namespace(&pr, anytype);
          ns->constraint = &namespacetype;
          return ns;
       }
 
       impl::Union*
-      Unit::make_union(const ipr::Region& pr) {
+      Lexicon::make_union(const ipr::Region& pr) {
          impl::Union* u = types.make_union(pr, anytype);
          u->constraint = &anytype;
          return u;
       }
 
       impl::Mapping*
-      Unit::make_mapping(const ipr::Region& r) {
+      Lexicon::make_mapping(const ipr::Region& r) {
          return expr_factory::make_mapping(r, anytype);
       }
 
       impl::Parameter*
-      Unit::make_parameter(const ipr::Name& n, const ipr::Type& t,
-                           impl::Mapping& m) {
+      Lexicon::make_parameter(const ipr::Name& n, const ipr::Type& t,
+                              impl::Mapping& m) {
          return m.param(n, *rname_for_next_param(m, t));
       }
 
-      const ipr::Auto& Unit::get_auto()
-      {
+      const ipr::Auto& Lexicon::get_auto() {
          auto t = autos.make();
          t->id = &get_identifier("auto");
          return *t;
       }
+
+      // -- impl::Unit --
+
+      Unit::Unit(impl::Lexicon& l)
+            : context{ l },
+              global_ns{ nullptr, context.namespace_type() }
+      {
+         global_ns.id = &context.get_identifier("");
+      }
+
+      const ipr::Global_scope& Unit::global_namespace() const {
+         return global_ns;
+      }
+      
 
 //       int
 //       Unit::make_fileindex(const ipr::String& s)
@@ -2391,23 +2290,24 @@ namespace ipr {
 int main()
 {
    using namespace ipr;
-   impl::Unit unit;              // current translation unit
+   impl::Lexicon lexicon { };
+   impl::Unit unit { lexicon };              // current translation unit
 
    impl::Scope* global_scope = unit.global_scope();
 
    // Build the variable's name,
-   const Name* name = unit.make_identifier("bufsz");
+   const Name* name = lexicon.make_identifier("bufsz");
    // then its type,
-   const Type* type = unit.make_cv_qualified(unit.Int(), Type::Const);
+   auto& type = lexicon.get_qualified(Type_qualifier::Const, lexicon.int_type());
    // and the actual impl::Var node,
-   impl::Var* var = global_scope->make_var(*name, *type);
+   impl::Var* var = global_scope->make_var(*name, type);
    // set its initializer,
-   var->init = unit.make_literal(unit.Int(), "1024");
+   var->init = lexicon.make_literal(lexicon.int_type(), "1024");
    // and inject it into its scope.
 
    // Print out the whole translation unit
-   Printer pp(std::cout);
-   pp << xpr_declaration(unit.global_members());
+   Printer pp { std::cout };
+   pp << unit;
    std::cout << std::endl;
 
 }

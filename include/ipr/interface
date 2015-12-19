@@ -238,6 +238,8 @@ namespace ipr {
    // ------------------------
    struct Unit;                  // translation unit
 
+   struct Lexicon;              // Interpretation context
+
 
    // ----------------------------------
    // -- built-ins, but not constants --
@@ -1939,8 +1941,12 @@ namespace ipr {
 
                                 // -- Unit --
    struct Unit : Category<unit_cat, Node> {
-      virtual const ipr::Global_scope& get_global_scope() const = 0;
+      virtual const ipr::Global_scope& global_namespace() const = 0;
+   };
 
+
+                                // -- Lexicon --
+   struct Lexicon {
       virtual const Type& void_type() const = 0;
       virtual const Type& bool_type() const = 0;
       virtual const Type& char_type() const = 0;
@@ -1968,7 +1974,6 @@ namespace ipr {
       virtual const Linkage& cxx_linkage() const = 0;
       virtual const Linkage& c_linkage() const = 0;
    };
-
                                 // -- Built-in type constants --
 
    struct Primitive : As_type { };

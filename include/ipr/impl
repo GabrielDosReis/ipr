@@ -1995,15 +1995,14 @@ namespace ipr {
          Arg2_type link;
       };
       
-
-      struct Unit : impl::Node<ipr::Unit>, stmt_factory {
-         Unit();
-         ~Unit();
+      
+                                // -- impl::Lexicon --
+      struct Lexicon : ipr::Lexicon, stmt_factory {
+         Lexicon();
+         ~Lexicon();
 
          const ipr::Linkage& cxx_linkage() const final;
          const ipr::Linkage& c_linkage() const final;
-         
-         const ipr::Global_scope& get_global_scope() const;
 
          const ipr::Identifier& get_identifier(const char*);
          const ipr::Identifier& get_identifier(const std::string&);
@@ -2098,11 +2097,6 @@ namespace ipr {
          const ipr::Template& get_template(const ipr::Product&,
                                            const ipr::Type&);
 
-         
-         Region* global_region() { return &global_ns.body; }
-         
-         Scope* global_scope() { return &global_ns.body.scope; }
-
          impl::Mapping* make_mapping(const ipr::Region&);
          impl::Parameter* make_parameter(const ipr::Name&, const ipr::Type&,
                                          impl::Mapping&);
@@ -2125,8 +2119,6 @@ namespace ipr {
          void record_builtin_type(const ipr::As_type&);
 
          using Filemap = stable_farm<impl::String>;
-
-
          Filemap filemap;
          stable_farm<impl::Token> tokens;
          type_factory types;
@@ -2160,8 +2152,18 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> ellipsistype;
 
          template<class T> T* finish_type(T*);
+      };
 
-      public:
+      struct Unit : impl::Node<ipr::Unit> {
+         Unit(impl::Lexicon&);
+         ~Unit();
+
+         const ipr::Global_scope& global_namespace() const final;
+         Region* global_region() { return &global_ns.body; }
+         Scope* global_scope() { return &global_ns.body.scope; }
+
+      private:
+         impl::Lexicon& context;
          impl::Udt<ipr::Global_scope> global_ns;
       };
    }
