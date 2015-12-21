@@ -1,3 +1,10 @@
+2015-12-20  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* ipr/interface: Introduce Module_name, Module_unit,
+	Interface_unit, Module.  Rename Unit to Translation_unit.
+	Translation_unit is now a class hierarchy root, outside Node.
+	* ipr/impl: Implement.
+
 2015-12-19  Gabriel Dos Reis  <gdr@axiomatics.org>
 
 	* ipr/interface: Introduce ipr::Lexicon, split from ipr::Unit.

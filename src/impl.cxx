@@ -23,6 +23,10 @@ namespace ipr {
             : text{ s }, location{ l }, token_value{ v }, token_category{ c }
       { }
 
+      const ipr::Sequence<ipr::Identifier>& Module_name::stems() const {
+         return components;
+      }
+
       struct scope_datum::comp {
          int operator()(const scope_datum& lhs, const scope_datum& rhs) const
          {
@@ -2244,40 +2248,38 @@ namespace ipr {
          return *t;
       }
 
-      // -- impl::Unit --
+      // -- impl::Interface_unit --
+      Interface_unit::Interface_unit(impl::Lexicon& l, const ipr::Module& m)
+            : basic_unit<ipr::Interface_unit>{ l, m }
+      { }
 
-      Unit::Unit(impl::Lexicon& l)
-            : context{ l },
-              global_ns{ nullptr, context.namespace_type() }
-      {
-         global_ns.id = &context.get_identifier("");
+      const ipr::Sequence<ipr::Module>&
+      Interface_unit::exported_modules() const {
+         return modules_exported;
       }
 
-      const ipr::Global_scope& Unit::global_namespace() const {
-         return global_ns;
+      const ipr::Sequence<ipr::Decl>&
+      Interface_unit::exported_declarations() const {
+         return decls_exported;
+      }
+
+                                // -- impl::Module --
+      Module::Module(impl::Lexicon& l) : lexicon{ l }, iface{l, *this }
+      { }
+      
+      const ipr::Module_name& Module::name() const { return stems; }
+
+      const ipr::Interface_unit& Module::interface_unit() const {
+         return iface;
+      }
+
+      const ipr::Sequence<ipr::Module_unit>&
+      Module::implementation_units() const { return units; }
+
+      impl::Module_unit* Module::make_unit() {
+         return units.push_back(lexicon, *this);
       }
       
-
-//       int
-//       Unit::make_fileindex(const ipr::String& s)
-//       {
-//          Filemap::iterator where = std::find(filemap.begin(),
-//                                              filemap.end(), s);
-//          if (where == filemap.end())
-//             filemap.push_back(s);
-//          return std::distance(filemap.begin(), where);
-//       }
-
-//       const ipr::String&
-//       Unit::to_filename(int index) const
-//       {
-//          if (index < 0 || index >= 0)
-//             throw std::domain_error("invalid file index");
-
-//          Filemap::const_iterator what = filemap.begin();
-//          std::advance(what, index);
-//          return *what;
-//       }
    }
 }
 
@@ -2291,7 +2293,7 @@ int main()
 {
    using namespace ipr;
    impl::Lexicon lexicon { };
-   impl::Unit unit { lexicon };              // current translation unit
+   impl::Translation_unit unit { lexicon };   // current translation unit
 
    impl::Scope* global_scope = unit.global_scope();
 

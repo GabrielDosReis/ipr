@@ -865,12 +865,6 @@ ipr::Visitor::visit(const Var& d)
    visit(as<Decl>(d));
 }
 
-void
-ipr::Visitor::visit(const Unit& u)
-{
-   visit(as<Node>(u));
-}
-
 //
 // Similarly, the global namespace constant is visited as-if Namespace.
 //
@@ -887,4 +881,16 @@ void
 ipr::Visitor::visit(const Empty_stmt& s)
 {
    visit(as<Expr_stmt>(s));
+}
+
+void
+ipr::Translation_unit::Visitor::visit(const Module_unit& u)
+{
+   visit(as<Translation_unit>(u));
+}
+
+void
+ipr::Translation_unit::Visitor::visit(const Interface_unit& u)
+{
+   visit(as<Translation_unit>(u));
 }

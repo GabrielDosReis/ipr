@@ -38,7 +38,7 @@
 
 namespace ipr {
    namespace impl {
-      struct Unit;
+      struct Lexicon;
 
       template<typename T>
       struct stable_farm : std::forward_list<T> {
@@ -169,7 +169,14 @@ namespace ipr {
          TokenValue token_value;
          TokenCategory token_category;
          Token(const String&, const Source_location&, TokenValue, TokenCategory);
-         friend impl::Unit;
+         friend impl::Lexicon;
+      };
+
+                                // -- Module_name --
+      struct Module_name : ipr::Module_name {
+         ref_sequence<ipr::Identifier> components;
+
+         const ipr::Sequence<ipr::Identifier>& stems() const final;
       };
 
                                 // -- Node --
@@ -2154,17 +2161,75 @@ namespace ipr {
          template<class T> T* finish_type(T*);
       };
 
-      struct Unit : impl::Node<ipr::Unit> {
-         Unit(impl::Lexicon&);
-         ~Unit();
+      template<typename T>
+      struct unit_base : T {
+         unit_base(impl::Lexicon& l)
+               : context{ l },
+                 global_ns{ nullptr, context.namespace_type() }
+         {
+            global_ns.id = &context.get_identifier("");
+         }
 
-         const ipr::Global_scope& global_namespace() const final;
+         void accept(Translation_unit::Visitor& v) const override {
+            v.visit(*this);
+         }
+
+         const ipr::Global_scope& global_namespace() const final {
+            return global_ns;
+         }
+
+         const ipr::Sequence<ipr::Module>& imported_modules() const final {
+            return modules_imported;
+         }
+         
          Region* global_region() { return &global_ns.body; }
          Scope* global_scope() { return &global_ns.body.scope; }
+         ref_sequence<ipr::Module>* imports() { return &modules_imported; }
 
       private:
          impl::Lexicon& context;
          impl::Udt<ipr::Global_scope> global_ns;
+         ref_sequence<ipr::Module> modules_imported;
+      };
+
+      template<typename T>
+      struct basic_unit : unit_base<T> {
+         const ipr::Module& parent;
+         impl::ref_sequence<ipr::Decl> owned_decls;
+         
+         basic_unit(impl::Lexicon& l, const ipr::Module& m)
+               : unit_base<T>{ l }, parent{ m }
+         { }
+         const ipr::Module& parent_module() const final { return parent; }
+         const ipr::Sequence<ipr::Decl>& purview() const final {
+            return owned_decls;
+         }
+      };
+      
+      using Translation_unit = unit_base<ipr::Translation_unit>;
+      using Module_unit = basic_unit<ipr::Module_unit>;
+
+      struct Interface_unit : basic_unit<ipr::Interface_unit> {
+         impl::ref_sequence<ipr::Module> modules_exported;
+         impl::ref_sequence<ipr::Decl> decls_exported;
+         
+         Interface_unit(impl::Lexicon&, const ipr::Module&);
+         const ipr::Sequence<ipr::Module>& exported_modules() const final;
+         const ipr::Sequence<ipr::Decl>& exported_declarations() const final;
+      };
+
+      struct Module : ipr::Module {
+         using ImplUnits = impl::val_sequence<impl::Module_unit, ipr::Sequence<ipr::Module_unit>>;
+         impl::Lexicon& lexicon;
+         impl::Module_name stems;
+         impl::Interface_unit iface;
+         ImplUnits units;
+
+         Module(impl::Lexicon&);
+         const ipr::Module_name& name() const final;
+         const ipr::Interface_unit& interface_unit() const final;
+         const ipr::Sequence<ipr::Module_unit>& implementation_units() const final;
+         impl::Module_unit* make_unit();
       };
    }
 }

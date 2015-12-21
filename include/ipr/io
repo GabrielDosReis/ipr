@@ -123,7 +123,7 @@ namespace ipr
    Printer& operator<<(Printer&, xpr_stmt);
    Printer& operator<<(Printer&, xpr_type);
    Printer& operator<<(Printer&, xpr_expr);
-   Printer& operator<<(Printer&, const Unit&);
+   Printer& operator<<(Printer&, const Translation_unit&);
 
    Printer& operator<<(Printer&, const Identifier&);
 }

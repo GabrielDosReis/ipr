@@ -236,7 +236,10 @@ namespace ipr {
    // ------------------------
    // -- distinguished node --
    // ------------------------
-   struct Unit;                  // translation unit
+   struct Translation_unit;     // Translation unit
+   struct Module_unit;          // Module unit
+   struct Interface_unit;       // Module interface unit
+   struct Module;               // module.
 
    struct Lexicon;              // Interpretation context
 
@@ -555,6 +558,11 @@ namespace ipr {
       virtual void visit(const ScopedAttribute&) = 0;
       virtual void visit(const LabeledAttribute&) = 0;
       virtual void visit(const CalledAttribute&) = 0;
+   };
+
+                                // -- Module_name --
+   struct Module_name {
+      virtual const Sequence<Identifier>& stems() const = 0;
    };
 
                                 // -- Node --
@@ -1939,11 +1947,32 @@ namespace ipr {
       virtual const Typedecl& definition() const = 0;
    };
 
-                                // -- Unit --
-   struct Unit : Category<unit_cat, Node> {
+                                // -- Translation_unit --
+   struct Translation_unit {
+      struct Visitor;
+      virtual void accept(Visitor&) const = 0;
       virtual const ipr::Global_scope& global_namespace() const = 0;
+      virtual const Sequence<Module>& imported_modules() const = 0;
    };
 
+                                // -- Module_unit --
+   struct Module_unit : Translation_unit {
+      virtual const Module& parent_module() const = 0;
+      virtual const Sequence<Decl>& purview() const = 0;
+   };
+
+                                // -- Interface_unit --
+   struct Interface_unit : Module_unit {
+      virtual const Sequence<Module>& exported_modules() const = 0;
+      virtual const Sequence<Decl>& exported_declarations() const = 0;
+   };
+
+                                // -- Module --
+   struct Module {
+      virtual const Module_name& name() const = 0;
+      virtual const Interface_unit& interface_unit() const = 0;
+      virtual const Sequence<Module_unit>& implementation_units() const = 0;
+   };
 
                                 // -- Lexicon --
    struct Lexicon {
@@ -2133,10 +2162,15 @@ namespace ipr {
       virtual void visit(const Var&);
       virtual void visit(const Asm&);
 
-      virtual void visit(const Unit&);
-
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);
+   };
+
+                                // -- Translation_unit::Visitor --
+   struct Translation_unit::Visitor {
+      virtual void visit(const Translation_unit&) = 0;
+      virtual void visit(const Module_unit&);
+      virtual void visit(const Interface_unit&);
    };
 }
 

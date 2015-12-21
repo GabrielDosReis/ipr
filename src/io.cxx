@@ -1834,7 +1834,7 @@ namespace ipr
    }
 
    Printer&
-   operator<<(Printer& pp, const Unit& unit)
+   operator<<(Printer& pp, const Translation_unit& unit)
    {
       return pp << xpr_expr(unit.global_namespace().scope());
    }
