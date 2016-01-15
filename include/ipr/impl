@@ -78,13 +78,13 @@ namespace ipr {
          
          explicit ref_sequence(std::size_t n = 0) : Rep(n) { }
          
-         int size() const final { return (int)Rep::size(); }
+         int size() const final { return Rep::size(); }
          
          using Seq::operator[];
          using Seq::begin;
          using Seq::end;
 
-         //using Rep::reserve; // YS: deque doesn't support it
+         //using Rep::reserve;
          using Rep::resize;
          using Rep::push_back;
          using Rep::push_front;
@@ -147,7 +147,6 @@ namespace ipr {
             throw std::domain_error("empty_sequence::get");
          }
       };
-
 
       template<class T>
       struct node_ref {
@@ -215,6 +214,10 @@ namespace ipr {
          Arg_type operand() const final { return rep; }
       };
 
+      // Short for the impplementation of generic unary nodes.
+      template<typename T>
+      using Unary_node = Unary<Node<T>>;
+
       // FIXME: This class template logically inherits from impl::Unary<T>,
       // FIXME as it was in previous versions.
       // FIXME: However, VC++2015 got utterly confused.
@@ -245,9 +248,12 @@ namespace ipr {
          Binary(Arg1_type f, Arg2_type s) : rep{ f, s } { }
 
          Arg1_type first() const final { return rep.first; }
-
          Arg2_type second() const final { return rep.second; }
       };
+
+      // Short hand for implementation of geeric binary nodes.
+      template<typename T>
+      using Binary_node = Binary<Node<T>>;
 
       // FIXME: see comment on type_from_operand.  VC++2015 bug.
       // FIXME: This class template logically inherits from impl::Binary<T>,
@@ -324,8 +330,8 @@ namespace ipr {
 
       template<class Operation>
       struct Classic : Operation {
-         const ipr::Decl* op_impl;
-         Classic() : op_impl{ } { }
+         const ipr::Decl* op_impl = { };
+         using Operation::Operation;
 
          Optional<ipr::Decl> implementation() const final
          {
@@ -335,17 +341,12 @@ namespace ipr {
 
                                 // -- Conversion_expr --
       template<class Interface>
-      struct Conversion_expr
-         : impl::Binary<impl::Classic<impl::Node<Interface>>> {
-         using Base = impl::Binary<impl::Classic<impl::Node<Interface>>>;
-         using typename Base::Arg1_type;
-         using typename Base::Arg2_type;
+      struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
+         using Base = impl::Classic<Binary_node<Interface>>;
+         using Base::Base;
 
-         explicit Conversion_expr(typename Base::Rep r) : Base(r) { }
-         Conversion_expr(Arg1_type f, Arg2_type s) : Base(f, s) { }
          const ipr::Type& type() const { return this->rep.first; }
       };
-
 
                                 // -- String --
       struct String : impl::Node<ipr::String> {
@@ -360,7 +361,7 @@ namespace ipr {
       };
 
                                 // -- Linkage --
-      using Linkage = Unary<Node<ipr::Linkage>>;
+      using Linkage = Unary_node<ipr::Linkage>;
 
       // -------------------------
       // -- General expressions --
@@ -381,6 +382,18 @@ namespace ipr {
          }
       };
 
+      // Short hand for the implementation of generic expression nodes.
+      template<typename T>
+      using Unary_expr = Unary<Expr<T>>;
+
+      template<typename T>
+      using Classic_unary_expr = Classic<Unary_expr<T>>;
+
+      template<typename T>
+      using Binary_expr = Binary<Expr<T>>;
+
+      template<typename T>
+      using Classic_binary_expr = Classic<Binary_expr<T>>;
 
       // ----------------------------------------------------
       // -- Scopes, sequence of declarations and overloads --
@@ -416,18 +429,14 @@ namespace ipr {
       struct scope_datum : link<scope_datum> {
          // The position of this Decl in its scope.  It shall be set
          // at the actual declaration creation by the creating scope.
-         int scope_pos;
+         int scope_pos = -1;
 
          // The specifiers for this declaration.  S
-         ipr::DeclSpecifiers spec;
+         ipr::DeclSpecifiers spec = { };
 
          // Back-pointer to this declaration.  It shall be set at
          // the declaration creation.
-         const ipr::Decl* decl; 
-
-         scope_datum()
-               : scope_pos{ -1 }, spec{ ipr::DeclSpecifiers::None }, decl{ }
-         { }
+         const ipr::Decl* decl = { }; 
 
          // A comparator object type, implements ordering on declaration
          // position chaining declarations together, in scopes.
@@ -647,12 +656,16 @@ namespace ipr {
 
       template<class T>
       struct Type : impl::Expr<T> {
-         Type() : id{ } { }
+         const ipr::Name* id = { };
 
          const ipr::Name& name() const final { return *util::check(id); }
-
-         const ipr::Name* id;
       };
+
+      template<typename T>
+      using Unary_type = Unary<Type<T>>;
+
+      template<typename T>
+      using Binary_type = Binary<Type<T>>;
 
       // Scopes, as expressions, have Product types.  Such types could
       // be implemented directly as a separate sequence of types.
@@ -739,10 +752,10 @@ namespace ipr {
       template<class D>
       struct Decl : Stmt<Node<D>> {
          basic_decl_data<D> decl_data;
-         ipr::Named_map* pat;
+         ipr::Named_map* pat = { };
          val_sequence<ipr::Substitution> args;
 
-         Decl() : decl_data(0), pat(0) { }
+         Decl() : decl_data{ nullptr } { }
 
          const ipr::Sequence<ipr::Substitution>& substitutions() const final
          { return args; }
@@ -966,7 +979,7 @@ namespace ipr {
          using location_span = ipr::Region::Location_span;
          const ipr::Region& parent;
          location_span extent;
-         const ipr::Expr* owned_by;
+         const ipr::Expr* owned_by = { };
          homogeneous_scope<Member> scope;
 
          int size() const { return scope.size(); }
@@ -979,7 +992,7 @@ namespace ipr {
          const ipr::Expr& owner() const { return *util::check(owned_by); }
 
          homogeneous_region(const ipr::Region& p, const ipr::Type& t)
-               : parent(p), owned_by(0), scope(t)
+               : parent(p), scope(t)
          { }
       };
       
@@ -1044,31 +1057,31 @@ namespace ipr {
       };
 
       
-      using Array = Binary<Type<ipr::Array>>;
-      using Decltype = Unary<Type<ipr::Decltype>>;
-      using As_type = Binary<Type<ipr::As_type>>;
+      using Array = Binary_type<ipr::Array>;
+      using Decltype = Unary_type<ipr::Decltype>;
+      using As_type = Binary_type<ipr::As_type>;
       using Function = Quaternary<Type<ipr::Function>>;
-      using Pointer = Unary<Type<ipr::Pointer>>;
-      using Product = Unary<Type<ipr::Product>>;
-      using Ptr_to_member = Binary<Type<ipr::Ptr_to_member>>;
-      using Qualified = Binary<Type<ipr::Qualified>>;
-      using Reference = Unary<Type<ipr::Reference>>;
-      using Rvalue_reference = Unary<Type<ipr::Rvalue_reference>>;
-      using Sum = Unary<Type<ipr::Sum>>;
-      using Template = Binary<Type<ipr::Template>>;
+      using Pointer = Unary_type<ipr::Pointer>;
+      using Product = Unary_type<ipr::Product>;
+      using Ptr_to_member = Binary_type<ipr::Ptr_to_member>;
+      using Qualified = Binary_type<ipr::Qualified>;
+      using Reference = Unary_type<ipr::Reference>;
+      using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
+      using Sum = Unary_type<ipr::Sum>;
+      using Template = Binary_type<ipr::Template>;
 
-      using Comment = Unary<Node<Comment>>;
+      using Comment = Unary_node<Comment>;
 
       using Phantom = Expr<ipr::Phantom>;
 
-      using Address = Unary<Classic<Expr<ipr::Address>>>;
-      using Array_delete = Unary<Classic<Expr<ipr::Array_delete>>>;
-      using Complement = Unary<Classic<Expr<ipr::Complement>>>;
-      using Conversion = Unary<Expr<ipr::Conversion>>;
-      using Ctor_name = Unary<Expr<ipr::Ctor_name>>;
-      using Delete = Unary<Classic<Expr<ipr::Delete>>>;
-      using Deref = Unary<Classic<Expr<ipr::Deref>>>;
-      using Dtor_name = Unary<Expr<ipr::Dtor_name>>;
+      using Address = Classic_unary_expr<ipr::Address>;
+      using Array_delete = Classic_unary_expr<ipr::Array_delete>;
+      using Complement = Classic_unary_expr<ipr::Complement>;
+      using Conversion = Unary_expr<ipr::Conversion>;
+      using Ctor_name = Unary_expr<ipr::Ctor_name>;
+      using Delete = Classic_unary_expr<ipr::Delete>;
+      using Deref = Classic_unary_expr<ipr::Deref>;
+      using Dtor_name = Unary_expr<ipr::Dtor_name>;
 
       struct Expr_list : impl::Node<ipr::Expr_list> {
          typed_sequence<ref_sequence<ipr::Expr>> seq;
@@ -1087,12 +1100,12 @@ namespace ipr {
 		 // <<<< Yuriy Solodkyy: 2007/02/02 
       };
 
-      using Initializer_list = Unary<Classic<Expr<ipr::Initializer_list>>>;
-      using Sizeof = Unary<Expr<ipr::Sizeof>>;
-      using Typeid = Unary<Expr<ipr::Typeid>>;
-      using Identifier = Unary<Expr<ipr::Identifier>>;
+      using Initializer_list = Classic_unary_expr<ipr::Initializer_list>;
+      using Sizeof = Unary_expr<ipr::Sizeof>;
+      using Typeid = Unary_expr<ipr::Typeid>;
+      using Identifier = Unary_expr<ipr::Identifier>;
 
-      struct Id_expr : impl::Unary<Expr<ipr::Id_expr>> {
+      struct Id_expr : Unary_expr<ipr::Id_expr> {
          const ipr::Decl* decl;
 
          explicit Id_expr(const ipr::Name&);
@@ -1100,52 +1113,52 @@ namespace ipr {
          const ipr::Decl& resolution() const final;
       };
 
-      using Not = Unary<Classic<Expr<ipr::Not>>>;
+      using Not = Classic_unary_expr<ipr::Not>;
 
-      using Operator = Unary<Expr<ipr::Operator>>;
+      using Operator = Unary_expr<ipr::Operator>;
       using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
       
-      using Pre_decrement = Unary<Classic<Expr<ipr::Pre_decrement>>>;
-      using Pre_increment = Unary<Classic<Expr<ipr::Pre_increment>>>;
-      using Post_decrement = Unary<Classic<Expr<ipr::Post_decrement>>>;
-      using Post_increment = Unary<Classic<Expr<ipr::Post_increment>>>;
-      using Throw = Unary<Classic<Expr<ipr::Throw>>>;
+      using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
+      using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
+      using Post_decrement = Classic_unary_expr<ipr::Post_decrement>;
+      using Post_increment = Classic_unary_expr<ipr::Post_increment>;
+      using Throw = Classic_unary_expr<ipr::Throw>;
       using Type_id = type_from_operand<Node<ipr::Type_id>>;
 
-      using Unary_minus = Unary<Classic<Expr<ipr::Unary_minus>>>;
-      using Unary_plus = Unary<Classic<Expr<ipr::Unary_plus>>>;
-      using Expansion = Unary<Classic<Expr<ipr::Expansion>>>;
+      using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
+      using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
+      using Expansion = Classic_unary_expr<ipr::Expansion>;
 
-      using And = Binary<Classic<Expr<ipr::And>>>;
-      using Annotation = Binary<Node<ipr::Annotation>>;
-      using Array_ref = Binary<Classic<Expr<ipr::Array_ref>>>;
-      using Arrow = Binary<Classic<Expr<ipr::Arrow>>>;
-      using Arrow_star = Binary<Classic<Expr<ipr::Arrow_star>>>;
-      using Assign = Binary<Classic<Expr<ipr::Assign>>>;
-      using Bitand = Binary<Classic<Expr<ipr::Bitand>>>;
-      using Bitand_assign = Binary<Classic<Expr<ipr::Bitand_assign>>>;
-      using Bitor = Binary<Classic<Expr<ipr::Bitor>>>;
-      using Bitor_assign = Binary<Classic<Expr<ipr::Bitor_assign>>>;
-      using Bitxor = Binary<Classic<Expr<ipr::Bitxor>>>;
-      using Bitxor_assign = Binary<Classic<Expr<ipr::Bitxor_assign>>>;
-      using Call = Binary<Classic<Expr<ipr::Call>>>;
+      using And = Classic_binary_expr<ipr::And>;
+      using Annotation = Binary_node<ipr::Annotation>;
+      using Array_ref = Classic_binary_expr<ipr::Array_ref>;
+      using Arrow = Classic_binary_expr<ipr::Arrow>;
+      using Arrow_star = Classic_binary_expr<ipr::Arrow_star>;
+      using Assign = Classic_binary_expr<ipr::Assign>;
+      using Bitand = Classic_binary_expr<ipr::Bitand>;
+      using Bitand_assign = Classic_binary_expr<ipr::Bitand_assign>;
+      using Bitor = Classic_binary_expr<ipr::Bitor>;
+      using Bitor_assign = Classic_binary_expr<ipr::Bitor_assign>;
+      using Bitxor = Classic_binary_expr<ipr::Bitxor>;
+      using Bitxor_assign = Classic_binary_expr<ipr::Bitxor_assign>;
+      using Call = Classic_binary_expr<ipr::Call>;
       using Cast = Conversion_expr<ipr::Cast>;
-      using Comma = Binary<Classic<Expr<ipr::Comma>>>;
+      using Comma = Classic_binary_expr<ipr::Comma>;
       using Const_cast = Conversion_expr<ipr::Const_cast>;
       using Datum = Conversion_expr<ipr::Datum>;
-      using Div = Binary<Classic<Expr<ipr::Div>>>;
-      using Div_assign = Binary<Classic<Expr<ipr::Div_assign>>>;
-      using Dot = Binary<Classic<Expr<ipr::Dot>>>;
-      using Dot_star = Binary<Classic<Expr<ipr::Dot_star>>>;
+      using Div = Classic_binary_expr<ipr::Div>;
+      using Div_assign = Classic_binary_expr<ipr::Div_assign>;
+      using Dot = Classic_binary_expr<ipr::Dot>;
+      using Dot_star = Classic_binary_expr<ipr::Dot_star>;
       using Dynamic_cast = Conversion_expr<ipr::Dynamic_cast>;
-      using Equal = Binary<Classic<Expr<ipr::Equal>>>;
-      using Greater = Binary<Classic<Expr<ipr::Greater>>>;
-      using Greater_equal = Binary<Classic<Expr<ipr::Greater_equal>>>;
-      using Less = Binary<Classic<Expr<ipr::Less>>>;
-      using Less_equal = Binary<Classic<Expr<ipr::Less_equal>>>;
+      using Equal = Classic_binary_expr<ipr::Equal>;
+      using Greater = Classic_binary_expr<ipr::Greater>;
+      using Greater_equal = Classic_binary_expr<ipr::Greater_equal>;
+      using Less = Classic_binary_expr<ipr::Less>;
+      using Less_equal = Classic_binary_expr<ipr::Less_equal>;
       using Literal = Conversion_expr<ipr::Literal>;
-      using Lshift = Binary<Classic<Expr<ipr::Lshift>>>;
-      using Lshift_assign = Binary<Classic<Expr<ipr::Lshift_assign>>>;
+      using Lshift = Classic_binary_expr<ipr::Lshift>;
+      using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
 
       struct Mapping : impl::Expr<ipr::Mapping> {
          impl::Parameter_list parameters;
@@ -1162,23 +1175,23 @@ namespace ipr {
          impl::Parameter* param(const ipr::Name&, const impl::Rname&);
       };
 
-      using Member_init = Binary<Expr<ipr::Member_init>>;
-      using Minus = Binary<Classic<Expr<ipr::Minus>>>;
-      using Minus_assign = Binary<Classic<Expr<ipr::Minus_assign>>>;
-      using Modulo = Binary<Classic<Expr<ipr::Modulo>>>;
-      using Modulo_assign = Binary<Classic<Expr<ipr::Modulo_assign>>>;
-      using Mul = Binary<Classic<Expr<ipr::Mul>>>;
-      using Mul_assign = Binary<Classic<Expr<ipr::Mul_assign>>>;
-      using Not_equal = Binary<Classic<Expr<ipr::Not_equal>>>;
-      using Or = Binary<Classic<Expr<ipr::Or>>>;
-      using Plus = Binary<Classic<Expr<ipr::Plus>>>;
-      using Plus_assign = Binary<Classic<Expr<ipr::Plus_assign>>>;
+      using Member_init = Binary_expr<ipr::Member_init>;
+      using Minus = Classic_binary_expr<ipr::Minus>;
+      using Minus_assign = Classic_binary_expr<ipr::Minus_assign>;
+      using Modulo = Classic_binary_expr<ipr::Modulo>;
+      using Modulo_assign = Classic_binary_expr<ipr::Modulo_assign>;
+      using Mul = Classic_binary_expr<ipr::Mul>;
+      using Mul_assign = Classic_binary_expr<ipr::Mul_assign>;
+      using Not_equal = Classic_binary_expr<ipr::Not_equal>;
+      using Or = Classic_binary_expr<ipr::Or>;
+      using Plus = Classic_binary_expr<ipr::Plus>;
+      using Plus_assign = Classic_binary_expr<ipr::Plus_assign>;
       using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
-      using Rshift = Binary<Classic<Expr<ipr::Rshift>>>;
-      using Rshift_assign = Binary<Classic<Expr<ipr::Rshift_assign>>>;
-      using Scope_ref = Binary<Expr<ipr::Scope_ref>>;
+      using Rshift = Classic_binary_expr<ipr::Rshift>;
+      using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
+      using Scope_ref = Binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
-      using Template_id = Binary<Expr<ipr::Template_id>>;
+      using Template_id = Binary_expr<ipr::Template_id>;
 
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
@@ -1593,7 +1606,6 @@ namespace ipr {
          decl_factory<ipr::Bitfield> bitfields;
          decl_factory<ipr::Fundecl> fundecls;
          decl_factory<ipr::Typedecl> typedecls;
-
          decl_factory<ipr::Named_map> primary_maps;
          decl_factory<ipr::Named_map> secondary_maps;
 
@@ -1639,7 +1651,6 @@ namespace ipr {
          {
             return scope.make_bitfield(n, t);
          }
-         
 
          Typedecl* declare_type(const ipr::Name& n, const ipr::Type& t)
          {
@@ -1922,10 +1933,8 @@ namespace ipr {
          const ipr::Stmt& from() const final;
       };
 
-
       // Like a Break, a Continue node can refer back to the
       // iteration-statement containing it.
-
       struct Continue : Stmt<Node<ipr::Continue>> {
          const ipr::Stmt* stmt;
 
