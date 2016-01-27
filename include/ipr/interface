@@ -283,17 +283,25 @@ namespace ipr {
    // location data type, we save space by mapping file-names and
    // unit-names to IDs (integers).  That mapping is managed by the Unit
    // instance.
+
+   enum class Line_number : uint32_t { };
+   enum class Column_number : uint32_t { };
+
    struct Basic_location {
-      int line = { };
-      int column = { };
+      Line_number line = { };
+      Column_number column = { };
    };
+
+   enum class File_index : uint32_t { };
 
    struct Source_location : Basic_location {
-      int file = { };           // ID of the file
+      File_index file = { };    // ID of the file
    };
 
+   enum class Unit_index : uint32_t { };
+   
    struct Unit_location : Basic_location {
-      int unit = { };           // ID of the unit
+      Unit_index unit = { };    // ID of the unit
    };
 
    // -- General structural utility types.
