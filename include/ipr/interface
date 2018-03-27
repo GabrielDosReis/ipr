@@ -274,7 +274,7 @@ namespace ipr {
    //       (c) physical unit location; and
    //       (d) logical unit location.
    // Physical and logical source locations are locations as witnessed
-   // at translation phase 2 (see ISO C++, �2.1/1).
+   // at translation phase 2 (see ISO C++, §2.1/1).
    // Physical and logical unit locations are locations as manifest when
    // looking at a translation unit, at translation phase 4.
    // 
@@ -1043,7 +1043,7 @@ namespace ipr {
    // not an object-type.
     struct Reference : Unary<Category<reference_cat, Type>, const Type&> {
        // The type of the object or function an expression of this
-       // type refers to.� 
+       // type refers to.
        Arg_type refers_to() const { return operand(); }
     };
 
@@ -1052,7 +1052,7 @@ namespace ipr {
     struct Rvalue_reference : Unary<Category<rvalue_reference_cat, Type>,
                                     const Type&> {
        // The type of the object or function an expression of this
-       // type refers to.� 
+       // type refers to.
        Arg_type refers_to() const { return operand(); }
     };
 
