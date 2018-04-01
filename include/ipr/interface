@@ -20,7 +20,7 @@ namespace ipr {
    //        -- except macros -- Standard C, and possibly Fortran
    //        and other C-like languages;
    //    (2) be at the basis of program manipulations;
-   //    (3) be ahead of time, i.e. accomodate future possible
+   //    (3) be ahead of time, i.e. accommodate future possible
    //        extensions to C++, e.g. "concepts".
    //
    // The "meta-language" implemented by IPR is expression-based.
@@ -55,7 +55,7 @@ namespace ipr {
 
    struct Node;                  // universal base class for all IPR nodes
    
-   struct Visitor;               // base class for all IPR vistor classes
+   struct Visitor;               // base class for all IPR visitor classes
 
    struct Annotation;            // node annotations
    struct Region;                // declarative region
@@ -93,7 +93,7 @@ namespace ipr {
    struct Sum;                   // sum type - not ISO C++ type
    struct Template;              // type of a template - Not ISO C++ type
    struct Union;                 // user-defined type - union
-   struct Auto;                  // "auto" -- each occurence is generative
+   struct Auto;                  // "auto" -- each occurrence is generative
 
    // ------------------------------------------
    // -- results of name constructor constants --
@@ -168,7 +168,7 @@ namespace ipr {
    struct Equal;                 // equality comparison            a == b
    struct Greater;               // greater comparison             a > b
    struct Greater_equal;         // greater-or-equal comparison    a >= b
-   struct Initializer_list;      // barce-enclosed expression list { a, b }
+   struct Initializer_list;      // brace-enclosed expression list { a, b }
    struct Less;                  // less comparison                a < b
    struct Less_equal;            // less-equal comparison          a <= b
    struct Literal;               // literal expressions            3.14
@@ -251,7 +251,7 @@ namespace ipr {
 
 
                                 // -- Category_node --
-   // A list of numerical codes in one-to-one correspondance with
+   // A list of numerical codes in one-to-one correspondence with
    // IPR node "interface types".  In a sufficiently expressive and
    // efficient type system, we would not need to manually maintain
    // this list.  This can be seen as an optimization of the traditional
@@ -274,7 +274,7 @@ namespace ipr {
    //       (c) physical unit location; and
    //       (d) logical unit location.
    // Physical and logical source locations are locations as witnessed
-   // at translation phase 2 (see ISO C++, §2.1/1).
+   // at translation phase 2 (see ISO C++, Â§2.1/1).
    // Physical and logical unit locations are locations as manifest when
    // looking at a translation unit, at translation phase 4.
    // 
@@ -589,7 +589,7 @@ namespace ipr {
 
       
       const Category_code category; // the category the complete node object
-                                // belongs to.  In a sufficientlt expressive
+                                // belongs to.  In a sufficiently expressive
                                 // and efficient type system, we would not
                                 // need this member, for it could be read
                                 // directly from the type of the object.
@@ -675,7 +675,7 @@ namespace ipr {
    // Classic expressions are those constructed with operators
    // directly expressible in standard C++.  Most of those operators
    // can be overloaded and given user-defined implementation. For
-   // instantce,  cout << 2, involves a user-defined operator.  The IPR
+   // instance,  cout << 2, involves a user-defined operator.  The IPR
    // representation is not a function call but, something like
    // 
    //                        << ---> implementation
@@ -683,7 +683,7 @@ namespace ipr {
    //                    cout   2
    //
    // where we record the fact that the left-shift operator has a
-   // user-defined menaning.  In IPR, we take the general apporach that
+   // user-defined meaning.  In IPR, we take the general approach that
    // all operators can be given user-defined meanings.  Consequently,
    // we define this class to represent the idea that an expression
    // has a user-supplied meaning.
@@ -736,7 +736,7 @@ namespace ipr {
    // For a function operator "operator @", "opname()" is the "@"
    // sub-part.  Notice that for the array forms of allocation
    // and deallocation operator functions, this is respectively
-   // "new[]" and "delete[]", with no space before, betweeen, and after
+   // "new[]" and "delete[]", with no space before, between, and after
    // the square brackets.
    struct Operator : Unary<Category<operator_cat, Name>, const String&> {
       Arg_type opname() const { return operand(); }
@@ -825,7 +825,7 @@ namespace ipr {
    // scope; such a name is said "overloaded".  The result of
    // looking up a name in a scope is a set of all declarations, called
    // an "overload set", for that name in that scope.  An "overload set"
-   // is a "sequence" of declarations, that additionaly supports
+   // is a "sequence" of declarations, that additionally supports
    // lookup by "Type".
    struct Scope : Category<scope_cat> {
       using Iterator = Sequence<Decl>::Iterator;
@@ -1043,7 +1043,7 @@ namespace ipr {
    // not an object-type.
     struct Reference : Unary<Category<reference_cat, Type>, const Type&> {
        // The type of the object or function an expression of this
-       // type refers to.  
+       // type refers to.
        Arg_type refers_to() const { return operand(); }
     };
 
@@ -1052,7 +1052,7 @@ namespace ipr {
     struct Rvalue_reference : Unary<Category<rvalue_reference_cat, Type>,
                                     const Type&> {
        // The type of the object or function an expression of this
-       // type refers to.  
+       // type refers to.
        Arg_type refers_to() const { return operand(); }
     };
 
@@ -1113,7 +1113,7 @@ namespace ipr {
    };
 
                                 // -- Enum --
-   // An enumration is an object-type whose members are named constants
+   // An enumeration is an object-type whose members are named constants
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
    struct Enum : Category<enum_cat, Udt> {
@@ -1342,7 +1342,7 @@ namespace ipr {
                                 // -- Call --
    // A function call with an argument list.  Notice that in the abstract
    // this is not really different from an Template_id.  However, having
-   // a separate node means less cluter in codes.
+   // a separate node means less clutter in codes.
    struct Call : Binary<Category<call_cat, Classic>,
                          const Expr&, const Expr_list&> {
       Arg1_type function() const  { return first(); }
@@ -1417,7 +1417,7 @@ namespace ipr {
                            const Type&, const String&> {
       // See comments for the cast operators regarding type().
 
-      // The texttual representation of this literal as it appears
+      // The textual representation of this literal as it appears
       // in the program text.
       Arg2_type string() const { return second(); }
    };
@@ -1433,12 +1433,12 @@ namespace ipr {
 
       // Mappings may have nested mappings (e.g. member templates of
       // templates)
-      // The depth of a template declaration is its nesting nevel.
+      // The depth of a template declaration is its nesting level.
       virtual int depth() const = 0;
    };
 
                                 // -- Member_init --
-   // Node that represent a member initlization, in constructor
+   // Node that represent a member initialization, in constructor
    // definition.
    struct Member_init : Binary<Category<member_init_cat>> {
       Arg1_type member() const { return first(); }
@@ -1513,7 +1513,7 @@ namespace ipr {
 
                                 // -- Conditional --
    // This represents the C++ ternary operator ?:.  In principle,
-   // it is redundant with both If_then_else and Swicth nodes
+   // it is redundant with both If_then_else and Switch nodes
    // from semantics point of view.  However, if we want to preserve
    // the syntax, then it is necessary to have it.
    struct Conditional : Ternary<Category<conditional_cat, Classic>> {
@@ -1531,7 +1531,7 @@ namespace ipr {
    // Standard C++ specification.  It is a design choice we made based on
    // the following facts:
    //    1. We need to have an IPR node that can represent both a
-   //       declaration and an expression.  That need is examplified
+   //       declaration and an expression.  That need is exemplified
    //       by constructs like
    //            if (std::cin >> c) { /* .... */ }
    //       and
@@ -1600,7 +1600,7 @@ namespace ipr {
    //   - default : statement
    // IPR represents that "label()" as an expressions so that it can
    // handle "identifier", "case cst-expr" and "default", where cst-expr
-   // is an abritrary constant-expression.
+   // is an arbitrary constant-expression.
    struct Labeled_stmt : Binary<Category<labeled_stmt_cat, Stmt>,
                                 const Expr&, const Stmt&> {
       const Expr& label() const { return first(); }
@@ -1616,7 +1616,7 @@ namespace ipr {
    };
 
                                 // -- Ctor_body --
-   // This node represents a construtor "body" consisting of:
+   // This node represents a constructor "body" consisting of:
    //      (a) member-initializer list, if present; and
    //      (b) the actual body of the constructor
    struct Ctor_body : Binary<Category<ctor_body_cat, Stmt>,
