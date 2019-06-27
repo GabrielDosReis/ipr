@@ -1,6 +1,6 @@
 dist_data_DATA = macro.tex ref.tex user-guide.tex ipr.bib
 
-dvi-local: ref.dvi user-guide.dvi
+pdf-local: ref.pdf user-guide.pdf
 
-.tex.dvi: %.tex macro.tex ipr.bib
-	$(LATEX) $<
+.tex.pdf: %.tex macro.tex ipr.bib
+	$(PDFLATEX) $<

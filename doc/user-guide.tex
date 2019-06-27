@@ -1,7 +1,7 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass[11pt]{article}
 \usepackage[latin1]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{dsfont, mathrsfs}
+\usepackage{mathrsfs}
 \usepackage{palatino}
 \usepackage{amsmath,amssymb}
 \usepackage{graphics}
@@ -294,10 +294,10 @@ type derived from \code{Expr}.  The return value is of type
      \cxxRule{unqualified-name} <\cxxOptRule{template-argument-list}>
 \end{Grammar}
 
-Template specialization names, \NodeClass{Specialization} in IPR, are made out
+Template specialization names, \NodeClass{Template\_id} in IPR, are made out
 of two expressions, as:
 \begin{Program}
-  \expr{unit}.make_specialization(\expr{template}, \expr{arglist});
+  \expr{unit}.make_template_id(\expr{template}, \expr{arglist});
 \end{Program}
 where the first argument designates the template to specialize and the second
 argument is an \code{Expr\_list} that denotes the template-argument

@@ -14,7 +14,7 @@ if (WIN32)
 endif()
 
 # On UNIX systems, we do want the ability to process large files.
-if (UNIT)
+if (UNIX)
    add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 

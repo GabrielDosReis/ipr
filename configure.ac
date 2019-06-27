@@ -17,7 +17,7 @@ AC_PROG_LN_S
 
 
 dnl * We need to compile LaTeX files.
-AC_CHECK_PROG(LATEX, latex, latex)
+AC_CHECK_PROG(PDFLATEX, pdflatex, pdflatex)
 
 AC_CONFIG_FILES(Makefile include/Makefile src/Makefile doc/Makefile)
 

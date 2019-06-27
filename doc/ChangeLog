@@ -1,3 +1,12 @@
+2019-06-26  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* user-guide.tex: Tidy.
+	* ref.tex: Likewise.
+
+2019-06-26  Gabriel Dos Reis  <gdr@axiomatics.org>
+
+	* Makefile.am: Generate PDF.
+
 2010-03-29  Gabriel Dos Reis  <gdr@cs.tamu.edu>
 
 	* user-guide.tex: Fix various discrepancies.
