@@ -33,4 +33,4 @@ namespace ipr {
       // FIXME: Implement checking of "c".
       ++stats::node_usage_counts[c];
    }
-};
+}
