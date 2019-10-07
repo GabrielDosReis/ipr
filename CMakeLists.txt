@@ -41,7 +41,8 @@ target_compile_options(${PROJECT_NAME}
          -pedantic     # Turn on strict language conformance
       >
       $<$<CXX_COMPILER_ID:Clang>:
-		 -Wno-overloaded-virtual  # Too many false positives
+		 -Wno-overloaded-virtual                   # Too many false positives
+		 -Wno-delete-non-abstract-non-virtual-dtor # System headers plagued
       >
 )
 
