@@ -1,5 +1,5 @@
 cmake_minimum_required(
-   VERSION 3.5 # Ubuntu 16.04 LTS
+   VERSION 3.5
 )
 
 project(ipr
@@ -22,7 +22,7 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME}
    PROPERTIES
-      CXX_STANDARD 14
+      CXX_STANDARD 17
       CXX_STANDARD_REQUIRED ON
 	  CXX_EXTENSIONS OFF
 )
@@ -30,14 +30,12 @@ set_target_properties(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME}
    PRIVATE
       $<$<CXX_COMPILER_ID:MSVC>:
-         /W4           # Highest sensible warning level
+         /W2           # Usual warnings
          /permissive-  # Turn on strict language conformance
          /EHsc         # Turn on exception handling semantics
-         /FIiso646.h   # MSVC still does not support alternative keywords! :-/
       >
       $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
-         -Wall         # Turn on all warnings
-         -Wextra       # Turn on even more warnings
+         -Wall         # Turn on all useful warnings
          -pedantic     # Turn on strict language conformance
       >
       $<$<CXX_COMPILER_ID:Clang>:
