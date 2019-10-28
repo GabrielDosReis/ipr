@@ -1,50 +1,64 @@
-cmake_minimum_required(VERSION 2.8.12)
-project (ipr)
-set (ipr_VERSION_MAJOR 0)
-set (ipr_VERSION_MINOR 47)
+cmake_minimum_required(
+   VERSION 3.5 # Ubuntu 16.04 LTS
+)
 
-# Hey, we are building C++ for C++.
-enable_language(CXX)
+project(ipr
+   VERSION 0.47
+   LANGUAGES CXX
+)
 
-# Microsoft's Visual C++ still does not support alternative keywords! :-/
-# Also, set the appropriate exception handling flavor.
-if (WIN32)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FIiso646.h")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
-endif()
+add_library(${PROJECT_NAME}
+   src/interface.cxx
+   src/impl.cxx
+   src/io.cxx
+   src/traversal.cxx
+   src/utility.cxx
+)
 
-# On UNIX systems, we do want the ability to process large files.
-if (UNIX)
-   add_definitions(-D_FILE_OFFSET_BITS=64)
-endif()
+target_include_directories(${PROJECT_NAME}
+   PUBLIC
+      ${PROJECT_SOURCE_DIR}/include
+)
 
-# We really want to use C++14 (bug fix over C++11).
-# When the booting compiler is g++ or clang, use -std= flag.
-# Approximate that with UNIX platforms for now.
-if (UNIX)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2 -Wall")
-endif()
+set_target_properties(${PROJECT_NAME}
+   PROPERTIES
+      CXX_STANDARD 14
+      CXX_STANDARD_REQUIRED ON
+	  CXX_EXTENSIONS OFF
+)
+				
+target_compile_options(${PROJECT_NAME}
+   PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:
+         /W4           # Highest sensible warning level
+         /permissive-  # Turn on strict language conformance
+         /EHsc         # Turn on exception handling semantics
+         /FIiso646.h   # MSVC still does not support alternative keywords! :-/
+      >
+      $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
+         -Wall         # Turn on all warnings
+         -Wextra       # Turn on even more warnings
+         -pedantic     # Turn on strict language conformance
+      >
+      $<$<CXX_COMPILER_ID:Clang>:
+		 -Wno-overloaded-virtual                   # Too many false positives
+		 -Wno-delete-non-abstract-non-virtual-dtor # System headers plagued
+      >
+)
 
-# Clang can sometimes be overly anal-rententive vis-a-vis good programming idioms :-(
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
-endif()
+target_compile_definitions(${PROJECT_NAME}
+   PRIVATE
+	  $<$<PLATFORM_ID:UNIX>:
+		 _FILE_OFFSET_BITS=64 # We want the ability to process large files.
+	  >
+)
 
-# Set up search paths for source header files.
-include_directories ("${PROJECT_SOURCE_DIR}/include")
-
-# The final IPR library
-add_library(ipr STATIC
-		src/interface.cxx
-		src/impl.cxx
-		src/io.cxx
-		src/traversal.cxx
-		src/utility.cxx)
-
-
-## Installation time, folks.
-install(TARGETS ipr
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib)
-install(DIRECTORY include/ipr DESTINATION include)
-
+install(
+   TARGETS ipr
+   LIBRARY DESTINATION lib
+   ARCHIVE DESTINATION lib
+)
+install(
+   DIRECTORY include/ipr
+   DESTINATION include
+)

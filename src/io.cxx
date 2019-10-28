@@ -638,7 +638,7 @@ namespace ipr
                << xpr_cast_expr(e.storage());
          }
       };
-   };
+   }
 
    static Printer& operator<<(Printer&, xpr_cast_expr);
    
@@ -1688,7 +1688,7 @@ namespace ipr
             pp << xpr_decl(d, true);
          }
       };
-   };
+   }
 
    Printer&
    operator<<(Printer& printer, xpr_stmt x)
