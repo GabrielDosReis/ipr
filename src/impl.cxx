@@ -882,11 +882,11 @@ namespace ipr {
 	  };
 
 
-      // >>>> Yuriy Solodkyy: 2008/07/10 
-      // This comparison would be used to unify Unary nodes: on LHS we would be 
-      // called with a type for which Pointer (Reference/sizeof etc.) is created, 
-      // on RHS we would be called with already allocated Pointer types. Thus we 
-      // have to check whether any of the existing Pointer types does not already 
+      // >>>> Yuriy Solodkyy: 2008/07/10
+      // This comparison would be used to unify Unary nodes: on LHS we would be
+      // called with a type for which Pointer (Reference/sizeof etc.) is created,
+      // on RHS we would be called with already allocated Pointer types. Thus we
+      // have to check whether any of the existing Pointer types does not already
       // have a points_to (its operand()) equal to the type in LHS.
 	  struct unified_type_compare
 	  {
@@ -896,7 +896,7 @@ namespace ipr {
               return compare(lhs, rhs.operand());
 		  }
 	  };
-      // <<<< Yuriy Solodkyy: 2008/07/10 
+      // <<<< Yuriy Solodkyy: 2008/07/10
 
       impl::Array*
       type_factory::make_array(const ipr::Type& t, const ipr::Expr& b)
@@ -989,10 +989,10 @@ namespace ipr {
       impl::Pointer*
       type_factory::make_pointer(const ipr::Type& t)
       {
-         // >>>> Yuriy Solodkyy: 2008/07/10 
+         // >>>> Yuriy Solodkyy: 2008/07/10
          // Fixed pointer comparison for unification
          return pointers.insert(t, unified_type_compare());
-         // <<<< Yuriy Solodkyy: 2008/07/10 
+         // <<<< Yuriy Solodkyy: 2008/07/10
       }
 
       impl::Product*
@@ -1322,7 +1322,7 @@ namespace ipr {
          return scope;
       }
 
-      const Region::location_span& 
+      const Region::location_span&
       Region::span() const {
          return extent;
       }
@@ -1402,7 +1402,7 @@ namespace ipr {
          if (item == 0)
             item = strings.insert(*string_pool.make_string(s, n),
                                   string_comp());
-         
+
          return *item;
       }
 
@@ -1997,7 +1997,7 @@ namespace ipr {
             id->constraint = &get_decltype(*id);
          return *id;
       }
-      
+
       const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
 
       const ipr::Type& Lexicon::bool_type() const { return booltype; }
@@ -2205,30 +2205,22 @@ namespace ipr {
 
       impl::Class*
       Lexicon::make_class(const ipr::Region& pr) {
-         impl::Class* c = types.make_class(pr, anytype);
-         c->constraint = &classtype;
-         return c;
+         return types.make_class(pr, classtype);
       }
 
       impl::Enum*
       Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
-         impl::Enum* e = types.make_enum(pr, anytype, k);
-         e->constraint = &enumtype;
-         return e;
+         return types.make_enum(pr, enumtype, k);
       }
 
       impl::Namespace*
       Lexicon::make_namespace(const ipr::Region& pr) {
-         impl::Namespace* ns = types.make_namespace(&pr, anytype);
-         ns->constraint = &namespacetype;
-         return ns;
+         return types.make_namespace(&pr, namespacetype);
       }
 
       impl::Union*
       Lexicon::make_union(const ipr::Region& pr) {
-         impl::Union* u = types.make_union(pr, anytype);
-         u->constraint = &anytype;
-         return u;
+         return types.make_union(pr, uniontype);
       }
 
       impl::Mapping*
@@ -2266,7 +2258,7 @@ namespace ipr {
                                 // -- impl::Module --
       Module::Module(impl::Lexicon& l) : lexicon{ l }, iface{l, *this }
       { }
-      
+
       const ipr::Module_name& Module::name() const { return stems; }
 
       const ipr::Interface_unit& Module::interface_unit() const {
@@ -2279,7 +2271,7 @@ namespace ipr {
       impl::Module_unit* Module::make_unit() {
          return units.push_back(lexicon, *this);
       }
-      
+
    }
 }
 
