@@ -2,6 +2,11 @@ cmake_minimum_required(
    VERSION 3.5
 )
 
+option(BUILD_DOC
+   "Build LaTeX documentation"
+   OFF
+)
+
 project(ipr
    VERSION 0.47
    LANGUAGES CXX
@@ -60,3 +65,8 @@ install(
    DIRECTORY include/ipr
    DESTINATION include
 )
+
+if(BUILD_DOC)
+   include(cmake/UseLATEX.cmake)
+   add_subdirectory(doc)
+endif()
