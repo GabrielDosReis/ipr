@@ -832,9 +832,6 @@ namespace ipr {
       // The sequence of declarations this scope contain.
       virtual const Sequence<Decl>& members() const = 0;
 
-      // The region that determine this scope.
-      // virtual const Region& region() const = 0;
-      
       // Look-up by name returns the overload-set of all declarations,
       // for the subscripting name, contained in this scope.
       virtual const Overload& operator[](const Name&) const = 0;
@@ -845,17 +842,6 @@ namespace ipr {
       Iterator begin() const { return members().begin(); }
       Iterator end() const { return members().end(); }
       const Decl& operator[](int i) const { return members()[i]; }
-      
-      // The enclosing scope, if any of this scope.
-      // virtual const Scope& enclosing() const = 0;
-//       const Scope& enclosing() const
-//       {
-//          return region().enclosing().bindings();
-//       }
-
-      // The owner (e.g. class, namespace, ...) of this scope.  This
-      // is a convenient function, given Region::owner.
-//      const Expr& owner() const { return region().owner(); }
    };
 
                                 // -- General types -- 
