@@ -13,9 +13,7 @@ string_cat,                             // ipr::String
 linkage_cat,                            // ipr::Linkage
 parameter_list_cat,                     // ipr::Parameter_list
 
-expr_cat,                               // ipr::Expr    -- abstract
 overload_cat,                           // ipr::Overload
-type_cat,                               // ipr::Type    -- abstract
 
 array_cat,                              // ipr::Array
 class_cat,                              // ipr::Class
@@ -32,11 +30,9 @@ reference_cat,                          // ipr::Reference
 rvalue_reference_cat,                   // ipr::Rvalue_reference
 sum_cat,                                // ipr::Sum
 template_cat,                           // ipr::Template
-udt_cat,                                // ipr::Udt     -- abstract
 union_cat,                              // ipr::Union
 auto_cat,                               // ipr::Auto
 
-name_cat,                               // ipr::Name    -- abstract
 identifier_cat,                         // ipr::Identifier
 operator_cat,                           // ipr::Operator
 conversion_cat,                         // ipr::Conversion
@@ -121,7 +117,6 @@ new_cat,                                // ipr::New
 conditional_cat,                        // ipr::Conditional
 scope_cat,                              // ipr::Scope
 
-stmt_cat,                               // ipr::Stmt    -- abstract
 block_cat,                              // ipr::Block
 break_cat,                              // ipr::Break
 continue_cat,                           // ipr::Continue
@@ -139,7 +134,6 @@ return_cat,                             // ipr::Return
 switch_cat,                             // ipr::Switch
 while_cat,                              // ipr::While
 
-decl_cat,                               // ipr::Decl    -- abstract
 alias_cat,                              // ipr::Alias
 asm_cat,                                // ipr::Asm
 base_type_cat,                          // ipr::Base_type

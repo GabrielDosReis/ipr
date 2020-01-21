@@ -219,7 +219,7 @@ namespace ipr {
          return *util::check(length);
       }
 
-      const ipr::Udt&
+      const ipr::Udt<ipr::Decl>&
       Bitfield::membership() const {
          return *util::check(member_of);
       }
@@ -330,7 +330,7 @@ namespace ipr {
          return { init };
       }
 
-      const ipr::Udt&
+      const ipr::Udt<ipr::Decl>&
       Field::membership() const {
          return *util::check(member_of);
       }
@@ -358,7 +358,7 @@ namespace ipr {
          return *util::check(init);
       }
 
-      const ipr::Udt&
+      const ipr::Udt<ipr::Decl>&
       Fundecl::membership() const {
          return *util::check(member_of);
       }
@@ -461,7 +461,7 @@ namespace ipr {
          return { init };
       }
 
-      const ipr::Udt&
+      const ipr::Udt<ipr::Decl>&
       Typedecl::membership() const {
          return *util::check(member_of);
       }

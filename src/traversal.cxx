@@ -164,7 +164,7 @@ ipr::Visitor::visit(const Array& t)
 void
 ipr::Visitor::visit(const Class& t)
 {
-   visit(as<Udt>(t));
+   visit(as<Type>(t));
 }
 
 void
@@ -176,7 +176,7 @@ ipr::Visitor::visit(const Decltype& t)
 void
 ipr::Visitor::visit(const Enum& t)
 {
-   visit(as<Udt>(t));
+   visit(as<Type>(t));
 }
 
 void
@@ -194,7 +194,7 @@ ipr::Visitor::visit(const Function& t)
 void
 ipr::Visitor::visit(const Namespace& t)
 {
-   visit(as<Udt>(t));
+   visit(as<Type>(t));
 }
 
 void
@@ -246,12 +246,6 @@ ipr::Visitor::visit(const Template& t)
 }
 
 void
-ipr::Visitor::visit(const Udt& t)
-{
-   visit(as<Type>(t));
-}
-
-void
 ipr::Visitor::visit(const Auto& t)
 {
    visit(as<Type>(t));
@@ -260,7 +254,7 @@ ipr::Visitor::visit(const Auto& t)
 void
 ipr::Visitor::visit(const Union& t)
 {
-   visit(as<Udt>(t));
+   visit(as<Type>(t));
 }
 
 // -- Expressions visiting hooks --

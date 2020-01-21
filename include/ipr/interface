@@ -66,7 +66,6 @@ namespace ipr {
    struct Expr;                  // general expressions
    struct Name;                  // general names
    struct Type;                  // general types
-   struct Udt;                   // general user-defined types
    struct Stmt;                  // general statements
    struct Decl;                  // general declarations
 
@@ -1078,11 +1077,15 @@ namespace ipr {
    };
 
                                 // -- Udt --
-   // Base class for user-defined types Nodes -- factor our common properties.
+   // Base class for user-defined types Nodes -- factor out common properties.
+   template<typename T>
    struct Udt : Type {
+      // The general interface to members of this user-defined type.
+      using Member = T;
       // The region delimited by the definition of this Udt.
       virtual const Region& region() const = 0;
       const Scope& scope() const { return region().bindings(); }
+      virtual const Sequence<Member>& members() const = 0;
 
    protected:
       // It is an error to create a node of this type.
@@ -1094,35 +1097,30 @@ namespace ipr {
    // The type of a Standard C++ namespace.  A namespace is primarily
    // interesting because it is a sequence of declarations that can be
    // given a name.
-   struct Namespace : Category<namespace_cat, Udt> {
-      using Member = Decl;      // -- type of members of this type.
-      const Sequence<Decl>& members() const { return scope().members(); }
+   struct Namespace : Category<namespace_cat, Udt<Decl>> {
+      const Sequence<Decl>& members() const final { return scope().members(); }
    };
 
                                 // -- Class --
-   struct Class : Category<class_cat, Udt> {
-      using Member = Decl;      // -- type of members of this type.
-      const Sequence<Decl>& members() const { return scope().members(); }
+   struct Class : Category<class_cat, Udt<Decl>> {
+      const Sequence<Decl>& members() const final { return scope().members(); }
       virtual const Sequence<Base_type>& bases() const = 0;
    };
 
                                 // -- Union --
-   struct Union : Category<union_cat, Udt> {
-      using Member = Decl;      // -- type of members of this type.
-      const Sequence<Decl>& members() const { return scope().members(); }
+   struct Union : Category<union_cat, Udt<Decl>> {
+      const Sequence<Decl>& members() const final { return scope().members(); }
    };
 
                                 // -- Enum --
    // An enumeration is an object-type whose members are named constants
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
-   struct Enum : Category<enum_cat, Udt> {
+   struct Enum : Category<enum_cat, Udt<Enumerator>> {
       enum class Kind : uint8_t {     // The kind of enum.
          Legacy,                      // traditional C-style enum
          Scoped                       // scoped enum (C++11)
       };
-      using Member = Enumerator;      // -- type of members of this type.
-      virtual const Sequence<Enumerator>& members() const = 0;
       virtual Kind kind() const = 0;
    };
 
@@ -1921,7 +1919,7 @@ namespace ipr {
    // exception specification is actually made part of the function
    // type.  For convenience, it is represented here too.
    struct Fundecl : Category<fundecl_cat, Decl> {
-      virtual const Udt& membership() const = 0;
+      virtual const Type& membership() const = 0;
       virtual const Mapping& mapping() const = 0;
 
       const Parameter_list& parameters() const
@@ -1939,19 +1937,19 @@ namespace ipr {
                                 // -- Field --
    // This node represents a nonstatic data member.  
    struct Field : Category<field_cat, Decl> {
-      virtual const Udt& membership() const = 0;
+      virtual const Type& membership() const = 0;
    };
 
                                 // -- Bitfield --
    // A bit-field data member.
    struct Bitfield : Category<bitfield_cat, Decl> {
       virtual const Expr& precision() const = 0;
-      virtual const Udt& membership() const = 0;
+      virtual const Type& membership() const = 0;
    };
 
                                 // -- Typedecl --
    struct Typedecl : Category<typedecl_cat, Decl> {
-      virtual const Udt& membership() const = 0;
+      virtual const Type& membership() const = 0;
       virtual const Typedecl& definition() const = 0;
    };
 
@@ -2060,7 +2058,6 @@ namespace ipr {
       virtual void visit(const Sum&);
       virtual void visit(const Template&);
       virtual void visit(const Union&);
-      virtual void visit(const Udt&);
       virtual void visit(const Auto&);
 
       virtual void visit(const Expr_list&);

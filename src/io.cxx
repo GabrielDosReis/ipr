@@ -1299,6 +1299,18 @@ namespace ipr
       explicit xpr_type_expr(const Expr& t) : type(t) { }
    };
 
+   template<typename T>
+   static Printer& operator<<(Printer& pp, const ipr::Udt<T>& t)
+   {
+      return pp << token(' ')
+            << token('{')
+            << newline_and_indent(3)
+            << xpr_expr(t.scope())
+            << newline_and_indent(-3)
+            << token('}')
+            << needs_newline();
+   }
+
    // >>>> Yuriy Solodkyy: 2006/05/31 
    // MSVC 7.1 has problem with calling same function from its local class.
    // Therefore this class was moved from being a local class of subsequent
@@ -1382,16 +1394,9 @@ namespace ipr
             << xpr_type_expr(t.target());
       }
 
-      void visit(const Udt& t) override
-      {
-         pp << token(' ')
-            << token('{')
-            << newline_and_indent(3)
-            << xpr_expr(t.scope())
-            << newline_and_indent(-3)
-            << token('}')
-            << needs_newline();
-      }
+      void visit(const Union& t) final { pp << t; }
+      void visit(const Enum& t) final { pp << t; }
+      void visit(const Namespace& t) final { pp << t; }
    };
    // <<<< Yuriy Solodkyy: 2006/05/31 
 

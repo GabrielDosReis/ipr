@@ -1417,7 +1417,7 @@ namespace ipr {
 
       
       struct Named_map : impl::Decl<ipr::Named_map> {
-         const ipr::Udt* member_of;
+         const ipr::Udt<ipr::Decl>* member_of;
          impl::Mapping* init;
          const ipr::Region* lexreg;
          impl::Expr_list args;
@@ -1495,12 +1495,12 @@ namespace ipr {
 
       // FIXME: Field should use unique_decl, not impl::Decl.
       struct Field : impl::Decl<ipr::Field> {
-         const ipr::Udt* member_of;
+         const ipr::Udt<ipr::Decl>* member_of;
          const ipr::Expr* init;
 
          Field();
 
-         const ipr::Udt& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final;
 
          // Override ipr::Decl::lexical_region.  Which is the
          // same as home_region for a Field.  Note that fields
@@ -1518,7 +1518,7 @@ namespace ipr {
       // FIXME: Bitfield should use unique_decl, not impl::Decl
       struct Bitfield : impl::Decl<ipr::Bitfield> {
          const ipr::Expr* length;
-         const ipr::Udt* member_of;
+         const ipr::Udt<ipr::Decl>* member_of;
          const ipr::Expr* init;
 
          Bitfield();
@@ -1526,7 +1526,7 @@ namespace ipr {
          const ipr::Expr& precision() const final;
          const ipr::Region& lexical_region() const final;
          const ipr::Region& home_region() const final;
-         const ipr::Udt& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final;
          Optional<ipr::Expr> initializer() const final;
       };
 
@@ -1537,12 +1537,12 @@ namespace ipr {
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
          const ipr::Type* init;
-         const ipr::Udt* member_of;
+         const ipr::Udt<ipr::Decl>* member_of;
          const ipr::Region* lexreg;
 
          Typedecl();
 
-         const ipr::Udt& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final;
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
@@ -1553,14 +1553,14 @@ namespace ipr {
       };
 
       struct Fundecl : impl::Decl<ipr::Fundecl> {
-         const ipr::Udt* member_of;
+         const ipr::Udt<ipr::Decl>* member_of;
          impl::Mapping* init;
          const ipr::Region* lexreg;
 
          Fundecl();
          
          const ipr::Mapping& mapping() const final;
-         const ipr::Udt& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final;
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
