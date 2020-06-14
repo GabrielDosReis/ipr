@@ -1436,6 +1436,9 @@ namespace ipr
       void visit(const Reference& t) override
       { pp << xpr_type_expr(t); }
 
+      void visit(const Rvalue_reference& t) override
+      { pp << xpr_type_expr(t); }
+
       void visit(const Template& t) override
       { pp << xpr_type_expr(t); }
 
