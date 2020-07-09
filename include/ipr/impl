@@ -752,7 +752,7 @@ namespace ipr {
       template<class D>
       struct Decl : Stmt<Node<D>> {
          basic_decl_data<D> decl_data;
-         ipr::Named_map* pat = { };
+         const ipr::Named_map* pat = { };
          val_sequence<ipr::Substitution> args;
 
          Decl() : decl_data{ nullptr } { }
@@ -793,7 +793,7 @@ namespace ipr {
          ipr::DeclSpecifiers spec;
          const ipr::Linkage* langlinkage;
          singleton_overload overload;
-         ipr::Named_map* pat;
+         const ipr::Named_map* pat;
          val_sequence<ipr::Substitution> args;
 
          unique_decl() : spec(ipr::DeclSpecifiers::None),
