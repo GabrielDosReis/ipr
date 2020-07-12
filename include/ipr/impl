@@ -192,7 +192,8 @@ namespace ipr {
       // identifier at its creation and retain it unchanged till the
       // end of the program.)  An obvious benefit is that ordering comes
       // for free.
-      template<typename T>
+      template<typename T,
+          typename std::enable_if_t<std::is_scalar_v<T>, int> = 0>
       constexpr int compare(T lhs, T rhs)
       {
          return lhs < rhs ? -1 : (lhs > rhs ? 1 : 0);
