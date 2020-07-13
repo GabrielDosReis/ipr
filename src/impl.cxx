@@ -350,12 +350,19 @@ namespace ipr {
       // -------------------
 
       Fundecl::Fundecl()
-            : member_of(0), init(0), lexreg(0)
+            : member_of(nullptr), data{ }, lexreg(nullptr)
       { }
 
-      const ipr::Mapping&
-      Fundecl::mapping() const {
-         return *util::check(init);
+      const ipr::Parameter_list& Fundecl::parameters() const {
+         if (data.index() == 0)
+            return *util::check(data.parameters());
+         return util::check(data.mapping())->parameters;
+      }
+
+      Optional<ipr::Mapping> Fundecl::mapping() const {
+         if (data.index() == 0)
+            return { };
+         return { data.mapping() };
       }
 
       const ipr::Udt<ipr::Decl>&
@@ -364,7 +371,9 @@ namespace ipr {
       }
 
       Optional<ipr::Expr> Fundecl::initializer() const {
-         return { util::check(init)->body };
+         if (data.index() == 0)
+            return { };
+         return { data.mapping() };
       }
 
       const ipr::Region&

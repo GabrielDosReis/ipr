@@ -16,6 +16,7 @@
 #include <deque>
 #include <map>
 #include <forward_list>
+#include <variant>
 
 // -----------------
 // -- Methodology --
@@ -1553,14 +1554,24 @@ namespace ipr {
          using rep = impl::Typedecl;
       };
 
+      // For a non-defining function declaration, the parameters - if any is named
+      // or has a default argument - are stored with that particular declaration.
+      // A function definition is one that specifies the initializer (Mapping) which
+      // already has room for the named parameters or the default arguments.
+      struct fundecl_data : std::variant<impl::Parameter_list*, impl::Mapping*> {
+         impl::Parameter_list* parameters() const { return std::get<0>(*this); }
+         impl::Mapping* mapping() const { return std::get<1>(*this); }
+      };
+
       struct Fundecl : impl::Decl<ipr::Fundecl> {
          const ipr::Udt<ipr::Decl>* member_of;
-         impl::Mapping* init;
+         fundecl_data data;
          const ipr::Region* lexreg;
 
          Fundecl();
          
-         const ipr::Mapping& mapping() const final;
+         const ipr::Parameter_list& parameters() const final;
+         Optional<ipr::Mapping> mapping() const final;
          const ipr::Udt<ipr::Decl>& membership() const final;
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
