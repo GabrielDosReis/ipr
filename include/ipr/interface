@@ -1902,15 +1902,11 @@ namespace ipr {
 
                                 // -- Fundecl --
    // This node represents a function declaration. Notice that the
-   // exception specification is actually made part of the function
-   // type.  For convenience, it is represented here too.
+   // exception specification is actually made part of the function type.
    struct Fundecl : Category<fundecl_cat, Decl> {
       virtual const Type& membership() const = 0;
-      virtual const Mapping& mapping() const = 0;
-
-      const Parameter_list& parameters() const
-      { return mapping().params(); }
-
+      virtual Optional<Mapping> mapping() const = 0;
+      virtual const Parameter_list& parameters() const = 0;
       virtual const Fundecl& definition() const = 0;
    };
 
