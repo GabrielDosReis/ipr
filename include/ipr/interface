@@ -349,15 +349,19 @@ namespace ipr {
    };
 
                                 // -- Sequence<>::Iterator --
-   // This iterator class is as much as abstract as it could be, for
-   // useful purposes.  It forwards most operations to the "Sequence"
-   // class it provides a view for.
+   // This iterator class is as abstract as it could be, for useful
+   // purposes.  It forwards most operations to the "Sequence" class
+   // it provides a view for.
    template<class T>
-   struct Sequence<T>::Iterator
-      : std::iterator<std::bidirectional_iterator_tag, const T>  {
+   struct Sequence<T>::Iterator {
+      using self_type = Sequence<T>::Iterator;
+      using value_type = const T;
+      using reference = const T&;
+      using pointer = const T*;
+      using difference_type = ptrdiff_t;
+      using iterator_category = std::bidirectional_iterator_tag;
 
-      Iterator() : seq{ }, index{ } {}
-
+      Iterator() {}
       Iterator(const Sequence* s, int i) : seq{ s }, index{ i } { }
 
       const T& operator*() const
@@ -399,8 +403,8 @@ namespace ipr {
       { return !(*this == other); }
 
    private:
-      const Sequence* seq;
-      int index;
+      const Sequence* seq{};
+      int index{};
    };
 
    template<class T>
