@@ -332,10 +332,10 @@ namespace ipr {
 
       template<class Operation>
       struct Classic : Operation {
-         const ipr::Decl* op_impl = { };
+         const ipr::Expr* op_impl = { };
          using Operation::Operation;
 
-         Optional<ipr::Decl> implementation() const final
+         Optional<ipr::Expr> implementation() const final
          {
             return { op_impl };
          }

@@ -693,7 +693,7 @@ namespace ipr {
    struct Classic : Expr {
       // For an operation implemented by an overloaded operator, retrieve
       // the implementation.
-      virtual Optional<Decl> implementation() const = 0;
+      virtual Optional<Expr> implementation() const = 0;
 
    protected:
       Classic(Category_code c) : Expr(c)
