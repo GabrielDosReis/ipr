@@ -1017,17 +1017,17 @@ namespace ipr {
             mdd->declset.push_back(this);
          }
          
-         const ipr::Name& name() const
+         const ipr::Name& name() const final
          {
             return this->decl_data.master_data->overload->name;
          }
          
-         ipr::DeclSpecifiers specifiers() const
+         ipr::DeclSpecifiers specifiers() const final
          {
             return this->decl_data.spec;
          }
          
-         const ipr::Type& type() const
+         const ipr::Type& type() const final
          {
             return this->decl_data.master_data->type;
          }
@@ -1052,9 +1052,9 @@ namespace ipr {
             return this->decl_data.master_data->declset;
          }
 
-         const T& definition() const
+         Optional<T> definition() const
          {
-            return *util::check(this->decl_data.master_data->def);
+            return this->decl_data.master_data->def;
          }
       };
 

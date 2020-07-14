@@ -2,7 +2,7 @@
 //
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
-// See LICENSE for copright and license notices.
+// See LICENSE for copyright and license notices.
 // 
 
 #ifndef IPR_INTERFACE_INCLUDED
@@ -1854,7 +1854,7 @@ namespace ipr {
       const Parameter_list& params() const { return mapping().params(); }
       const Expr& result() const { return mapping().result(); }
 
-      virtual const Named_map& definition() const = 0;
+      virtual Optional<Named_map> definition() const = 0;
    };
 
                                 // -- Enumerator --
@@ -1911,13 +1911,14 @@ namespace ipr {
       virtual const Type& membership() const = 0;
       virtual Optional<Mapping> mapping() const = 0;
       virtual const Parameter_list& parameters() const = 0;
-      virtual const Fundecl& definition() const = 0;
+      virtual Optional<Fundecl> definition() const = 0;
    };
 
                                 // -- Var --
    // This represents a variable declaration.  It is also used to
    // represent a static data member.
    struct Var : Category<var_cat, Decl> {
+      virtual Optional<Var> definition() const = 0;
    };
 
                                 // -- Field --
@@ -1936,7 +1937,7 @@ namespace ipr {
                                 // -- Typedecl --
    struct Typedecl : Category<typedecl_cat, Decl> {
       virtual const Type& membership() const = 0;
-      virtual const Typedecl& definition() const = 0;
+      virtual Optional<Typedecl> definition() const = 0;
    };
 
                                 // -- Translation_unit --
