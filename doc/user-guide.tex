@@ -109,7 +109,7 @@ int main()
 \}
 \end{Program}
 
-When, compiled and linked against the IPR library, it produces the output
+When compiled and linked against the IPR library, it produces the output
 \begin{Output}
 'c' has type char
 1024 has type int
@@ -120,7 +120,7 @@ double has type  typename
 \end{Output}
 
 %% Notions like \code{class}, \code{enum}, \code{union} and \code{namespace} are
-%% types in IPR: they characterize type expresions such as class-expressions,
+%% types in IPR: they characterize type expressions such as class-expressions,
 %% enum-expressions, union-expression and namespace-expressions.
 
 A node of type \NodeClass{Unit} also serves to represent the notion of 
@@ -130,13 +130,13 @@ instantiations.  An instantiation unit is a translation unit where all
 template instantiation requests have been resolved.
 
 
-The next sections will focuse on the part of the library typically used for
+The next sections will focus on the part of the library typically used for
 building IPR nodes.  It is meant to provide support for tools that create IPR
 nodes, \eg{} IPR generators from compilers or XPR parsers.  All IPR
 node construction functions return pointers; usually their names start with
 the prefix \code{make\_}.  
 
-Type nodes, expression nodes and statements nodes are created with
+Type nodes, expression nodes, and statements nodes are created with
 \NodeClass{impl::Unit} objects.  Declarations are created with their enclosing
 regions.  They are generally represented as a triple of name, type and
 optional initializer.
@@ -366,7 +366,7 @@ will yield the same physical node.
 \subsection{CV-qualified type}
 \label{sec:type.cv-qualified}
 Any type (in IPR sense) can be cv-qualified.  The set of cv-qualifiers
-currently supported consists in \texttt{const}, \texttt{volatile} and
+currently supported consists of \texttt{const}, \texttt{volatile} and
 \texttt{restrict} (C99).  They are denoted by the enumerators
 \texttt{Type::Const}, \texttt{Type::Volatile} and \texttt{Type::Restrict}.
 They can be bitor-ed.  A cv-qualified type is built with the
@@ -463,7 +463,7 @@ a type (reflecting the assumption introduced by the C++ keyword
 \subsection{Function type}
 \label{sec:type.function}
 
-A function type consists in three logical parts: (a) the parameter type list;
+A function type consists of three logical parts: (a) the parameter type list;
 (b) the return type; and (c) the list of exceptions a function of that type
 may throw.  IPR represents a function type as a \NodeClass{Function} node.
 Such nodes can be constructed with the \NodeClass{impl::Unit} member functions 
@@ -615,7 +615,7 @@ the target type and the second operand is the source expression.
 In Standard C++, most operators can be overloaded and given a user-defined
 meaning. For generality, IPR takes the approach that just about any operator
 can be given a user-defined meaning.  Consequently, every IPR implementation
-class for a operator has a field \code{op\_impl} to record the function
+class for an operator has a field \code{op\_impl} to record the function
 declaration that implements that operator.  For instance, consider the
 expression \code{cout~<<~2} for inserting the integer value tow in the
 output standard stream.  Assume further that the insertion function operator
@@ -638,22 +638,22 @@ built-in operator.
 \label{sec:data.named}
 
 This section describes the representation of named data, \ie{} variables, data
-member.  Notice that in either cases, references are treated no specially from
+member.  Notice that in either case, references are treated no specially from
 variables or data members -- even though the C++ standard says that references
 are not objects. 
 
 Named data are declared at user-defined types (\ie{} class-types,
 enumerations or namespaces) level.  Consequently, their IPR node
-representations are  manifactured with a member function, prefixed by
+representations are  manufactured with a member function, prefixed by
 \code{declare\_}, of the enclosing user-defined type. The next subsections
-discuss the mapping ofthe variety C++ named data to IPR representation.
+discuss the mapping of the variety C++ named data to IPR representation.
 
 \subsection{Variable declaration}
 \label{sec:decl.variable}
 
 A variable is an association of a name and a storage for data, that does not
 have any enclosing object. The notion of variable is implemented by
-\code{impl::Var}.  Manifacturing a node of that type requires ---
+\code{impl::Var}.  Manufacturing a node of that type requires ---
 as do most declaration nodes --- three things: (a) the name of the variable;
 (b) the type of the data to store; and (c) an optional initializer.
 
@@ -706,11 +706,11 @@ one line per significant token.
 
 A static data member is a global variable in disguise.  They key difference
 between a static data member and an ordinary variable that the former is
-subject to to access control.  Therefore, a static data member is also
+subject to access control.  Therefore, a static data member is also
 represented by a \code{Var} node.  From the IPR representation point of view,
-the steps for manifacturing a node for a static data member is pretty much
+the steps for manufacturing a node for a static data member is pretty much
 the same as for ordinary variable, except that one uses the enclosing
-class-type as the manifacturer.  For instance, consider the program fragment 
+class-type as the manufacturer.  For instance, consider the program fragment 
 \begin{Program}
   class nifty_counter \{
     // ...
@@ -761,7 +761,7 @@ enumerations.
 
 A non-static data member has semantics different from that of ordinary 
 variable and static data-members.  Consequently, it is represented by a
-distinct node (\code{Field}).  However, the steps for manifacturing such node
+distinct node (\code{Field}).  However, the steps for manufacturing such node
 is very similar to that of a variable, except that the construction function 
 \code{declare\_field()} is used --- instead of \code{declare\_var()}.
 
@@ -826,7 +826,7 @@ mapping.  For example, the C++ declaration
   int identity(int);
 \end{Program}
 defines a mapping from \code{int} to \code{int} called \code{identity}.
-More generaly, that declaration is represented as the association of the name
+More generally, that declaration is represented as the association of the name
 \code{identity} with a 
 unary parameterized expression, where the argument is expected to be of type
 \code{int}, the result of type \code{int}, and the computation of the result
@@ -850,13 +850,13 @@ non-member functions with privileged access to their enclosing class-type's
 members (kind of friend non-member functions), and the latter have an implicit
 or implied parameter.  We do not have different kinds of function types for
 the types of static member functions and non-static member functions. They 
-all have types uniformely represented by a \code{Function} node.
+all have types uniformly represented by a \code{Function} node.
 
 A \code{Fundecl} for a static member function differs from a \code{Fundecl}
 for a non-static member function in that the former has the
 \code{Decl::Static} set and the latter not.  
 
-Furthermore, the correspondance between a non-static member function in C++
+Furthermore, the correspondence between a non-static member function in C++
 and its ``regularized'' version in IPR makes and adjustment:  the keyword
 \code{this} is made an explicit parameter.  For instance, the following
 member function declarations 
@@ -1249,7 +1249,7 @@ Standard C++ defines a labeled statement according to the grammar:
 
 All these three variants of labeled statements are uniformly represented in
 IPR through the node class \NodeClass{Labeled\_stmt}.  The label can be any
-IPR expression.  Since a name is a expression a statement like 
+IPR expression.  Since a name is an expression a statement like 
 \begin{Program}
   id:
      token = cursor - 1;
@@ -1417,7 +1417,7 @@ equivalently written in XPR as
 It is clear that it is a named mapping which, when given a type argument
 T, produces a function declaration --- named \code{identity<T>} -- taking a
 \code{T} and returning a value of the same type.  In a sense, it is a mapping
-of a mapping: the result of the first mapping is compilte-time, whereas the
+of a mapping: the result of the first mapping is compile-time, whereas the
 second is runtime; however the abstract representations are similar.
 
 A named mapping is a declaration (\code{Named\_map}).  It has type represented
@@ -1540,7 +1540,7 @@ represented as an ordinary class.  On the other hand, \code{\#5} is a
 secondary template declaration.  It specializes \code{\#1}, and uses the 
 argument list \code{<T*>}.
 
-Secondary named mappings are manifactured with the member function
+Secondary named mappings are manufactured with the member function
 \begin{Program}
   impl::Named_map* declare_secondar_map(const ipr::Name&, const ipr::Template&);
 \end{Program}
