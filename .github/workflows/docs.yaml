@@ -1,0 +1,27 @@
+name: Ubuntu-Docs
+
+on:
+  push:
+    paths:
+      - 'doc/**'
+    branches: [ master ]
+  pull_request:
+    paths:
+      - 'doc/**'
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install GCC, CMake
+      run: sudo apt-get install build-essential cmake texlive texlive-latex-extra
+
+    - name: Configure CMake
+      run: mkdir build && cmake -Bbuild -DBUILD_DOC=ON
+
+    - name: Build project
+      run: make -C build
