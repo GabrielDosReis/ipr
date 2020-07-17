@@ -1,3 +1,5 @@
+![Ubuntu-Build](https://github.com/GabrielDosReis/ipr/workflows/Ubuntu-Build/badge.svg)
+
 The IPR, short for *Internal Program Representation*, is an open source
 project originally developed as the core data structures of a framework
 for semantics-based analysis and transformation of C++ programs.  The
