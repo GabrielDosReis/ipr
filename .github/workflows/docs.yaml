@@ -24,4 +24,4 @@ jobs:
       run: mkdir build && cmake -Bbuild -DBUILD_DOC=ON
 
     - name: Build project
-      run: make -C build
+      run: make -C build doc
