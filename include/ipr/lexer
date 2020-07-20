@@ -3,7 +3,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #ifndef IPR_XPR_LEXER_INCLUDED
 #define IPR_XPR_LEXER_INCLUDED
@@ -16,7 +16,7 @@
 #include <ipr/impl>
 
 namespace xpr {
-   
+
    struct Token {
       enum Kind {
          Unknown,
@@ -40,7 +40,7 @@ namespace xpr {
          Not                = '!',
          Assign             = '=',
          Semicolon          = ';',
-         Comma              =',',
+         Comma              = ',',
          Complement         = '~',
          At                 = '@',
          Ampersand          = '&',
@@ -74,98 +74,96 @@ namespace xpr {
          LeftShiftAssign    = LeftShift + 256 * 256 * '=',
          RightShiftAssign   = RightShift + 256 * 256 * '=',
          ArrowStar          = Arrow + 256 * 256 * '*',
-         Boolean,            // boolean literal
-         Integer,            // integer literal
-         FloatingPoint,      // floating-poitn literal
-         Character = '\'',   // character literal
-         String = '"',       // string literal
+         Boolean,          // boolean literal
+         Integer,          // integer literal
+         FloatingPoint,    // floating-poitn literal
+         Character = '\'', // character literal
+         String    = '"',  // string literal
          Identifier,
-         Comment,            // well, for comments
-         
-         Auto,               // "auto"
-         Class,              // "class"
-         Union,              // "union"
-         Enum,               // "enum"
-         Namespace,          // "namespace"
-         Concept,            // "concept"
-         
-         Virtual,            // "virtual"
-         Const,              // "const"
-         Volatile,           // "volatile"
-         Restrict,           // "restrict"
-         
-         Public,             // "public"
-         Protected,          // "protected"
-         Private,            // "private"
-         Inline,             // "inline"
-         Explicit,           // "explicit"
-         Friend,             // "friend"
-         Export,             // "export"
-         Extern,             // "extern"
-         Static,             // "static"
-         Register,           // "register"
-         
-         Sizeof,             // "sizeof"
-         Typeid,             // "typeid"
-         Throw,              // "throw"
-         StaticCast,         // "static_cast"
-         DynamicCast,        // "dynamic_cast"
-         ConstCast,          // "const_cast"
-         ReinterpretCast,    // "reinterpret_cast"
-         New,                // "new"
-         Delete,             // "delete"
-         
-         For,                // "for"
-         If,                 // "if"
-         Else,               // "else"
-         Switch,             // "switch"
-         Continue,           // "continue"
-         Break,              // "break"
-         Return,             // "return"
-         Goto,               // "goto"
-         Case,               // "case"
-         Default,            // "default"
-         While,              // "while
-         Do,                 // "do"
-         Catch,              // "catch"
-         
-         EndOfInput          // end of character input stream
+         Comment, // well, for comments
+
+         Auto,      // "auto"
+         Class,     // "class"
+         Union,     // "union"
+         Enum,      // "enum"
+         Namespace, // "namespace"
+         Concept,   // "concept"
+
+         Virtual,  // "virtual"
+         Const,    // "const"
+         Volatile, // "volatile"
+         Restrict, // "restrict"
+
+         Public,    // "public"
+         Protected, // "protected"
+         Private,   // "private"
+         Inline,    // "inline"
+         Explicit,  // "explicit"
+         Friend,    // "friend"
+         Export,    // "export"
+         Extern,    // "extern"
+         Static,    // "static"
+         Register,  // "register"
+
+         Sizeof,          // "sizeof"
+         Typeid,          // "typeid"
+         Throw,           // "throw"
+         StaticCast,      // "static_cast"
+         DynamicCast,     // "dynamic_cast"
+         ConstCast,       // "const_cast"
+         ReinterpretCast, // "reinterpret_cast"
+         New,             // "new"
+         Delete,          // "delete"
+
+         For,      // "for"
+         If,       // "if"
+         Else,     // "else"
+         Switch,   // "switch"
+         Continue, // "continue"
+         Break,    // "break"
+         Return,   // "return"
+         Goto,     // "goto"
+         Case,     // "case"
+         Default,  // "default"
+         While,    // "while
+         Do,       // "do"
+         Catch,    // "catch"
+
+         EndOfInput // end of character input stream
       };
 
       // Comparator function object type, useful for inserting
       // tokens in an associative containers.
       struct Compare {
-         bool operator()(const Token& lhs, const Token& rhs) const
-         {
+         bool operator()(const Token& lhs, const Token& rhs) const {
             return lhs.text < rhs.text;
          }
       };
-      
-      Token() : kind() { }
-      Token(Kind k, const char* s = 0) : kind(k), text(s) { }
-      
+
+      Token() : kind() {}
+      Token(Kind k, const char* s = 0) : kind(k), text(s) {}
+
       Kind kind;
       ipr::Source_location location;
       std::string text;
    };
-   
+
    struct Lexer {
       explicit Lexer(ipr::impl::Unit&);
-      
+
       Token& peek(int = 0);
       void discard() { tokens.pop_front(); }
-      
+
       void input_file(const char*);
       void syntax_error();
 
    protected:
       ipr::impl::Unit& unit;
-      
+
    private:
       using Keyword_set = std::set<Token, Token::Compare>;
-      struct Token_stream : std::deque<Token> {
-      };
-      
+      struct Token_stream : std::deque<Token> {};
+
       Token_stream tokens;
       Keyword_set keywords;
       ipr::Source_location locus;
@@ -173,7 +171,7 @@ namespace xpr {
       std::ifstream input;
       const char* cursor;
       const char* end_of_line;
-      
+
       void insert_keyword(Token::Kind, const char*);
       std::istream& read_line();
       void read_quoted_text(std::string&);
@@ -183,8 +181,8 @@ namespace xpr {
       void identifier(Token&);
       void number(Token&);
       void unknown(Token&);
-         inline const Token* keyword(const std::string&) const;
+      inline const Token* keyword(const std::string&) const;
    };
-}
+} // namespace xpr
 
 #endif // IPR_XPR_LEXER_INCLUDED

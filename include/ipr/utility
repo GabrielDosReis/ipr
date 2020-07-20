@@ -3,7 +3,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #ifndef IPR_UTILITY_INCLUDED
 #define IPR_UTILITY_INCLUDED
@@ -20,8 +20,7 @@ namespace ipr {
 
       // -- Check for nonnull pointer.
       template<typename T>
-      inline T* check(T* ptr)
-      {
+      inline T* check(T* ptr) {
          if (ptr == nullptr)
             throw std::logic_error("attempt to dereference a null pointer");
          return ptr;
@@ -52,7 +51,7 @@ namespace ipr {
             enum Color { Black, Red };
             enum Dir { Left, Right, Parent };
 
-            link() : arm(), color(Red) { }
+            link() : arm(), color(Red) {}
 
             Node*& parent() { return arm[Parent]; }
             Node*& left() { return arm[Left]; }
@@ -64,7 +63,7 @@ namespace ipr {
 
          template<class Node>
          struct core {
-            core() : root{ }, count{ } { }
+            core() : root{}, count{} {}
 
             int size() const { return count; }
 
@@ -85,14 +84,11 @@ namespace ipr {
          };
 
          template<class Node>
-         void
-         core<Node>::rotate_left(Node* x)
-         {
+         void core<Node>::rotate_left(Node* x) {
             Node* y = x->right();
             // Make y's left a subtree of x's right subtree.
             x->right() = y->left();
-            if (y->left() != nullptr)
-               y->left()->parent() = x;
+            if (y->left() != nullptr) y->left()->parent() = x;
 
             // Update y's parent and its left or right arms.
             y->parent() = x->parent();
@@ -105,19 +101,16 @@ namespace ipr {
                x->parent()->right() = y;
 
             // Now, x must go on y's left.
-            y->left() = x;
+            y->left()   = x;
             x->parent() = y;
          }
 
          template<class Node>
-         void
-         core<Node>::rotate_right(Node* x)
-         {
+         void core<Node>::rotate_right(Node* x) {
             Node* y = x->left();
 
             x->left() = y->right();
-            if (y->right() != nullptr)
-               y->right()->parent() = x;
+            if (y->right() != nullptr) y->right()->parent() = x;
 
             y->parent() = x->parent();
             if (x->parent() == nullptr)
@@ -127,49 +120,49 @@ namespace ipr {
             else
                x->parent()->left() = y;
 
-            y->right() = x;
+            y->right()  = x;
             x->parent() = y;
          }
 
          template<class Node>
-         void
-         core<Node>::fixup_insert(Node* z)
-         {
+         void core<Node>::fixup_insert(Node* z) {
             while (z != root && z->parent()->color == Node::Red) {
                if (z->parent() == z->parent()->parent()->left()) {
                   Node* y = z->parent()->parent()->right();
                   if (y != nullptr && y->color == Node::Red) {
-                     z->parent()->color = Node::Black;
-                     y->color = Node::Black;
+                     z->parent()->color           = Node::Black;
+                     y->color                     = Node::Black;
                      z->parent()->parent()->color = Node::Red;
-                     z = z->parent()->parent();
-                  } else {
+                     z                            = z->parent()->parent();
+                  }
+                  else {
                      if (z->parent()->right() == z) {
                         z = z->parent();
                         rotate_left(z);
                      }
-                     z->parent()->color = Node::Black;
+                     z->parent()->color           = Node::Black;
                      z->parent()->parent()->color = Node::Red;
                      rotate_right(z->parent()->parent());
                   }
-               } else {
+               }
+               else {
                   Node* y = z->parent()->parent()->left();
                   if (y != nullptr && y->color == Node::Red) {
-                     z->parent()->color = Node::Black;
-                     y->color = Node::Black;
+                     z->parent()->color           = Node::Black;
+                     y->color                     = Node::Black;
                      z->parent()->parent()->color = Node::Red;
-                     z = z->parent()->parent();
-                  } else {
+                     z                            = z->parent()->parent();
+                  }
+                  else {
                      if (z->parent()->left() == z) {
                         z = z->parent();
                         rotate_right(z);
                      }
-                     z->parent()->color = Node::Black;
+                     z->parent()->color           = Node::Black;
                      z->parent()->parent()->color = Node::Red;
                      rotate_left(z->parent()->parent());
                   }
                }
-
             }
 
             root->color = Node::Black;
@@ -187,13 +180,11 @@ namespace ipr {
 
          template<class Node>
          template<typename Key, class Comp>
-         Node*
-         chain<Node>::find(const Key& key, Comp comp) const
-         {
-            bool found = false;
+         Node* chain<Node>::find(const Key& key, Comp comp) const {
+            bool found   = false;
             Node* result = this->root;
             while (result != nullptr && !found) {
-               int ordering = comp(key, *result) ;
+               int ordering = comp(key, *result);
                if (ordering < 0)
                   result = result->left();
                else if (ordering > 0)
@@ -207,21 +198,19 @@ namespace ipr {
 
          template<class Node>
          template<class Comp>
-         Node*
-         chain<Node>::insert(Node* z, Comp comp)
-         {
+         Node* chain<Node>::insert(Node* z, Comp comp) {
             Node** slot = &this->root;
-            Node* up = nullptr;
+            Node* up    = nullptr;
 
             bool found = false;
             while (!found && *slot != nullptr) {
                int ordering = comp(*z, **slot);
                if (ordering < 0) {
-                  up = *slot;
+                  up   = *slot;
                   slot = &up->left();
                }
                else if (ordering > 0) {
-                  up = *slot;
+                  up   = *slot;
                   slot = &up->right();
                }
                else
@@ -231,13 +220,13 @@ namespace ipr {
             if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
                this->root = z;
-               z->color = Node::Black;
+               z->color   = Node::Black;
             }
             else if (*slot == nullptr) {
                // key is not present, do what we're asked to do.
-               *slot = z;
+               *slot       = z;
                z->parent() = up;
-               z->color = Node::Red;
+               z->color    = Node::Red;
                this->fixup_insert(z);
             }
 
@@ -265,19 +254,17 @@ namespace ipr {
 
          private:
             node<T>* allocate() {
-               return static_cast<node<T>*>(operator new (sizeof(node<T>)));
+               return static_cast<node<T>*>(operator new(sizeof(node<T>)));
             }
 
-            void deallocate(node<T>* n) {
-               operator delete(n);
-            }
+            void deallocate(node<T>* n) { operator delete(n); }
 
             template<class U>
             node<T>* make_node(const U& u) {
                node<T>* n = allocate();
                new (&n->data) T(u);
-               n->arm[node<T>::Left] = nullptr;
-               n->arm[node<T>::Right] = nullptr;
+               n->arm[node<T>::Left]   = nullptr;
+               n->arm[node<T>::Right]  = nullptr;
                n->arm[node<T>::Parent] = nullptr;
                return n;
             }
@@ -292,10 +279,8 @@ namespace ipr {
 
          template<typename T>
          template<typename Key, class Comp>
-         T*
-         container<T>::find(const Key& key, Comp comp) const
-         {
-            for (node<T>* x = this->root; x != nullptr; ) {
+         T* container<T>::find(const Key& key, Comp comp) const {
+            for (node<T>* x = this->root; x != nullptr;) {
                int ordering = comp(key, x->data);
                if (ordering < 0)
                   x = x->left();
@@ -310,31 +295,30 @@ namespace ipr {
 
          template<typename T>
          template<typename Key, class Comp>
-         T*
-         container<T>::insert(const Key& key, Comp comp)
-         {
+         T* container<T>::insert(const Key& key, Comp comp) {
             if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
-               this->root = make_node(key);
+               this->root        = make_node(key);
                this->root->color = node<T>::Black;
                ++this->count;
                return &this->root->data;
             }
 
-            node<T>** slot = &this->root;
+            node<T>** slot  = &this->root;
             node<T>* parent = nullptr;
-            node<T>* where = nullptr;
-            bool found = false;
+            node<T>* where  = nullptr;
+            bool found      = false;
 
-            for (where = this->root; where != nullptr && !found; where = *slot) {
+            for (where = this->root; where != nullptr && !found;
+                 where = *slot) {
                int ordering = comp(key, where->data);
                if (ordering < 0) {
                   parent = where;
-                  slot = &where->left();
+                  slot   = &where->left();
                }
                else if (ordering > 0) {
                   parent = where;
-                  slot = &where->right();
+                  slot   = &where->right();
                }
                else
                   found = true;
@@ -342,16 +326,16 @@ namespace ipr {
 
             if (where == nullptr) {
                // key is not present, do what we're asked to do.
-               where = *slot = make_node(key);
+               where = *slot   = make_node(key);
                where->parent() = parent;
-               where->color = node<T>::Red;
+               where->color    = node<T>::Red;
                ++this->count;
                this->fixup_insert(where);
             }
 
             return &where->data;
          }
-      }
+      } // namespace rb_tree
 
 
       // -- helper for implementing permanent string objects.  They uniquely
@@ -364,9 +348,7 @@ namespace ipr {
 
          // number of characters directly contained in this header
          // of the string.  Takent to be the number of bytes in size_type.
-         enum {
-            padding_count = sizeof (size_type)
-         };
+         enum { padding_count = sizeof(size_type) };
 
          int size() const { return length; }
          char operator[](int) const;
@@ -386,22 +368,21 @@ namespace ipr {
 
       private:
          util::string* allocate(int);
-         int remaining_header_count() const
-         {
+         int remaining_header_count() const {
             return (int)(next_header - &mem->storage[0]);
          }
 
          struct pool;
 
-         enum { headersz = sizeof (util::string) };
-         enum { bufsz = headersz << (20 - sizeof (pool*)) };
+         enum { headersz = sizeof(util::string) };
+         enum { bufsz = headersz << (20 - sizeof(pool*)) };
 
          struct pool {
             pool* previous;
             util::string storage[bufsz];
          };
 
-         enum { poolsz = sizeof (pool) };
+         enum { poolsz = sizeof(pool) };
 
          pool* mem;
          string* next_header;
@@ -411,18 +392,16 @@ namespace ipr {
       struct lexicographical_compare {
          template<typename In1, typename In2, class Compare>
          int operator()(In1 first1, In1 last1, In2 first2, In2 last2,
-                        Compare compare) const
-         {
+                        Compare compare) const {
             for (; first1 != last1 && first2 != last2; ++first1, ++first2)
-               if (int cmp = compare(*first1, *first2))
-                  return cmp;
+               if (int cmp = compare(*first1, *first2)) return cmp;
 
             return first1 == last1 ? (first2 == last2 ? 0 : -1) : 1;
          }
       };
 
 
-   }
-}
+   } // namespace util
+} // namespace ipr
 
 #endif // IPR_UTILITY_INCLUDED
