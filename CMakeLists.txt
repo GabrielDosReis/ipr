@@ -1,9 +1,14 @@
 cmake_minimum_required(
-   VERSION 3.5
+   VERSION 3.9
 )
 
 option(BUILD_DOC
    "Build LaTeX documentation"
+   OFF
+)
+
+option(BUILD_TESTS
+   "Build the tests. Requires GTest."
    OFF
 )
 
@@ -69,4 +74,35 @@ install(
 if(BUILD_DOC)
    include(cmake/UseLATEX.cmake)
    add_subdirectory(doc)
+endif()
+
+if(BUILD_TESTS)
+   enable_testing()
+
+   # Download GTest.
+   include(cmake/External_GTest.cmake)
+
+   include(GoogleTest)
+   set(TEST_BINARY tests)
+   add_executable(${TEST_BINARY}
+      tests/main.cpp
+      tests/simple.cpp
+   )
+   target_include_directories(${PROJECT_NAME}
+     PRIVATE
+         ${PROJECT_SOURCE_DIR}/include
+   )
+   target_link_libraries(${TEST_BINARY}
+      ${PROJECT_NAME}
+      ${GTEST_LIBRARY}
+   )
+   set_target_properties(${TEST_BINARY}
+      PROPERTIES
+         CXX_STANDARD 17
+         CXX_STANDARD_REQUIRED ON
+       CXX_EXTENSIONS OFF
+   )
+   gtest_add_tests(
+      TARGET ${TEST_BINARY}
+   )
 endif()
