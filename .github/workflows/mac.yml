@@ -24,7 +24,7 @@ jobs:
       run: cmake --build ./build --parallel
 
     - name: Reconfigure CMake with Tests
-      run: cmake -Bbuild -DBUILD_TESTS=ON
+      run: cmake -Bbuild -DBUILD_TESTING=ON
 
     - name: Build tests
       run: cmake --build ./build --parallel

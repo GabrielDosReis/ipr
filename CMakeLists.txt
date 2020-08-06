@@ -7,7 +7,7 @@ option(BUILD_DOC
    OFF
 )
 
-option(BUILD_TESTS
+option(BUILD_TESTING
    "Build the tests. Requires GTest."
    OFF
 )
@@ -76,33 +76,13 @@ if(BUILD_DOC)
    add_subdirectory(doc)
 endif()
 
-if(BUILD_TESTS)
+if(BUILD_TESTING)
    enable_testing()
 
    # Download GTest.
    include(cmake/External_GTest.cmake)
 
    include(GoogleTest)
-   set(TEST_BINARY tests)
-   add_executable(${TEST_BINARY}
-      tests/main.cpp
-      tests/simple.cpp
-   )
-   target_include_directories(${PROJECT_NAME}
-     PRIVATE
-         ${PROJECT_SOURCE_DIR}/include
-   )
-   target_link_libraries(${TEST_BINARY}
-      ${PROJECT_NAME}
-      ${GTEST_LIBRARY}
-   )
-   set_target_properties(${TEST_BINARY}
-      PROPERTIES
-         CXX_STANDARD 17
-         CXX_STANDARD_REQUIRED ON
-       CXX_EXTENSIONS OFF
-   )
-   gtest_add_tests(
-      TARGET ${TEST_BINARY}
-   )
+
+   add_subdirectory(tests)
 endif()
