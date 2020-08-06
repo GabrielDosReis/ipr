@@ -12,6 +12,11 @@ option(BUILD_TESTING
    OFF
 )
 
+option(DOWNLOAD_GTEST
+  "Force downloading GTest instead of using a local copy."
+   OFF
+)
+
 project(ipr
    VERSION 0.47
    LANGUAGES CXX
@@ -79,8 +84,27 @@ endif()
 if(BUILD_TESTING)
    enable_testing()
 
-   # Download GTest.
-   include(cmake/External_GTest.cmake)
+   find_package(GTest)
+
+   # Download GTest if not found or forced.
+   if(NOT GTest_FOUND OR DOWNLOAD_GTEST)
+      message(STATUS "Downloading and building GTest.")
+      configure_file(cmake/External_GTest.cmake gtest/CMakeLists.txt)
+      execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/gtest"
+         OUTPUT_QUIET
+      )
+      execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/gtest"
+         OUTPUT_QUIET
+      )
+      set(GTEST_ROOT ${CMAKE_BINARY_DIR}/gtest)
+      find_package(GTest REQUIRED)
+   endif()
+
+   if(NOT GTest_FOUND)
+      message(FATAL_ERROR "GTest could not be found or built.")
+   endif()
 
    include(GoogleTest)
 

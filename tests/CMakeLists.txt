@@ -7,7 +7,7 @@ add_executable(${TEST_BINARY}
 
 target_link_libraries(${TEST_BINARY}
    ${PROJECT_NAME}
-   ${GTEST_LIBRARY}
+   GTest::GTest
 )
 
 set_target_properties(${TEST_BINARY}
