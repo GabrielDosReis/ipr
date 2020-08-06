@@ -22,5 +22,3 @@ TEST(TestIO, GlobalConstIntWithInit) {
   EXPECT_GT(ss.str().size(), 0);
 }
 
-
-
