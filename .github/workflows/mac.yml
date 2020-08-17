@@ -21,4 +21,4 @@ jobs:
       run: mkdir build && cmake -Bbuild
 
     - name: Build project
-      run: make -C build
+      run: cmake --build ./build --parallel
