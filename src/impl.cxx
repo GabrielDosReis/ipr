@@ -635,8 +635,8 @@ namespace ipr {
       }
 
       impl::Empty_stmt*
-      stmt_factory::make_empty_stmt() {
-         return empty_stmts.make(*make_phantom());
+      stmt_factory::make_empty_stmt(const ipr::Type& t) {
+         return empty_stmts.make(*make_phantom(t));
       }
 
       impl::Block*

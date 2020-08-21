@@ -1962,7 +1962,7 @@ namespace ipr {
       struct stmt_factory : expr_factory {
          impl::Break* make_break();
          impl::Continue* make_continue();
-         impl::Empty_stmt* make_empty_stmt();
+         impl::Empty_stmt* make_empty_stmt(const ipr::Type&);
          impl::Block* make_block(const ipr::Region&, const ipr::Type&);
          impl::Ctor_body* make_ctor_body(const ipr::Expr_list&,
                                          const ipr::Block&);
