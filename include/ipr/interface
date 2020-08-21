@@ -1190,9 +1190,14 @@ namespace ipr {
 
                                 // -- Id_expr --
    // This node represents use of a name to designate an entity.
-   // FIXME: Explain how useful this is and when it is used.
-   struct Id_expr : Unary<Category<id_expr_cat, Name>, const Name&> {
-      virtual const Decl& resolution() const = 0;
+   // In general, names are introduced by a declaration.  In a well-formed
+   // fully elaborated program, a use of name refers to exactly one declaration.
+   // However, in a partially elaborated program (e.g. a template definition)
+   // a dependent name may refer to zero, one, or many (overloaded) declarations.
+   struct Id_expr : Unary<Category<id_expr_cat, Expr>, const Name&> {
+      // The set of declarations the name refers to, at the elaboration point.
+      virtual Optional<Expr> resolution() const = 0;
+
       Arg_type name() const { return operand(); }
    };
 

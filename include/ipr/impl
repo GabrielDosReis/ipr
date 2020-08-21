@@ -1108,11 +1108,11 @@ namespace ipr {
       using Identifier = Unary_expr<ipr::Identifier>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
-         const ipr::Decl* decl;
+         const ipr::Expr* decls = nullptr;
 
          explicit Id_expr(const ipr::Name&);
          const ipr::Type& type() const final;
-         const ipr::Decl& resolution() const final;
+         Optional<ipr::Expr> resolution() const final;
       };
 
       using Not = Classic_unary_expr<ipr::Not>;

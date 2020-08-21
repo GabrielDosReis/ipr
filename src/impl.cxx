@@ -1083,17 +1083,17 @@ namespace ipr {
       // -------------
 
       Id_expr::Id_expr(const ipr::Name& n)
-            : impl::Unary<impl::Expr<ipr::Id_expr>>(n), decl(0)
+            : impl::Unary<impl::Expr<ipr::Id_expr>>(n)
       { }
 
       const ipr::Type&
       Id_expr::type() const {
-         return util::check(decl)->type();
+         return *util::check(constraint);
       }
 
-      const ipr::Decl&
+      Optional<ipr::Expr>
       Id_expr::resolution() const {
-         return *util::check(decl);
+         return { decls };
       }
 
 
@@ -1512,7 +1512,7 @@ namespace ipr {
       expr_factory::make_id_expr(const ipr::Decl& d) {
          impl::Id_expr* x = id_exprs.make(d.name());
          x->constraint = &d.type();
-         x->decl = &d;
+         x->decls = &d;
          return x;
       }
 
