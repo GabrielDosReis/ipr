@@ -1191,7 +1191,7 @@ namespace ipr {
       using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
       using Rshift = Classic_binary_expr<ipr::Rshift>;
       using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
-      using Scope_ref = Binary_expr<ipr::Scope_ref>;
+      using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_expr<ipr::Template_id>;
 
@@ -1338,7 +1338,6 @@ namespace ipr {
          util::rb_tree::container<impl::Literal> lits;
          util::rb_tree::container<impl::Operator> ops;
          util::rb_tree::container<impl::Rname> rnames;
-         util::rb_tree::container<impl::Scope_ref> scope_refs;
          util::rb_tree::container<Template_id> template_ids;
          util::rb_tree::container<impl::Type_id> type_ids;
          util::rb_tree::container<impl::Sizeof> sizeofs;
@@ -1366,6 +1365,7 @@ namespace ipr {
          stable_farm<impl::Unary_plus> unary_pluses;
          stable_farm<impl::Expansion> expansions;
 
+         stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;
          stable_farm<impl::Array_ref> array_refs;
          stable_farm<impl::Arrow> arrows;
@@ -2044,9 +2044,6 @@ namespace ipr {
          const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
 
          const ipr::Conversion& get_conversion(const ipr::Type&);
-
-         const ipr::Scope_ref& get_scope_ref(const ipr::Expr&,
-                                             const ipr::Expr&);
 
          const ipr::Template_id& get_template_id(const ipr::Name&,
                                                  const ipr::Expr_list&);

@@ -1831,8 +1831,7 @@ namespace ipr {
       impl::Scope_ref*
       expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r)
       {
-         using Rep = impl::Scope_ref::Rep;
-         return scope_refs.insert(Rep{ l, r }, binary_compare());
+         return scope_refs.make(l, r);
       }
 
       impl::Rshift*
@@ -2106,14 +2105,6 @@ namespace ipr {
          if (conv->constraint == 0)
             conv->constraint = &get_decltype(*conv);
          return *conv;
-      }
-
-      const ipr::Scope_ref&
-      Lexicon::get_scope_ref(const ipr::Expr& s, const ipr::Expr& m) {
-         impl::Scope_ref* sr = expr_factory::make_scope_ref(s, m);
-         if (sr->constraint == 0)
-            sr->constraint = &get_decltype(*sr);
-         return *sr;
       }
 
       const ipr::Template_id&

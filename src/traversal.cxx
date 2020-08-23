@@ -118,12 +118,6 @@ ipr::Visitor::visit(const Conversion& conv)
 }
 
 void
-ipr::Visitor::visit(const Scope_ref& n)
-{
-   visit(as<Name>(n));
-}
-
-void
 ipr::Visitor::visit(const Template_id& e)
 {
    visit(as<Name>(e));
@@ -401,6 +395,12 @@ void
 ipr::Visitor::visit(const Expansion& e)
 {
    visit(as<Classic>(e));
+}
+
+void
+ipr::Visitor::visit(const Scope_ref& n)
+{
+   visit(as<Classic>(n));
 }
 
 void
