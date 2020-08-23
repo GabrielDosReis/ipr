@@ -98,6 +98,7 @@ namespace ipr {
    // -- results of name constructor constants --
    // ------------------------------------------
    struct Identifier;            // identifier                          foo
+   struct Suffix;                // Literal operator suffix       "Plato"sv
    struct Operator;              // C++ operator name             operator+
    struct Conversion;            // conversion function name   operator int
    struct Template_id;           // C++ template-id                  S<int>
@@ -731,6 +732,13 @@ namespace ipr {
    struct Identifier : Unary<Category<identifier_cat, Name>, const String&> {
       // The character sequence of this identifier
       Arg_type string() const { return operand(); }
+   };
+
+                                // -- Suffix --
+   // The suffix of a user-defined literal is essential just an identifier
+   // with a distinguished interpretation.
+   struct Suffix : Unary<Category<suffix_cat, Name>, const Identifier&> {
+      Arg_type name() const { return operand(); }
    };
 
                                 // -- Operator --
@@ -2027,6 +2035,7 @@ namespace ipr {
       
       virtual void visit(const Name&);
       virtual void visit(const Identifier&);
+      virtual void visit(const Suffix&);
       virtual void visit(const Operator&);
       virtual void visit(const Conversion&);
       virtual void visit(const Template_id&);

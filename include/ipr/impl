@@ -1106,6 +1106,7 @@ namespace ipr {
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
       using Identifier = Unary_expr<ipr::Identifier>;
+      using Suffix = Unary_expr<ipr::Suffix>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
          const ipr::Expr* decls = nullptr;
@@ -1235,6 +1236,8 @@ namespace ipr {
          Identifier* make_identifier(const char*);
          Identifier* make_identifier(const std::string&);
 
+         Suffix* make_suffix(const ipr::Identifier&);
+
          // Builds an IPR object for an operator name.
          Operator* make_operator(const ipr::String&);
          Operator* make_operator(const char*);
@@ -1335,10 +1338,11 @@ namespace ipr {
          util::rb_tree::container<impl::Ctor_name> ctors;
          util::rb_tree::container<impl::Dtor_name> dtors;
          util::rb_tree::container<impl::Identifier> ids;
+         util::rb_tree::container<impl::Suffix> suffixes;
          util::rb_tree::container<impl::Literal> lits;
          util::rb_tree::container<impl::Operator> ops;
          util::rb_tree::container<impl::Rname> rnames;
-         util::rb_tree::container<Template_id> template_ids;
+         util::rb_tree::container<impl::Template_id> template_ids;
          util::rb_tree::container<impl::Type_id> type_ids;
          util::rb_tree::container<impl::Sizeof> sizeofs;
          util::rb_tree::container<impl::Typeid> xtypeids;
@@ -2035,6 +2039,8 @@ namespace ipr {
          const ipr::Identifier& get_identifier(const char*);
          const ipr::Identifier& get_identifier(const std::string&);
          const ipr::Identifier& get_identifier(const ipr::String&);
+
+         const ipr::Suffix& get_suffix(const ipr::Identifier&);
          
          const ipr::Operator& get_operator(const char*);
          const ipr::Operator& get_operator(const std::string&);

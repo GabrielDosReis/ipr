@@ -78,7 +78,7 @@ ipr::Visitor::visit(const Linkage& l)
    visit(as<Node>(l));
 }
 
-// Because Name is a very high-leverl interface to
+// Because Name is a very high-level interface to
 // Identifier, Operator, Conversion, Instantiation and
 // Qualified and these share common very high-level
 // semantics, it is convenient to have the implementation
@@ -103,6 +103,12 @@ void
 ipr::Visitor::visit(const Identifier& id)
 {
    visit(as<Name>(id));
+}
+
+void
+ipr::Visitor::visit(const Suffix& s)
+{
+   visit(as<Name>(s));
 }
 
 void

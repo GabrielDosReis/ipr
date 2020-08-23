@@ -1502,6 +1502,10 @@ namespace ipr {
          return make_identifier(get_string(s));
       }
 
+      impl::Suffix*
+      expr_factory::make_suffix(const ipr::Identifier& s) {
+         return suffixes.insert(s, unary_compare());
+      }
 
       impl::Id_expr*
       expr_factory::make_id_expr(const ipr::Name& n) {
@@ -2004,6 +2008,14 @@ namespace ipr {
          if (id->constraint == 0)
             id->constraint = &get_decltype(*id);
          return *id;
+      }
+
+      const ipr::Suffix&
+      Lexicon::get_suffix(const ipr::Identifier& id) {
+         auto s = expr_factory::make_suffix(id);
+         if (s->constraint == nullptr)
+            s->constraint = &get_decltype(*s);
+         return *s;
       }
 
       const ipr::Type& Lexicon::void_type() const {  return voidtype;  }

@@ -35,6 +35,7 @@ auto_cat,                               // ipr::Auto
 
 identifier_cat,                         // ipr::Identifier
 operator_cat,                           // ipr::Operator
+suffix_cat,                             // ipr::Suffix
 conversion_cat,                         // ipr::Conversion
 template_id_cat,                        // ipr::Template_id
 type_id_cat,                            // ipr::Type_id
