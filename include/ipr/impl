@@ -1107,6 +1107,7 @@ namespace ipr {
       using Typeid = Unary_expr<ipr::Typeid>;
       using Identifier = Unary_expr<ipr::Identifier>;
       using Suffix = Unary_expr<ipr::Suffix>;
+      using Guide_name = Unary_expr<ipr::Guide_name>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
          const ipr::Expr* decls = nullptr;
@@ -1243,6 +1244,8 @@ namespace ipr {
          Operator* make_operator(const char*);
          Operator* make_operator(const std::string&);
 
+         Guide_name* make_guide_name(const ipr::Named_map&);
+
          Address* make_address(const ipr::Expr&);
          Array_delete* make_array_delete(const ipr::Expr&);
          Complement* make_complement(const ipr::Expr&);
@@ -1341,6 +1344,7 @@ namespace ipr {
          util::rb_tree::container<impl::Suffix> suffixes;
          util::rb_tree::container<impl::Literal> lits;
          util::rb_tree::container<impl::Operator> ops;
+         util::rb_tree::container<impl::Guide_name> guide_ids;
          util::rb_tree::container<impl::Rname> rnames;
          util::rb_tree::container<impl::Template_id> template_ids;
          util::rb_tree::container<impl::Type_id> type_ids;

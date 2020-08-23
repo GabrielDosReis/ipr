@@ -105,6 +105,7 @@ namespace ipr {
    struct Type_id;               // C++ type-id                  const int*
    struct Ctor_name;             // constructor name                   T::T
    struct Dtor_name;             // destructor name                   T::~T
+   struct Guide_name;            // deduction guide name
    struct Rname;                 // de Bruijn (index, position),
                                  // find better name
 
@@ -789,6 +790,17 @@ namespace ipr {
    // is a type.
    struct Dtor_name : Unary<Category<dtor_name_cat, Name>, const Type&> {
       Arg_type object_type() const { return operand(); }
+   };
+                                // -- Guide_name --
+   // This interface class represents the name of a deduction guide.
+   // Deduction guides do not have names in Standard C++, and they cannot
+   // be found by name lookup.  Yet, they are entities (like templates)
+   // that generate compiler-internal instructions (their initializers)
+   // that when executed yield deduced template arguments.  As such, they
+   // fit the IPR model of a declaration being an introduction of a name
+   // in a scope, with a type and optional initializer.
+   struct Guide_name : Unary<Category<guide_name_cat, Name>, const Named_map&> {
+      Arg_type mapping_decl() const { return operand(); }
    };
 
                                 // -- Rname --
@@ -2042,6 +2054,7 @@ namespace ipr {
       virtual void visit(const Type_id&);
       virtual void visit(const Ctor_name&);
       virtual void visit(const Dtor_name&);
+      virtual void visit(const Guide_name&);
       virtual void visit(const Rname&);
 
       virtual void visit(const Type&) = 0;

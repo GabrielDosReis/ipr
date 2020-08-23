@@ -148,6 +148,12 @@ ipr::Visitor::visit(const Dtor_name& n)
 }
 
 void
+ipr::Visitor::visit(const Guide_name& n)
+{
+   visit(as<Name>(n));
+}
+
+void
 ipr::Visitor::visit(const Rname& n)
 {
    visit(as<Name>(n));

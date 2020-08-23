@@ -41,6 +41,7 @@ template_id_cat,                        // ipr::Template_id
 type_id_cat,                            // ipr::Type_id
 ctor_name_cat,                          // ipr::Ctor_name
 dtor_name_cat,                          // ipr::Dtor_name
+guide_name_cat,                         // ipr::Guide_name
 rname_cat,                              // ipr::Rname
 
 phantom_cat,                            // ipr::Phantom

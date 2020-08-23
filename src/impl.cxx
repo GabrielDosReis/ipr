@@ -1507,6 +1507,11 @@ namespace ipr {
          return suffixes.insert(s, unary_compare());
       }
 
+      impl::Guide_name*
+      expr_factory::make_guide_name(const ipr::Named_map& m) {
+         return guide_ids.insert(m, unary_compare());
+      }
+
       impl::Id_expr*
       expr_factory::make_id_expr(const ipr::Name& n) {
          return id_exprs.make(n);
