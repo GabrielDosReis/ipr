@@ -1106,6 +1106,8 @@ namespace ipr {
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
       using Identifier = Unary_expr<ipr::Identifier>;
+      using Suffix = Unary_expr<ipr::Suffix>;
+      using Guide_name = Unary_expr<ipr::Guide_name>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
          const ipr::Expr* decls = nullptr;
@@ -1191,7 +1193,7 @@ namespace ipr {
       using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
       using Rshift = Classic_binary_expr<ipr::Rshift>;
       using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
-      using Scope_ref = Binary_expr<ipr::Scope_ref>;
+      using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_expr<ipr::Template_id>;
 
@@ -1235,10 +1237,14 @@ namespace ipr {
          Identifier* make_identifier(const char*);
          Identifier* make_identifier(const std::string&);
 
+         Suffix* make_suffix(const ipr::Identifier&);
+
          // Builds an IPR object for an operator name.
          Operator* make_operator(const ipr::String&);
          Operator* make_operator(const char*);
          Operator* make_operator(const std::string&);
+
+         Guide_name* make_guide_name(const ipr::Named_map&);
 
          Address* make_address(const ipr::Expr&);
          Array_delete* make_array_delete(const ipr::Expr&);
@@ -1335,11 +1341,12 @@ namespace ipr {
          util::rb_tree::container<impl::Ctor_name> ctors;
          util::rb_tree::container<impl::Dtor_name> dtors;
          util::rb_tree::container<impl::Identifier> ids;
+         util::rb_tree::container<impl::Suffix> suffixes;
          util::rb_tree::container<impl::Literal> lits;
          util::rb_tree::container<impl::Operator> ops;
+         util::rb_tree::container<impl::Guide_name> guide_ids;
          util::rb_tree::container<impl::Rname> rnames;
-         util::rb_tree::container<impl::Scope_ref> scope_refs;
-         util::rb_tree::container<Template_id> template_ids;
+         util::rb_tree::container<impl::Template_id> template_ids;
          util::rb_tree::container<impl::Type_id> type_ids;
          util::rb_tree::container<impl::Sizeof> sizeofs;
          util::rb_tree::container<impl::Typeid> xtypeids;
@@ -1366,6 +1373,7 @@ namespace ipr {
          stable_farm<impl::Unary_plus> unary_pluses;
          stable_farm<impl::Expansion> expansions;
 
+         stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;
          stable_farm<impl::Array_ref> array_refs;
          stable_farm<impl::Arrow> arrows;
@@ -2035,6 +2043,8 @@ namespace ipr {
          const ipr::Identifier& get_identifier(const char*);
          const ipr::Identifier& get_identifier(const std::string&);
          const ipr::Identifier& get_identifier(const ipr::String&);
+
+         const ipr::Suffix& get_suffix(const ipr::Identifier&);
          
          const ipr::Operator& get_operator(const char*);
          const ipr::Operator& get_operator(const std::string&);
@@ -2044,9 +2054,6 @@ namespace ipr {
          const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
 
          const ipr::Conversion& get_conversion(const ipr::Type&);
-
-         const ipr::Scope_ref& get_scope_ref(const ipr::Expr&,
-                                             const ipr::Expr&);
 
          const ipr::Template_id& get_template_id(const ipr::Name&,
                                                  const ipr::Expr_list&);

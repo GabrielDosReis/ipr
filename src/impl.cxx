@@ -1502,6 +1502,15 @@ namespace ipr {
          return make_identifier(get_string(s));
       }
 
+      impl::Suffix*
+      expr_factory::make_suffix(const ipr::Identifier& s) {
+         return suffixes.insert(s, unary_compare());
+      }
+
+      impl::Guide_name*
+      expr_factory::make_guide_name(const ipr::Named_map& m) {
+         return guide_ids.insert(m, unary_compare());
+      }
 
       impl::Id_expr*
       expr_factory::make_id_expr(const ipr::Name& n) {
@@ -1831,8 +1840,7 @@ namespace ipr {
       impl::Scope_ref*
       expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r)
       {
-         using Rep = impl::Scope_ref::Rep;
-         return scope_refs.insert(Rep{ l, r }, binary_compare());
+         return scope_refs.make(l, r);
       }
 
       impl::Rshift*
@@ -2007,6 +2015,14 @@ namespace ipr {
          return *id;
       }
 
+      const ipr::Suffix&
+      Lexicon::get_suffix(const ipr::Identifier& id) {
+         auto s = expr_factory::make_suffix(id);
+         if (s->constraint == nullptr)
+            s->constraint = &get_decltype(*s);
+         return *s;
+      }
+
       const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
 
       const ipr::Type& Lexicon::bool_type() const { return booltype; }
@@ -2106,14 +2122,6 @@ namespace ipr {
          if (conv->constraint == 0)
             conv->constraint = &get_decltype(*conv);
          return *conv;
-      }
-
-      const ipr::Scope_ref&
-      Lexicon::get_scope_ref(const ipr::Expr& s, const ipr::Expr& m) {
-         impl::Scope_ref* sr = expr_factory::make_scope_ref(s, m);
-         if (sr->constraint == 0)
-            sr->constraint = &get_decltype(*sr);
-         return *sr;
       }
 
       const ipr::Template_id&

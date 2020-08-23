@@ -35,12 +35,13 @@ auto_cat,                               // ipr::Auto
 
 identifier_cat,                         // ipr::Identifier
 operator_cat,                           // ipr::Operator
+suffix_cat,                             // ipr::Suffix
 conversion_cat,                         // ipr::Conversion
-scope_ref_cat,                          // ipr::Scope_ref
 template_id_cat,                        // ipr::Template_id
 type_id_cat,                            // ipr::Type_id
 ctor_name_cat,                          // ipr::Ctor_name
 dtor_name_cat,                          // ipr::Dtor_name
+guide_name_cat,                         // ipr::Guide_name
 rname_cat,                              // ipr::Rname
 
 phantom_cat,                            // ipr::Phantom
@@ -66,6 +67,7 @@ unary_minus_cat,                        // ipr::Unary_minus
 unary_plus_cat,                         // ipr::Unary_plus;
 expansion_cat,                          // ipr::Expansion
 
+scope_ref_cat,                          // ipr::Scope_ref
 plus_cat,                               // ipr::Plus
 plus_assign_cat,                        // ipr::Plus_assign
 and_cat,                                // ipr::And

@@ -78,7 +78,7 @@ ipr::Visitor::visit(const Linkage& l)
    visit(as<Node>(l));
 }
 
-// Because Name is a very high-leverl interface to
+// Because Name is a very high-level interface to
 // Identifier, Operator, Conversion, Instantiation and
 // Qualified and these share common very high-level
 // semantics, it is convenient to have the implementation
@@ -106,6 +106,12 @@ ipr::Visitor::visit(const Identifier& id)
 }
 
 void
+ipr::Visitor::visit(const Suffix& s)
+{
+   visit(as<Name>(s));
+}
+
+void
 ipr::Visitor::visit(const Operator& op)
 {
    visit(as<Name>(op));
@@ -115,12 +121,6 @@ void
 ipr::Visitor::visit(const Conversion& conv)
 {
    visit(as<Name>(conv));
-}
-
-void
-ipr::Visitor::visit(const Scope_ref& n)
-{
-   visit(as<Name>(n));
 }
 
 void
@@ -143,6 +143,12 @@ ipr::Visitor::visit(const Ctor_name& n)
 
 void
 ipr::Visitor::visit(const Dtor_name& n)
+{
+   visit(as<Name>(n));
+}
+
+void
+ipr::Visitor::visit(const Guide_name& n)
 {
    visit(as<Name>(n));
 }
@@ -401,6 +407,12 @@ void
 ipr::Visitor::visit(const Expansion& e)
 {
    visit(as<Classic>(e));
+}
+
+void
+ipr::Visitor::visit(const Scope_ref& n)
+{
+   visit(as<Classic>(n));
 }
 
 void
