@@ -39,6 +39,7 @@ namespace ipr {
    template<class F>
    struct Constant_visitor : Visitor, F {
       void visit(const Node& n) override { (*this)(n); }
+      void visit(const Name& n) override { (*this)(n); }
       void visit(const Expr& n) override { (*this)(n); }
       void visit(const Type& n) override { (*this)(n); }
       void visit(const Stmt& n) override { (*this)(n); }

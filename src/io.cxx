@@ -18,7 +18,6 @@ namespace ipr
    struct pp_base : Constant_visitor<Missing_overrider> {
       explicit pp_base(Printer& p) : pp(p) { }
       using Visitor::visit;
-      void visit(const Name& n) override { visit(as<Expr>(n)); }
       void visit(const Type& t) override { visit(as<Expr>(t)); }
       void visit(const Decl& d) override { visit(as<Expr>(d)); }
       
@@ -302,8 +301,8 @@ namespace ipr
          //       primary-expression < expression-seq >
          void visit(const Template_id& n) override
          {
-            pp << xpr_primary_expr(n.template_name())
-               << token("<|") << n.args() << token("|>");
+            n.template_name().accept(*this);
+            pp << token("<|") << n.args() << token("|>");
          }
          
          // -- ctor-name:

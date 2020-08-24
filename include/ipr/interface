@@ -714,16 +714,13 @@ namespace ipr {
    //    - type-id                           -- Type_id
    // 
    // Most names are introduced by declarations into scope.
-   // A Name is an Expression.  That obviates the needs for a
-   // special node to turn names into Expressions, for the purpose
-   // of symbolic interpretation.   
-   struct Name : Expr {
+   struct Name : Node {
       // At the moment, this class is empty because there is no
       // interesting operation that could be provided here without
       // imposing too much of implementation details.
 
    protected:
-      Name(Category_code c) : Expr(c)
+      Name(Category_code c) : Node{ c }
       { }
    };
 
@@ -2045,7 +2042,7 @@ namespace ipr {
       virtual void visit(const Expr&) = 0;
       virtual void visit(const Classic&);
       
-      virtual void visit(const Name&);
+      virtual void visit(const Name&) = 0;
       virtual void visit(const Identifier&);
       virtual void visit(const Suffix&);
       virtual void visit(const Operator&);

@@ -2009,18 +2009,12 @@ namespace ipr {
 
       const ipr::Identifier&
       Lexicon::get_identifier(const ipr::String& s) {
-         impl::Identifier* id = expr_factory::make_identifier(s);
-         if (id->constraint == 0)
-            id->constraint = &get_decltype(*id);
-         return *id;
+         return *expr_factory::make_identifier(s);
       }
 
       const ipr::Suffix&
       Lexicon::get_suffix(const ipr::Identifier& id) {
-         auto s = expr_factory::make_suffix(id);
-         if (s->constraint == nullptr)
-            s->constraint = &get_decltype(*s);
-         return *s;
+         return *expr_factory::make_suffix(id);
       }
 
       const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
@@ -2084,18 +2078,12 @@ namespace ipr {
 
       const ipr::Ctor_name&
       Lexicon::get_ctor_name(const ipr::Type& t) {
-         impl::Ctor_name* id = expr_factory::make_ctor_name(t);
-         if (id->constraint == 0)
-            id->constraint = &get_decltype(*id);
-         return *id;
+         return *expr_factory::make_ctor_name(t);
       }
 
       const ipr::Dtor_name&
       Lexicon::get_dtor_name(const ipr::Type& t) {
-         impl::Dtor_name* id = expr_factory::make_dtor_name(t);
-         if (id->constraint == 0)
-            id->constraint = &get_decltype(*id);
-         return *id;
+         return *expr_factory::make_dtor_name(t);
       }
 
       const ipr::Operator&
@@ -2110,26 +2098,17 @@ namespace ipr {
 
       const ipr::Operator&
       Lexicon::get_operator(const ipr::String& s) {
-         impl::Operator* op = expr_factory::make_operator(s);
-         if (op->constraint == 0)
-            op->constraint = &get_decltype(*op);
-         return *op;
+         return *expr_factory::make_operator(s);
       }
 
       const ipr::Conversion&
       Lexicon::get_conversion(const ipr::Type& t) {
-         impl::Conversion* conv = expr_factory::make_conversion(t);
-         if (conv->constraint == 0)
-            conv->constraint = &get_decltype(*conv);
-         return *conv;
+         return *expr_factory::make_conversion(t);
       }
 
       const ipr::Template_id&
       Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
-         impl::Template_id* tid = expr_factory::make_template_id(t, a);
-         if (tid->constraint == 0)
-            tid->constraint = &get_decltype(*tid);
-         return *tid;
+         return *expr_factory::make_template_id(t, a);
       }
 
       const ipr::Array&

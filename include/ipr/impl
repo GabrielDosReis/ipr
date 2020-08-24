@@ -216,7 +216,7 @@ namespace ipr {
          Arg_type operand() const final { return rep; }
       };
 
-      // Short for the impplementation of generic unary nodes.
+      // Shorthand for the implementation of generic unary nodes.
       template<typename T>
       using Unary_node = Unary<Node<T>>;
 
@@ -253,7 +253,7 @@ namespace ipr {
          Arg2_type second() const final { return rep.second; }
       };
 
-      // Short hand for implementation of geeric binary nodes.
+      // Short hand for implementation of generic binary nodes.
       template<typename T>
       using Binary_node = Binary<Node<T>>;
 
@@ -1074,16 +1074,22 @@ namespace ipr {
 
       using Comment = Unary_node<Comment>;
 
+      using Identifier = Unary_node<ipr::Identifier>;
+      using Suffix = Unary_node<ipr::Suffix>;
+      using Operator = Unary_node<ipr::Operator>;
+      using Conversion = Unary_node<ipr::Conversion>;
+      using Ctor_name = Unary_node<ipr::Ctor_name>;
+      using Dtor_name = Unary_node<ipr::Dtor_name>;
+      using Guide_name = Unary_node<ipr::Guide_name>;
+      using Type_id = Unary_node<ipr::Type_id>;
+
       using Phantom = Expr<ipr::Phantom>;
 
       using Address = Classic_unary_expr<ipr::Address>;
       using Array_delete = Classic_unary_expr<ipr::Array_delete>;
       using Complement = Classic_unary_expr<ipr::Complement>;
-      using Conversion = Unary_expr<ipr::Conversion>;
-      using Ctor_name = Unary_expr<ipr::Ctor_name>;
       using Delete = Classic_unary_expr<ipr::Delete>;
       using Deref = Classic_unary_expr<ipr::Deref>;
-      using Dtor_name = Unary_expr<ipr::Dtor_name>;
 
       struct Expr_list : impl::Node<ipr::Expr_list> {
          typed_sequence<ref_sequence<ipr::Expr>> seq;
@@ -1105,9 +1111,6 @@ namespace ipr {
       using Initializer_list = Classic_unary_expr<ipr::Initializer_list>;
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
-      using Identifier = Unary_expr<ipr::Identifier>;
-      using Suffix = Unary_expr<ipr::Suffix>;
-      using Guide_name = Unary_expr<ipr::Guide_name>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
          const ipr::Expr* decls = nullptr;
@@ -1119,7 +1122,6 @@ namespace ipr {
 
       using Not = Classic_unary_expr<ipr::Not>;
 
-      using Operator = Unary_expr<ipr::Operator>;
       using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
       
       using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
@@ -1127,7 +1129,6 @@ namespace ipr {
       using Post_decrement = Classic_unary_expr<ipr::Post_decrement>;
       using Post_increment = Classic_unary_expr<ipr::Post_increment>;
       using Throw = Classic_unary_expr<ipr::Throw>;
-      using Type_id = type_from_operand<Node<ipr::Type_id>>;
 
       using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
       using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
@@ -1195,7 +1196,7 @@ namespace ipr {
       using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
       using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
-      using Template_id = Binary_expr<ipr::Template_id>;
+      using Template_id = Binary_node<ipr::Template_id>;
 
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
@@ -2023,7 +2024,7 @@ namespace ipr {
                : impl::Expr<T>(&t), id(n), link(l) { }
 
          const ipr::Name& name() const { return id; }
-         Arg1_type first() const { return id; }
+         Arg1_type first() const { return *this; }
          Arg2_type second() const { return link; }
 
       private:
