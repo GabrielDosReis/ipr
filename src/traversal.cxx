@@ -94,12 +94,6 @@ ipr::Visitor::visit(const Classic& e)
 }
 
 void
-ipr::Visitor::visit(const Name& n)
-{
-   visit(as<Expr>(n));
-}
-
-void
 ipr::Visitor::visit(const Identifier& id)
 {
    visit(as<Name>(id));
