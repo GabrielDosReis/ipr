@@ -1,0 +1,30 @@
+IPR is using CMake as its build system. The default configuration will
+build the library:
+
+> mkdir build && cd build
+> cmake ..
+> make
+
+Tests need to be enabled explicitly using the BUILD_TESTING CMake option.
+IPR is using GTest as its unit testing framework. When GTest is not found
+at configuration time the CMake script will download and build it automatically.
+After enabling testing tests will be built automatically when building the
+default target. The DOWNLOAD_GTEST CMake option can be used to force downloading
+GTest over using the one installed on the system.
+
+> mkdir build && cd build
+> cmake .. -DBUILD_TESTING=ON
+> make
+
+Tests can be run using the test target.
+
+> make test
+
+The Latex documentation is also optional. The BUILD_DOC CMake option enables
+building the documentation. It required pdflatex to be available in the path.
+The documentation can be built using the doc target.
+
+> mkdir build && cd build
+> cmake .. -DBUILD_DOC=ON
+> make doc
+  
