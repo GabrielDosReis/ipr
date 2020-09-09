@@ -1,0 +1,20 @@
+IPR is using CMake as its build system. The default configuration will
+build the library and the tests. The tests can be invoked using the test
+target:
+
+> mkdir build && cd build
+> cmake ..
+> make
+> make test
+
+Or alternatively, tests can be invoked using CTest:
+> ctest
+
+The Latex documentation is also optional. The BUILD_DOC CMake option enables
+building the documentation. It required pdflatex to be available in the path.
+The documentation can be built using the doc target.
+
+> mkdir build && cd build
+> cmake .. -DBUILD_DOC=ON
+> make doc
+

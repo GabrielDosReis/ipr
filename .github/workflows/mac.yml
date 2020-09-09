@@ -22,3 +22,7 @@ jobs:
 
     - name: Build project
       run: cmake --build ./build --parallel
+
+    - name: Run tests
+      run: cmake --build ./build --target test --parallel
+
