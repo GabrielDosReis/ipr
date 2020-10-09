@@ -1203,13 +1203,13 @@ namespace ipr
    struct xpr_expr_visitor : pp_base {
       xpr_expr_visitor(Printer& p) : pp_base(p) { }
 
-      void visit(const Comma& e) override
+      void visit(const Comma& e) final
       {
          pp << xpr_expr(e.first()) << token("@, ")
             << xpr_assignment_expression(e.second());
       }
 
-      void visit(const Scope& s) override
+      void visit(const Scope& s) final
       {
          const Sequence<Decl>& decls = s.members();
          const int n = decls.size();
@@ -1220,18 +1220,18 @@ namespace ipr
             }
       }
 
-      void visit(const Expr_list& e) override { pp << e; }
+      void visit(const Expr_list& e) final { pp << e; }
 
-      void visit(const Member_init& e) override
+      void visit(const Member_init& e) final
       {
          pp << xpr_expr(e.member())
             << token('(') << xpr_expr(e.initializer()) << token(')');
       }
 
-      void visit(const Type& t) override { pp << xpr_type(t); }
-      void visit(const Expr& e) override { pp << xpr_assignment_expression(e); }
-      void visit(const Stmt& s) override { pp << xpr_stmt(s); }
-      void visit(const Decl& d) override
+      void visit(const Type& t) final { pp << xpr_type(t); }
+      void visit(const Expr& e) final { pp << xpr_assignment_expression(e); }
+      void visit(const Stmt& s) final { pp << xpr_stmt(s); }
+      void visit(const Decl& d) final
       {
          // A declaration used as an expression must have appeared
          // as a primary-expression.
@@ -1417,45 +1417,50 @@ namespace ipr
    struct xpr_type_visitor : pp_base {
       xpr_type_visitor(Printer& p) : pp_base(p) { }
 
-      void visit(const As_type& t) override
-      { pp << xpr_expr(t.expr()); }
+      void visit(const As_type& t) final
+      { 
+         if (denote_builtin_type(t))
+            pp << xpr_name(t.name());
+         else
+            pp << xpr_expr(t.expr()); 
+      }
 
-      void visit(const Array& a) override
+      void visit(const Array& a) final
       { pp << xpr_type_expr(a); }
 
-      void visit(const Function& f) override
+      void visit(const Function& f) final
       { pp << xpr_type_expr(f); }
 
-      void visit(const Pointer& t) override
+      void visit(const Pointer& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Ptr_to_member& t) override
+      void visit(const Ptr_to_member& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Qualified& t) override
+      void visit(const Qualified& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Reference& t) override
+      void visit(const Reference& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Rvalue_reference& t) override
+      void visit(const Rvalue_reference& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Template& t) override
+      void visit(const Template& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Type& t) override
+      void visit(const Type& t) final
       {
          // FIXME: Check.
          pp << xpr_name(t.name());
       }
 
-      void visit(const Product& t) override
+      void visit(const Product& t) final
       {
          pp << t.operand();
       }
 
-      void visit(const Sum& t) override
+      void visit(const Sum& t) final
       {
          pp << t.operand();
       }

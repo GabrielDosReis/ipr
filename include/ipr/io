@@ -17,6 +17,7 @@
 
 namespace ipr
 {
+   // FIXME: Remove these data structures.
    /// A data structure used to map different uses of a name to the 
    /// corresponding declaration. It is used by XPR printer to print name
    /// disambiguation information. A similar but a bit more elaborated structure
@@ -37,10 +38,9 @@ namespace ipr
          if (p == decls.end())
          {
             decls.push_back(&declaration);
-            return decls.size(); // Because disambiguations are 1-based
+            return static_cast<int>(decls.size()); // Because disambiguations are 1-based
          }
-         else
-            return p-decls.begin()+1; // Because disambiguations are 1-based
+         return static_cast<int>(p - decls.begin()) + 1; // Because disambiguations are 1-based
       }
    }; // of struct disambiguation_map_type
 
