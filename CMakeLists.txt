@@ -70,3 +70,9 @@ if(BUILD_DOC)
    include(cmake/UseLATEX.cmake)
    add_subdirectory(doc)
 endif()
+
+# Testing
+enable_testing()
+set(DOCTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty")
+add_subdirectory(tests)
+
