@@ -109,7 +109,8 @@ namespace ipr {
 
          val_sequence() : mark(this->before_begin()) { }
          
-         int size() const final {
+         int size() const final 
+         {
             return std::distance(Impl::begin(), Impl::end());
          }
 
