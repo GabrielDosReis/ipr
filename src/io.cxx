@@ -364,16 +364,23 @@ namespace ipr
       struct Primary_expr : xpr::Name {
          Primary_expr(Printer& pp) : xpr::Name(pp) { }
          
-         void visit(const Label& l) override { xpr::Name::visit(l.name()); }
-         void visit(const Id_expr& id) override { pp << xpr_name{ id.name() }; }
-         void visit(const Literal&) override;
-         void visit(const As_type& t) override { pp << xpr_primary_expr(t.expr()); }
-         void visit(const Phantom&) override { } // nothing to print
-         void visit(const Paren_expr& e) override
+         void visit(const Label& l) final { xpr::Name::visit(l.name()); }
+         void visit(const Id_expr& id) final { pp << xpr_name{ id.name() }; }
+         void visit(const Literal&) final;
+         void visit(const As_type& t) final 
+         {
+            if (denote_builtin_type(t))
+               pp << xpr_name(t.name());
+            else
+               pp << xpr_primary_expr(t.expr()); 
+         }
+         void visit(const Phantom&) final { } // nothing to print
+         void visit(const Paren_expr& e) final
          {
             pp << token('(') << xpr_expr(e.expr()) << token(')');
          }
-         void visit(const Initializer_list& e)  override {
+         void visit(const Initializer_list& e) final
+         {
             pp << token('{') << e.expr_list() << token('}');
          }
          void visit(const Expr& e) override

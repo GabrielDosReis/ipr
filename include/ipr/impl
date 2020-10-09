@@ -2023,9 +2023,9 @@ namespace ipr {
          Builtin(const ipr::Name& n, Arg2_type l, const ipr::Type& t)
                : impl::Expr<T>(&t), id(n), link(l) { }
 
-         const ipr::Name& name() const { return id; }
-         Arg1_type first() const { return *this; }
-         Arg2_type second() const { return link; }
+         const ipr::Name& name() const final { return id; }
+         Arg1_type first() const final { return *this; }
+         Arg2_type second() const final { return link; }
 
       private:
          const ipr::Name& id;

@@ -862,7 +862,7 @@ namespace ipr {
    // A type of a type is what we call a "concept".  A type in IPR has a
    // much broader significance than Standard C++ types (henceforth called
    // "classic type").  In particular, in IPR, namespace is a type.
-   // Simirlary, an overload-set has a type.
+   // Similarly, an overload-set has a type.
    struct Type : Expr {
       // All types have names.
       virtual const Name& name() const = 0;

@@ -25,6 +25,14 @@ namespace ipr {
    // point of view in context like dependent types.
 
    bool structurally_same(const Node&, const Node&);
+
+   // -- builtin types
+   // This predicate holds for representation of built types: they are
+   // the fix points of the As_type functor.
+   inline bool denote_builtin_type(const As_type& t)
+   {
+      return physically_same(t, t.expr());
+   }
    
    // -- utility functions --
 
