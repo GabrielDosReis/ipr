@@ -90,7 +90,7 @@ namespace ipr {
    struct Reference;             // reference type
    struct Rvalue_reference;      // rvalue-reference type -- C++0x
    struct Sum;                   // sum type - not ISO C++ type
-   struct Template;              // type of a template - Not ISO C++ type
+   struct Forall;                // universally quantified type - Not ISO C++ type
    struct Union;                 // user-defined type - union
    struct Auto;                  // "auto" -- each occurrence is generative
 
@@ -1062,11 +1062,13 @@ namespace ipr {
       const Type& operator[](int i) const { return elements()[i]; }
    };
 
-                                // -- Template --
-   // This represents the type of a template declaration.  In the near future,
+                                // -- Forall --
+   // This represents a universally quantified type, parameterized by any compile-time sort,
+   // that is all values for the parameters must designate compile-time entities.
+   // It is useful for representing the type of a template declaration, and more.  In the near future,
    // when "concepts" are integrated, it will become a Ternary node where the
    // third operand will represent the "where-clause".
-   struct Template : Binary<Category<template_cat, Type>,
+   struct Forall : Binary<Category<forall_cat, Type>,
                             const Product&, const Type&> {
       // The constraints or types of the template-parameters.
       const Product& source() const { return first(); }
@@ -2069,7 +2071,7 @@ namespace ipr {
       virtual void visit(const Reference&);
       virtual void visit(const Rvalue_reference&);
       virtual void visit(const Sum&);
-      virtual void visit(const Template&);
+      virtual void visit(const Forall&);
       virtual void visit(const Union&);
       virtual void visit(const Auto&);
 

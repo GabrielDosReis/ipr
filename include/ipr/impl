@@ -1071,7 +1071,7 @@ namespace ipr {
       using Reference = Unary_type<ipr::Reference>;
       using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
       using Sum = Unary_type<ipr::Sum>;
-      using Template = Binary_type<ipr::Template>;
+      using Forall = Binary_type<ipr::Forall>;
 
       using Comment = Unary_node<Comment>;
 
@@ -1612,9 +1612,9 @@ namespace ipr {
          impl::Typedecl* make_typedecl(const ipr::Name&, const ipr::Type&);
          impl::Fundecl* make_fundecl(const ipr::Name&, const ipr::Function&);
          impl::Named_map* make_primary_map(const ipr::Name&,
-                                           const ipr::Template&);
+                                           const ipr::Forall&);
          impl::Named_map* make_secondary_map(const ipr::Name&,
-                                             const ipr::Template&);
+                                             const ipr::Forall&);
       
       private:
          const ipr::Region& region;
@@ -1685,13 +1685,13 @@ namespace ipr {
          }
 
          Named_map* declare_primary_map(const ipr::Name& n,
-                                        const ipr::Template& t)
+                                        const ipr::Forall& t)
          {
             return scope.make_primary_map(n, t);
          }
 
          Named_map* declare_secondary_map(const ipr::Name& n,
-                                          const ipr::Template& t)
+                                          const ipr::Forall& t)
          {
             return scope.make_secondary_map(n, t);
          }
@@ -1766,7 +1766,7 @@ namespace ipr {
          }
          
          impl::Named_map*
-         declare_primary_map(const ipr::Name& n, const ipr::Template& t)
+         declare_primary_map(const ipr::Name& n, const ipr::Forall& t)
          {
             impl::Named_map* map = body.declare_primary_map(n, t);
             map->member_of = this;
@@ -1774,7 +1774,7 @@ namespace ipr {
          }
 
          impl::Named_map*
-         declare_secondary_map(const ipr::Name& n, const ipr::Template& t)
+         declare_secondary_map(const ipr::Name& n, const ipr::Forall& t)
          {
             impl::Named_map* map = body.declare_secondary_map(n, t);
             map->member_of = this;
@@ -1835,7 +1835,7 @@ namespace ipr {
          impl::Reference* make_reference(const ipr::Type&);
          impl::Rvalue_reference* make_rvalue_reference(const ipr::Type&);
          impl::Sum* make_sum(const ipr::Sequence<ipr::Type>&);
-         impl::Template* make_template(const ipr::Product&, const ipr::Type&);
+         impl::Forall* make_forall(const ipr::Product&, const ipr::Type&);
 
          impl::Enum* make_enum(const ipr::Region&, const ipr::Type&, Enum::Kind);
          impl::Class* make_class(const ipr::Region&, const ipr::Type&);
@@ -1854,7 +1854,7 @@ namespace ipr {
          util::rb_tree::container<impl::Reference> references;
          util::rb_tree::container<impl::Rvalue_reference> refrefs;
          util::rb_tree::container<impl::Sum> sums;
-         util::rb_tree::container<impl::Template> templates;
+         util::rb_tree::container<impl::Forall> foralls;
          stable_farm<impl::Enum> enums;
          stable_farm<impl::Class> classes;
          stable_farm<impl::Union> unions;
@@ -2131,7 +2131,7 @@ namespace ipr {
 
          const ipr::Sum& get_sum(const ref_sequence<ipr::Type>&);
 
-         const ipr::Template& get_template(const ipr::Product&,
+         const ipr::Forall& get_forall(const ipr::Product&,
                                            const ipr::Type&);
 
          impl::Mapping* make_mapping(const ipr::Region&);

@@ -240,7 +240,7 @@ ipr::Visitor::visit(const Sum& t)
 }
 
 void
-ipr::Visitor::visit(const Template& t)
+ipr::Visitor::visit(const Forall& t)
 {
    visit(as<Type>(t));
 }
