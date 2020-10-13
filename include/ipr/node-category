@@ -29,7 +29,7 @@ qualified_cat,                          // ipr::Qualified
 reference_cat,                          // ipr::Reference
 rvalue_reference_cat,                   // ipr::Rvalue_reference
 sum_cat,                                // ipr::Sum
-template_cat,                           // ipr::Template
+forall_cat,                             // ipr::Forall
 union_cat,                              // ipr::Union
 auto_cat,                               // ipr::Auto
 

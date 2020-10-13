@@ -1031,10 +1031,10 @@ namespace ipr {
          return sums.insert(seq, unary_compare());
       }
 
-      impl::Template*
-      type_factory::make_template(const ipr::Product& s, const ipr::Type& t) {
-         using rep = impl::Template::Rep;
-         return templates.insert(rep{ s, t }, binary_compare());
+      impl::Forall*
+      type_factory::make_forall(const ipr::Product& s, const ipr::Type& t) {
+         using rep = impl::Forall::Rep;
+         return foralls.insert(rep{ s, t }, binary_compare());
       }
 
       impl::Enum*
@@ -1274,7 +1274,7 @@ namespace ipr {
       }
 
       impl::Named_map*
-      Scope::make_primary_map(const ipr::Name& n, const ipr::Template& t)
+      Scope::make_primary_map(const ipr::Name& n, const ipr::Forall& t)
       {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
@@ -1294,7 +1294,7 @@ namespace ipr {
       }
 
       impl::Named_map*
-      Scope::make_secondary_map(const ipr::Name& n, const ipr::Template& t)
+      Scope::make_secondary_map(const ipr::Name& n, const ipr::Forall& t)
       {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
@@ -2194,9 +2194,9 @@ namespace ipr {
             (types.make_sum(*type_seqs.insert(s, unary_compare())));
       }
 
-      const ipr::Template&
-      Lexicon::get_template(const ipr::Product& p, const ipr::Type& t) {
-         return *finish_type(types.make_template(p, t));
+      const ipr::Forall&
+      Lexicon::get_forall(const ipr::Product& p, const ipr::Type& t) {
+         return *finish_type(types.make_forall(p, t));
       }
 
       impl::Class*

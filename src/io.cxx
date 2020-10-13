@@ -1090,7 +1090,7 @@ namespace ipr
          pp << xpr_initializer(map.result());
       }
 
-      void visit(const Template&) override
+      void visit(const Forall&) override
       {
          pp << token('<');
          pp << map.params();
@@ -1389,7 +1389,7 @@ namespace ipr
          pp << token('&') << token('&') << xpr_type(t.refers_to());
       }
 
-      void visit(const Template& t) override
+      void visit(const Forall& t) override
       {
          pp << token('<') << t.source().operand() << token('>')
             << token(' ')
@@ -1446,7 +1446,7 @@ namespace ipr
       void visit(const Rvalue_reference& t) final
       { pp << xpr_type_expr(t); }
 
-      void visit(const Template& t) final
+      void visit(const Forall& t) final
       { pp << xpr_type_expr(t); }
 
       void visit(const Type& t) final
