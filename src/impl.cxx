@@ -1096,6 +1096,14 @@ namespace ipr {
          return { decls };
       }
 
+      // -----------------
+      // -- Binary_fold --
+      // -----------------
+      Binary_fold::Binary_fold(Category_code op, const ipr::Expr& x, const ipr::Expr& y)
+         : Classic{x, y}, fold_op{ op }
+      { }
+
+      Category_code Binary_fold::operation() const { return fold_op; }
 
       // -------------------
       // -- impl::Mapping --
@@ -1440,6 +1448,11 @@ namespace ipr {
       const ipr::Phantom*
       expr_factory::make_phantom(const ipr::Type& t) {
          return phantoms.make(&t);
+      }
+
+      impl::Eclipsis* expr_factory::make_eclipsis(const ipr::Type& t)
+      {
+         return eclipses.make(&t);
       }
 
       impl::Address*
@@ -1864,6 +1877,12 @@ namespace ipr {
       impl::Static_cast*
       expr_factory::make_static_cast(const ipr::Type& t, const ipr::Expr& e) {
          return scasts.make(t, e);
+      }
+
+      impl::Binary_fold*
+      expr_factory::make_binary_fold(Category_code op, const ipr::Expr& l, const ipr::Expr& r)
+      {
+         return folds.make(op, l, r);
       }
 
       impl::New*

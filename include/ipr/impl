@@ -1085,6 +1085,7 @@ namespace ipr {
       using Type_id = Unary_node<ipr::Type_id>;
 
       using Phantom = Expr<ipr::Phantom>;
+      using Eclipsis = Expr<ipr::Eclipsis>;
 
       using Address = Classic_unary_expr<ipr::Address>;
       using Array_delete = Classic_unary_expr<ipr::Array_delete>;
@@ -1199,6 +1200,13 @@ namespace ipr {
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_node<ipr::Template_id>;
 
+      struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
+         Category_code fold_op;
+
+         Binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&);
+         Category_code operation() const final;
+      };
+
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
       struct New : Classic<Expr<ipr::New>> {
@@ -1228,6 +1236,8 @@ namespace ipr {
          Phantom* make_phantom();
          // Build an unspecified expression node of a given type.
          const ipr::Phantom* make_phantom(const ipr::Type&);
+         
+         Eclipsis* make_eclipsis(const ipr::Type&);
 
          // Returns an IPR node for a typed literal expression.
          Literal* make_literal(const ipr::Type&, const ipr::String&);
@@ -1321,6 +1331,7 @@ namespace ipr {
          Template_id* make_template_id(const ipr::Name&,
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
+         Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&);
          New* make_new(const ipr::Type&);
          New* make_new(const ipr::Type&, const ipr::Expr_list&);
          New* make_new(const ipr::Expr_list&, const ipr::Type&,
@@ -1354,6 +1365,7 @@ namespace ipr {
          util::rb_tree::container<impl::Typeid> xtypeids;
 
          stable_farm<impl::Phantom> phantoms;
+         stable_farm<impl::Eclipsis> eclipses;
          
          stable_farm<impl::Address> addresses;
          stable_farm<impl::Annotation> annotations;
@@ -1419,6 +1431,7 @@ namespace ipr {
          stable_farm<impl::Rshift> rshifts;
          stable_farm<impl::Rshift_assign> rshift_assigns;
          stable_farm<impl::Static_cast> scasts;
+         stable_farm<impl::Binary_fold> folds;
          
          stable_farm<impl::New> news;
          stable_farm<impl::Conditional> conds;

@@ -283,6 +283,11 @@ ipr::Visitor::visit(const Phantom& e)
    visit(as<Expr>(e));
 }
 
+void ipr::Visitor::visit(const Eclipsis& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Initializer_list& e)
 {
@@ -669,6 +674,11 @@ ipr::Visitor::visit(const Minus& e)
 
 void
 ipr::Visitor::visit(const Minus_assign& e)
+{
+   visit(as<Classic>(e));
+}
+
+void ipr::Visitor::visit(const Binary_fold& e)
 {
    visit(as<Classic>(e));
 }

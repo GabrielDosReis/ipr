@@ -45,6 +45,7 @@ guide_name_cat,                         // ipr::Guide_name
 rname_cat,                              // ipr::Rname
 
 phantom_cat,                            // ipr::Phantom
+eclipsis_cat,                           // ipr::Eclipsis
 
 address_cat,                            // ipr::Address
 array_delete_cat,                       // ipr::Array_delete
@@ -114,6 +115,7 @@ rshift_assign_cat,                      // ipr::Rshift_assign
 static_cast_cat,                        // ipr::Static_cast
 minus_cat,                              // ipr::Minus
 minus_assign_cat,                       // ipr::Minus_assign
+binary_fold_cat,                        // ipr::Binary_fold
 
 new_cat,                                // ipr::New
 conditional_cat,                        // ipr::Conditional

@@ -113,6 +113,7 @@ namespace ipr {
    // -- results of nullar expression constructor constants --
    // --------------------------------------------------------
    struct Phantom;               // for arrays of unknown bound
+   struct Eclipsis;              // the `...' in a unary fold
 
    // -------------------------------------------------------
    // -- results of unary expression constructor constants --
@@ -187,6 +188,7 @@ namespace ipr {
    struct Rshift;                // right shift                    a >> b
    struct Rshift_assign;         // in-place right shift           a >>= b
    struct Static_cast;           // static-cast            static_cast<T>(v)
+   struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
 
@@ -1129,11 +1131,19 @@ namespace ipr {
    };
 
                                 // -- Phantom --
-   // This nodes represents the "bound" of an array type with
-   // unknown bound, as in "unsigned char charset[];"
+   // This nodes represents a missing expression, as in the "bound" of an array type with
+   // unknown bound, e.g. in "unsigned char charset[];", or in an empty expression-statement.
    // We do not unify Phantom expressions, as two arrays with
    // unknown bounds may not designate the same type.
    struct Phantom : Category<phantom_cat, Expr> { };
+
+
+                                // -- Eclipsis --
+   // Representation of the `...' in a unary fold, e.g. `... + e'.
+   // Note: that `...' is not the pack expansion operator.  There is no operand to the `...' here.
+   // While the syntax looks the same, the meaning is really different.  It stands for something
+   // was omitted, hence the name.
+   struct Eclipsis : Category<eclipsis_cat, Expr> { };
 
                                 // -- Initializer_list --
    // Representation of brace-enclosed sequence of expressions.
@@ -1435,6 +1445,14 @@ namespace ipr {
       // The textual representation of this literal as it appears
       // in the program text.
       Arg2_type string() const { return second(); }
+   };
+
+                                // -- Binary_fold --
+   // Representation of a binary fold expression, e.g. `(x + ... + y)'.
+   // The first() operand designates `x', and the second() operand designates `y'.
+   // The operation() is the category code for the operation being folded.
+   struct Binary_fold : Binary<Category<binary_fold_cat, Classic>> {
+      virtual Category_code operation() const = 0;
    };
 
                                 // -- Mapping --
@@ -2079,6 +2097,7 @@ namespace ipr {
       virtual void visit(const Overload&);
       virtual void visit(const Scope&);
       virtual void visit(const Phantom&);
+      virtual void visit(const Eclipsis&);
       virtual void visit(const Initializer_list&);
 
       virtual void visit(const Address&); 
@@ -2146,7 +2165,8 @@ namespace ipr {
       virtual void visit(const Reinterpret_cast&); 
       virtual void visit(const Rshift&);
       virtual void visit(const Rshift_assign&);
-      virtual void visit(const Static_cast&); 
+      virtual void visit(const Static_cast&);
+      virtual void visit(const Binary_fold&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);
