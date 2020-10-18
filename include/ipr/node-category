@@ -145,7 +145,7 @@ enumerator_cat,                         // ipr::Enumerator
 field_cat,                              // ipr::Field
 bitfield_cat,                           // ipr::Bitfield
 fundecl_cat,                            // ipr::Fundecl
-named_map_cat,                          // ipr::Named_map
+template_cat,                           // ipr::Template
 parameter_cat,                          // ipr::Parameter
 typedecl_cat,                           // ipr::Typedecl
 var_cat,                                // ipr::Var

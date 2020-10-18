@@ -547,13 +547,13 @@ namespace ipr {
       };
 
       template<>
-      struct master_decl_data<ipr::Named_map>
-         : basic_decl_data<ipr::Named_map>, overload_entry {
-         using Base = basic_decl_data<ipr::Named_map>;
+      struct master_decl_data<ipr::Template>
+         : basic_decl_data<ipr::Template>, overload_entry {
+         using Base = basic_decl_data<ipr::Template>;
          // The declaration that is considered to be the definition.
-         const ipr::Named_map* def;
+         const ipr::Template* def;
          const ipr::Linkage* langlinkage;
-         const ipr::Named_map* primary;
+         const ipr::Template* primary;
          const ipr::Region* home;
 
          // The overload set that contains this master declaration.  It
@@ -755,7 +755,7 @@ namespace ipr {
       template<class D>
       struct Decl : Stmt<Node<D>> {
          basic_decl_data<D> decl_data;
-         const ipr::Named_map* pat = { };
+         const ipr::Template* pat = { };
          val_sequence<ipr::Substitution> args;
 
          Decl() : decl_data{ nullptr } { }
@@ -763,7 +763,7 @@ namespace ipr {
          const ipr::Sequence<ipr::Substitution>& substitutions() const final
          { return args; }
 
-         const ipr::Named_map& generating_map() const final
+         const ipr::Template& generating_map() const final
          { return *util::check(pat); }
 
          const ipr::Linkage& lang_linkage() const final
@@ -796,7 +796,7 @@ namespace ipr {
          ipr::DeclSpecifiers spec;
          const ipr::Linkage* langlinkage;
          singleton_overload overload;
-         const ipr::Named_map* pat;
+         const ipr::Template* pat;
          val_sequence<ipr::Substitution> args;
 
          unique_decl() : spec(ipr::DeclSpecifiers::None),
@@ -815,7 +815,7 @@ namespace ipr {
          const ipr::Sequence<ipr::Substitution>& substitutions() const final
          { return args; }
 
-         const ipr::Named_map& generating_map() const final
+         const ipr::Template& generating_map() const final
          { return *util::check(pat); }
       };
 
@@ -1256,7 +1256,7 @@ namespace ipr {
          Operator* make_operator(const char*);
          Operator* make_operator(const std::string&);
 
-         Guide_name* make_guide_name(const ipr::Named_map&);
+         Guide_name* make_guide_name(const ipr::Template&);
 
          Address* make_address(const ipr::Expr&);
          Array_delete* make_array_delete(const ipr::Expr&);
@@ -1441,24 +1441,24 @@ namespace ipr {
       };
 
       
-      struct Named_map : impl::Decl<ipr::Named_map> {
+      struct Template : impl::Decl<ipr::Template> {
          const ipr::Udt<ipr::Decl>* member_of;
          impl::Mapping* init;
          const ipr::Region* lexreg;
          impl::Expr_list args;
 
-         Named_map();
+         Template();
 
-         const ipr::Named_map& primary_named_map() const;
-         const ipr::Sequence<ipr::Decl>& specializations() const;
-         const ipr::Mapping& mapping() const;
+         const ipr::Template& primary_template() const final;
+         const ipr::Sequence<ipr::Decl>& specializations() const final;
+         const ipr::Mapping& mapping() const final;
          Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const;
+         const ipr::Region& lexical_region() const final;
       };
 
       template<>
-      struct traits<ipr::Named_map> {
-         using rep = impl::Named_map;
+      struct traits<ipr::Template> {
+         using rep = impl::Template;
       };
       
       template<class Interface>
@@ -1624,10 +1624,8 @@ namespace ipr {
          impl::Bitfield* make_bitfield(const ipr::Name&, const ipr::Type&);
          impl::Typedecl* make_typedecl(const ipr::Name&, const ipr::Type&);
          impl::Fundecl* make_fundecl(const ipr::Name&, const ipr::Function&);
-         impl::Named_map* make_primary_map(const ipr::Name&,
-                                           const ipr::Forall&);
-         impl::Named_map* make_secondary_map(const ipr::Name&,
-                                             const ipr::Forall&);
+         impl::Template* make_primary_template(const ipr::Name&, const ipr::Forall&);
+         impl::Template* make_secondary_template(const ipr::Name&, const ipr::Forall&);
       
       private:
          const ipr::Region& region;
@@ -1641,8 +1639,8 @@ namespace ipr {
          decl_factory<ipr::Bitfield> bitfields;
          decl_factory<ipr::Fundecl> fundecls;
          decl_factory<ipr::Typedecl> typedecls;
-         decl_factory<ipr::Named_map> primary_maps;
-         decl_factory<ipr::Named_map> secondary_maps;
+         decl_factory<ipr::Template> primary_maps;
+         decl_factory<ipr::Template> secondary_maps;
 
          template<class T> inline void add_member(T*);
       };
@@ -1697,16 +1695,14 @@ namespace ipr {
             return scope.make_fundecl(n, t);
          }
 
-         Named_map* declare_primary_map(const ipr::Name& n,
-                                        const ipr::Forall& t)
+         Template* declare_primary_template(const ipr::Name& n, const ipr::Forall& t)
          {
-            return scope.make_primary_map(n, t);
+            return scope.make_primary_template(n, t);
          }
 
-         Named_map* declare_secondary_map(const ipr::Name& n,
-                                          const ipr::Forall& t)
+         Template* declare_secondary_template(const ipr::Name& n, const ipr::Forall& t)
          {
-            return scope.make_secondary_map(n, t);
+            return scope.make_secondary_template(n, t);
          }
 
          Region(const ipr::Region*, const ipr::Type&);
@@ -1778,18 +1774,18 @@ namespace ipr {
             return fundecl;
          }
          
-         impl::Named_map*
-         declare_primary_map(const ipr::Name& n, const ipr::Forall& t)
+         impl::Template*
+         declare_primary_template(const ipr::Name& n, const ipr::Forall& t)
          {
-            impl::Named_map* map = body.declare_primary_map(n, t);
+            impl::Template* map = body.declare_primary_template(n, t);
             map->member_of = this;
             return map;
          }
 
-         impl::Named_map*
-         declare_secondary_map(const ipr::Name& n, const ipr::Forall& t)
+         impl::Template*
+         declare_secondary_template(const ipr::Name& n, const ipr::Forall& t)
          {
-            impl::Named_map* map = body.declare_secondary_map(n, t);
+            impl::Template* map = body.declare_secondary_template(n, t);
             map->member_of = this;
             return map;
          }

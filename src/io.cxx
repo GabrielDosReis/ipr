@@ -1826,7 +1826,7 @@ namespace ipr
                   << xpr_stmt(init.get());
          }
 
-         void visit(const Named_map& m) override
+         void visit(const Template& m) override
          {
             m.name().accept(*this);
             pp << token(" : ")
