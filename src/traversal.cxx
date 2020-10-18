@@ -864,7 +864,7 @@ ipr::Visitor::visit(const Typedecl& d)
 }
 
 void
-ipr::Visitor::visit(const Named_map& d)
+ipr::Visitor::visit(const Template& d)
 {
    visit(as<Decl>(d));
 }

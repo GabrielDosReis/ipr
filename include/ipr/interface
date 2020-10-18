@@ -229,7 +229,7 @@ namespace ipr {
    struct Field;                 // field in union or class declaration
    struct Bitfield;              // bitfield
    struct Fundecl;               // function-declaration
-   struct Named_map;             // template-declaration
+   struct Template;              // template-declaration
    struct Parameter;             // function or template parameter
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
@@ -798,7 +798,7 @@ namespace ipr {
    // that when executed yield deduced template arguments.  As such, they
    // fit the IPR model of a declaration being an introduction of a name
    // in a scope, with a type and optional initializer.
-   struct Guide_name : Unary<Category<guide_name_cat, Name>, const Named_map&> {
+   struct Guide_name : Unary<Category<guide_name_cat, Name>, const Template&> {
       Arg_type mapping_decl() const { return operand(); }
    };
 
@@ -1866,7 +1866,7 @@ namespace ipr {
 
       virtual Optional<Expr> initializer() const = 0;
 
-      virtual const Named_map& generating_map() const = 0;
+      virtual const Template& generating_map() const = 0;
       virtual const Sequence<Substitution>& substitutions() const = 0;
 
       virtual int position() const = 0;
@@ -1883,7 +1883,7 @@ namespace ipr {
       { }
    };
 
-                                // -- Named_map --
+                                // -- Template --
    // This represents a parameterized declaration.  If its
    // template-parameter list is empty, that means that it is
    // either an explicit specialization -- if result() has a
@@ -1891,15 +1891,15 @@ namespace ipr {
    // declaration  -- if result().substitutions() is empty.
    // The list of specializations of this template (either
    // partial or explicit) is given by specializations().
-   struct Named_map : Category<named_map_cat, Decl> {
-      virtual const Named_map& primary_named_map() const = 0;
+   struct Template : Category<template_cat, Decl> {
+      virtual const Template& primary_template() const = 0;
       virtual const Sequence<Decl>& specializations() const = 0;
       virtual const Mapping& mapping() const = 0;
 
       const Parameter_list& params() const { return mapping().params(); }
       const Expr& result() const { return mapping().result(); }
 
-      virtual Optional<Named_map> definition() const = 0;
+      virtual Optional<Template> definition() const = 0;
    };
 
                                 // -- Enumerator --
@@ -2196,7 +2196,7 @@ namespace ipr {
       virtual void visit(const Enumerator&);
       virtual void visit(const Field&);
       virtual void visit(const Fundecl&);
-      virtual void visit(const Named_map&);
+      virtual void visit(const Template&);
       virtual void visit(const Parameter&);
       virtual void visit(const Parameter_list&);
       virtual void visit(const Typedecl&);

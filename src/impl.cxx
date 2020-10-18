@@ -56,11 +56,11 @@ namespace ipr {
 
       Optional<ipr::Expr_list> New::initializer() const { return { args }; }
 
-      // --------------------------------------
-      // -- master_decl_data<ipr::Named_map> --
-      // --------------------------------------
+      // -------------------------------------
+      // -- master_decl_data<ipr::Template> --
+      // -------------------------------------
 
-      master_decl_data<ipr::Named_map>::
+      master_decl_data<ipr::Template>::
       master_decl_data(impl::Overload* ovl, const ipr::Type& t)
             : Base(this), overload_entry(t),
               def(0), langlinkage(0), primary(0),home(0),
@@ -381,33 +381,33 @@ namespace ipr {
          return *util::check(lexreg);
       }
 
-      // ---------------------
-      // -- impl::Named_map --
-      // ---------------------
+      // --------------------
+      // -- impl::Template --
+      // --------------------
 
-      Named_map::Named_map() : member_of(0), init(0), lexreg(0) { }
+      Template::Template() : member_of(0), init(0), lexreg(0) { }
 
-      const ipr::Named_map&
-      Named_map::primary_named_map() const {
+      const ipr::Template&
+      Template::primary_template() const {
          return *util::check(util::check(decl_data.master_data)->primary);
       }
 
       const ipr::Sequence<ipr::Decl>&
-      Named_map::specializations() const {
+      Template::specializations() const {
          return util::check(decl_data.master_data)->specs;
       }
 
       const ipr::Mapping&
-      Named_map::mapping() const {
+      Template::mapping() const {
          return *util::check(init);
       }
 
-      Optional<ipr::Expr> Named_map::initializer() const {
+      Optional<ipr::Expr> Template::initializer() const {
          return { util::check(init)->body };
       }
 
       const ipr::Region&
-      Named_map::lexical_region() const {
+      Template::lexical_region() const {
          return *util::check(lexreg);
       }
 
@@ -1281,40 +1281,40 @@ namespace ipr {
          }
       }
 
-      impl::Named_map*
-      Scope::make_primary_map(const ipr::Name& n, const ipr::Forall& t)
+      impl::Template*
+      Scope::make_primary_template(const ipr::Name& n, const ipr::Forall& t)
       {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
          if (master == 0) {
-            impl::Named_map* decl = primary_maps.declare(ovl, t);
+            impl::Template* decl = primary_maps.declare(ovl, t);
             decl->decl_data.master_data->primary = decl;
             add_member(decl);
             return decl;
          }
          else {
-            impl::Named_map* decl = primary_maps.redeclare(master);
+            impl::Template* decl = primary_maps.redeclare(master);
             // FIXME: set the primary field.
             add_member(decl);
             return decl;
          }
       }
 
-      impl::Named_map*
-      Scope::make_secondary_map(const ipr::Name& n, const ipr::Forall& t)
+      impl::Template*
+      Scope::make_secondary_template(const ipr::Name& n, const ipr::Forall& t)
       {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
          if (master == 0) {
-            impl::Named_map* decl = secondary_maps.declare(ovl, t);
+            impl::Template* decl = secondary_maps.declare(ovl, t);
             // FXIME: record this a secondary map and set its primary.
             add_member(decl);
             return decl;
          }
          else {
-            impl::Named_map* decl = secondary_maps.redeclare(master);
+            impl::Template* decl = secondary_maps.redeclare(master);
             // FIXME: set primary info.
             add_member(decl);
             return decl;
@@ -1521,7 +1521,7 @@ namespace ipr {
       }
 
       impl::Guide_name*
-      expr_factory::make_guide_name(const ipr::Named_map& m) {
+      expr_factory::make_guide_name(const ipr::Template& m) {
          return guide_ids.insert(m, unary_compare());
       }
 
