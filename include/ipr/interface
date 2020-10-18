@@ -1905,7 +1905,7 @@ namespace ipr {
                                 // -- Enumerator --
    // This represents a classic enumerator.
    struct Enumerator : Category<enumerator_cat, Decl> {
-      const Type& type() const { return membership(); }
+      const Type& type() const final { return membership(); }
       virtual const Enum& membership() const = 0;
    };
 
@@ -1981,7 +1981,7 @@ namespace ipr {
 
                                 // -- Typedecl --
    struct Typedecl : Category<typedecl_cat, Decl> {
-      virtual const Type& membership() const = 0;
+      virtual const Expr& membership() const = 0;
       virtual Optional<Typedecl> definition() const = 0;
    };
 

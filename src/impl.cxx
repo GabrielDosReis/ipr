@@ -470,7 +470,7 @@ namespace ipr {
          return { init };
       }
 
-      const ipr::Udt<ipr::Decl>&
+      const ipr::Expr&
       Typedecl::membership() const {
          return *util::check(member_of);
       }

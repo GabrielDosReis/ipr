@@ -1562,12 +1562,12 @@ namespace ipr {
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
          const ipr::Type* init;
-         const ipr::Udt<ipr::Decl>* member_of;
+         const ipr::Expr* member_of;
          const ipr::Region* lexreg;
 
          Typedecl();
 
-         const ipr::Udt<ipr::Decl>& membership() const final;
+         const ipr::Expr& membership() const final;
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final;
       };
