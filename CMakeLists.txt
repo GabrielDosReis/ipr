@@ -73,6 +73,6 @@ endif()
 
 # Testing
 enable_testing()
-set(DOCTEST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty")
+set(DOCTEST_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/3rdparty")
 add_subdirectory(tests)
 
