@@ -124,6 +124,7 @@ namespace ipr {
    struct Array_delete;          // array delete-expression     delete[] p
    struct Complement;            // bitwise complement                  ~m
    struct Delete;                // delete-expression             delete p
+   struct Demote;                // integral or floating-point conversion
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // expression list        
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
@@ -131,12 +132,15 @@ namespace ipr {
    struct Id_expr;               // an identifier used in an expression
    struct Label;                 // a label - target of a goto-statement
                                  //         or entry of a switch-statement
+   struct Materialize;           // temporary materialization        T().m
    struct Not;                   // logical negation                 !cond
    struct Paren_expr;            // parenthesized expression           (a)
    struct Post_decrement;        // post-increment                     p++
    struct Post_increment;        // post-decrement                     p--
    struct Pre_decrement;         // pre-increment                      ++p
    struct Pre_increment;         // pre-decrement                      --p
+   struct Promote;               // integral or floating-point promotion
+   struct Read;                  // lvalue to rvalue conversion      = var
    struct Throw;                 // throw expression           throw Bad()
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
@@ -190,6 +194,7 @@ namespace ipr {
    struct Rshift;                // right shift                    a >> b
    struct Rshift_assign;         // in-place right shift           a >>= b
    struct Static_cast;           // static-cast            static_cast<T>(v)
+   struct Qualification;         // implicit cv-qualification
    struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
@@ -198,6 +203,7 @@ namespace ipr {
    // -- result of trinary expression constructor constants --
    // --------------------------------------------------------
    struct New;                   // new-expression              new (p) T(v)
+   struct Coerce;                // implicit conversions not promotion or demotion
    struct Conditional;           // conditional                   p ? a : b
 
    // -----------------------------------------------
@@ -806,7 +812,7 @@ namespace ipr {
    struct Rname : Ternary<Category<rname_cat, Name>, const Type&, int, int> {
       // Although the type() of an Rname is its first operand, we don't define
       // that function here, for it would involve a two indirections to
-      // to give the result.  Consequently we define it in the implemenation
+      // to give the result.  Consequently we define it in the implementation
       // part.
       // pmp: swapped level and position to return 2nd and 3rd
       Arg2_type level() const { return second(); }
@@ -1167,6 +1173,10 @@ namespace ipr {
       const Expr& storage() const { return operand(); }
    };
 
+                                   // -- Demote --
+   // Integral or floating point conversion -- "(float)2.2"
+   struct Demote : Unary<Category<demote_cat>> { };
+
                                 // -- Deref --
    // Dereference-expression -- "*expr"
    struct Deref : Unary<Category<deref_cat, Classic>> { };
@@ -1219,6 +1229,10 @@ namespace ipr {
       Arg_type name() const { return operand(); }
    };
 
+                                // -- Materialize --
+   // Temporary materialization -- "T().m"
+   struct Materialize : Unary<Category<materialize_cat>> { };
+
                                 // -- Not --
    // logical-not-expression -- "!expr"
    struct Not : Unary<Category<not_cat, Classic>> { };
@@ -1238,6 +1252,14 @@ namespace ipr {
                                 // -- Pre_increment --
    // pre-increment-expression -- "++expr".
    struct Pre_increment : Unary<Category<pre_increment_cat, Classic>> { };
+
+                                // -- Promote --
+   // Integral or floating point promotion -- "(int)'2'"
+   struct Promote : Unary<Category<promote_cat>> { };
+
+                                // -- Read --
+   // Lvalue-to-rvalue conversion -- "= var"
+   struct Read : Unary<Category<read_cat>> { };
 
                                 // -- Throw --
    // A node that represents a C++ expression of the form `throw ex'.
@@ -1526,6 +1548,13 @@ namespace ipr {
    // An expression of the form "static_cast<type>(expr)".
    struct Static_cast : Cast_expr<static_cast_cat> { };
 
+                                   // -- Qualification --
+   // Implicit conversions that add cv-qualifiers
+   struct Qualification : Binary<Category<qualified_cat>, const Type&> {
+      Arg1_type target() const { return first(); }
+      Arg2_type expr() const { return second(); }
+   };
+
                                 // -- New --
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
@@ -1534,6 +1563,14 @@ namespace ipr {
       virtual Optional<Expr_list> placement() const = 0;
       virtual const Type& allocated_type() const = 0;
       virtual Optional<Expr_list> initializer() const = 0;
+   };
+
+                                   // -- Coerce --
+   // Implicit conversions that are not promotions or demotions
+   struct Coerce : Category<conditional_cat> {
+      virtual const Type& target() const = 0;
+      virtual const Expr& expr() const = 0;
+      virtual Optional<Expr> implementation() const = 0;
    };
 
                                 // -- Conditional --
@@ -2094,6 +2131,7 @@ namespace ipr {
       virtual void visit(const Array_delete&); 
       virtual void visit(const Complement&); 
       virtual void visit(const Delete&); 
+      virtual void visit(const Demote&);
       virtual void visit(const Deref&);
       virtual void visit(const Paren_expr&);
       virtual void visit(const Sizeof&);
@@ -2102,10 +2140,13 @@ namespace ipr {
       virtual void visit(const Id_expr&);
       virtual void visit(const Label&);
       virtual void visit(const Not&); 
+      virtual void visit(const Materialize&);
       virtual void visit(const Post_decrement&);
       virtual void visit(const Post_increment&); 
       virtual void visit(const Pre_decrement&); 
       virtual void visit(const Pre_increment&); 
+      virtual void visit(const Promote&);
+      virtual void visit(const Read&);
       virtual void visit(const Throw&);
       virtual void visit(const Unary_minus&); 
       virtual void visit(const Unary_plus&);
@@ -2125,6 +2166,7 @@ namespace ipr {
       virtual void visit(const Bitxor_assign&);
       virtual void visit(const Cast&); 
       virtual void visit(const Call&); 
+      virtual void visit(const Coerce&);
       virtual void visit(const Comma&);
       virtual void visit(const Const_cast&); 
       virtual void visit(const Datum&); 
@@ -2157,6 +2199,7 @@ namespace ipr {
       virtual void visit(const Rshift_assign&);
       virtual void visit(const Static_cast&);
       virtual void visit(const Binary_fold&);
+      virtual void visit(const Qualification&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);

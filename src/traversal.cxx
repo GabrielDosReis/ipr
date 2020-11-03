@@ -319,6 +319,12 @@ ipr::Visitor::visit(const Delete& e)
 }
 
 void
+ipr::Visitor::visit(const Demote& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Deref& e)
 {
    visit(as<Classic>(e));
@@ -361,6 +367,12 @@ ipr::Visitor::visit(const Unary_minus& e)
 }
 
 void
+ipr::Visitor::visit(const Materialize& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Not& e)
 {
    visit(as<Classic>(e));
@@ -388,6 +400,18 @@ void
 ipr::Visitor::visit(const Pre_increment& e)
 {
    visit(as<Classic>(e));
+}
+
+void
+ipr::Visitor::visit(const Promote& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
+ipr::Visitor::visit(const Read& e)
+{
+   visit(as<Expr>(e));
 }
 
 void
@@ -667,6 +691,12 @@ ipr::Visitor::visit(const Static_cast& e)
 }
 
 void
+ipr::Visitor::visit(const Qualification& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Minus& e)
 {
    visit(as<Classic>(e));
@@ -681,6 +711,12 @@ ipr::Visitor::visit(const Minus_assign& e)
 void ipr::Visitor::visit(const Binary_fold& e)
 {
    visit(as<Classic>(e));
+}
+
+void
+ipr::Visitor::visit(const Coerce& e)
+{
+   visit(as<Expr>(e));
 }
 
 void

@@ -57,6 +57,16 @@ namespace ipr {
          }
       };
 
+      Coerce::Coerce(const ipr::Type& type, const ipr::Expr& expr)
+            : target_type{ type }, expression{ expr }
+      { }
+
+      const ipr::Type& Coerce::target() const { return target_type; }
+
+      const ipr::Expr& Coerce::expr() const { return expression; }
+
+      Optional<ipr::Expr> Coerce::implementation() const { return { impl }; }
+
       // -- impl::New --
       New::New(const ipr::Expr_list* where, const ipr::Type& what,
                const ipr::Expr_list* args)
@@ -1479,6 +1489,13 @@ namespace ipr {
          return deletes.make(e);
       }
 
+      impl::Demote*
+      expr_factory::make_demote(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Demote* demote_expr = demotes.make(e);
+         demote_expr->constraint = result;
+         return demote_expr;
+      }
+
       impl::Deref*
       expr_factory::make_deref(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Deref* deref = derefs.make(e);
@@ -1603,6 +1620,20 @@ namespace ipr {
          Pre_decrement* dec = pre_decrements.make(e);
          dec->constraint = result;
          return dec;
+      }
+
+      impl::Promote*
+      expr_factory::make_promote(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Promote* promote_expr = promotes.make(e);
+         promote_expr->constraint = result;
+         return promote_expr;
+      }
+
+      impl::Read*
+      expr_factory::make_read(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Read* read_expr = reads.make(e);
+         read_expr->constraint = result;
+         return read_expr;
       }
 
       impl::Throw*
@@ -1980,6 +2011,13 @@ namespace ipr {
          return scasts.make(t, e);
       }
 
+      impl::Qualification*
+      expr_factory::make_qualification(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Qualification* qualification = qualifications.make(t, e);
+         qualification->constraint = result;
+         return qualification;
+      }
+
       impl::Binary_fold*
       expr_factory::make_binary_fold(Category_code op, const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
@@ -2008,6 +2046,13 @@ namespace ipr {
          impl::New* new_expr = news.make(&p, t, &i);
          new_expr->constraint = result;
          return new_expr;
+      }
+
+      impl::Coerce*
+      expr_factory::make_coerce(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Coerce* coerce_expr = coerces.make(t, e);
+         coerce_expr->constraint = result;
+         return coerce_expr;
       }
 
       impl::Conditional*

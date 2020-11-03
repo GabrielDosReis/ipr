@@ -1017,6 +1017,7 @@ namespace ipr {
       using Array_delete = Classic_unary_expr<ipr::Array_delete>;
       using Complement = Classic_unary_expr<ipr::Complement>;
       using Delete = Classic_unary_expr<ipr::Delete>;
+      using Demote = Unary_expr<ipr::Demote>;
       using Deref = Classic_unary_expr<ipr::Deref>;
 
       struct Expr_list : impl::Node<ipr::Expr_list> {
@@ -1049,6 +1050,7 @@ namespace ipr {
          Optional<ipr::Expr> resolution() const final;
       };
 
+      using Materialize = Classic_unary_expr<ipr::Materialize>;
       using Not = Classic_unary_expr<ipr::Not>;
 
       using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
@@ -1057,6 +1059,8 @@ namespace ipr {
       using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
       using Post_decrement = Classic_unary_expr<ipr::Post_decrement>;
       using Post_increment = Classic_unary_expr<ipr::Post_increment>;
+      using Promote = Unary_expr<ipr::Promote>;
+      using Read = Unary_expr<ipr::Read>;
       using Throw = Classic_unary_expr<ipr::Throw>;
 
       using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
@@ -1126,12 +1130,24 @@ namespace ipr {
       using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_node<ipr::Template_id>;
+      using Qualification = Binary_expr<ipr::Qualification>;
 
       struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
          Category_code fold_op;
 
          Binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&);
          Category_code operation() const final;
+      };
+
+      struct Coerce : Expr<ipr::Coerce> {
+         const ipr::Type& target_type;
+         const ipr::Expr& expression;
+         const ipr::Expr* impl;
+
+         Coerce(const ipr::Type&, const ipr::Expr&);
+         const ipr::Type& target() const final;
+         const ipr::Expr& expr() const final;
+         Optional<ipr::Expr> implementation() const final;
       };
 
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
@@ -1191,6 +1207,7 @@ namespace ipr {
          Conversion* make_conversion(const ipr::Type&);
          Ctor_name* make_ctor_name(const ipr::Type&);
          Delete* make_delete(const ipr::Expr&);
+         Demote* make_demote(const ipr::Expr&, Optional<ipr::Type> = {});
          Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
          Dtor_name* make_dtor_name(const ipr::Type&);
          Expr_list* make_expr_list();
@@ -1200,12 +1217,15 @@ namespace ipr {
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
          Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
+         Materialize* make_materialize(const ipr::Expr&, Optional<ipr::Type> = {});
          Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
          Paren_expr* make_paren_expr(const ipr::Expr&);
          Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
          Post_decrement* make_post_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
          Pre_increment* make_pre_increment(const ipr::Expr&, Optional<ipr::Type> = {});
          Pre_decrement* make_pre_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
+         Promote* make_promote(const ipr::Expr&, Optional<ipr::Type> = {});
+         Read* make_read(const ipr::Expr&, Optional<ipr::Type> = {});
          Throw* make_throw(const ipr::Expr&, Optional<ipr::Type> = {});
          Type_id* make_type_id(const ipr::Type&);
          Unary_minus* make_unary_minus(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1225,6 +1245,7 @@ namespace ipr {
          Bitxor_assign* make_bitxor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Cast* make_cast(const ipr::Type&, const ipr::Expr&);
          Call* make_call(const ipr::Expr&, const ipr::Expr_list&, Optional<ipr::Type> = {});
+         Coerce* make_coerce(const ipr::Type&, const ipr::Expr&, Optional<ipr::Type> = {});
          Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
          Datum* make_datum(const ipr::Type&, const ipr::Expr_list&);
@@ -1259,6 +1280,7 @@ namespace ipr {
          Template_id* make_template_id(const ipr::Name&,
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
+         Qualification* make_qualification(const ipr::Type&, const ipr::Expr&, Optional<ipr::Type> = {});
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          New* make_new(const ipr::Type&, Optional<ipr::Type> = {});
          New* make_new(const ipr::Type&, const ipr::Expr_list&, Optional<ipr::Type> = {});
@@ -1300,17 +1322,20 @@ namespace ipr {
          stable_farm<impl::Array_delete> array_deletes;
          stable_farm<impl::Complement> complements;
          stable_farm<impl::Delete> deletes;
+         stable_farm<impl::Demote> demotes;
          stable_farm<impl::Deref> derefs;
          stable_farm<impl::Expr_list> xlists;
          stable_farm<impl::Id_expr> id_exprs;
          stable_farm<impl::Initializer_list> init_lists;
          stable_farm<impl::Label> labels;
          stable_farm<impl::Not> nots;
+         stable_farm<impl::Paren_expr> parens;
          stable_farm<impl::Pre_increment> pre_increments;
          stable_farm<impl::Pre_decrement> pre_decrements;
          stable_farm<impl::Post_increment> post_increments;
          stable_farm<impl::Post_decrement> post_decrements;
-         stable_farm<impl::Paren_expr> parens;
+         stable_farm<impl::Promote> promotes;
+         stable_farm<impl::Read> reads;
          stable_farm<impl::Throw> throws;
          stable_farm<impl::Unary_minus> unary_minuses;
          stable_farm<impl::Unary_plus> unary_pluses;
@@ -1360,9 +1385,11 @@ namespace ipr {
          stable_farm<impl::Rshift> rshifts;
          stable_farm<impl::Rshift_assign> rshift_assigns;
          stable_farm<impl::Static_cast> scasts;
+         stable_farm<impl::Qualification> qualifications;
          stable_farm<impl::Binary_fold> folds;
          
          stable_farm<impl::New> news;
+         stable_farm<impl::Coerce> coerces;
          stable_farm<impl::Conditional> conds;
          stable_farm<impl::Mapping> mappings;
 
