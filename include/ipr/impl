@@ -755,16 +755,8 @@ namespace ipr {
       template<class D>
       struct Decl : Stmt<Node<D>> {
          basic_decl_data<D> decl_data;
-         const ipr::Template* pat = { };
-         val_sequence<ipr::Substitution> args;
 
          Decl() : decl_data{ nullptr } { }
-
-         const ipr::Sequence<ipr::Substitution>& substitutions() const final
-         { return args; }
-
-         const ipr::Template& generating_map() const final
-         { return *util::check(pat); }
 
          const ipr::Linkage& lang_linkage() const final
          {
@@ -796,13 +788,10 @@ namespace ipr {
          ipr::DeclSpecifiers spec;
          const ipr::Linkage* langlinkage;
          singleton_overload overload;
-         const ipr::Template* pat;
-         val_sequence<ipr::Substitution> args;
 
          unique_decl() : spec(ipr::DeclSpecifiers::None),
                          langlinkage{ },
-                         overload(*this),
-                         pat{ }
+                         overload(*this)
          { }
 
          ipr::DeclSpecifiers specifiers() const final { return spec; }
@@ -811,12 +800,6 @@ namespace ipr {
          {
             return *util::check(langlinkage);
          }
-
-         const ipr::Sequence<ipr::Substitution>& substitutions() const final
-         { return args; }
-
-         const ipr::Template& generating_map() const final
-         { return *util::check(pat); }
       };
 
       struct Parameter : unique_decl<ipr::Parameter> {

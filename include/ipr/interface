@@ -1830,9 +1830,9 @@ namespace ipr {
    }
 
                                 // -- Decl --
-   // Only declaration-statements are statements.  But we find it simpler
-   // just to take the general rule that a declaration is a statement.
-   // However it should be observed that declarations like
+   // Only declaration-statements are statements from Standard C++ perspective.
+   // However, we find it simpler just to take the general rule that a declaration
+   //  is a statement. Furthermore, it should be observed that declarations like
    //   (a) function-definition
    //   (b) template-declaration
    //   (c) explicit-instantiation
@@ -1865,9 +1865,6 @@ namespace ipr {
       virtual const Region& lexical_region() const = 0;
 
       virtual Optional<Expr> initializer() const = 0;
-
-      virtual const Template& generating_map() const = 0;
-      virtual const Sequence<Substitution>& substitutions() const = 0;
 
       virtual int position() const = 0;
 
