@@ -656,12 +656,18 @@ namespace ipr {
    // some implicit actions like cleanup-ups happen, or nesting of scopes.
    // The sequence of declarations appearing in a Region makes up the
    // Scope of that region.
-   struct Region : Category<region_cat, Node> {
+   struct Region : Node {
       using Location_span = std::pair<Unit_location, Unit_location>;
       virtual const Location_span& span() const = 0;
       virtual const Region& enclosing() const = 0;
       virtual const Scope& bindings() const = 0;
       virtual const Expr& owner() const = 0;
+      Region() : Node(region_cat)
+      { }
+
+   protected:
+      Region(Category_code cat) : Node(cat)
+      { }
    };
 
                                 // -- Expr --
@@ -1556,8 +1562,7 @@ namespace ipr {
    };
 
                                 // -- Parameter_list --
-   // FIXME: Parameter_list should have its category ste properly.
-   struct Parameter_list : Region, Sequence<Parameter> { };
+   struct Parameter_list : Category<parameter_list_cat, Region>, Sequence<Parameter> { };
 
                                 // -- Stmt -- 
    // The view that a statement is kind of expression does not follow from
@@ -2040,7 +2045,7 @@ namespace ipr {
    };
                                 // -- Built-in type constants --
 
-   struct Primitive : As_type { };
+   struct Primitive : Category<primitive_cat, As_type> { };
 
    struct Global_scope : Namespace { };
 

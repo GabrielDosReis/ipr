@@ -227,7 +227,7 @@ namespace ipr {
       template<class Interface>
       struct type_from_operand : Interface {
          using typename Interface::Arg_type;
-	 Arg_type rep;
+         Arg_type rep;
 
          explicit type_from_operand(Arg_type a) : rep(a) { }
          const ipr::Type& type() const final
