@@ -495,6 +495,36 @@ namespace ipr {
          return *util::check(lexreg);
       }
 
+      // --------------------
+      // -- impl::Static_assert --
+      // --------------------
+
+      Static_assert::Static_assert(const ipr::Type* t, const ipr::Name* n) :
+         barren_decl(t, n), a_expr(0), mes(), lexreg(0)
+      { }
+      
+      const ipr::Expr& Static_assert::assert_expr() const {
+         return *util::check(a_expr);
+      }
+
+      Optional<ipr::Expr> Static_assert::initializer() const {
+         return a_expr;
+      }
+      
+      Optional<ipr::Literal> Static_assert::message() const {
+         return mes;
+      }
+
+      const ipr::Region&
+      Static_assert::lexical_region() const {
+         return *util::check(lexreg);
+      }
+
+      const ipr::Region&
+      Static_assert::home_region() const {
+         return *util::check(lexreg);
+      }
+
       // -----------------
       // -- impl::Block --
       // -----------------
@@ -1247,6 +1277,20 @@ namespace ipr {
             decl = typedecls.redeclare(master);
          add_member(decl);      // remember we saw a declaration.
          return decl;
+      }
+
+      impl::Static_assert*
+      Scope::make_static_assert(Lexicon& lexicon,
+                                const ipr::Expr& e,
+                                Optional<ipr::Literal> message)
+      {
+         impl::Static_assert* stat_assert =
+            static_asserts.make(&lexicon.static_assert_type(),
+                                &lexicon.get_identifier("static_assert"));
+         stat_assert->a_expr = &e;
+         stat_assert->mes = message;
+         
+         return stat_assert;
       }
 
       impl::Fundecl*
@@ -2042,6 +2086,7 @@ namespace ipr {
               uniontype(get_identifier("union"), cxx_linkage(), anytype),
               enumtype(get_identifier("enum"), cxx_linkage(), anytype),
               namespacetype(get_identifier("namespace"), cxx_linkage(), anytype),
+              staticasserttype(get_identifier("static_assert"), cxx_linkage(), anytype),
 
               voidtype(get_identifier("void"), cxx_linkage(), anytype),
               booltype(get_identifier("bool"), cxx_linkage(), anytype),
@@ -2071,6 +2116,7 @@ namespace ipr {
          record_builtin_type(uniontype);
          record_builtin_type(enumtype);
          record_builtin_type(namespacetype);
+         record_builtin_type(staticasserttype);
 
          record_builtin_type(voidtype);
 
@@ -2183,6 +2229,8 @@ namespace ipr {
       const ipr::Type& Lexicon::enum_type() const { return enumtype; }
 
       const ipr::Type& Lexicon::namespace_type() const { return namespacetype; }
+
+      const ipr::Type& Lexicon::static_assert_type() const { return staticasserttype; }
 
       template<class T>
       T* Lexicon::finish_type(T* t) {

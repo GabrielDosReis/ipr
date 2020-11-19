@@ -235,6 +235,7 @@ namespace ipr {
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
    struct Using_directive;       // using-directive
+   struct Static_assert;         // static_assert-declaration
 
    // ------------------------
    // -- distinguished node --
@@ -1971,6 +1972,12 @@ namespace ipr {
       virtual Optional<Typedecl> definition() const = 0;
    };
 
+                                // -- Static_assert --
+   struct Static_assert : Category<static_assert_cat, Decl> {
+      virtual const Expr& assert_expr() const = 0;
+      virtual Optional<Literal> message() const = 0;
+   };
+
                                 // -- Translation_unit --
    struct Translation_unit {
       struct Visitor;
@@ -2023,6 +2030,7 @@ namespace ipr {
       virtual const Type& union_type() const = 0;
       virtual const Type& enum_type() const = 0;
       virtual const Type& namespace_type() const = 0;
+      virtual const Type& static_assert_type() const = 0;
 
       virtual const Linkage& cxx_linkage() const = 0;
       virtual const Linkage& c_linkage() const = 0;
@@ -2188,6 +2196,7 @@ namespace ipr {
       virtual void visit(const Typedecl&);
       virtual void visit(const Var&);
       virtual void visit(const Asm&);
+      virtual void visit(const Static_assert&);
 
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);

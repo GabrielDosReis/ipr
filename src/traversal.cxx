@@ -864,6 +864,12 @@ ipr::Visitor::visit(const Typedecl& d)
 }
 
 void
+ipr::Visitor::visit(const Static_assert& d)
+{
+   visit(as<Decl>(d));
+}
+
+void
 ipr::Visitor::visit(const Template& d)
 {
    visit(as<Decl>(d));

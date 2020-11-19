@@ -149,7 +149,8 @@ template_cat,                           // ipr::Template
 parameter_cat,                          // ipr::Parameter
 typedecl_cat,                           // ipr::Typedecl
 var_cat,                                // ipr::Var
-using_directive,                        // ipr::Using_directive
+using_directive_cat,                    // ipr::Using_directive
+static_assert_cat,                      // ipr::Static_assert
 
 unit_cat,                               // ipr::Unit
 
