@@ -1743,7 +1743,7 @@ namespace ipr {
    // for "try" as every Block is implicitly a try-block.  Ideally, we
    // should have every expression as a "try-block".
    struct Handler : Binary<Category<handler_cat, Stmt>,
-                           const Decl&, const Block&> {
+                           const Parameter&, const Block&> {
       Arg1_type exception() const { return first(); }
       Arg2_type body() const { return second(); }
    };

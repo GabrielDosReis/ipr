@@ -1974,7 +1974,7 @@ namespace ipr {
          impl::Do* make_do(const ipr::Stmt&, const ipr::Expr&);
          impl::If_then* make_if_then(const ipr::Expr&, const ipr::Stmt&);
          impl::Switch* make_switch(const ipr::Expr&, const ipr::Stmt&);
-         impl::Handler* make_handler(const ipr::Decl&, const ipr::Block&);
+         impl::Handler* make_handler(const ipr::Parameter&, const ipr::Block&);
          impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&,
                                                const ipr::Stmt&);
          impl::While* make_while(const ipr::Expr&, const ipr::Stmt&);

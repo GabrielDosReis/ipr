@@ -681,8 +681,8 @@ namespace ipr {
       }
 
       impl::Handler*
-      stmt_factory::make_handler(const ipr::Decl& d, const ipr::Block& b) {
-         return handlers.make(d, b);
+      stmt_factory::make_handler(const ipr::Parameter& p, const ipr::Block& b) {
+         return handlers.make(p, b);
       }
 
       impl::Labeled_stmt*
