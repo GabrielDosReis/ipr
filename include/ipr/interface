@@ -693,9 +693,14 @@ namespace ipr {
    // all operators can be given user-defined meanings.  Consequently,
    // we define this class to represent the idea that an expression
    // has a user-supplied meaning.
+   //
+   // IPR defines a language that is the superset of C++. The term classic
+   // refers to the C++ language.
    struct Classic : Expr {
       // For an operation implemented by an overloaded operator, retrieve
-      // the implementation.
+      // the implementation. In non-templated context this returns a
+      // user-supplied declaration (that might be a definition). In
+      // templated contexts it might return an overload set.
       virtual Optional<Expr> implementation() const = 0;
 
    protected:
