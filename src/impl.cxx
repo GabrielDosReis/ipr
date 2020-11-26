@@ -594,11 +594,6 @@ namespace ipr {
 
       Break::Break() : stmt(0) { }
 
-      const ipr::Type&
-      Break::type() const {
-         return util::check(stmt)->type();
-      }
-
       const ipr::Stmt&
       Break::from() const {
          return *util::check(stmt);
@@ -609,11 +604,6 @@ namespace ipr {
       // --------------------
 
       Continue::Continue() : stmt(0) { }
-
-      const ipr::Type&
-      Continue::type() const {
-         return util::check(stmt)->type();
-      }
 
       const ipr::Stmt&
       Continue::iteration() const {

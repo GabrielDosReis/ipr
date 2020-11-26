@@ -1939,21 +1939,19 @@ namespace ipr {
       // A Break node can record the selction- of iteration-statement it
       // transfers control out of.
 
-      struct Break : Stmt<Node<ipr::Break>> {
+      struct Break : Stmt<Expr<ipr::Break>> {
          const ipr::Stmt* stmt;
 
          Break();
-         const ipr::Type& type() const final;
          const ipr::Stmt& from() const final;
       };
 
       // Like a Break, a Continue node can refer back to the
       // iteration-statement containing it.
-      struct Continue : Stmt<Node<ipr::Continue>> {
+      struct Continue : Stmt<Expr<ipr::Continue>> {
          const ipr::Stmt* stmt;
 
          Continue();
-         const ipr::Type& type() const final;
          const ipr::Stmt& iteration() const final;
       };
 
