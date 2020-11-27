@@ -153,5 +153,8 @@ using_directive,                        // ipr::Using_directive
 
 unit_cat,                               // ipr::Unit
 
+primitive_cat,                          // ipr::Primitive
+empty_stmt_cat,                         // ipr::Empty_stmt
+
 last_code_cat
 
