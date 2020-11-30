@@ -222,7 +222,7 @@ namespace ipr {
       template<class Interface>
       struct type_from_operand : Interface {
          using typename Interface::Arg_type;
-	 Arg_type rep;
+	      Arg_type rep;
 
          explicit type_from_operand(Arg_type a) : rep(a) { }
          const ipr::Type& type() const final
@@ -506,7 +506,7 @@ namespace ipr {
 
       template<class Interface>
       struct basic_decl_data : scope_datum {
-         // Information about the master declararion.  This pointer
+         // Information about the master declaration.  This pointer
          // shall be set at actual declaration creation time.
          master_decl_data<Interface>* master_data;
 
@@ -556,7 +556,7 @@ namespace ipr {
          // is created.
          impl::Overload* overload;
 
-         // Sequence of specilizations
+         // Sequence of specializations
          decl_sequence specs;
 
          master_decl_data(impl::Overload*, const ipr::Type&);
@@ -616,7 +616,7 @@ namespace ipr {
       // set is returned.  This class empty_overload implements that notion.
       // Alternatively, we could have thrown an exception to indicate
       // that failure; however, the resulting programming style might
-      // be clutered by try-blocks. 
+      // be cluttered by try-blocks. 
 
       struct empty_overload : impl::Node<ipr::Overload> {
          const ipr::Type& type() const final;
@@ -846,54 +846,22 @@ namespace ipr {
          const ipr::Enum& membership() const;
       };
 
-      
-      // Map ipr::Parameter, ipr::Base_type and ipr::Enumerator
-      // to their implementation classes.  This information is
-      // mostly used in the implementation of homogeneous_sequence,
-      // homogeneous_scope and homogeneous_region.
-
-      template<>
-      struct traits<ipr::Parameter> {
-         using rep = impl::Parameter;
-      };
-
-      template<>
-      struct traits<ipr::Base_type> {
-         using rep = impl::Base_type;
-      };
-
-      template<>
-      struct traits<ipr::Enumerator> {
-         using rep = impl::Enumerator;
-      };
-
-
       // A sequence of homogenous node can be represented directly
       // as a container of the concrete implementations classes
       // instad of pointers to the interface nodes.  This is the
       // case in particular for enumerators or parameters.
       
       template<class Member>
-      struct homogeneous_sequence : ipr::Sequence<Member> {
-         using rep = typename traits<Member>::rep;
-         val_sequence<rep> seq;
+      struct homogeneous_sequence : ipr::Sequence<typename Member::Interface> {
+         val_sequence<Member> seq;
 
-         int size() const { return seq.size(); }
-         const rep& get(int i) const { return seq.get(i); }
+         int size() const final { return seq.size(); }
+         const Member& get(int i) const final { return seq.get(i); }
 
-
-         // Most nodes in homogeneous sequences need only
-         // two or three arguments for their constructors.
-         template<class T, class U>
-         rep* push_back(const T& t, const U& u)
+         template<typename... Args>
+         Member* push_back(const Args&... args)
          {
-            return seq.push_back(t, u);
-         }
-
-         template<class T, class U, class V>
-         rep* push_back(const T& t, const U& u, const V& v)
-         {
-            return seq.push_back(t, u, v);
+            return seq.push_back(args...);
          }
       };
 
@@ -902,7 +870,6 @@ namespace ipr {
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
                                  std::allocator<void> {
-         using member_rep = typename homogeneous_sequence<Member>::rep;
          typed_sequence<homogeneous_sequence<Member>> decls;
          empty_overload missing;
 
@@ -912,27 +879,19 @@ namespace ipr {
             decls.constraint = &t;
          }
 
-         int size() const { return decls.size(); }
-         const Member& get(int i) const { return decls.seq.get(i); }
+         int size() const final { return decls.size(); }
+         const Member& get(int i) const final { return decls.seq.get(i); }
 
-         const ipr::Product& type() const { return decls; }
+         const ipr::Product& type() const final { return decls; }
 
-         const ipr::Sequence<ipr::Decl>& members() const { return *this; }
+         const ipr::Sequence<ipr::Decl>& members() const final { return *this; }
 
-         const ipr::Overload& operator[](const Name&) const;
+         const ipr::Overload& operator[](const Name&) const final;
 
-         template<class T, class U>
-         member_rep* push_back(const T& t, const U& u)
+         template<typename... Args>
+         Member* push_back(const Args&... args)
          {
-            member_rep* decl = decls.seq.push_back(t, u);
-            return decl;
-         }
-
-         template<class T, class U, class V>
-         member_rep* push_back(const T& t, const U& u, const V& v)
-         {
-            member_rep* decl = decls.seq.push_back(t, u, v);
-            return decl;
+            return decls.seq.push_back(args...);
          }
       };
 
@@ -943,8 +902,7 @@ namespace ipr {
       {
          const int s = decls.size();
          for (int i = 0; i < s; ++i) {
-            const typename homogeneous_sequence<Member>::rep&
-               decl = decls.seq.get(i);
+            const auto& decl = decls.seq.get(i);
             if (&decl.name() == &n)
                return decl.overload;
          }
@@ -975,9 +933,9 @@ namespace ipr {
          { }
       };
       
-      struct Parameter_list : homogeneous_region<ipr::Parameter,
+      struct Parameter_list : homogeneous_region<impl::Parameter,
                                  impl::Node<ipr::Parameter_list>> {
-         using Base = homogeneous_region<ipr::Parameter,
+         using Base = homogeneous_region<impl::Parameter,
                                          impl::Node<ipr::Parameter_list>>;
          
          Parameter_list(const ipr::Region&, const ipr::Type&);
@@ -1768,7 +1726,7 @@ namespace ipr {
       };
 
       struct Enum : impl::Type<ipr::Enum> {
-         homogeneous_region<ipr::Enumerator> body;
+         homogeneous_region<impl::Enumerator> body;
          const Kind enum_kind;
 
          const ipr::Region& region() const final;
@@ -1783,7 +1741,7 @@ namespace ipr {
       using Namespace = Udt<ipr::Namespace>;
 
       struct Class : impl::Udt<ipr::Class> {
-         homogeneous_region<ipr::Base_type> base_subobjects;
+         homogeneous_region<impl::Base_type> base_subobjects;
          
          Class(const ipr::Region&, const ipr::Type&);
 
