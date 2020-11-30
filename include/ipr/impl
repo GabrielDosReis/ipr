@@ -795,9 +795,10 @@ namespace ipr {
          {
             return *util::check(langlinkage);
          }
+         const ipr::Sequence<ipr::Decl>& decl_set() const final { return overload.seq; }
       };
 
-      struct Parameter : unique_decl<ipr::Parameter> {
+      struct Parameter final : unique_decl<ipr::Parameter> {
          const ipr::Name& id;
          const impl::Rname& abstract_name;
          const ipr::Parameter_list* where;
@@ -809,14 +810,13 @@ namespace ipr {
          const ipr::Type& type() const;
          const ipr::Region& home_region() const;
          const ipr::Region& lexical_region() const;
-         const ipr::Sequence<ipr::Decl>& decl_set() const;
          int position() const;
          Optional<ipr::Expr>initializer() const final;
          // FIXME: This should go away.
          const Parameter_list& membership() const;
       };
 
-      struct Base_type : unique_decl<ipr::Base_type> {
+      struct Base_type final : unique_decl<ipr::Base_type> {
          const ipr::Type& base;
          const ipr::Region& where;
          const int scope_pos;
@@ -827,10 +827,9 @@ namespace ipr {
          const ipr::Region& home_region() const;
          int position() const;
          Optional<ipr::Expr> initializer() const final;
-         const ipr::Sequence<ipr::Decl>& decl_set() const;
       };
 
-      struct Enumerator : unique_decl<ipr::Enumerator> {
+      struct Enumerator final : unique_decl<ipr::Enumerator> {
          const ipr::Name& id;
          const ipr::Enum& constraint;
          const int scope_pos;
@@ -841,7 +840,6 @@ namespace ipr {
          const ipr::Name& name() const;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-         const ipr::Sequence<ipr::Decl>& decl_set() const;
          int position() const;
          Optional<ipr::Expr> initializer() const final;
          // FIXME: this should go away.

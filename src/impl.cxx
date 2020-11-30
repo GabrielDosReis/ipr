@@ -24,7 +24,7 @@ namespace ipr {
          iterator end() const { return begin(); }
       };
 
-      constexpr Empty_string empty { };
+      static constexpr Empty_string empty { };
       return empty;
    }
 
@@ -284,11 +284,6 @@ namespace ipr {
          throw std::domain_error("impl::Base_type::initializer");
       }
 
-      const ipr::Sequence<ipr::Decl>&
-      Base_type::decl_set() const {
-         return overload.seq;
-      }
-
       // ----------------------
       // -- impl::Enumerator --
       // ----------------------
@@ -315,11 +310,6 @@ namespace ipr {
       const ipr::Enum&
       Enumerator::membership() const {
          return constraint;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      Enumerator::decl_set() const {
-         return overload.seq;
       }
 
       int
@@ -456,11 +446,6 @@ namespace ipr {
       const ipr::Parameter_list&
       Parameter::membership() const {
          return *util::check(where);
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      Parameter::decl_set() const {
-         return overload.seq;
       }
 
       int
