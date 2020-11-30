@@ -1442,8 +1442,10 @@ namespace ipr {
       }
 
       impl::Address*
-      expr_factory::make_address(const ipr::Expr& e) {
-         return addresses.make(e);
+      expr_factory::make_address(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Address* address = addresses.make(e);
+         address->constraint = result; 
+         return address;
       }
 
       impl::Array_delete*
@@ -1452,8 +1454,10 @@ namespace ipr {
       }
 
       impl::Complement*
-      expr_factory::make_complement(const ipr::Expr& e) {
-         return complements.make(e);
+      expr_factory::make_complement(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Complement* complement = complements.make(e);
+         complement->constraint = result;
+         return complement;
       }
 
       impl::Conversion*
@@ -1472,8 +1476,10 @@ namespace ipr {
       }
 
       impl::Deref*
-      expr_factory::make_deref(const ipr::Expr& e) {
-         return derefs.make(e);
+      expr_factory::make_deref(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Deref* deref = derefs.make(e);
+         deref->constraint = result;
+         return deref;
       }
 
       impl::Dtor_name*
@@ -1512,8 +1518,10 @@ namespace ipr {
       }
 
       impl::Id_expr*
-      expr_factory::make_id_expr(const ipr::Name& n) {
-         return id_exprs.make(n);
+      expr_factory::make_id_expr(const ipr::Name& n, Optional<ipr::Type> result) {
+         impl::Id_expr* id = id_exprs.make(n);
+         id->constraint = result;
+         return id;
       }
 
       impl::Id_expr*
@@ -1525,13 +1533,17 @@ namespace ipr {
       }
 
       impl::Initializer_list*
-      expr_factory::make_initializer_list(const ipr::Expr_list& e) {
-         return init_lists.make(e);
+      expr_factory::make_initializer_list(const ipr::Expr_list& e, Optional<ipr::Type> result) {
+         impl::Initializer_list* init = init_lists.make(e);
+         init->constraint = result;
+         return init;
       }
 
       impl::Not*
-      expr_factory::make_not(const ipr::Expr& e) {
-         return nots.make(e);
+      expr_factory::make_not(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Not* not_expr = nots.make(e);
+         not_expr->constraint = result;
+         return not_expr;
       }
 
       impl::Operator*
@@ -1555,28 +1567,38 @@ namespace ipr {
       }
 
       impl::Post_increment*
-      expr_factory::make_post_increment(const ipr::Expr& e) {
-         return post_increments.make(e);
+      expr_factory::make_post_increment(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Post_increment* inc = post_increments.make(e);
+         inc->constraint = result;
+         return inc;
       }
 
       impl::Post_decrement*
-      expr_factory::make_post_decrement(const ipr::Expr& e) {
-         return post_decrements.make(e);
+      expr_factory::make_post_decrement(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Post_decrement* dec = post_decrements.make(e);
+         dec->constraint = result;
+         return dec;
       }
 
       impl::Pre_increment*
-      expr_factory::make_pre_increment(const ipr::Expr& e) {
-         return pre_increments.make(e);
+      expr_factory::make_pre_increment(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Pre_increment *inc = pre_increments.make(e);
+         inc->constraint = result;
+         return inc;
       }
 
       impl::Pre_decrement*
-      expr_factory::make_pre_decrement(const ipr::Expr& e) {
-         return pre_decrements.make(e);
+      expr_factory::make_pre_decrement(const ipr::Expr& e, Optional<ipr::Type> result) {
+         Pre_decrement* dec = pre_decrements.make(e);
+         dec->constraint = result;
+         return dec;
       }
 
       impl::Throw*
-      expr_factory::make_throw(const ipr::Expr& e) {
-         return throws.make(e);
+      expr_factory::make_throw(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Throw* throw_expr = throws.make(e);
+         throw_expr->constraint = result;
+         return throw_expr;
       }
 
       impl::Type_id*
@@ -1595,76 +1617,104 @@ namespace ipr {
       }
 
       impl::Unary_minus*
-      expr_factory::make_unary_minus(const ipr::Expr& e) {
-         return unary_minuses.make(e);
+      expr_factory::make_unary_minus(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Unary_minus* minus = unary_minuses.make(e);
+         minus->constraint = result;
+         return minus;
       }
 
       impl::Unary_plus*
-      expr_factory::make_unary_plus(const ipr::Expr& e) {
-         return unary_pluses.make(e);
+      expr_factory::make_unary_plus(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Unary_plus* plus = unary_pluses.make(e);
+         plus->constraint = result;
+         return plus;
       }
 
       impl::Expansion*
-      expr_factory::make_expansion(const ipr::Expr& e) {
-         return expansions.make(e);
+      expr_factory::make_expansion(const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Expansion* expansion = expansions.make(e);
+         expansion->constraint = result;
+         return expansion;
       }
 
       impl::And*
-      expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r) {
-         return ands.make(l, r);
+      expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::And* and_expr = ands.make(l, r);
+         and_expr->constraint = result;
+         return and_expr;
       }
 
       impl::Array_ref*
-      expr_factory::make_array_ref(const ipr::Expr& l, const ipr::Expr& r) {
-         return array_refs.make(l, r);
+      expr_factory::make_array_ref(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Array_ref* array_ref = array_refs.make(l, r);
+         array_ref->constraint = result;
+         return array_ref;
       }
 
       impl::Arrow*
-      expr_factory::make_arrow(const ipr::Expr& l, const ipr::Expr& r) {
-         return arrows.make(l, r);
+      expr_factory::make_arrow(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Arrow* arrow = arrows.make(l, r);
+         arrow->constraint = result;
+         return arrow;
       }
 
       impl::Arrow_star*
-      expr_factory::make_arrow_star(const ipr::Expr& l, const ipr::Expr& r) {
-         return arrow_stars.make(l, r);
+      expr_factory::make_arrow_star(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Arrow_star* arrow_star = arrow_stars.make(l, r);
+         arrow_star->constraint = result;
+         return arrow_star;
       }
 
       impl::Assign*
-      expr_factory::make_assign(const ipr::Expr& l, const ipr::Expr& r) {
-         return assigns.make(l, r);
+      expr_factory::make_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Assign* assign = assigns.make(l, r);
+         assign->constraint = result;
+         return assign;
       }
 
       impl::Bitand*
-      expr_factory::make_bitand(const ipr::Expr& l, const ipr::Expr& r) {
-         return bitands.make(l, r);
+      expr_factory::make_bitand(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Bitand* bit_and = bitands.make(l, r);
+         bit_and->constraint = result;
+         return bit_and;
       }
 
       impl::Bitand_assign*
-      expr_factory::make_bitand_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_bitand_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return bitand_assigns.make(l, r);
+         impl::Bitand_assign* bitand_assign = bitand_assigns.make(l, r);
+         bitand_assign->constraint = result;
+         return bitand_assign;
       }
 
       impl::Bitor*
-      expr_factory::make_bitor(const ipr::Expr& l, const ipr::Expr& r) {
-         return bitors.make(l, r);
+      expr_factory::make_bitor(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Bitor* bit_or = bitors.make(l, r);
+         bit_or->constraint = result;
+         return bit_or;
       }
 
       impl::Bitor_assign*
-      expr_factory::make_bitor_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_bitor_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return bitor_assigns.make(l, r);
+         impl::Bitor_assign* bitor_assign = bitor_assigns.make(l, r);
+         bitor_assign->constraint = result;
+         return bitor_assign;
       }
 
       impl::Bitxor*
-      expr_factory::make_bitxor(const ipr::Expr& l, const ipr::Expr& r) {
-         return bitxors.make(l, r);
+      expr_factory::make_bitxor(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Bitxor* bit_xor = bitxors.make(l, r);
+         bit_xor->constraint = result;
+         return bit_xor;
       }
 
       impl::Bitxor_assign*
-      expr_factory::make_bitxor_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_bitxor_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return bitxor_assigns.make(l, r);
+         impl::Bitxor_assign* bitxor_assign = bitxor_assigns.make(l, r);
+         bitxor_assign->constraint = result;
+         return bitxor_assign;
       }
 
       impl::Cast*
@@ -1673,13 +1723,17 @@ namespace ipr {
       }
 
       impl::Call*
-      expr_factory::make_call(const ipr::Expr& l, const ipr::Expr_list& r) {
-         return calls.make(l, r);
+      expr_factory::make_call(const ipr::Expr& l, const ipr::Expr_list& r, Optional<ipr::Type> result) {
+         impl::Call* call = calls.make(l, r);
+         call->constraint = result;
+         return call;
       }
 
       impl::Comma*
-      expr_factory::make_comma(const ipr::Expr& l, const ipr::Expr& r) {
-         return commas.make(l, r);
+      expr_factory::make_comma(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Comma* comma = commas.make(l, r);
+         comma->constraint = result;
+         return comma;
       }
 
       impl::Const_cast*
@@ -1693,23 +1747,31 @@ namespace ipr {
       }
 
       impl::Div*
-      expr_factory::make_div(const ipr::Expr& l, const ipr::Expr& r) {
-         return divs.make(l, r);
+      expr_factory::make_div(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Div* div = divs.make(l, r);
+         div->constraint = result;
+         return div;
       }
 
       impl::Div_assign*
-      expr_factory::make_div_assign(const ipr::Expr& l, const ipr::Expr& r) {
-         return div_assigns.make(l, r);
+      expr_factory::make_div_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Div_assign* div_assign = div_assigns.make(l, r);
+         div_assign->constraint = result;
+         return div_assign;
       }
 
       impl::Dot*
-      expr_factory::make_dot(const ipr::Expr& l, const ipr::Expr& r) {
-         return dots.make(l, r);
+      expr_factory::make_dot(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Dot* dot = dots.make(l, r);
+         dot->constraint = result;
+         return dot;
       }
 
       impl::Dot_star*
-      expr_factory::make_dot_star(const ipr::Expr& l, const ipr::Expr& r) {
-         return dot_stars.make(l, r);
+      expr_factory::make_dot_star(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Dot_star* dot_star = dot_stars.make(l, r);
+         dot_star->constraint = result;
+         return dot_star;
       }
 
       impl::Dynamic_cast*
@@ -1719,29 +1781,39 @@ namespace ipr {
       }
 
       impl::Equal*
-      expr_factory::make_equal(const ipr::Expr& l, const ipr::Expr& r) {
-         return equals.make(l, r);
+      expr_factory::make_equal(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Equal* equal = equals.make(l, r);
+         equal->constraint = result;
+         return equal;
       }
 
       impl::Greater*
-      expr_factory::make_greater(const ipr::Expr& l, const ipr::Expr& r) {
-         return greaters.make(l, r);
+      expr_factory::make_greater(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Greater* greater = greaters.make(l, r);
+         greater->constraint = result;
+         return greater;
       }
 
       impl::Greater_equal*
-      expr_factory::make_greater_equal(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_greater_equal(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return greater_equals.make(l, r);
+         impl::Greater_equal* greater_equal = greater_equals.make(l, r);
+         greater_equal->constraint = result;
+         return greater_equal;
       }
 
       impl::Less*
-      expr_factory::make_less(const ipr::Expr& l, const ipr::Expr& r) {
-         return lesses.make(l, r);
+      expr_factory::make_less(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Less* less = lesses.make(l, r);
+         less->constraint = result;
+         return less;
       }
 
       impl::Less_equal*
-      expr_factory::make_less_equal(const ipr::Expr& l, const ipr::Expr& r) {
-         return less_equals.make(l, r);
+      expr_factory::make_less_equal(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Less_equal* less_equal = less_equals.make(l, r);
+         less_equal->constraint = result;
+         return less_equal;
       }
 
       impl::Literal*
@@ -1761,73 +1833,99 @@ namespace ipr {
       }
 
       impl::Lshift*
-      expr_factory::make_lshift(const ipr::Expr& l, const ipr::Expr& r) {
-         return lshifts.make(l, r);
+      expr_factory::make_lshift(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Lshift* lshift = lshifts.make(l, r);
+         lshift->constraint = result;
+         return lshift;
       }
 
       impl::Lshift_assign*
-      expr_factory::make_lshift_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_lshift_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return lshift_assigns.make(l, r);
+         impl::Lshift_assign* lshift_assign = lshift_assigns.make(l, r);
+         lshift_assign->constraint = result;
+         return lshift_assign;
       }
 
       impl::Member_init*
-      expr_factory::make_member_init(const ipr::Expr& l, const ipr::Expr& r) {
-         return member_inits.make(l, r);
+      expr_factory::make_member_init(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Member_init* member_init = member_inits.make(l, r);
+         member_init->constraint = result;
+         return member_init;
       }
 
       impl::Minus*
-      expr_factory::make_minus(const ipr::Expr& l, const ipr::Expr& r) {
-         return minuses.make(l, r);
+      expr_factory::make_minus(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Minus* minus = minuses.make(l, r);
+         minus->constraint = result;
+         return minus;
       }
 
       impl::Minus_assign*
-      expr_factory::make_minus_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_minus_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return minus_assigns.make(l, r);
+         impl::Minus_assign* minus_assign = minus_assigns.make(l, r);
+         minus_assign->constraint = result;
+         return minus_assign;
       }
 
       impl::Modulo*
-      expr_factory::make_modulo(const ipr::Expr& l, const ipr::Expr& r) {
-         return modulos.make(l, r);
+      expr_factory::make_modulo(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Modulo* modulo = modulos.make(l, r);
+         modulo->constraint = result;
+         return modulo;
       }
 
       impl::Modulo_assign*
-      expr_factory::make_modulo_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_modulo_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return modulo_assigns.make(l, r);
+         impl::Modulo_assign* modulo_assign = modulo_assigns.make(l, r);
+         modulo_assign->constraint = result;
+         return modulo_assign;
       }
 
       impl::Mul*
-      expr_factory::make_mul(const ipr::Expr& l, const ipr::Expr& r) {
-         return muls.make(l, r);
+      expr_factory::make_mul(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Mul* mul = muls.make(l, r);
+         mul->constraint = result;
+         return mul;
       }
 
       impl::Mul_assign*
-      expr_factory::make_mul_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_mul_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return mul_assigns.make(l, r);
+         impl::Mul_assign* mul_assign = mul_assigns.make(l, r);
+         mul_assign->constraint = result;
+         return mul_assign;
       }
 
       impl::Not_equal*
-      expr_factory::make_not_equal(const ipr::Expr& l, const ipr::Expr& r) {
-         return not_equals.make(l, r);
+      expr_factory::make_not_equal(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Not_equal* not_equal = not_equals.make(l, r);
+         not_equal->constraint = result;
+         return not_equal;
       }
 
       impl::Or*
-      expr_factory::make_or(const ipr::Expr& l, const ipr::Expr& r) {
-         return ors.make(l, r);
+      expr_factory::make_or(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Or* or_expr = ors.make(l, r);
+         or_expr->constraint = result;
+         return or_expr;
       }
 
       impl::Plus*
-      expr_factory::make_plus(const ipr::Expr& l, const ipr::Expr& r) {
-         return pluses.make(l, r);
+      expr_factory::make_plus(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Plus* plus = pluses.make(l, r);
+         plus->constraint = result;
+         return plus;
       }
 
       impl::Plus_assign*
-      expr_factory::make_plus_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_plus_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return plus_assigns.make(l, r);
+         impl::Plus_assign* plus_assign = plus_assigns.make(l, r);
+         plus_assign->constraint = result;
+         return plus_assign;
       }
 
       impl::Reinterpret_cast*
@@ -1837,20 +1935,26 @@ namespace ipr {
       }
 
       impl::Scope_ref*
-      expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_scope_ref(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return scope_refs.make(l, r);
+         impl::Scope_ref* scope_ref = scope_refs.make(l, r);
+         scope_ref->constraint = result;
+         return scope_ref;
       }
 
       impl::Rshift*
-      expr_factory::make_rshift(const ipr::Expr& l, const ipr::Expr& r) {
-         return rshifts.make(l, r);
+      expr_factory::make_rshift(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
+         impl::Rshift* rshift = rshifts.make(l, r);
+         rshift->constraint = result;
+         return rshift;
       }
 
       impl::Rshift_assign*
-      expr_factory::make_rshift_assign(const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_rshift_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return rshift_assigns.make(l, r);
+         impl::Rshift_assign* rshift_assign = rshift_assigns.make(l, r);
+         rshift_assign->constraint = result;
+         return rshift_assign;
       }
 
       impl::Template_id*
@@ -1866,31 +1970,41 @@ namespace ipr {
       }
 
       impl::Binary_fold*
-      expr_factory::make_binary_fold(Category_code op, const ipr::Expr& l, const ipr::Expr& r)
+      expr_factory::make_binary_fold(Category_code op, const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result)
       {
-         return folds.make(op, l, r);
+         impl::Binary_fold* binary_fold = folds.make(op, l, r);
+         binary_fold->constraint = result;
+         return binary_fold;
       }
 
       impl::New*
-      expr_factory::make_new(const ipr::Type& t) {
-         return news.make(nullptr, t, nullptr);
+      expr_factory::make_new(const ipr::Type& t, Optional<ipr::Type> result) {
+         impl::New* new_expr = news.make(nullptr, t, nullptr);
+         new_expr->constraint = result;
+         return new_expr;
       }
 
       impl::New*
-      expr_factory::make_new(const ipr::Type& t, const ipr::Expr_list& i) {
-         return news.make(nullptr, t, &i);
+      expr_factory::make_new(const ipr::Type& t, const ipr::Expr_list& i, Optional<ipr::Type> result) {
+         impl::New* new_expr = news.make(nullptr, t, &i);
+         new_expr->constraint = result;
+         return new_expr;
       }
 
       impl::New*
       expr_factory::make_new(const ipr::Expr_list& p, const ipr::Type& t,
-                             const ipr::Expr_list& i) {
-         return news.make(&p, t, &i);
+                             const ipr::Expr_list& i, Optional<ipr::Type> result) {
+         impl::New* new_expr = news.make(&p, t, &i);
+         new_expr->constraint = result;
+         return new_expr;
       }
 
       impl::Conditional*
       expr_factory::make_conditional(const ipr::Expr& c, const ipr::Expr& t,
-                                     const ipr::Expr& f) {
-         return conds.make(c, t, f);
+                                     const ipr::Expr& f, Optional<ipr::Type> result) {
+         impl::Conditional* conditional = conds.make(c, t, f);
+         conditional->constraint = result;
+         return conditional;
       }
 
       impl::Rname*
