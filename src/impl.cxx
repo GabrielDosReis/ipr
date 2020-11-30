@@ -1946,6 +1946,7 @@ namespace ipr {
               longlongtype(get_identifier("long long"), cxx_linkage(), anytype),
               ulonglongtype(get_identifier("unsigned long long"),
                             cxx_linkage(), anytype),
+              nullptrtype(get_identifier("nullptr_t"), cxx_linkage(), anytype),
               floattype(get_identifier("float"), cxx_linkage(), anytype),
               doubletype(get_identifier("double"), cxx_linkage(), anytype),
               longdoubletype(get_identifier("long double"),
@@ -1981,6 +1982,8 @@ namespace ipr {
          record_builtin_type(floattype);
          record_builtin_type(doubletype);
          record_builtin_type(longdoubletype);
+
+         record_builtin_type(nullptrtype);
 
          record_builtin_type(ellipsistype);
       }
@@ -2057,6 +2060,8 @@ namespace ipr {
       const ipr::Type& Lexicon::long_double_type() const {
          return longdoubletype;
       }
+
+      const ipr::Type& Lexicon::nullptr_type() const { return nullptrtype; }
 
       const ipr::Type& Lexicon::ellipsis_type() const { return ellipsistype; }
 

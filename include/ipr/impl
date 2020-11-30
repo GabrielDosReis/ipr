@@ -2021,6 +2021,8 @@ namespace ipr {
          const ipr::Type& double_type() const final;
          const ipr::Type& long_double_type() const final;
 
+         const ipr::Type& nullptr_type() const final;
+
          const ipr::Type& ellipsis_type() const final;
 
          const ipr::Type& typename_type() const final;
@@ -2116,6 +2118,7 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> ulongtype;
          const impl::Builtin<ipr::As_type> longlongtype;
          const impl::Builtin<ipr::As_type> ulonglongtype;
+         const impl::Builtin<ipr::As_type> nullptrtype;
          const impl::Builtin<ipr::As_type> floattype;
          const impl::Builtin<ipr::As_type> doubletype;
          const impl::Builtin<ipr::As_type> longdoubletype;
