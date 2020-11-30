@@ -844,7 +844,7 @@ namespace ipr {
       inline bool
       operator==(const ipr::Node& lhs, const ipr::Node& rhs)
       {
-         return lhs.node_id == rhs.node_id;
+         return &lhs == &rhs;
       }
 
       struct binary_compare {

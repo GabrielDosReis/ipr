@@ -24,7 +24,7 @@ namespace ipr
    /// is used by XPR parser to relink uses of names to appropriate declarations.
    /// The key of the map is the node_id of the name used, while the value
    /// is the information about corresponding declaration.
-   struct disambiguation_map_type : std::map<int, std::vector<const ipr::Decl*>>
+   struct disambiguation_map_type : std::map<const ipr::Name*, std::vector<const ipr::Decl*>>
    {
       using declarations = std::vector<const ipr::Decl*>;
 
@@ -32,7 +32,7 @@ namespace ipr
       /// or allocates a disambiguation id for them.
       int get_disambiguation(const ipr::Name& name, const ipr::Decl& declaration)
       {
-         declarations& decls = (*this)[name.node_id];
+         declarations& decls = (*this)[&name];
          declarations::const_iterator p = std::find(decls.begin(), decls.end(), &declaration);
 
          if (p == decls.end())
