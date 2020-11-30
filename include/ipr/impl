@@ -328,13 +328,10 @@ namespace ipr {
 
       template<class Operation>
       struct Classic : Operation {
-         const ipr::Expr* op_impl = { };
+         Optional<ipr::Expr> op_impl { };
          using Operation::Operation;
 
-         Optional<ipr::Expr> implementation() const final
-         {
-            return { op_impl };
-         }
+         Optional<ipr::Expr> implementation() const final { return op_impl; }
       };
 
                                 // -- Conversion_expr --
@@ -371,13 +368,10 @@ namespace ipr {
 
       template<class Interface>
       struct Expr : impl::Node<Interface> {
-         const ipr::Type* constraint;
+         Optional<ipr::Type> constraint;
 
-         Expr(const ipr::Type* t = 0) : constraint(t) { }
-         const ipr::Type& type() const override
-         {
-            return *util::check(constraint);
-         }
+         Expr(Optional<ipr::Type> t = { }) : constraint{ t } { }
+         const ipr::Type& type() const override { return constraint.get(); }
       };
 
       // Short hand for the implementation of generic expression nodes.
@@ -525,8 +519,8 @@ namespace ipr {
       template<class Interface>
       struct master_decl_data : basic_decl_data<Interface>, overload_entry {
          // The declaration that is considered to be the definition.
-         const Interface* def;
-         const ipr::Linkage* langlinkage;
+         Optional<Interface> def { };
+         Optional<ipr::Linkage> langlinkage { };
 
          // The overload set that contains this master declaration.  It
          // shall be set at the time the node for the master declaration
@@ -536,7 +530,6 @@ namespace ipr {
          master_decl_data(impl::Overload* ovl, const ipr::Type& t)
                : basic_decl_data<Interface>(this),
                  overload_entry(t),
-                 def(0), langlinkage(0),
                  overload(ovl),home(0)
          { } 
       };
@@ -546,8 +539,8 @@ namespace ipr {
          : basic_decl_data<ipr::Template>, overload_entry {
          using Base = basic_decl_data<ipr::Template>;
          // The declaration that is considered to be the definition.
-         const ipr::Template* def;
-         const ipr::Linkage* langlinkage;
+         Optional<ipr::Template> def { };
+         Optional<ipr::Linkage> langlinkage { };
          const ipr::Template* primary;
          const ipr::Region* home;
 
@@ -654,9 +647,9 @@ namespace ipr {
 
       template<class T>
       struct Type : impl::Expr<T> {
-         const ipr::Name* id = { };
+         Optional<ipr::Name> id { };
 
-         const ipr::Name& name() const final { return *util::check(id); }
+         const ipr::Name& name() const final { return id.get(); }
       };
 
       template<typename T>
@@ -755,7 +748,7 @@ namespace ipr {
 
          const ipr::Linkage& lang_linkage() const final
          {
-            return *util::check(util::check(decl_data.master_data)->langlinkage);
+            return util::check(decl_data.master_data)->langlinkage.get();
          }
 
          const ipr::Region& home_region() const override {
@@ -781,11 +774,10 @@ namespace ipr {
       template<class Interface>
       struct unique_decl : impl::Stmt<Node<Interface>> {
          ipr::DeclSpecifiers spec;
-         const ipr::Linkage* langlinkage;
+         Optional<ipr::Linkage> langlinkage { };
          singleton_overload overload;
 
          unique_decl() : spec(ipr::DeclSpecifiers::None),
-                         langlinkage{ },
                          overload(*this)
          { }
 
@@ -793,7 +785,7 @@ namespace ipr {
          const ipr::Decl& master() const final { return *this; }
          const ipr::Linkage& lang_linkage() const final
          {
-            return *util::check(langlinkage);
+            return langlinkage.get();
          }
          const ipr::Sequence<ipr::Decl>& decl_set() const final { return overload.seq; }
       };
@@ -802,7 +794,7 @@ namespace ipr {
          const ipr::Name& id;
          const impl::Rname& abstract_name;
          const ipr::Parameter_list* where;
-         const ipr::Expr* init;
+         Optional<ipr::Expr> init;
 
          Parameter(const ipr::Name&, const impl::Rname&);
          
@@ -811,7 +803,7 @@ namespace ipr {
          const ipr::Region& home_region() const;
          const ipr::Region& lexical_region() const;
          int position() const;
-         Optional<ipr::Expr>initializer() const final;
+         Optional<ipr::Expr> initializer() const final;
          // FIXME: This should go away.
          const Parameter_list& membership() const;
       };
@@ -834,7 +826,7 @@ namespace ipr {
          const ipr::Enum& constraint;
          const int scope_pos;
          const ipr::Region* where;
-         const ipr::Expr* init;
+         Optional<ipr::Expr> init;
 
          Enumerator(const ipr::Name&, const ipr::Enum&, int);
          const ipr::Name& name() const;
@@ -916,7 +908,7 @@ namespace ipr {
          using location_span = ipr::Region::Location_span;
          const ipr::Region& parent;
          location_span extent;
-         const ipr::Expr* owned_by = { };
+         Optional<ipr::Expr> owned_by { };
          homogeneous_scope<Member> scope;
 
          int size() const { return scope.size(); }
@@ -926,7 +918,7 @@ namespace ipr {
          const ipr::Region& enclosing() const { return parent; }
          const ipr::Scope& bindings() const { return scope; }
          const location_span& span() const { return extent; }
-         const ipr::Expr& owner() const { return *util::check(owned_by); }
+         const ipr::Expr& owner() const { return owned_by.get(); }
 
          homogeneous_region(const ipr::Region& p, const ipr::Type& t)
                : parent(p), scope(t)
@@ -1049,7 +1041,7 @@ namespace ipr {
       using Typeid = Unary_expr<ipr::Typeid>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
-         const ipr::Expr* decls = nullptr;
+         Optional<ipr::Expr> decls { };
 
          explicit Id_expr(const ipr::Name&);
          const ipr::Type& type() const final;
@@ -1103,8 +1095,8 @@ namespace ipr {
 
       struct Mapping : impl::Expr<ipr::Mapping> {
          impl::Parameter_list parameters;
-         const ipr::Type* value_type;
-         const ipr::Expr* body;
+         Optional<ipr::Type> value_type;
+         Optional<ipr::Expr> body;
          const int nesting_level;
 
          Mapping(const ipr::Region&, const ipr::Type&, int);
@@ -1438,7 +1430,7 @@ namespace ipr {
       };
       
       struct Var : impl::Decl<ipr::Var> {
-         const ipr::Expr* init;
+         Optional<ipr::Expr> init;
          const ipr::Region* lexreg;
 
          Var();
@@ -1455,7 +1447,7 @@ namespace ipr {
       // FIXME: Field should use unique_decl, not impl::Decl.
       struct Field : impl::Decl<ipr::Field> {
          const ipr::Udt<ipr::Decl>* member_of;
-         const ipr::Expr* init;
+         Optional<ipr::Expr> init;
 
          Field();
 
@@ -1478,7 +1470,7 @@ namespace ipr {
       struct Bitfield : impl::Decl<ipr::Bitfield> {
          const ipr::Expr* length;
          const ipr::Udt<ipr::Decl>* member_of;
-         const ipr::Expr* init;
+         Optional<ipr::Expr> init;
 
          Bitfield();
 
@@ -1495,7 +1487,7 @@ namespace ipr {
       };
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
-         const ipr::Type* init;
+         Optional<ipr::Type> init;
          const ipr::Expr* member_of;
          const ipr::Region* lexreg;
 

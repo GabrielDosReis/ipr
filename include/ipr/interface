@@ -12,6 +12,7 @@
 #include <utility>
 #include <iterator>
 #include <stdexcept>
+#include <type_traits>
 #include <ipr/utility>
 
 namespace ipr {
@@ -434,6 +435,8 @@ namespace ipr {
       const T& get() const { return *util::check(ptr); }
       bool is_valid() const { return ptr != nullptr; }
       explicit operator bool() const { return is_valid(); }
+      template<typename U, bool = std::is_base_of_v<T, U>>
+      operator Optional<U>() const { return { ptr }; }
    private:
       const T* ptr;
    };
