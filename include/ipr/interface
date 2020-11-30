@@ -262,12 +262,6 @@ namespace ipr {
 #include <ipr/node-category>
    };
 
-   // Routines to report statistics about a run of a program.
-   namespace stats {
-      int all_nodes_count();    // count of all nodes 
-      int node_count(Category_code); // count of nodes of a given category
-   }
-
                                 // -- Various Location Types --
    // C++ constructs span locations.  There are at least four flavours of
    // locations:
@@ -311,7 +305,7 @@ namespace ipr {
    template<Category_code Cat, class T = Expr>
    struct Category : T {
    protected:
-      constexpr Category() : T(Cat) { }
+      constexpr Category() : T{ Cat } { }
    };
 
                                 // -- Sequence<> --
@@ -587,12 +581,6 @@ namespace ipr {
       // This class does not have a declared virtual destructor
       // because we don't plan to have Nodes manage resources, and
       // therefore no deletion through pointers to this base class.
-
-      const int node_id;        // unique node-identifier in a translation
-                                // unit.  An integer data member is prefered
-                                // over the address of the actual node
-                                // for simplicity and persistency reasons.
-
       
       const Category_code category; // the category the complete node object
                                 // belongs to.  In a sufficiently expressive
@@ -606,7 +594,7 @@ namespace ipr {
 
    protected:
       // It is an error to create a complete object of this type.
-      Node(Category_code);      // Used by derived classes.
+      constexpr Node(Category_code c) : category{ c } { }
    };
 
                                 // -- String --
@@ -673,8 +661,7 @@ namespace ipr {
       virtual const Type& type() const = 0;
 
    protected:
-      Expr(Category_code c) : Node(c)
-      { }
+      constexpr Expr(Category_code c) : Node{ c } { }
    };
 
                                 // -- Classic --
@@ -704,8 +691,7 @@ namespace ipr {
       virtual Optional<Expr> implementation() const = 0;
 
    protected:
-      Classic(Category_code c) : Expr(c)
-      { }
+      constexpr Classic(Category_code c) : Expr{ c } { }
    };
 
                                 // -- Name --
@@ -727,8 +713,7 @@ namespace ipr {
       // imposing too much of implementation details.
 
    protected:
-      Name(Category_code c) : Node{ c }
-      { }
+      constexpr Name(Category_code c) : Node{ c } { }
    };
 
                                 // -- Identifier --
@@ -875,8 +860,7 @@ namespace ipr {
       virtual const Name& name() const = 0;
 
    protected:
-      Type(Category_code c) : Expr(c)
-      { }
+      constexpr Type(Category_code c) : Expr{ c } { }
    };
 
    // cv-qualifiers are actually type operators.  Much of these operators
@@ -1096,8 +1080,7 @@ namespace ipr {
 
    protected:
       // It is an error to create a node of this type.
-      Udt(Category_code c) : Type(c) // Used by derived classes.
-      { }
+      constexpr Udt(Category_code c) : Type{ c } { }
    };
 
                                 // -- Namespace --
@@ -1619,8 +1602,7 @@ namespace ipr {
       virtual const Sequence<Attribute>& attributes() const = 0;
 
    protected:
-      Stmt(Category_code c) : Expr(c)
-      { }
+      constexpr Stmt(Category_code c) : Expr{ c } { }
    };
 
                                 // -- Expr_stmt --
@@ -1881,8 +1863,7 @@ namespace ipr {
       virtual const Sequence<Decl>& decl_set() const = 0;
 
    protected:
-      Decl(Category_code c) : Stmt(c)
-      { }
+      constexpr Decl(Category_code c) : Stmt{ c } { }
    };
 
                                 // -- Template --
