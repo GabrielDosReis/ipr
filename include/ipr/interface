@@ -598,13 +598,13 @@ namespace ipr {
    };
 
                                 // -- String --
-   // Strings in IPR are immutable, and therefore unified.  The constitute
-   // the basic building block of many nodes.
+   // Strings in IPR are immutable, and therefore unified.
    struct String : Category<string_cat, Node> {
       using iterator = const char*;
       virtual int size() const = 0;
       virtual iterator begin() const = 0;
       virtual iterator end() const  = 0;
+      static const String& empty_string();            // dedicated node for an empty string
    };
 
                                 // -- Comment --

@@ -16,6 +16,19 @@
 #include <cstring>
 #include <string>
 namespace ipr {
+   const String& String::empty_string()
+   {
+      struct Empty_string final : impl::Node<String> {
+         int size() const { return 0; }
+         iterator begin() const { return ""; }
+         iterator end() const { return begin(); }
+      };
+
+      constexpr Empty_string empty { };
+      return empty;
+   }
+
+
    namespace impl {
 
       Token::Token(const ipr::String& s, const Source_location& l,
