@@ -8,8 +8,6 @@
 #ifndef IPR_IMPL_INCLUDED
 #define IPR_IMPL_INCLUDED
 
-#include <ipr/interface>
-#include <ipr/utility>
 #include <memory>
 #include <list>
 #include <vector>
@@ -17,6 +15,9 @@
 #include <map>
 #include <forward_list>
 #include <variant>
+#include <functional>
+#include <ipr/interface>
+#include <ipr/utility>
 
 // -----------------
 // -- Methodology --
@@ -187,23 +188,17 @@ namespace ipr {
          void accept(ipr::Visitor& v) const final { v.visit(*this); }
       };
 
-      // In various situations, we need to store nodes in ordered
-      // containers.  We could of course use the addresses of Nodes as
-      // keys.  However, for simplicity and persistence reasons, we chose
-      // to used an integer identifier. (Each node  acquires such an
-      // identifier at its creation and retain it unchanged till the
-      // end of the program.)  An obvious benefit is that ordering comes
-      // for free.
       template<typename T,
           typename std::enable_if_t<std::is_scalar_v<T>, int> = 0>
       constexpr int compare(T lhs, T rhs)
       {
-         return lhs < rhs ? -1 : (lhs > rhs ? 1 : 0);
+         constexpr std::less<> lt { };
+         return lt(lhs, rhs) ? -1 : (lt(rhs, lhs) ? 1 : 0);
       }
 
       constexpr int compare(const ipr::Node& lhs, const ipr::Node& rhs)
       {
-         return compare(lhs.node_id, rhs.node_id);
+         return compare(&lhs, &rhs);
       }
 
       // Helper class
@@ -952,7 +947,7 @@ namespace ipr {
          for (int i = 0; i < s; ++i) {
             const typename homogeneous_sequence<Member>::rep&
                decl = decls.seq.get(i);
-            if (decl.name().node_id == n.node_id)
+            if (&decl.name() == &n)
                return decl.overload;
          }
 
