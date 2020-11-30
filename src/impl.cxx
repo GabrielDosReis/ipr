@@ -76,7 +76,7 @@ namespace ipr {
       master_decl_data<ipr::Template>::
       master_decl_data(impl::Overload* ovl, const ipr::Type& t)
             : Base(this), overload_entry(t),
-              def(0), langlinkage(0), primary(0),home(0),
+              primary(0),home(0),
               overload(ovl)
       { }
 
@@ -238,7 +238,7 @@ namespace ipr {
       }
 
       Optional<ipr::Expr> Bitfield::initializer() const {
-         return { init };
+         return init;
       }
 
       const ipr::Region&
@@ -318,7 +318,7 @@ namespace ipr {
       }
 
       Optional<ipr::Expr> Enumerator::initializer() const {
-         return { init };
+         return init;
       }
 
       // -----------------
@@ -330,7 +330,7 @@ namespace ipr {
       { }
 
       Optional<ipr::Expr> Field::initializer() const {
-         return { init };
+         return init;
       }
 
       const ipr::Udt<ipr::Decl>&
@@ -454,19 +454,17 @@ namespace ipr {
       }
 
       Optional<ipr::Expr> Parameter::initializer() const {
-         return { init };
+         return init;
       }
 
       // --------------------
       // -- impl::Typedecl --
       // --------------------
 
-      Typedecl::Typedecl() : init(0), member_of(0), lexreg(0)
+      Typedecl::Typedecl() : init{ }, member_of(0), lexreg(0)
       { }
 
-      Optional<ipr::Expr> Typedecl::initializer() const {
-         return { init };
-      }
+      Optional<ipr::Expr> Typedecl::initializer() const { return init; }
 
       const ipr::Expr&
       Typedecl::membership() const {
@@ -489,7 +487,7 @@ namespace ipr {
       { }
 
       Optional<ipr::Expr> Var::initializer() const {
-         return { init };
+         return init;
       }
 
       const ipr::Region&
@@ -1076,12 +1074,12 @@ namespace ipr {
 
       const ipr::Type&
       Id_expr::type() const {
-         return *util::check(constraint);
+         return constraint.get();
       }
 
       Optional<ipr::Expr>
       Id_expr::resolution() const {
-         return { decls };
+         return decls;
       }
 
       // -----------------
@@ -1113,12 +1111,12 @@ namespace ipr {
 
       const ipr::Type&
       Mapping::result_type() const {
-         return *util::check(value_type);
+         return value_type.get();
       }
 
       const ipr::Expr&
       Mapping::result() const {
-         return *util::check(body);
+         return body.get();
       }
 
       int
@@ -2074,10 +2072,10 @@ namespace ipr {
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
-         if (t->constraint == 0)
+         if (!t->constraint.is_valid())
             t->constraint = &anytype;
 
-         if (t->id == 0)
+         if (!t->id.is_valid())
             t->id = make_type_id(*t);
 
          return t;
