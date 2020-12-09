@@ -1137,11 +1137,11 @@ namespace ipr {
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
       struct New : Classic<Expr<ipr::New>> {
-         const ipr::Expr_list* where;
+         Optional<ipr::Expr_list> where;
          const ipr::Type& what;
-         const ipr::Expr_list* args;
+         Optional<ipr::Expr_list> args;
 
-         New(const ipr::Expr_list*, const ipr::Type&, const ipr::Expr_list*);
+         New(Optional<ipr::Expr_list>, const ipr::Type&, Optional<ipr::Expr_list>);
          Optional<ipr::Expr_list> placement() const final;
          const ipr::Type& allocated_type() const final;
          Optional<ipr::Expr_list> initializer() const final;
@@ -1260,10 +1260,8 @@ namespace ipr {
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         New* make_new(const ipr::Type&, Optional<ipr::Type> = {});
-         New* make_new(const ipr::Type&, const ipr::Expr_list&, Optional<ipr::Type> = {});
-         New* make_new(const ipr::Expr_list&, const ipr::Type&,
-                       const ipr::Expr_list&, Optional<ipr::Type> = {});
+         New* make_new(const ipr::Type& allocated, Optional<ipr::Expr_list> init = {},
+                       Optional<Expr_list> placement = {}, Optional<ipr::Type> result = {});
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                        const ipr::Expr&, Optional<ipr::Type> = {});
 

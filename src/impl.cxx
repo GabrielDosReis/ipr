@@ -58,16 +58,16 @@ namespace ipr {
       };
 
       // -- impl::New --
-      New::New(const ipr::Expr_list* where, const ipr::Type& what,
-               const ipr::Expr_list* args)
+      New::New(Optional<ipr::Expr_list> where, const ipr::Type& what,
+               Optional<ipr::Expr_list> args)
             : where{ where }, what{ what }, args{ args }
       { }
 
-      Optional<ipr::Expr_list> New::placement() const { return { where }; }
+      Optional<ipr::Expr_list> New::placement() const { return where; }
 
       const ipr::Type& New::allocated_type() const { return what; }
 
-      Optional<ipr::Expr_list> New::initializer() const { return { args }; }
+      Optional<ipr::Expr_list> New::initializer() const { return args; }
 
       // -------------------------------------
       // -- master_decl_data<ipr::Template> --
@@ -1989,23 +1989,9 @@ namespace ipr {
       }
 
       impl::New*
-      expr_factory::make_new(const ipr::Type& t, Optional<ipr::Type> result) {
-         impl::New* new_expr = news.make(nullptr, t, nullptr);
-         new_expr->constraint = result;
-         return new_expr;
-      }
-
-      impl::New*
-      expr_factory::make_new(const ipr::Type& t, const ipr::Expr_list& i, Optional<ipr::Type> result) {
-         impl::New* new_expr = news.make(nullptr, t, &i);
-         new_expr->constraint = result;
-         return new_expr;
-      }
-
-      impl::New*
-      expr_factory::make_new(const ipr::Expr_list& p, const ipr::Type& t,
-                             const ipr::Expr_list& i, Optional<ipr::Type> result) {
-         impl::New* new_expr = news.make(&p, t, &i);
+      expr_factory::make_new(const ipr::Type& allocated, Optional<ipr::Expr_list> init,
+                       Optional<Expr_list> placement, Optional<ipr::Type> result) {
+         impl::New* new_expr = news.make(placement, allocated, init);
          new_expr->constraint = result;
          return new_expr;
       }
