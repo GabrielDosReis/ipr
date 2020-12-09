@@ -113,7 +113,8 @@ namespace ipr {
    // --------------------------------------------------------
    // -- results of nullar expression constructor constants --
    // --------------------------------------------------------
-   struct Phantom;               // for arrays of unknown bound
+   struct Phantom;               // placeholder for arrays of unknown bounds,
+                                 // rethrow, empty parts of a For, etc...
    struct Eclipsis;              // the `...' in a unary fold
 
    // -------------------------------------------------------
