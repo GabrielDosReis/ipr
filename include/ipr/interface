@@ -2006,6 +2006,9 @@ namespace ipr {
       virtual const Type& schar_type() const = 0;
       virtual const Type& uchar_type() const = 0;
       virtual const Type& wchar_t_type() const = 0;
+      virtual const Type& char8_t_type() const = 0;
+      virtual const Type& char16_t_type() const = 0;
+      virtual const Type& char32_t_type() const = 0;
       virtual const Type& short_type() const = 0;
       virtual const Type& ushort_type() const = 0;
       virtual const Type& int_type() const = 0;
