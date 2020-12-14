@@ -1962,7 +1962,7 @@ namespace ipr {
    // A bit-field data member.
    struct Bitfield : Category<bitfield_cat, Decl> {
       virtual const Expr& precision() const = 0;
-      virtual const Type& membership() const = 0;
+      virtual const Udt<Decl>& membership() const = 0;
    };
 
                                 // -- Typedecl --
