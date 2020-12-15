@@ -788,6 +788,21 @@ namespace ipr {
             return langlinkage.get();
          }
          const ipr::Sequence<ipr::Decl>& decl_set() const final { return overload.seq; }
+         int position() const { return 0; }
+      };
+
+      // Some declarations like Static_assert and Asm does not introduce
+      // any names and cannot be overloaded.
+      template<class Interface>
+      struct barren_decl : unique_decl<Interface> {
+         const ipr::Type* t;
+         const ipr::Name* n;
+
+         barren_decl(const ipr::Type* type, const ipr::Name* name) :
+            t(type), n(name) {};
+
+         const ipr::Name &name() const override { return *util::check(n); }
+         const ipr::Type &type() const override { return *util::check(t); } 
       };
 
       struct Parameter final : unique_decl<ipr::Parameter> {
@@ -1503,6 +1518,25 @@ namespace ipr {
          using rep = impl::Typedecl;
       };
 
+      struct Static_assert : barren_decl<ipr::Static_assert> {
+         const ipr::Expr* a_expr;
+         Optional<ipr::Literal> mes;
+         const ipr::Region* lexreg;
+
+         Static_assert(const ipr::Type*, const ipr::Name*);
+
+         const ipr::Expr& assert_expr() const final;
+         Optional<ipr::Expr> initializer() const final;
+         Optional<ipr::Literal> message() const final;
+         const ipr::Region& lexical_region() const final;
+         const ipr::Region& home_region() const final;
+      };
+
+      template<>
+      struct traits<ipr::Static_assert> {
+         using rep = impl::Static_assert;
+      };
+
       // For a non-defining function declaration, the parameters - if any is named
       // or has a default argument - are stored with that particular declaration.
       // A function definition is one that specifies the initializer (Mapping) which
@@ -1549,6 +1583,7 @@ namespace ipr {
          impl::Field* make_field(const ipr::Name&, const ipr::Type&);
          impl::Bitfield* make_bitfield(const ipr::Name&, const ipr::Type&);
          impl::Typedecl* make_typedecl(const ipr::Name&, const ipr::Type&);
+         impl::Static_assert* make_static_assert(Lexicon&, const ipr::Expr&, Optional<ipr::Literal> message);
          impl::Fundecl* make_fundecl(const ipr::Name&, const ipr::Function&);
          impl::Template* make_primary_template(const ipr::Name&, const ipr::Forall&);
          impl::Template* make_secondary_template(const ipr::Name&, const ipr::Forall&);
@@ -1565,6 +1600,7 @@ namespace ipr {
          decl_factory<ipr::Bitfield> bitfields;
          decl_factory<ipr::Fundecl> fundecls;
          decl_factory<ipr::Typedecl> typedecls;
+         stable_farm<impl::Static_assert> static_asserts;
          decl_factory<ipr::Template> primary_maps;
          decl_factory<ipr::Template> secondary_maps;
 
@@ -1614,6 +1650,13 @@ namespace ipr {
          Typedecl* declare_type(const ipr::Name& n, const ipr::Type& t)
          {
             return scope.make_typedecl(n, t);
+         }
+
+         Static_assert* declare_static_assert(Lexicon& l, const ipr::Expr& e,
+                                              Optional<ipr::Literal> m) {
+            Static_assert* stat_assert = scope.make_static_assert(l, e, m);
+            stat_assert->lexreg = this;
+            return stat_assert;
          }
 
          Fundecl* declare_fun(const ipr::Name& n, const ipr::Function& t)
@@ -1690,6 +1733,12 @@ namespace ipr {
             impl::Typedecl* typedecl = body.declare_type(n, t);
             typedecl->member_of = this;
             return typedecl;
+         }
+
+         impl::Static_assert* declare_static_assert(Lexicon& l,
+                                                    const ipr::Expr& e,
+                                                    Optional<ipr::Literal> m) {
+            return body.declare_static_assert(l, e, m);
          }
          
          impl::Fundecl*
@@ -2028,6 +2077,7 @@ namespace ipr {
          const ipr::Type& union_type() const final;
          const ipr::Type& enum_type() const final;
          const ipr::Type& namespace_type() const final;
+         const ipr::Type& static_assert_type() const final;
 
          const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 
@@ -2102,6 +2152,7 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> uniontype;
          const impl::Builtin<ipr::As_type> enumtype;
          const impl::Builtin<ipr::As_type> namespacetype;
+         const impl::Builtin<ipr::As_type> staticasserttype;
          const impl::Builtin<ipr::As_type> voidtype;
          const impl::Builtin<ipr::As_type> booltype;
          const impl::Builtin<ipr::As_type> chartype;
