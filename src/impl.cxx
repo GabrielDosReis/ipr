@@ -1539,6 +1539,13 @@ namespace ipr {
          return init;
       }
 
+      impl::Label*
+      expr_factory::make_label(const ipr::Identifier& n, Optional<ipr::Type> result) {
+         impl::Label* label = labels.make(n);
+         label->constraint = result;
+         return label;
+      }
+
       impl::Not*
       expr_factory::make_not(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Not* not_expr = nots.make(e);
