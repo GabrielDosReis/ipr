@@ -3,6 +3,7 @@
 
 #include <ipr/impl>
 #include <ipr/io>
+#include <ipr/traversal>
 #include <sstream>
 
 TEST_CASE("global constant variable can be printed") {
@@ -24,3 +25,19 @@ TEST_CASE("global constant variable can be printed") {
   CHECK(!ss.str().empty());
 }
 
+TEST_CASE("Interface node viewed as impl node") {
+  using namespace ipr;
+  impl::Lexicon lexicon{};
+  impl::Module m{lexicon};
+  impl::Interface_unit unit{lexicon, m};
+
+  impl::Scope* global_scope = unit.global_scope();
+
+  const Name* name = lexicon.make_identifier("bufsz");
+  auto& type = lexicon.get_qualified(Type_qualifier::Const, lexicon.int_type());
+  Var* var_interface = global_scope->make_var(*name, type);
+  impl::Var* var_impl = util::view_impl<ipr::Var>(*var_interface);
+  var_impl->init = lexicon.make_literal(lexicon.int_type(), "1024");
+
+  CHECK(&var_interface->initializer().get() == &var_impl->init.get());
+}
