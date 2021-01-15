@@ -1039,6 +1039,7 @@ namespace ipr {
       using Initializer_list = Classic_unary_expr<ipr::Initializer_list>;
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
+      using Label = Unary_expr<ipr::Label>;
 
       struct Id_expr : Unary_expr<ipr::Id_expr> {
          Optional<ipr::Expr> decls { };
@@ -1198,6 +1199,7 @@ namespace ipr {
          Initializer_list* make_initializer_list(const ipr::Expr_list&, Optional<ipr::Type> = {});
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
+         Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
          Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
          Paren_expr* make_paren_expr(const ipr::Expr&);
          Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1302,6 +1304,7 @@ namespace ipr {
          stable_farm<impl::Expr_list> xlists;
          stable_farm<impl::Id_expr> id_exprs;
          stable_farm<impl::Initializer_list> init_lists;
+         stable_farm<impl::Label> labels;
          stable_farm<impl::Not> nots;
          stable_farm<impl::Pre_increment> pre_increments;
          stable_farm<impl::Pre_decrement> pre_decrements;
