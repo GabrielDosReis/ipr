@@ -2049,6 +2049,9 @@ namespace ipr {
               schartype(get_identifier("signed char"), cxx_linkage(), anytype),
               uchartype(get_identifier("unsigned char"), cxx_linkage(), anytype),
               wchar_ttype(get_identifier("wchar_t"), cxx_linkage(), anytype),
+              char8_ttype(get_identifier("char8_t"), cxx_linkage(), anytype),
+              char16_ttype(get_identifier("char16_t"), cxx_linkage(), anytype),
+              char32_ttype(get_identifier("char32_t"), cxx_linkage(), anytype),
               shorttype(get_identifier("short"), cxx_linkage(), anytype),
               ushorttype(get_identifier("unsigned short"),
                          cxx_linkage(), anytype),
@@ -2079,6 +2082,10 @@ namespace ipr {
          record_builtin_type(chartype);
          record_builtin_type(schartype);
          record_builtin_type(uchartype);
+         record_builtin_type(wchar_ttype);
+         record_builtin_type(char8_ttype);
+         record_builtin_type(char16_ttype);
+         record_builtin_type(char32_ttype);
 
          record_builtin_type(shorttype);
          record_builtin_type(ushorttype);
@@ -2147,6 +2154,12 @@ namespace ipr {
       const ipr::Type& Lexicon::uchar_type() const { return uchartype; }
 
       const ipr::Type& Lexicon::wchar_t_type() const { return wchar_ttype; }
+
+      const ipr::Type& Lexicon::char8_t_type() const { return char8_ttype; }
+
+      const ipr::Type& Lexicon::char16_t_type() const { return char16_ttype; }
+
+      const ipr::Type& Lexicon::char32_t_type() const { return char32_ttype; }
 
       const ipr::Type& Lexicon::short_type() const { return shorttype; }
 

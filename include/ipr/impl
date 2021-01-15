@@ -2004,6 +2004,9 @@ namespace ipr {
          const ipr::Type& schar_type() const final;
          const ipr::Type& uchar_type() const final;
          const ipr::Type& wchar_t_type() const final;
+         const ipr::Type& char8_t_type() const final;
+         const ipr::Type& char16_t_type() const final;
+         const ipr::Type& char32_t_type() const final;
 
          const ipr::Type& short_type() const final;
          const ipr::Type& ushort_type() const final;
@@ -2108,6 +2111,9 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> schartype;
          const impl::Builtin<ipr::As_type> uchartype;
          const impl::Builtin<ipr::As_type> wchar_ttype;
+         const impl::Builtin<ipr::As_type> char8_ttype;
+         const impl::Builtin<ipr::As_type> char16_ttype;
+         const impl::Builtin<ipr::As_type> char32_ttype;
          const impl::Builtin<ipr::As_type> shorttype;
          const impl::Builtin<ipr::As_type> ushorttype;
          const impl::Builtin<ipr::As_type> inttype;
