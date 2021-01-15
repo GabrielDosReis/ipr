@@ -611,13 +611,17 @@ namespace ipr {
       // ------------------------
 
       impl::Break*
-      stmt_factory::make_break() {
-         return breaks.make();
+      stmt_factory::make_break(const ipr::Type& t) {
+         auto* brk = breaks.make();
+         brk->constraint = &t;
+         return brk;
       }
 
       impl::Continue*
-      stmt_factory::make_continue() {
-         return continues.make();
+      stmt_factory::make_continue(const ipr::Type& t) {
+         auto* cnt = continues.make();
+         cnt->constraint = &t;
+         return cnt;
       }
 
       impl::Empty_stmt*

@@ -1903,8 +1903,8 @@ namespace ipr {
       // allocating storage for statement nodes and their constructions.
 
       struct stmt_factory : expr_factory {
-         impl::Break* make_break();
-         impl::Continue* make_continue();
+         impl::Break* make_break(const ipr::Type&);
+         impl::Continue* make_continue(const ipr::Type&);
          impl::Empty_stmt* make_empty_stmt(const ipr::Type&);
          impl::Block* make_block(const ipr::Region&, const ipr::Type&);
          impl::Ctor_body* make_ctor_body(const ipr::Expr_list&,
