@@ -1050,7 +1050,7 @@ namespace ipr {
          Optional<ipr::Expr> resolution() const final;
       };
 
-      using Materialize = Classic_unary_expr<ipr::Materialize>;
+      using Materialize = Unary_expr<ipr::Materialize>;
       using Not = Classic_unary_expr<ipr::Not>;
 
       using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
