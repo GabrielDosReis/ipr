@@ -124,7 +124,8 @@ namespace ipr {
    struct Array_delete;          // array delete-expression     delete[] p
    struct Complement;            // bitwise complement                  ~m
    struct Delete;                // delete-expression             delete p
-   struct Demote;                // integral or floating-point conversion
+   struct Demote;                // inverse of an integral or floating-point
+                                 // promotion
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // expression list        
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
@@ -132,7 +133,7 @@ namespace ipr {
    struct Id_expr;               // an identifier used in an expression
    struct Label;                 // a label - target of a goto-statement
                                  //         or entry of a switch-statement
-   struct Materialize;           // temporary materialization        T().m
+   struct Materialize;           // temporary materialization
    struct Not;                   // logical negation                 !cond
    struct Paren_expr;            // parenthesized expression           (a)
    struct Post_decrement;        // post-increment                     p++
@@ -140,7 +141,7 @@ namespace ipr {
    struct Pre_decrement;         // pre-increment                      ++p
    struct Pre_increment;         // pre-decrement                      --p
    struct Promote;               // integral or floating-point promotion
-   struct Read;                  // lvalue to rvalue conversion      = var
+   struct Read;                  // lvalue to rvalue conversion
    struct Throw;                 // throw expression           throw Bad()
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
@@ -164,6 +165,7 @@ namespace ipr {
    struct Bitxor_assign;         // in-place bitwise exclusive or  a ^= b
    struct Call;                  // function call                  f(u, v)
    struct Cast;                  // C-style class                  (T) e
+   struct Coerce;                // generalized type conversion
    struct Comma;                 // comma-operator                 a, b
    struct Const_cast;            // const-cast             const_cast<T&>(v)
    struct Datum;                 // object construction             T(v)
@@ -194,7 +196,7 @@ namespace ipr {
    struct Rshift;                // right shift                    a >> b
    struct Rshift_assign;         // in-place right shift           a >>= b
    struct Static_cast;           // static-cast            static_cast<T>(v)
-   struct Qualification;         // implicit cv-qualification
+   struct Qualification;         // cv-qualification conversion
    struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
@@ -203,7 +205,6 @@ namespace ipr {
    // -- result of trinary expression constructor constants --
    // --------------------------------------------------------
    struct New;                   // new-expression              new (p) T(v)
-   struct Coerce;                // implicit conversions not promotion or demotion
    struct Conditional;           // conditional                   p ? a : b
 
    // -----------------------------------------------
@@ -1174,7 +1175,7 @@ namespace ipr {
    };
 
                                    // -- Demote --
-   // Integral or floating point conversion -- "(float)2.2"
+   // Integral or floating point conversion
    struct Demote : Unary<Category<demote_cat>> { };
 
                                 // -- Deref --
@@ -1230,7 +1231,7 @@ namespace ipr {
    };
 
                                 // -- Materialize --
-   // Temporary materialization -- "T().m"
+   // Temporary materialization
    struct Materialize : Unary<Category<materialize_cat>> { };
 
                                 // -- Not --
@@ -1386,6 +1387,15 @@ namespace ipr {
                          const Expr&, const Expr_list&> {
       Arg1_type function() const  { return first(); }
       Arg2_type args() const { return second(); }
+   };
+
+                                // -- Coerce --
+   // A generalized type conversion either built-in to the language or
+   // programmatically defined by either constructors or conversion
+   // functions.
+   struct Coerce : Binary<Category<conditional_cat, Classic>, const Type&> {
+      Arg1_type target() const { return first(); }
+      Arg2_type expr() const { return second(); }
    };
 
                                 // -- Comma --
@@ -1549,10 +1559,10 @@ namespace ipr {
    struct Static_cast : Cast_expr<static_cast_cat> { };
 
                                    // -- Qualification --
-   // Implicit conversions that add cv-qualifiers
-   struct Qualification : Binary<Category<qualified_cat>, const Type&> {
-      Arg1_type target() const { return first(); }
-      Arg2_type expr() const { return second(); }
+   // A conversion that add cv-qualifiers
+   struct Qualification : Binary<Category<qualified_cat>, const Expr&, Type_qualifier> {
+      Arg1_type expr() const { return first(); }
+      Arg2_type qualifier() const { return second(); }
    };
 
                                 // -- New --
@@ -1563,14 +1573,6 @@ namespace ipr {
       virtual Optional<Expr_list> placement() const = 0;
       virtual const Type& allocated_type() const = 0;
       virtual Optional<Expr_list> initializer() const = 0;
-   };
-
-                                   // -- Coerce --
-   // Implicit conversions that are not promotions or demotions
-   struct Coerce : Category<conditional_cat> {
-      virtual const Type& target() const = 0;
-      virtual const Expr& expr() const = 0;
-      virtual Optional<Expr> implementation() const = 0;
    };
 
                                 // -- Conditional --

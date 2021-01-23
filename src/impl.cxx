@@ -57,16 +57,6 @@ namespace ipr {
          }
       };
 
-      Coerce::Coerce(const ipr::Type& type, const ipr::Expr& expr)
-            : target_type{ type }, expression{ expr }
-      { }
-
-      const ipr::Type& Coerce::target() const { return target_type; }
-
-      const ipr::Expr& Coerce::expr() const { return expression; }
-
-      Optional<ipr::Expr> Coerce::implementation() const { return { impl }; }
-
       // -- impl::New --
       New::New(const ipr::Expr_list* where, const ipr::Type& what,
                const ipr::Expr_list* args)
@@ -1490,9 +1480,9 @@ namespace ipr {
       }
 
       impl::Demote*
-      expr_factory::make_demote(const ipr::Expr& e, Optional<ipr::Type> result) {
+      expr_factory::make_demote(const ipr::Expr& e, const ipr::Type& result) {
          impl::Demote* demote_expr = demotes.make(e);
-         demote_expr->constraint = result;
+         demote_expr->constraint = &result;
          return demote_expr;
       }
 
@@ -1567,6 +1557,13 @@ namespace ipr {
          return label;
       }
 
+      Materialize*
+      expr_factory::make_materialize(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Materialize* materialize = materializes.make(e);
+         materialize->constraint = &result;
+         return materialize;
+      }
+
       impl::Not*
       expr_factory::make_not(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Not* not_expr = nots.make(e);
@@ -1623,16 +1620,16 @@ namespace ipr {
       }
 
       impl::Promote*
-      expr_factory::make_promote(const ipr::Expr& e, Optional<ipr::Type> result) {
+      expr_factory::make_promote(const ipr::Expr& e, const ipr::Type& result) {
          impl::Promote* promote_expr = promotes.make(e);
-         promote_expr->constraint = result;
+         promote_expr->constraint = &result;
          return promote_expr;
       }
 
       impl::Read*
-      expr_factory::make_read(const ipr::Expr& e, Optional<ipr::Type> result) {
+      expr_factory::make_read(const ipr::Expr& e, const ipr::Type& result) {
          impl::Read* read_expr = reads.make(e);
-         read_expr->constraint = result;
+         read_expr->constraint = &result;
          return read_expr;
       }
 
@@ -1769,6 +1766,13 @@ namespace ipr {
          impl::Call* call = calls.make(l, r);
          call->constraint = result;
          return call;
+      }
+
+      impl::Coerce*
+      expr_factory::make_coerce(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
+         impl::Coerce* coerce_expr = coerces.make(t, e);
+         coerce_expr->constraint = result;
+         return coerce_expr;
       }
 
       impl::Comma*
@@ -2012,9 +2016,9 @@ namespace ipr {
       }
 
       impl::Qualification*
-      expr_factory::make_qualification(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
-         impl::Qualification* qualification = qualifications.make(t, e);
-         qualification->constraint = result;
+      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifier q, const ipr::Type& result) {
+         impl::Qualification* qualification = qualifications.make(e, q);
+         qualification->constraint = &result;
          return qualification;
       }
 
@@ -2046,13 +2050,6 @@ namespace ipr {
          impl::New* new_expr = news.make(&p, t, &i);
          new_expr->constraint = result;
          return new_expr;
-      }
-
-      impl::Coerce*
-      expr_factory::make_coerce(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
-         impl::Coerce* coerce_expr = coerces.make(t, e);
-         coerce_expr->constraint = result;
-         return coerce_expr;
       }
 
       impl::Conditional*
