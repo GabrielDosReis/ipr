@@ -1235,7 +1235,7 @@ namespace ipr {
          Bitxor_assign* make_bitxor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Cast* make_cast(const ipr::Type&, const ipr::Expr&);
          Call* make_call(const ipr::Expr&, const ipr::Expr_list&, Optional<ipr::Type> = {});
-         Coerce* make_coerce(const ipr::Type&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Coerce* make_coerce(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
          Datum* make_datum(const ipr::Type&, const ipr::Expr_list&);

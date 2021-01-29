@@ -1769,9 +1769,9 @@ namespace ipr {
       }
 
       impl::Coerce*
-      expr_factory::make_coerce(const ipr::Type& t, const ipr::Expr& e, Optional<ipr::Type> result) {
-         impl::Coerce* coerce_expr = coerces.make(t, e);
-         coerce_expr->constraint = result;
+      expr_factory::make_coerce(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         impl::Coerce* coerce_expr = coerces.make(e, t);
+         coerce_expr->constraint = &result;
          return coerce_expr;
       }
 

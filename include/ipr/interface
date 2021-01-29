@@ -1393,9 +1393,9 @@ namespace ipr {
    // A generalized type conversion either built-in to the language or
    // programmatically defined by either constructors or conversion
    // functions.
-   struct Coerce : Binary<Category<conditional_cat, Classic>, const Type&> {
-      Arg1_type target() const { return first(); }
-      Arg2_type expr() const { return second(); }
+   struct Coerce : Binary<Category<conditional_cat, Classic>, const Expr&, const Type&> {
+      Arg1_type expr() const { return first(); }
+      Arg2_type target() const { return second(); }
    };
 
                                 // -- Comma --

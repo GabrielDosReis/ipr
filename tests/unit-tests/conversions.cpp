@@ -36,9 +36,9 @@ TEST_CASE("C++ Standard Conversions") {
     Type_qualifier::Const, lexicon.get_pointer(lexicon.int_type()));
   auto& ptr = *unit.global_region()->declare_var(*lexicon.make_identifier("ptr"), ptr_type);
   ptr.init = lexicon.make_coerce(
-    ptr_type,
     *lexicon.make_literal(lexicon.int_type(), "0"),
-    &ptr_type
+    ptr_type,
+    ptr_type
   );
 
   INFO("if (ptr) double(6);");
@@ -46,17 +46,17 @@ TEST_CASE("C++ Standard Conversions") {
   // Lvalue-to-Rvalue              (Read)
   // Integral-Floating Conversion  (Coercion)
   const auto& condition = *lexicon.make_coerce(
-    lexicon.bool_type(),
     *lexicon.make_read(
       *lexicon.make_id_expr(ptr),
       lexicon.get_pointer(lexicon.int_type()) // != ptr.type() (see 7.2.2/2)
     ),
-    &lexicon.bool_type()
+    lexicon.bool_type(),
+    lexicon.bool_type()
   );
   const auto& then_expr = *lexicon.make_coerce(
-      lexicon.double_type(),
       *lexicon.make_literal(lexicon.int_type(), "6"),
-      &lexicon.double_type()
+      lexicon.double_type(),
+      lexicon.double_type()
   );
   lexicon.make_if_then(condition, *lexicon.make_expr_stmt(then_expr));
 }
