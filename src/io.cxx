@@ -1703,6 +1703,32 @@ namespace ipr
             pp << xpr_decl(d, true);
          }
       };
+
+      struct Location_printer
+      {
+         Printer* pp;
+
+         void operator()(const ipr::Node&) {}
+         void operator()(const ipr::Stmt& stmt)
+         {
+            auto& locus = stmt.source_location();
+            if (locus.file != File_index{})
+            {
+               *pp << token("F") << (int)locus.file << token(':') << (int)locus.line;
+               if (locus.column != Column_number{})
+                  *pp << token(':') << (int)locus.column << token(' ');
+            }
+         }
+         static void print(Printer& printer, const ipr::Node& node)
+         {
+            if (printer.print_locations)
+            {
+               Constant_visitor<xpr::Location_printer> location_printer;
+               location_printer.pp = &printer;
+               node.accept(location_printer);
+            }
+         }
+      };
    }
 
    Printer&
@@ -1710,7 +1736,8 @@ namespace ipr
    {
       if(printer.needs_newline())
          printer << newline_and_indent();
-
+      
+      xpr::Location_printer::print(printer, x.stmt);
       xpr::Stmt impl(printer);
       x.stmt.accept(impl);
       return printer;
@@ -1841,6 +1868,7 @@ namespace ipr
       if (printer.needs_newline())
          printer << newline_and_indent();
 
+      xpr::Location_printer::print(printer, x.decl);
       xpr::Decl impl(printer);
       x.decl.accept(impl);
       if (x.needs_semicolon)

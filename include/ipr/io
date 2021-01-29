@@ -81,7 +81,7 @@ namespace ipr
 
       void write(const char*, const char*);
 
-      
+
    private:
       std::ostream& stream;
       Padding pad;
@@ -90,6 +90,7 @@ namespace ipr
 
    public:
       disambiguation_map_type disambiguation_map;
+      bool print_locations = false;
    };
    
 
