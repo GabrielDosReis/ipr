@@ -1716,7 +1716,8 @@ namespace ipr
             {
                *pp << token("F") << (int)locus.file << token(':') << (int)locus.line;
                if (locus.column != Column_number{})
-                  *pp << token(':') << (int)locus.column << token(' ');
+                  *pp << token(':') << (int)locus.column;
+               *pp << token(' ');
             }
          }
          static void print(Printer& printer, const ipr::Node& node)
