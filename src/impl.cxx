@@ -2371,12 +2371,12 @@ namespace ipr {
       File_index Lexicon::make_fileindex(const ipr::String& file_name)
       {
           filemap.emplace_back(&file_name);
-          return File_index{filemap.size() - 1};
+          return File_index{uint32_t(filemap.size()) - 1};
       }
 
       const ipr::String& Lexicon::to_filename(File_index index) const
       {
-          return *filemap.at((size_t)index);
+          return *filemap.at(uint32_t(index));
       }
 
       // -- impl::Interface_unit --
