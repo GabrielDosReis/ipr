@@ -1479,6 +1479,13 @@ namespace ipr {
          return deletes.make(e);
       }
 
+      impl::Demote*
+      expr_factory::make_demote(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Demote* demote_expr = demotes.make(e);
+         demote_expr->constraint = &result;
+         return demote_expr;
+      }
+
       impl::Deref*
       expr_factory::make_deref(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Deref* deref = derefs.make(e);
@@ -1550,6 +1557,13 @@ namespace ipr {
          return label;
       }
 
+      Materialize*
+      expr_factory::make_materialize(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Materialize* materialize = materializes.make(e);
+         materialize->constraint = &result;
+         return materialize;
+      }
+
       impl::Not*
       expr_factory::make_not(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Not* not_expr = nots.make(e);
@@ -1603,6 +1617,20 @@ namespace ipr {
          Pre_decrement* dec = pre_decrements.make(e);
          dec->constraint = result;
          return dec;
+      }
+
+      impl::Promote*
+      expr_factory::make_promote(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Promote* promote_expr = promotes.make(e);
+         promote_expr->constraint = &result;
+         return promote_expr;
+      }
+
+      impl::Read*
+      expr_factory::make_read(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Read* read_expr = reads.make(e);
+         read_expr->constraint = &result;
+         return read_expr;
       }
 
       impl::Throw*
@@ -1738,6 +1766,13 @@ namespace ipr {
          impl::Call* call = calls.make(l, r);
          call->constraint = result;
          return call;
+      }
+
+      impl::Coerce*
+      expr_factory::make_coerce(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         impl::Coerce* coerce_expr = coerces.make(e, t);
+         coerce_expr->constraint = &result;
+         return coerce_expr;
       }
 
       impl::Comma*
@@ -1978,6 +2013,13 @@ namespace ipr {
       impl::Static_cast*
       expr_factory::make_static_cast(const ipr::Type& t, const ipr::Expr& e) {
          return scasts.make(t, e);
+      }
+
+      impl::Qualification*
+      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifier q, const ipr::Type& result) {
+         impl::Qualification* qualification = qualifications.make(e, q);
+         qualification->constraint = &result;
+         return qualification;
       }
 
       impl::Binary_fold*
