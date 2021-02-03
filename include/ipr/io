@@ -3,7 +3,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #ifndef IPR_IO_INCLUDED
 #define IPR_IO_INCLUDED
@@ -18,7 +18,7 @@
 namespace ipr
 {
    // FIXME: Remove these data structures.
-   /// A data structure used to map different uses of a name to the 
+   /// A data structure used to map different uses of a name to the
    /// corresponding declaration. It is used by XPR printer to print name
    /// disambiguation information. A similar but a bit more elaborated structure
    /// is used by XPR parser to relink uses of names to appropriate declarations.
@@ -50,7 +50,7 @@ namespace ipr
       };
 
       explicit Printer(std::ostream&);
-      
+
       Padding padding() const { return pad; }
 
       bool needs_newline() const { return emit_newline; }
@@ -81,7 +81,7 @@ namespace ipr
 
       void write(const char*, const char*);
 
-      
+
    private:
       std::ostream& stream;
       Padding pad;
@@ -91,7 +91,7 @@ namespace ipr
    public:
       disambiguation_map_type disambiguation_map;
    };
-   
+
 
    struct xpr_decl {
       const Expr& decl;
@@ -104,8 +104,8 @@ namespace ipr
    struct xpr_stmt {
       const Expr& stmt;
       const bool needs_semicolon; // false, in most cases.
-      explicit xpr_stmt(const Expr& s, bool add_semicolon = true) 
-            : stmt(s), needs_semicolon(add_semicolon) 
+      explicit xpr_stmt(const Expr& s, bool add_semicolon = true)
+            : stmt(s), needs_semicolon(add_semicolon)
       { }
    };
 

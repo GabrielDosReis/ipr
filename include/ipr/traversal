@@ -3,7 +3,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #ifndef IPR_TRAVERSAL_INCLUDED
 #define IPR_TRAVERSAL_INCLUDED
@@ -33,7 +33,7 @@ namespace ipr {
    {
       return physically_same(t, t.expr());
    }
-   
+
    // -- utility functions --
 
    // Helper function, for implicit conversion Derived -> Base.
@@ -41,7 +41,7 @@ namespace ipr {
    // as a member of more abstract node category (Base).
    template<class T, class U>
    inline const T& as(const U& u) { return u; }
-   
+
    // This visitor class applies the same function to all major nodes.
    // A typical example of use is to throw an exception or do nothing.
    template<class F>
@@ -79,7 +79,7 @@ namespace ipr {
             visitor() : result() { }
             void visit(const T& n) override { result = &n; }
          };
-         
+
          visitor vis { };
          n.accept(vis);
          return vis.result;

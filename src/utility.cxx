@@ -2,7 +2,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #include <ipr/utility>
 
@@ -76,9 +76,9 @@ ipr::util::string::arena::make_string(const char* s, int n)
    string* header = allocate(n);
 
    header->length = n;
-   // >>>> Yuriy Solodkyy: 2007/05/29 
+   // >>>> Yuriy Solodkyy: 2007/05/29
    // Put cast to avoid gettinch assert with safe STL in MSVC
    std::copy(s, s + n, (char*)header->data);
-   // <<<< Yuriy Solodkyy: 2007/05/29 
+   // <<<< Yuriy Solodkyy: 2007/05/29
    return header;
 }

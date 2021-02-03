@@ -3,7 +3,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
-// 
+//
 
 #ifndef IPR_INTERFACE_INCLUDED
 #define IPR_INTERFACE_INCLUDED
@@ -35,7 +35,7 @@ namespace ipr {
    // details of the moment.  Also, it is our intent that the interfaces
    // could be implemented in various ways depending on the particular
    // constraints of the target tools.
-   // 
+   //
    // A third header file <ipr/traversal> offers a set of traversal
    // facilities.  At the moment, it contains only trivial visitor classes.
    // A fourth header, <ipr/io>, contains interfaces to input/output
@@ -55,14 +55,14 @@ namespace ipr {
    //           "node-category.def" for the numerical mapping.
 
    struct Node;                  // universal base class for all IPR nodes
-   
+
    struct Visitor;               // base class for all IPR visitor classes
 
    struct Annotation;            // node annotations
    struct Region;                // declarative region
    struct Comment;               // C-style and BCPL-style comments
-   struct String;                // literal string 
-   
+   struct String;                // literal string
+
    struct Linkage;               // general language linkage
    struct Expr;                  // general expressions
    struct Name;                  // general names
@@ -127,7 +127,7 @@ namespace ipr {
    struct Demote;                // inverse of an integral or floating-point
                                  // promotion
    struct Deref;                 // dereference expression              *p
-   struct Expr_list;             // expression list        
+   struct Expr_list;             // expression list
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
    struct Typeid;                // typeid expression, like sizeof expression
    struct Id_expr;               // an identifier used in an expression
@@ -282,7 +282,7 @@ namespace ipr {
    // at translation phase 2 (see ISO C++, §2.1/1).
    // Physical and logical unit locations are locations as manifest when
    // looking at a translation unit, at translation phase 4.
-   // 
+   //
    // Many IPR nodes will have a source and unit locations.  Instead of
    // storing a source file and unit name as a string in every
    // location data type, we save space by mapping file-names and
@@ -304,7 +304,7 @@ namespace ipr {
    };
 
    enum class Unit_index : uint32_t { };
-   
+
    struct Unit_location : Basic_location {
       Unit_index unit = { };    // ID of the unit
    };
@@ -379,7 +379,7 @@ namespace ipr {
       Iterator& operator++()
       {
          ++index;
-         return *this; 
+         return *this;
       }
 
       Iterator& operator--()
@@ -465,7 +465,7 @@ namespace ipr {
       virtual Operand operand() const = 0;
    };
 
-   
+
                                 // -- Binary<> --
    // In full generality, a binary-expression is an expression that
    // consists in (a) an operator, and (b) two operands.  In Standard
@@ -493,7 +493,7 @@ namespace ipr {
    // An example of a ternary node is a Conditional node.
    template<class Cat, class First = const Expr&,
             class Second = const Expr&, class Third = const Expr&>
-   struct Ternary : Cat { 
+   struct Ternary : Cat {
       using Arg1_type = First;
       using Arg2_type = Second;
       using Arg3_type = Third;
@@ -592,13 +592,13 @@ namespace ipr {
       // This class does not have a declared virtual destructor
       // because we don't plan to have Nodes manage resources, and
       // therefore no deletion through pointers to this base class.
-      
+
       const Category_code category; // the category the complete node object
                                 // belongs to.  In a sufficiently expressive
                                 // and efficient type system, we would not
                                 // need this member, for it could be read
                                 // directly from the type of the object.
-      
+
 
       // Hook for visitor classes.
       virtual void accept(Visitor&) const = 0;
@@ -681,7 +681,7 @@ namespace ipr {
    // can be overloaded and given user-defined implementation. For
    // instance,  cout << 2, involves a user-defined operator.  The IPR
    // representation is not a function call but, something like
-   // 
+   //
    //                        << ---> implementation
    //                       /  \.
    //                    cout   2
@@ -716,7 +716,7 @@ namespace ipr {
    //    - conversion-function-id            -- Conversion
    //    - template-id                       -- Template_id
    //    - type-id                           -- Type_id
-   // 
+   //
    // Most names are introduced by declarations into scope.
    struct Name : Node {
       // At the moment, this class is empty because there is no
@@ -832,7 +832,7 @@ namespace ipr {
       virtual const Sequence<Decl>& operator[](const Type&) const = 0;
    };
 
-                                // -- Scope -- 
+                                // -- Scope --
    // A "declaration" is a type specification for a name. A "Scope" is
    // a "sequence" of declarations, that additionally supports "lookup"
    // by "Name".  A name may have more than one declarations in a given
@@ -859,7 +859,7 @@ namespace ipr {
       const Decl& operator[](int i) const { return members()[i]; }
    };
 
-                                // -- General types -- 
+                                // -- General types --
    // A type is a collection of constraints and operations that preserve
    // some invariants.  Since a Type is also an Expression, it has a type.
    // A type of a type is what we call a "concept".  A type in IPR has a
@@ -997,7 +997,7 @@ namespace ipr {
    // A pointer-type is type that describes an Address node.
    struct Pointer : Unary<Category<pointer_cat, Type>, const Type&> {
       // The type of the entity whose address an object of this
-      // type may hold. 
+      // type may hold.
       Arg_type points_to() const { return operand(); }
    };
 
@@ -1209,7 +1209,7 @@ namespace ipr {
 
                                 // -- Typeid --
    // typeid-expression -- "typeid (expr)", or "typeid (int)"
-   struct Typeid : Unary<Category<typeid_cat>> { }; 
+   struct Typeid : Unary<Category<typeid_cat>> { };
 
                                 // -- Id_expr --
    // This node represents use of a name to designate an entity.
@@ -1241,7 +1241,7 @@ namespace ipr {
                                 // -- Post_decrement --
    // post-decrement-expression -- "expr--".
    struct Post_decrement : Unary<Category<post_decrement_cat,Classic>> { };
-   
+
                                 // -- Post_increment --
    // post-increment-expression -- "expr++".
    struct Post_increment : Unary<Category<post_increment_cat, Classic>> { };
@@ -1459,9 +1459,9 @@ namespace ipr {
                                 // -- Less_equal --
    // less-equal-comparison-expression -- "a <= b"
    struct Less_equal : Binary<Category<less_equal_cat, Classic>> { };
-   
+
                                 // -- Literal --
-   // An IPR literal is just like a standard C++ literal. 
+   // An IPR literal is just like a standard C++ literal.
    struct Literal : Binary<Category<literal_cat, Classic>,
                            const Type&, const String&> {
       // See comments for the cast operators regarding type().
@@ -1517,7 +1517,7 @@ namespace ipr {
                                 // -- Modulo_assign --
    // In-place modulo-expression -- "a %= b"
    struct Modulo_assign : Binary<Category<modulo_assign_cat, Classic>> { };
-   
+
                                 // -- Mul --
    // Multiplication-expression -- "a * b"
    struct Mul : Binary<Category<mul_cat, Classic>> { };
@@ -1569,7 +1569,7 @@ namespace ipr {
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
    //    ::_opt new new-placement_opt ( type-id ) new-initializer_opt
-   struct New : Category<new_cat, Classic> { 
+   struct New : Category<new_cat, Classic> {
       virtual Optional<Expr_list> placement() const = 0;
       virtual const Type& allocated_type() const = 0;
       virtual Optional<Expr_list> initializer() const = 0;
@@ -1590,7 +1590,7 @@ namespace ipr {
    // FIXME: Parameter_list should have its category ste properly.
    struct Parameter_list : Region, Sequence<Parameter> { };
 
-                                // -- Stmt -- 
+                                // -- Stmt --
    // The view that a statement is kind of expression does not follow from
    // Standard C++ specification.  It is a design choice we made based on
    // the following facts:
@@ -1603,29 +1603,29 @@ namespace ipr {
    //       In the first case we have an expression and in the second
    //       case we have a declaration.  Therefore, we have a diagram
    //       that loooks like
-   // 
+   //
    //              ,----> E.D. <----,
    //              |                |
    //          Expression      Declaration
-   // 
+   //
    //
    //    2. Standard C++ says some declarations are statements, and when
    //       a declaration declares a variable with initialization, the
    //       initializer usually requests code execution.  Therefore, we
    //       chose to say that a declaration is a statement and we get
    //       a similar diagram
-   // 
+   //
    //              ,----> D.S. <----,
    //              |                |
    //         Declaration       Statement
-   // 
+   //
    //
    // When combined, the two diagrams yield
-   // 
+   //
    //              ,----> E.D. <---- ----> D.S <----,
    //              |                |               |
    //          Expression      Declaration      Statement
-   // 
+   //
    //
    // Somehow, we have to satisfy that equation.  In a previous design
    // we chose what seemed to be the simplest, i.e. deriving a Statement
@@ -1811,7 +1811,7 @@ namespace ipr {
       Explicit   = 1 << 7,
       Pure       = 1 << 8,
       FunctionSpecifier = Inline | Virtual | Explicit | Pure,
-      
+
       Friend     = 1 << 9,
       Typedef    = 1 << 10,
 
@@ -1870,7 +1870,7 @@ namespace ipr {
    //   (e) linkage-specification
    //   (f) namespace-definition
    // are not statement in Standard C++ sense.
-   // 
+   //
    // We take the view that all declarations can be parameterized.
    // Therefore, declaration nodes potentially are instantiations of a
    // a template given by "pattern()", with a set of template-arguments,
@@ -1993,7 +1993,7 @@ namespace ipr {
    };
 
                                 // -- Field --
-   // This node represents a nonstatic data member.  
+   // This node represents a nonstatic data member.
    struct Field : Category<field_cat, Decl> {
       virtual const Type& membership() const = 0;
    };
@@ -2090,7 +2090,7 @@ namespace ipr {
 
       virtual void visit(const Expr&) = 0;
       virtual void visit(const Classic&);
-      
+
       virtual void visit(const Name&) = 0;
       virtual void visit(const Identifier&);
       virtual void visit(const Suffix&);
@@ -2129,10 +2129,10 @@ namespace ipr {
       virtual void visit(const Eclipsis&);
       virtual void visit(const Initializer_list&);
 
-      virtual void visit(const Address&); 
-      virtual void visit(const Array_delete&); 
-      virtual void visit(const Complement&); 
-      virtual void visit(const Delete&); 
+      virtual void visit(const Address&);
+      virtual void visit(const Array_delete&);
+      virtual void visit(const Complement&);
+      virtual void visit(const Delete&);
       virtual void visit(const Demote&);
       virtual void visit(const Deref&);
       virtual void visit(const Paren_expr&);
@@ -2141,24 +2141,24 @@ namespace ipr {
       virtual void visit(const Typeid&);
       virtual void visit(const Id_expr&);
       virtual void visit(const Label&);
-      virtual void visit(const Not&); 
+      virtual void visit(const Not&);
       virtual void visit(const Materialize&);
       virtual void visit(const Post_decrement&);
-      virtual void visit(const Post_increment&); 
-      virtual void visit(const Pre_decrement&); 
-      virtual void visit(const Pre_increment&); 
+      virtual void visit(const Post_increment&);
+      virtual void visit(const Pre_decrement&);
+      virtual void visit(const Pre_increment&);
       virtual void visit(const Promote&);
       virtual void visit(const Read&);
       virtual void visit(const Throw&);
-      virtual void visit(const Unary_minus&); 
+      virtual void visit(const Unary_minus&);
       virtual void visit(const Unary_plus&);
       virtual void visit(const Expansion&);
 
       virtual void visit(const Scope_ref&);
-      virtual void visit(const And&); 
+      virtual void visit(const And&);
       virtual void visit(const Array_ref&);
-      virtual void visit(const Arrow&); 
-      virtual void visit(const Arrow_star&); 
+      virtual void visit(const Arrow&);
+      virtual void visit(const Arrow_star&);
       virtual void visit(const Assign&);
       virtual void visit(const Bitand&);
       virtual void visit(const Bitand_assign&);
@@ -2166,22 +2166,22 @@ namespace ipr {
       virtual void visit(const Bitor_assign&);
       virtual void visit(const Bitxor&);
       virtual void visit(const Bitxor_assign&);
-      virtual void visit(const Cast&); 
-      virtual void visit(const Call&); 
+      virtual void visit(const Cast&);
+      virtual void visit(const Call&);
       virtual void visit(const Coerce&);
       virtual void visit(const Comma&);
-      virtual void visit(const Const_cast&); 
-      virtual void visit(const Datum&); 
+      virtual void visit(const Const_cast&);
+      virtual void visit(const Datum&);
       virtual void visit(const Div&);
       virtual void visit(const Div_assign&);
       virtual void visit(const Dot&);
-      virtual void visit(const Dot_star&); 
-      virtual void visit(const Dynamic_cast&); 
-      virtual void visit(const Equal&); 
-      virtual void visit(const Greater&); 
-      virtual void visit(const Greater_equal&); 
-      virtual void visit(const Less&); 
-      virtual void visit(const Less_equal&); 
+      virtual void visit(const Dot_star&);
+      virtual void visit(const Dynamic_cast&);
+      virtual void visit(const Equal&);
+      virtual void visit(const Greater&);
+      virtual void visit(const Greater_equal&);
+      virtual void visit(const Less&);
+      virtual void visit(const Less_equal&);
       virtual void visit(const Literal&);
       virtual void visit(const Lshift&);
       virtual void visit(const Lshift_assign&);
@@ -2192,11 +2192,11 @@ namespace ipr {
       virtual void visit(const Modulo_assign&);
       virtual void visit(const Mul&);
       virtual void visit(const Mul_assign&);
-      virtual void visit(const Not_equal&); 
-      virtual void visit(const Or&); 
+      virtual void visit(const Not_equal&);
+      virtual void visit(const Or&);
       virtual void visit(const Plus&);
       virtual void visit(const Plus_assign&);
-      virtual void visit(const Reinterpret_cast&); 
+      virtual void visit(const Reinterpret_cast&);
       virtual void visit(const Rshift&);
       virtual void visit(const Rshift_assign&);
       virtual void visit(const Static_cast&);
