@@ -33,5 +33,5 @@ TEST_CASE("test builtins") {
   pp << lexicon.nullptr_type()
      << lexicon.variable_type()
      << lexicon.function_type();
-  CHECK(ss.str() == "decltype(nullptr) (variable) (function)");
+  CHECK(ss.str() == "@nullptr_t @variable @function");
 }

@@ -2083,7 +2083,7 @@ namespace ipr {
               namespacetype(get_identifier("namespace"), cxx_linkage(), anytype),
 
               voidtype(get_identifier("void"), cxx_linkage(), anytype),
-              nullptrtype(get_identifier("decltype(nullptr)"), cxx_linkage(), anytype),
+              nullptrtype(get_identifier("@nullptr_t"), cxx_linkage(), anytype),
               booltype(get_identifier("bool"), cxx_linkage(), anytype),
               chartype(get_identifier("char"), cxx_linkage(), anytype),
               schartype(get_identifier("signed char"), cxx_linkage(), anytype),
@@ -2108,8 +2108,8 @@ namespace ipr {
               longdoubletype(get_identifier("long double"),
                              cxx_linkage(), anytype),
               ellipsistype(get_identifier("..."), cxx_linkage(), anytype),
-              functiontype(get_identifier("(function)"), cxx_linkage(), anytype),
-              variabletype(get_identifier("(variable)"), cxx_linkage(), anytype)
+              functiontype(get_identifier("@function"), cxx_linkage(), anytype),
+              variabletype(get_identifier("@variable"), cxx_linkage(), anytype)
       {
          record_builtin_type(anytype);
          record_builtin_type(classtype);
