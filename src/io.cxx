@@ -1708,7 +1708,10 @@ namespace ipr
       {
          Printer* pp;
 
+         // Location is only present on nodes derived from ipr::Stmt.
+         // Nothing to print for other types of nodes at the moment.
          void operator()(const ipr::Node&) {}
+
          void operator()(const ipr::Stmt& stmt)
          {
             auto& locus = stmt.source_location();
