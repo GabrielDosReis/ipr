@@ -1560,7 +1560,7 @@ namespace ipr {
 
                                    // -- Qualification --
    // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<qualified_cat>, const Expr&, Type_qualifier> {
+   struct Qualification : Binary<Category<qualification_cat>, const Expr&, Type_qualifier> {
       Arg1_type expr() const { return first(); }
       Arg2_type qualifier() const { return second(); }
    };
