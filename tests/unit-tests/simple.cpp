@@ -4,6 +4,7 @@
 #include <ipr/impl>
 #include <ipr/io>
 #include <sstream>
+#include <iostream>
 
 TEST_CASE("global constant variable can be printed") {
   using namespace ipr;
@@ -24,3 +25,13 @@ TEST_CASE("global constant variable can be printed") {
   CHECK(!ss.str().empty());
 }
 
+TEST_CASE("test builtins") {
+  using namespace ipr;
+  impl::Lexicon lexicon{};
+  std::stringstream ss;
+  Printer pp{ss};
+  pp << lexicon.nullptr_type()
+     << lexicon.variable_type()
+     << lexicon.function_type();
+  CHECK(ss.str() == "decltype(nullptr) (variable) (function)");
+}

@@ -2042,6 +2042,7 @@ namespace ipr {
    struct Lexicon {
       virtual const Type& void_type() const = 0;
       virtual const Type& bool_type() const = 0;
+      virtual const Type& nullptr_type() const = 0;
       virtual const Type& char_type() const = 0;
       virtual const Type& schar_type() const = 0;
       virtual const Type& uchar_type() const = 0;
@@ -2066,6 +2067,8 @@ namespace ipr {
       virtual const Type& union_type() const = 0;
       virtual const Type& enum_type() const = 0;
       virtual const Type& namespace_type() const = 0;
+      virtual const Type& function_type() const = 0;
+      virtual const Type& variable_type() const = 0;
 
       virtual const Linkage& cxx_linkage() const = 0;
       virtual const Linkage& c_linkage() const = 0;

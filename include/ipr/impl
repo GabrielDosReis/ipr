@@ -1898,7 +1898,7 @@ namespace ipr {
       };
 
 
-      // A Break node can record the selction- of iteration-statement it
+      // A Break node can record the selection- of iteration-statement it
       // transfers control out of.
 
       struct Break : Stmt<Expr<ipr::Break>> {
@@ -2017,6 +2017,7 @@ namespace ipr {
          const ipr::Literal& get_literal(const ipr::Type&, const ipr::String&);
          
          const ipr::Type& void_type() const final;
+         const ipr::Type& nullptr_type() const final;
          const ipr::Type& bool_type() const final;
 
          const ipr::Type& char_type() const final;
@@ -2050,6 +2051,8 @@ namespace ipr {
          const ipr::Type& union_type() const final;
          const ipr::Type& enum_type() const final;
          const ipr::Type& namespace_type() const final;
+         const ipr::Type& function_type() const final;
+         const ipr::Type& variable_type() const final;
 
          const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 
@@ -2125,6 +2128,7 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> enumtype;
          const impl::Builtin<ipr::As_type> namespacetype;
          const impl::Builtin<ipr::As_type> voidtype;
+         const impl::Builtin<ipr::As_type> nullptrtype;
          const impl::Builtin<ipr::As_type> booltype;
          const impl::Builtin<ipr::As_type> chartype;
          const impl::Builtin<ipr::As_type> schartype;
@@ -2145,6 +2149,8 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> doubletype;
          const impl::Builtin<ipr::As_type> longdoubletype;
          const impl::Builtin<ipr::As_type> ellipsistype;
+         const impl::Builtin<ipr::As_type> functiontype;
+         const impl::Builtin<ipr::As_type> variabletype;
 
          template<class T> T* finish_type(T*);
       };
