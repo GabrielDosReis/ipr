@@ -4,7 +4,6 @@
 #include <ipr/impl>
 #include <ipr/io>
 #include <sstream>
-#include <iostream>
 
 TEST_CASE("global constant variable can be printed") {
   using namespace ipr;
