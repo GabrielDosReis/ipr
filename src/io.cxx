@@ -2,7 +2,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #include <assert.h>
 #include <ipr/io>
@@ -13,22 +13,22 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace ipr 
+namespace ipr
 {
    struct pp_base : Constant_visitor<Missing_overrider> {
       explicit pp_base(Printer& p) : pp(p) { }
       using Visitor::visit;
       void visit(const Type& t) override { visit(as<Expr>(t)); }
       void visit(const Decl& d) override { visit(as<Expr>(d)); }
-      
+
    protected:
       Printer& pp;
    };
-   
+
    Printer::Printer(std::ostream& os)
          : stream(os), pad(None), emit_newline(false),
            pending_indentation(0) { }
-   
+
    Printer&
    Printer::operator<<(const char* s)
    {
@@ -41,7 +41,7 @@ namespace ipr
    {
       std::copy(begin, last, std::ostream_iterator<char>(this->stream));
    }
-   
+
    template<typename T>
    struct Token_helper {
       T const value;
@@ -54,31 +54,31 @@ namespace ipr
    {
       return Token_helper<T>(t);
    }
-   
+
    template<typename T>
    inline Printer&
    operator<<(Printer& printer, Token_helper<T> t)
    {
       return printer << t.value << Printer::None;
    }
-   
+
    inline Printer&
    insert_xtoken(Printer& printer, const char* s)
    {
       return printer << s << Printer::None;
    }
-   
+
    struct needs_newline { };
-   
+
    inline Printer&
    operator<<(Printer& printer, needs_newline)
    {
       printer.needs_newline(true);
       return printer;
    }
-   
+
    struct newline { };
-   
+
    Printer&
    operator<<(Printer& printer, newline)
    {
@@ -89,7 +89,7 @@ namespace ipr
       printer.needs_newline(false);
       return printer;
    }
-   
+
    // -- An Expr_list is mostly a expression-seq.  See print_sequence().
    static inline Printer&
    operator<<(Printer& pp, const Expr_list& l)
@@ -103,8 +103,8 @@ namespace ipr
          }
       return pp;
    }
-   
-   
+
+
    // -- Print out a sequence of type.
    static inline Printer&
    operator<<(Printer& pp, const Sequence<Type>& s)
@@ -118,7 +118,7 @@ namespace ipr
          }
       return pp;
    }
-   
+
 
    // -- A Parameter_list is mostly a Parameter-seq.  See print_sequence().
    static inline Printer&
@@ -133,92 +133,92 @@ namespace ipr
          }
       return pp;
    }
-   
+
    struct xpr_initializer {
       const ipr::Expr& expr;
       explicit xpr_initializer(const ipr::Expr& e) : expr(e) { }
    };
-   
+
    static Printer& operator<<(Printer&, xpr_initializer);
 
    struct indentation {
       const int amount;
       indentation(int n) : amount(n) { }
    };
-   
+
    inline Printer&
    operator<<(Printer& printer, indentation i)
    {
       printer.indent(i.amount);
       return printer;
    }
-   
+
    struct newline_and_indent {
       const int indentation;
       newline_and_indent(int n = 0) : indentation(n) { }
    };
-   
+
    inline Printer&
    operator<<(Printer& printer, newline_and_indent m)
    {
       printer << indentation(m.indentation) << newline();
       return printer;
    }
-   
+
    struct xpr_primary_expr {
       const Expr& expr;
       explicit xpr_primary_expr(const Expr& e) : expr(e) { }
    };
    static Printer& operator<<(Printer&, xpr_primary_expr);
-   
+
    struct xpr_cast_expr {
    const Expr& expr;
       xpr_cast_expr(const Expr& e) : expr(e) { }
    };
    static Printer& operator<<(Printer&, xpr_cast_expr);
-   
+
    struct xpr_assignment_expression {
       const Expr& expr;
       xpr_assignment_expression(const Expr& e) : expr(e) { }
    };
    static Printer& operator<<(Printer&, xpr_assignment_expression);
-   
-   
+
+
    struct xpr_exception_spec {
       const Type& type;
       explicit xpr_exception_spec(const Type& t) : type(t) { }
    };
    static Printer& operator<<(Printer&, xpr_exception_spec);
-   
+
    // Pretty-print identifiers.
    struct xpr_identifier {
       const char* const begin;
       const char* const last;
-      
+
       explicit xpr_identifier(const ipr::String& s)
             : begin(s.begin()), last(s.end()) { }
-      
+
       template<int N>
       explicit xpr_identifier(const char (&s)[N])
             : begin(s), last(s + N - 1) { }
    };
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_identifier id)
    {
       if (printer.padding() == Printer::Before)
          printer << ' ';
       printer.write(id.begin, id.last);
-      
+
       return printer <<  Printer::Before;
    }
-   
+
    Printer&
    operator<<(Printer& pp, const Identifier& id)
    {
       return pp << xpr_identifier(id.string());
    }
-   
+
    // ------------------------------
    // -- Pretty printing of names --
    // ------------------------------
@@ -241,15 +241,15 @@ namespace ipr
    namespace xpr {
       struct Name : pp_base {
          explicit Name(Printer& p) : pp_base(p) { }
-         
+
          void visit(const Identifier& id) override
          {
             pp << id;
          }
-         
+
          // -- operator-function-id:
          //         operator operator-name
-         // 
+         //
          //    operator-name: one of
          //          +  ++  -=  -  --  -=  =  ==  !  !=  %   %=
          //          *  *=  /  /=  ^  ^=  &  &&  &=  |  ||  |=
@@ -258,7 +258,7 @@ namespace ipr
          void visit(const Operator& o) override
          {
             pp << xpr_identifier("operator");
-            
+
             const ipr::String& s = o.opname();
             if (!std::isalpha(*s.begin()))
                {
@@ -268,7 +268,7 @@ namespace ipr
             else
                pp << xpr_identifier(s);
          }
-         
+
          // -- conversion-function-id:
          //        operator  type-id
          // -- NOTE: This production is very different from ISO Standard
@@ -281,13 +281,13 @@ namespace ipr
                << xpr_identifier("cast")
                << token("<|") << xpr_type(c.target()) << token("|>");
          }
-         
+
          // A type-id is just the spelling of the type expression.
          void visit(const Type_id& n) override
          {
             pp << xpr_type(n.type_expr());
          }
-         
+
          // -- A Scope_ref corresponds to Standard C++ notion of
          // -- qualified-id.  Here, it takes the production of
          //    scope-ref:
@@ -296,7 +296,7 @@ namespace ipr
          {
             pp << xpr_expr(n.scope()) << token("::") << xpr_expr(n.member());
          }
-         
+
          // -- template-id:
          //       primary-expression < expression-seq >
          void visit(const Template_id& n) override
@@ -304,21 +304,21 @@ namespace ipr
             n.template_name().accept(*this);
             pp << token("<|") << n.args() << token("|>");
          }
-         
+
          // -- ctor-name:
          //        # ctor
          void visit(const Ctor_name&) override
          {
             pp << xpr_identifier("#ctor");
          }
-         
+
          // -- dtor-name
          //    # dtor
          void visit(const Dtor_name&) override
          {
             pp << xpr_identifier("#dtor");
          }
-         
+
          // -- parameter-canonical-name
          //    #(level, position)
          // The (template) parameter is indicated in a generalized
@@ -338,13 +338,13 @@ namespace ipr
          }
       };
    }
-   
+
    struct xpr_name {
       const Name& name;
       explicit xpr_name(const Name& n) : name(n) { }
       explicit xpr_name(const Decl& d) : name(d.name()) { }
    };
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_name x)
    {
@@ -352,27 +352,27 @@ namespace ipr
       x.name.accept(pp);
       return printer;
    }
-   
+
    // -- primary-expression:
    //      name
    //      label
    //      type
    //      ( expression )
    //      { expression-seq }
-   
+
    namespace xpr {
       struct Primary_expr : xpr::Name {
          Primary_expr(Printer& pp) : xpr::Name(pp) { }
-         
+
          void visit(const Label& l) final { xpr::Name::visit(l.name()); }
          void visit(const Id_expr& id) final { pp << xpr_name{ id.name() }; }
          void visit(const Literal&) final;
-         void visit(const As_type& t) final 
+         void visit(const As_type& t) final
          {
             if (denote_builtin_type(t))
                pp << xpr_name(t.name());
             else
-               pp << xpr_primary_expr(t.expr()); 
+               pp << xpr_primary_expr(t.expr());
          }
          void visit(const Phantom&) final { } // nothing to print
          void visit(const Paren_expr& e) final
@@ -389,7 +389,7 @@ namespace ipr
          }
          void visit(const Decl& d) override { d.name().accept(*this); }
       };
-      
+
       void
       Primary_expr::visit(const ipr::Literal& l)
       {
@@ -402,47 +402,47 @@ namespace ipr
                default:
                   pp << *cur;
                   break;
-                  
+
                case '\n':
                   pp << "\\n";
                   break;
-                  
+
                case '\r':
                   pp << "\\r";
                   break;
-                  
+
                case '\f':
                   pp << "\\f";
                   break;
-                  
+
                case '\t':
                   pp << "\\t";
                   break;
-                  
+
                case '\v':
                   pp << "\\v";
                   break;
-                  
+
                case '\b':
                   pp << "\\b";
                   break;
-                  
+
                case '\a':
                   pp << "\\a";
                   break;
-                  
+
                case '\\':
                   pp << "\\\\";
                   break;
-                  
+
 //               case '\'':
 //                  pp << "\\'";
 //                  break;
-                  
+
                case '\0':
                   pp << "\\0";
                   break;
-                  
+
                case '\1':
                case '\2':
                case '\3':
@@ -451,23 +451,23 @@ namespace ipr
                }
       }
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_primary_expr x)
    {
-      
+
       xpr::Primary_expr pp(printer);
       x.expr.accept(pp);
       return printer;
    }
-   
+
    struct xpr_postfix_expr {
       const Expr& expr;
       explicit xpr_postfix_expr(const Expr& e) : expr(e) { }
    };
-   
+
    static Printer& operator<<(Printer&, xpr_postfix_expr);
-   
+
    template<Category_code code, int N>
    void
    new_style_cast(Printer& pp, const Cast_expr<code>& e, const char (&op)[N])
@@ -476,71 +476,71 @@ namespace ipr
          << token("<|") << xpr_type(e.type()) << token("|>")
          << token('(') << xpr_expr(e.expr()) << token(')');
    }
-   
+
    namespace xpr {
       // -- postfix-expression:
       //        primary-expression
       struct Postfix_expr : xpr::Primary_expr {
          Postfix_expr(Printer& pp) : xpr::Primary_expr(pp) { }
-         
+
          //        postfix-expression [ expression ]
          void visit(const Array_ref& e) override
          {
             pp << xpr_postfix_expr(e.base())
                << token('[') << xpr_expr(e.member()) << token(']');
          }
-         
+
          //        postfix-expression . primary-expression
-         void visit(const Dot& e) override 
+         void visit(const Dot& e) override
          {
             pp << xpr_postfix_expr(e.base()) << token('.')
                << xpr_primary_expr(e.member());
          }
-         
-         //        postfix-expression -> primary-expression 
+
+         //        postfix-expression -> primary-expression
          void visit(const Arrow& e) override
          {
             pp << xpr_postfix_expr(e.base()) << token("->")
                << xpr_primary_expr(e.member());
          }
-         
+
          //        postfix-expression ( expression-list )
          void visit(const Call& e) override
          {
             pp << xpr_postfix_expr(e.function())
                << token('(') << e.args() << token(')');
          }
-         
+
          void visit(const Datum& e) override
          {
             pp << xpr_type(e.type())
                << token('(') << e.args() << token(')');
          }
-         
+
          //        postfix-expression --
          void visit(const Post_decrement& e) override
          {
             pp << xpr_postfix_expr(e.operand()) << token("--");
          }
-         
+
          //        postfix-expression ++
          void visit(const Post_increment& e) override
          {
             pp << xpr_postfix_expr(e.operand()) << token("++");
          }
-         
+
          //        dynamic_cast < type > ( expression )
          void visit(const Dynamic_cast& e) override
          {
             new_style_cast(pp, e, "dynamic_cast");
          }
-         
+
          //        static_cast < type > ( expression )
          void visit(const Static_cast& e) override
          {
             new_style_cast(pp, e, "static_cast");
          }
-         
+
          //        const_cast < type > ( expression )
          void visit(const Const_cast& e) override
          {
@@ -552,7 +552,7 @@ namespace ipr
          {
             new_style_cast(pp, e, "reinterpret_cast");
          }
-         
+
          //        typeid ( expression )
          void visit(const Typeid& e) override
          {
@@ -561,8 +561,8 @@ namespace ipr
          }
       };
    }
-   
-   
+
+
    static inline Printer&
    operator<<(Printer& printer, xpr_postfix_expr x)
    {
@@ -570,7 +570,7 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
    // -- unary-expression:
    //         -- cast-expression
    //         ++ cast-expression
@@ -583,25 +583,25 @@ namespace ipr
    {
       pp << token(op) << xpr_cast_expr(e.operand());
    }
-   
+
    namespace xpr {
       struct Unary_expr : xpr::Postfix_expr {
          Unary_expr(Printer& pp) : xpr::Postfix_expr(pp) { }
-         
+
          void visit(const Pre_decrement& e) override { unary_operation(pp, e, "--"); }
-         
+
          void visit(const Pre_increment& e) override { unary_operation(pp, e, "++"); }
-         
+
          void visit(const Address& e) override { unary_operation(pp, e, "&"); }
-         
+
          void visit(const Complement& e) override { unary_operation(pp, e, "~"); }
-         
+
          void visit(const Deref& e) override { unary_operation(pp, e, "*"); }
-         
+
          void visit(const Unary_minus& e) override { unary_operation(pp, e, "-"); }
-         
+
          void visit(const Not& e) override { unary_operation(pp, e, "!"); }
-         
+
          void visit(const Sizeof& e) override
          {
             pp << xpr_identifier("sizeof")
@@ -612,27 +612,27 @@ namespace ipr
          {
             pp << token('+') << xpr_expr(e.operand());
          }
-         
+
          void visit(const New& e) override
          {
             pp << xpr_identifier("new") << token(' ');
-            
+
             if (auto p = e.placement())
                pp << token('(') << p.get() << token(") ");
-            
+
             pp << xpr_type(e.allocated_type());
-            
+
             if (auto init = e.initializer())
                pp << token(" (") << init.get() << token(')');
          }
-         
+
          void visit(const Delete& e) override
          {
             pp << xpr_identifier("delete")
                << token(' ')
                << xpr_cast_expr(e.storage());
          }
-      
+
          void visit(const Array_delete& e) override
          {
             pp << xpr_identifier("delete[]")
@@ -643,11 +643,11 @@ namespace ipr
    }
 
    static Printer& operator<<(Printer&, xpr_cast_expr);
-   
+
    namespace xpr {
       struct Cast_expr : xpr::Unary_expr {
          Cast_expr(Printer& p) : xpr::Unary_expr(p) { }
-         
+
          // -- cast-expression
          //       unary-expression
          //       "(" type ")" cast-expression
@@ -657,7 +657,7 @@ namespace ipr
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_cast_expr x)
    {
@@ -665,17 +665,17 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
    // -- pm-expression:
    //      cast-expression
    //      pm-expression ".*" cast-expression
    //      pm-expression "->*" cast-expression
-   
+
    struct xpr_pm_expr {
       const Expr& expr;
       explicit xpr_pm_expr(const Expr& e) : expr(e) { }
    };
-   
+
    static Printer& operator<<(Printer&, xpr_pm_expr);
 
    template<Category_code code>
@@ -686,16 +686,16 @@ namespace ipr
          << op
          << xpr_cast_expr(e.member());
    }
-   
+
    namespace xpr {
       struct Pm_expr : xpr::Cast_expr {
          Pm_expr(Printer& p) : xpr::Cast_expr(p) { }
-         
+
          void visit(const Dot_star& e) override { offset_with_pm(pp, e, ".*"); }
          void visit(const Arrow_star& e) override { offset_with_pm(pp, e, "->*"); }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_pm_expr x)
    {
@@ -714,22 +714,22 @@ namespace ipr
          << token(' ') << op << token(' ')
          << Right(e.second());
    }
-   
+
    // -- multiplicative-expression:
    //          pm-expression
    //          multiplicative-expression * pm-expression
    //          multiplicative-expression / pm-expression
    //          multiplicative-expression % pm-expression
-   
+
    struct xpr_mul_expr {
       const Expr& expr;
       explicit xpr_mul_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Mul_expr : xpr::Pm_expr {
          Mul_expr(Printer& p) : xpr::Pm_expr(p) { }
-         
+
          void visit(const Mul& e) override
          {
             binary_expression<xpr_mul_expr, xpr_pm_expr>(pp, e, '*');
@@ -744,7 +744,7 @@ namespace ipr
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_mul_expr x)
    {
@@ -757,28 +757,28 @@ namespace ipr
    //         multiplicative-expression
    //         additive-expression + multiplicative-expression
    //         additive-expression - multiplicative-expression
-   
+
    struct xpr_add_expr {
       const Expr& expr;
       explicit xpr_add_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Add_expr : xpr::Mul_expr {
          Add_expr(Printer& p) : xpr::Mul_expr(p) { }
-         
+
          void visit(const Plus& e) override
          {
             binary_expression<xpr_add_expr, xpr_mul_expr>(pp, e, '+');
          }
-         
+
          void visit(const Minus& e) override
          {
             binary_expression<xpr_add_expr, xpr_mul_expr>(pp, e, '-');
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_add_expr x)
    {
@@ -786,34 +786,34 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   
+
+
    // -- shift-expression:
    //         additive-expression
    //         shift-expression << additive-expression
    //         shift-expression >> additive-expression
-   
+
    struct xpr_shift_expr {
       const Expr& expr;
       explicit xpr_shift_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Shift_expr : xpr::Add_expr {
          Shift_expr(Printer& p) : xpr::Add_expr(p) { }
-         
+
          void visit(const Lshift& e) override
          {
             binary_expression<xpr_shift_expr, xpr_add_expr>(pp, e, "<<");
          }
-         
+
          void visit(const Rshift& e) override
          {
             binary_expression<xpr_shift_expr, xpr_add_expr>(pp, e, ">>");
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_shift_expr x)
    {
@@ -821,7 +821,7 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
 
    // -- relational-expression
    //        shift-expression
@@ -829,38 +829,38 @@ namespace ipr
    //        relational-expression > shift-expression
    //        relational-expression <= shift-expression
    //        relational-expression >= shift-expression
-   
+
    struct xpr_rel_expr {
       const Expr& expr;
       explicit xpr_rel_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Rel_expr : xpr::Shift_expr {
          Rel_expr(Printer& p) : xpr::Shift_expr(p) { }
-         
+
          void visit(const Less& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, '<');
          }
-         
+
          void visit(const Less_equal& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, "<=");
          }
-         
+
          void visit(const Greater& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, '>');
          }
-         
+
          void visit(const Greater_equal& e) override
          {
             binary_expression<xpr_rel_expr, xpr_shift_expr>(pp, e, ">=");
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_rel_expr x)
    {
@@ -868,33 +868,33 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
    // -- equality-expression
    //          relational-expression
    //          equality-expression == relational-expression
    //          equality-expression != relational-expression
-   
+
    struct xpr_eq_expr {
       const Expr& expr;
       explicit xpr_eq_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Eq_expr : xpr::Rel_expr {
          Eq_expr(Printer& p) : xpr::Rel_expr(p) { }
-         
+
          void visit(const Equal& e) override
          {
             binary_expression<xpr_eq_expr, xpr_rel_expr>(pp, e, "==");
          }
-         
+
          void visit(const Not_equal& e) override
          {
             binary_expression<xpr_eq_expr, xpr_rel_expr>(pp, e, "!=");
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_eq_expr x)
    {
@@ -902,28 +902,28 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   
+
+
    // -- and-expression
    //          equality-expression
    //          and-expression & equality-expression
-   
+
    struct xpr_and_expr {
       const Expr& expr;
       explicit xpr_and_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct And_expr : xpr::Eq_expr {
          And_expr(Printer& p) : xpr::Eq_expr(p) { }
-         
+
          void visit(const Bitand& e) override
          {
             binary_expression<xpr_and_expr, xpr_eq_expr>(pp, e, '&');
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_and_expr x)
    {
@@ -935,23 +935,23 @@ namespace ipr
    // -- exclusive-or-expression
    //          and-expression
    //          exclusive-or-expression ^ and-expression
-   
+
    struct xpr_xor_expr {
       const Expr& expr;
       explicit xpr_xor_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Xor_expr : xpr::And_expr {
          Xor_expr(Printer& p) : xpr::And_expr(p) { }
-         
+
          void visit(const Bitxor& e) override
          {
             binary_expression<xpr_xor_expr, xpr_and_expr>(pp, e, '^');
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_xor_expr x)
    {
@@ -959,28 +959,28 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   
+
+
    // -- inclusive-or-expression
    //         exclusive-or-exclusive
    //         inclusive-or-expression | exclusive-or-expression
-   
+
    struct xpr_ior_expr {
       const Expr& expr;
       explicit xpr_ior_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Ior_expr : xpr::Xor_expr {
          Ior_expr(Printer& p) : xpr::Xor_expr(p) { }
-         
+
          void visit(const Bitor& e) override
          {
             binary_expression<xpr_ior_expr, xpr_xor_expr>(pp, e, '|');
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_ior_expr x)
    {
@@ -988,28 +988,28 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   
+
+
    // -- logical-and-expression
    //           inclusive-or-expression
    //           logical-and-expression && inclusive-or-expression
-   
+
    struct xpr_land_expr {
       const Expr& expr;
       explicit xpr_land_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Land_expr : xpr::Ior_expr {
          Land_expr(Printer& p) : xpr::Ior_expr(p) { }
-         
+
          void visit(const And& e) override
          {
             binary_expression<xpr_land_expr, xpr_ior_expr>(pp, e, "&&");
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_land_expr x)
    {
@@ -1017,7 +1017,7 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
 
    // -- logical-or-expression
    //         logical-and-expression
@@ -1027,18 +1027,18 @@ namespace ipr
       const Expr& expr;
       explicit xpr_lor_expr(const Expr& e) : expr(e) { }
    };
-   
+
    namespace xpr {
       struct Lor_expr : xpr::Land_expr {
          Lor_expr(Printer& p) : xpr::Land_expr(p) { }
-         
+
          void visit(const Or& e) override
          {
             binary_expression<xpr_lor_expr, xpr_land_expr>(pp, e, "||");
          }
       };
    }
-   
+
    static inline Printer&
    operator<<(Printer& printer, xpr_lor_expr x)
    {
@@ -1046,16 +1046,16 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
+
 
    // -- conditional-expression
    //          logical-or-expression
    //          logical-or-expression ? expression : assignment-expression
-   
+
    namespace xpr {
       struct Cond_expr : xpr::Lor_expr {
          Cond_expr(Printer& p) : xpr::Lor_expr(p) { }
-         
+
          void visit(const Conditional& e) override
          {
             pp << xpr_lor_expr(e.condition())
@@ -1071,8 +1071,8 @@ namespace ipr
       const Mapping& mapping;
       explicit xpr_mapping_expression(const Mapping& m) : mapping(m) { }
    };
-   
-   // >>>> Yuriy Solodkyy: 2006/05/31 
+
+   // >>>> Yuriy Solodkyy: 2006/05/31
    // MSVC 7.1 has problem with calling same function from its local class.
    // Therefore this class was moved from being a local class of subsequent
    // function to being just a regular class, which that function uses.
@@ -1098,7 +1098,7 @@ namespace ipr
          pp << xpr_initializer(map.result());
       }
    };
-   // <<<< Yuriy Solodkyy: 2006/05/31 
+   // <<<< Yuriy Solodkyy: 2006/05/31
 
    Printer&
    operator<<(Printer& pp, xpr_mapping_expression e)
@@ -1112,14 +1112,14 @@ namespace ipr
    //         conditional-expression
    //         logical-or-expression assignment-operator assignment-expression
    //         throw expression
-   // 
+   //
    //    assignment-operator: one of
    //         =   *=  /=  %=  +=  -=  >>=  <<=  &=  ^=  |=
 
    namespace xpr {
       struct Assignment_expr : xpr::Cond_expr {
          Assignment_expr(Printer& p) : xpr::Cond_expr(p) { }
-         
+
          void visit(const Assign& e) override
          {
             binary_expression<xpr_lor_expr, xpr_assignment_expression>
@@ -1180,14 +1180,14 @@ namespace ipr
             pp << xpr_identifier("throw") << token(' ')
                << xpr_assignment_expression(e.operand());
          }
-         
+
          void visit(const Mapping& m) override
          {
             pp << xpr_mapping_expression (m);
          }
       };
    }
-   
+
    Printer&
    operator<<(Printer& printer, xpr_assignment_expression x)
    {
@@ -1195,8 +1195,8 @@ namespace ipr
       x.expr.accept(pp);
       return printer;
    }
-   
-   // >>>> Yuriy Solodkyy: 2006/05/31 
+
+   // >>>> Yuriy Solodkyy: 2006/05/31
    // MSVC 7.1 has problem with calling same function from its local class.
    // Therefore this class was moved from being a local class of subsequent
    // function to being just a regular class, which that function uses.
@@ -1238,7 +1238,7 @@ namespace ipr
          pp << xpr_primary_expr(d);
       }
    };
-   // <<<< Yuriy Solodkyy: 2006/05/31 
+   // <<<< Yuriy Solodkyy: 2006/05/31
 
    Printer&
    operator<<(Printer& printer, xpr_expr x)
@@ -1247,7 +1247,7 @@ namespace ipr
       x.expr.accept(impl);
       return printer;
    }
-   
+
    //  -- Types --
 
    static Printer&
@@ -1256,13 +1256,13 @@ namespace ipr
       return  printer << token(' ') << xpr_identifier("throw")
                       << token('(') << xpr_type(x.type) << token(')');
    }
-   
+
    struct xpr_base_classes {
       const ipr::Sequence<ipr::Base_type>& bases;
       explicit xpr_base_classes(const ipr::Sequence<ipr::Base_type>& b)
             : bases(b) { }
    };
-   
+
    static Printer&
    operator<<(Printer& pp, xpr_base_classes x)
    {
@@ -1292,10 +1292,10 @@ namespace ipr
          printer << xpr_identifier("volatile");
       if (implies(cv, Type_qualifier::Restrict))
          printer << xpr_identifier("restrict");
-      
+
       return printer;
    }
-   
+
    struct xpr_type_expr {
       const Expr& type;
       explicit xpr_type_expr(const Expr& t) : type(t) { }
@@ -1313,7 +1313,7 @@ namespace ipr
             << needs_newline();
    }
 
-   // >>>> Yuriy Solodkyy: 2006/05/31 
+   // >>>> Yuriy Solodkyy: 2006/05/31
    // MSVC 7.1 has problem with calling same function from its local class.
    // Therefore this class was moved from being a local class of subsequent
    // function to being just a regular class, which that function uses.
@@ -1400,7 +1400,7 @@ namespace ipr
       void visit(const Enum& t) final { pp << t; }
       void visit(const Namespace& t) final { pp << t; }
    };
-   // <<<< Yuriy Solodkyy: 2006/05/31 
+   // <<<< Yuriy Solodkyy: 2006/05/31
 
    static Printer&
    operator<<(Printer& printer, xpr_type_expr x)
@@ -1410,7 +1410,7 @@ namespace ipr
       return printer;
    }
 
-   // >>>> Yuriy Solodkyy: 2006/05/31 
+   // >>>> Yuriy Solodkyy: 2006/05/31
    // MSVC 7.1 has problem with calling same function from its local class.
    // Therefore this class was moved from being a local class of subsequent
    // function to being just a regular class, which that function uses.
@@ -1418,11 +1418,11 @@ namespace ipr
       xpr_type_visitor(Printer& p) : pp_base(p) { }
 
       void visit(const As_type& t) final
-      { 
+      {
          if (denote_builtin_type(t))
             pp << xpr_name(t.name());
          else
-            pp << xpr_expr(t.expr()); 
+            pp << xpr_expr(t.expr());
       }
 
       void visit(const Array& a) final
@@ -1465,7 +1465,7 @@ namespace ipr
          pp << t.operand();
       }
    };
-   // <<<< Yuriy Solodkyy: 2006/05/31    
+   // <<<< Yuriy Solodkyy: 2006/05/31
 
    Printer&
    operator<<(Printer& printer, xpr_type x)
@@ -1770,7 +1770,7 @@ namespace ipr
                << token(" : ")
                << d.specifiers()
                << xpr_type(d.type());
-            
+
             if (auto init = d.initializer())
                {
                   pp << token('(')

@@ -2,7 +2,7 @@
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
 // See LICENSE for copright and license notices.
-// 
+//
 
 #include <algorithm>
 #include <string>
@@ -55,7 +55,7 @@ void
 ipr::Visitor::visit(const Annotation&) { }
 
 void
-ipr::Visitor::visit(const Region& r) 
+ipr::Visitor::visit(const Region& r)
 {
     visit(as<Node>(r));
 }
