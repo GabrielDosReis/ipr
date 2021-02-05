@@ -529,6 +529,12 @@ ipr::Visitor::visit(const Call& e)
 }
 
 void
+ipr::Visitor::visit(const Coerce& e)
+{
+   visit(as<Classic>(e));
+}
+
+void
 ipr::Visitor::visit(const Comma& e)
 {
    visit(as<Classic>(e));
@@ -711,12 +717,6 @@ ipr::Visitor::visit(const Minus_assign& e)
 void ipr::Visitor::visit(const Binary_fold& e)
 {
    visit(as<Classic>(e));
-}
-
-void
-ipr::Visitor::visit(const Coerce& e)
-{
-   visit(as<Expr>(e));
 }
 
 void

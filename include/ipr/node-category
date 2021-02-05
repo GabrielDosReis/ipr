@@ -88,6 +88,7 @@ bitxor_cat,                             // ipr::Bitxor
 bitxor_assign_cat,                      // ipr::Bitxor_assign
 call_cat,                               // ipr::Call
 cast_cat,                               // ipr::Cast
+coerce_cat,                             // ipr::Coerce
 comma_cat,                              // ipr::Comma
 const_cast_cat,                         // ipr::Const_cast
 datum_cat,                              // ipr::Datum
@@ -123,7 +124,6 @@ binary_fold_cat,                        // ipr::Binary_fold
 qualification_cat,                      // ipr::Qualification
 
 new_cat,                                // ipr::New
-coerce_cat,                             // ipr::Coerce
 conditional_cat,                        // ipr::Conditional
 scope_cat,                              // ipr::Scope
 

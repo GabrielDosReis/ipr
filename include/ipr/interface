@@ -1393,7 +1393,7 @@ namespace ipr {
    // A generalized type conversion either built-in to the language or
    // programmatically defined by either constructors or conversion
    // functions.
-   struct Coerce : Binary<Category<conditional_cat, Classic>, const Expr&, const Type&> {
+   struct Coerce : Binary<Category<coerce_cat, Classic>, const Expr&, const Type&> {
       Arg1_type expr() const { return first(); }
       Arg2_type target() const { return second(); }
    };
@@ -1560,7 +1560,7 @@ namespace ipr {
 
                                    // -- Qualification --
    // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<qualified_cat>, const Expr&, Type_qualifier> {
+   struct Qualification : Binary<Category<qualification_cat>, const Expr&, Type_qualifier> {
       Arg1_type expr() const { return first(); }
       Arg2_type qualifier() const { return second(); }
    };
