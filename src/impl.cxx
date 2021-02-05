@@ -1448,7 +1448,7 @@ namespace ipr {
       impl::Address*
       expr_factory::make_address(const ipr::Expr& e, Optional<ipr::Type> result) {
          impl::Address* address = addresses.make(e);
-         address->constraint = result; 
+         address->constraint = result;
          return address;
       }
 
