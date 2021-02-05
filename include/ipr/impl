@@ -18,6 +18,7 @@
 #include <functional>
 #include <ipr/interface>
 #include <ipr/utility>
+#include <ipr/traversal>
 
 // -----------------
 // -- Methodology --
@@ -2220,6 +2221,28 @@ namespace ipr {
          impl::Module_unit* make_unit();
       };
    }
+
+   namespace util {
+      // Similar to ipr::util::view, but get the implementation 
+      // node instead of the interface node.
+      template<class T>
+      typename impl::traits<T>::rep*
+      view_impl(ipr::Node& n)
+      {
+         struct visitor : Constant_visitor<No_op> {
+            typename impl::traits<T>::rep* result;
+            visitor() : result() { }
+            void visit(const T& n) override {
+               result = static_cast<typename impl::traits<T>::rep*>(
+                  const_cast<T*>(&n));
+            }
+         };
+         
+         visitor vis { };
+         n.accept(vis);
+         return vis.result;
+      }
+   } // namespace util
 }
 
 #endif
