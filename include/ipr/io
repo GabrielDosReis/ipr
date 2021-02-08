@@ -90,6 +90,7 @@ namespace ipr
 
    public:
       disambiguation_map_type disambiguation_map;
+      bool print_locations = false;
    };
 
 
