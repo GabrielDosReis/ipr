@@ -38,7 +38,7 @@ TEST_CASE("Can create and print line numbers")
   impl::Var* var = global_scope->make_var(*name, type);
   var->init = lexicon.make_literal(lexicon.int_type(), "1024");
 
-  Source_location loc{ Line_number{1}, Column_number{2}, File_index{1}};
+  Source_location loc{ Line_number{1}, Column_number{2}, File_index{1} };
   var->src_locus = loc;
 
   std::stringstream ss;
