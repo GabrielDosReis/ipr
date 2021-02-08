@@ -282,6 +282,16 @@ namespace ipr
                << token("<|") << xpr_type(c.target()) << token("|>");
          }
 
+         // Suffix is a user defined literal, as in operator""_km.
+         // We display it as operator "_km".
+         void visit(const Suffix& s) override
+         {
+             pp << xpr_identifier("operator")
+                << token('"')
+                << s.name()
+                << token('"');
+         }
+
          // A type-id is just the spelling of the type expression.
          void visit(const Type_id& n) override
          {
