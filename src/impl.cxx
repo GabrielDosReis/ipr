@@ -1987,6 +1987,13 @@ namespace ipr {
          return make(mul_assigns, l, r).with_type(t);
       }
 
+      impl::Narrow*
+      expr_factory::make_narrow(const ipr::Expr& e, const ipr::Class& c, const ipr::Type& result) {
+         impl::Narrow* narrow = narrows.make(e, c);
+         narrow->constraint = &result;
+         return narrow;
+      }
+
       impl::Not_equal*
       expr_factory::make_not_equal(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t)
       {
@@ -2009,6 +2016,19 @@ namespace ipr {
       expr_factory::make_plus_assign(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t)
       {
          return make(plus_assigns, l, r).with_type(t);
+      }
+
+      impl::Pretend*
+      expr_factory::make_pretend(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         impl::Pretend* pretend = pretends.make(e, t);
+         pretend->constraint = &result;
+         return pretend;
+      }
+
+      impl::Qualification*
+      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifier q, const ipr::Type& t)
+      {
+         return make(qualifications, e, q).with_type(t);
       }
 
       impl::Reinterpret_cast*
@@ -2047,10 +2067,11 @@ namespace ipr {
          return scasts.make(t, e);
       }
 
-      impl::Qualification*
-      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifier q, const ipr::Type& t)
-      {
-         return make(qualifications, e, q).with_type(t);
+      impl::Widen*
+      expr_factory::make_widen(const ipr::Expr& e, const ipr::Class& c, const ipr::Type& result) {
+         impl::Widen* widen = widens.make(e, c);
+         widen->constraint = &result;
+         return widen;
       }
 
       impl::Binary_fold*
