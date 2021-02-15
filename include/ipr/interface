@@ -221,8 +221,7 @@ namespace ipr {
    struct For_in;                // structured for-statement
    struct Goto;                  // goto-statement
    struct Handler;               // exception handler statement
-   struct If_then;               // if-statement
-   struct If_then_else;          // if-else-statement
+   struct If;                    // if-statement
    struct Labeled_stmt;          // labeled-statement
    struct Return;                // return-statement
    struct Switch;                // switch-statement
@@ -1576,10 +1575,9 @@ namespace ipr {
    };
 
                                 // -- Conditional --
-   // This represents the C++ ternary operator ?:.  In principle,
-   // it is redundant with both If_then_else and Switch nodes
-   // from semantics point of view.  However, if we want to preserve
-   // the syntax, then it is necessary to have it.
+   // This represents the C++ ternary operator ?:.  In principle, it is redundant
+   //  with both If and Switch nodes from semantics point of view.  However, 
+   // it is necessary for representing templated code
    struct Conditional : Ternary<Category<Category_code::Conditional, Classic>> {
       Arg1_type condition() const { return first(); }
       Arg2_type then_expr() const { return second(); }
@@ -1688,21 +1686,13 @@ namespace ipr {
       Arg2_type block() const { return second(); }
    };
 
-                                // -- If_then
-   // A classic if-statement without the "else" part.
-   struct If_then : Binary<Category<Category_code::If_then, Stmt>,
-                           const Expr&, const Stmt&> {
+                                // -- If
+   // A classic if-statement.
+   struct If : Ternary<Category<Category_code::If, Stmt>,
+                       const Expr&, const Stmt&, Optional<Stmt>> {
       Arg1_type condition() const { return first(); }
-      Arg2_type then_stmt() const { return second(); }
-   };
-
-                                // -- If_then_else --
-   // A classic full is-statement.
-   struct If_then_else : Ternary<Category<Category_code::If_then_else, Stmt>,
-                                 const Expr&, const Stmt&, const Stmt&> {
-      Arg1_type condition() const { return first(); }
-      Arg2_type then_stmt() const { return second(); }
-      Arg3_type else_stmt() const { return third(); }
+      Arg2_type consequence() const { return second(); }
+      Arg3_type alternative() const { return third(); }
    };
 
                                 // -- Switch --
@@ -2211,8 +2201,7 @@ namespace ipr {
       virtual void visit(const Labeled_stmt&);
       virtual void visit(const Block&);
       virtual void visit(const Ctor_body&);
-      virtual void visit(const If_then&);
-      virtual void visit(const If_then_else&);
+      virtual void visit(const If&);
       virtual void visit(const Switch&);
       virtual void visit(const While&);
       virtual void visit(const Do&);

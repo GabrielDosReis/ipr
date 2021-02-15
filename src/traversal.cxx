@@ -764,13 +764,7 @@ ipr::Visitor::visit(const Expr_stmt& s)
 }
 
 void
-ipr::Visitor::visit(const If_then& s)
-{
-   visit(as<Stmt>(s));
-}
-
-void
-ipr::Visitor::visit(const If_then_else& s)
+ipr::Visitor::visit(const If& s)
 {
    visit(as<Stmt>(s));
 }

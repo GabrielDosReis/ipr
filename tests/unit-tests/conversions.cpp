@@ -58,5 +58,5 @@ TEST_CASE("C++ Standard Conversions") {
       lexicon.double_type(),
       lexicon.double_type()
   );
-  lexicon.make_if_then(condition, *lexicon.make_expr_stmt(then_expr));
+  lexicon.make_if(condition, *lexicon.make_expr_stmt(then_expr));
 }

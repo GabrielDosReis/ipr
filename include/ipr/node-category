@@ -142,8 +142,7 @@ For,                                // ipr::For
 For_in,                             // ipr::For_in
 Goto,                               // ipr::Goto
 Handler,                            // ipr::Handler
-If_then,                            // ipr::If_then
-If_then_else,                       // ipr::If_then_else
+If,                                 // ipr::If
 Labeled_stmt,                       // ipr::Labeled_stmt
 Return,                             // ipr::Return
 Switch,                             // ipr::Switch
