@@ -660,9 +660,14 @@ namespace ipr {
          return dos.make(c, s);
       }
 
-      impl::If_then*
-      stmt_factory::make_if_then(const ipr::Expr& c, const ipr::Stmt& s) {
-         return ifs.make(c, s);
+      impl::If*
+      stmt_factory::make_if(const ipr::Expr& c, const ipr::Stmt& s) {
+         return ifs.make(c, s, nullptr);
+      }
+
+      impl::If*
+      stmt_factory::make_if(const ipr::Expr& c, const ipr::Stmt& t, const ipr::Stmt& f) {
+         return ifs.make(c, t, &f);
       }
 
       impl::Switch*
@@ -684,12 +689,6 @@ namespace ipr {
       impl::While*
       stmt_factory::make_while(const ipr::Expr& c, const ipr::Stmt& s) {
          return whiles.make(c, s);
-      }
-
-      impl::If_then_else*
-      stmt_factory::make_if_then_else(const ipr::Expr& c, const ipr::Stmt& t,
-                                      const ipr::Stmt& f) {
-         return ifelses.make(c, t, f);
       }
 
       impl::For*

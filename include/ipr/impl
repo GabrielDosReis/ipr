@@ -1826,8 +1826,7 @@ namespace ipr {
       using Empty_stmt = type_from_operand<Stmt<Node<ipr::Empty_stmt>>>;
       using Goto = type_from_operand<Stmt<Node<ipr::Goto>>>;
       using Handler = type_from_second<Stmt<Node<ipr::Handler>>>;
-      using If_then = type_from_second<Stmt<Node<ipr::If_then>>>;
-      using If_then_else = Ternary<Stmt<Expr<ipr::If_then_else>>>;
+      using If = Ternary<Stmt<Expr<ipr::If>>>;
       using Labeled_stmt = type_from_second<Stmt<Node<ipr::Labeled_stmt>>>;
       using Return = type_from_operand<Stmt<Node<ipr::Return>>>;
       using Switch = type_from_second<Stmt<Node<ipr::Switch>>>;
@@ -1932,15 +1931,13 @@ namespace ipr {
          impl::Goto* make_goto(const ipr::Expr&);
          impl::Return* make_return(const ipr::Expr&);
          impl::Do* make_do(const ipr::Stmt&, const ipr::Expr&);
-         impl::If_then* make_if_then(const ipr::Expr&, const ipr::Stmt&);
+         impl::If* make_if(const ipr::Expr&, const ipr::Stmt&);
+         impl::If* make_if(const ipr::Expr&, const ipr::Stmt&, const ipr::Stmt&);
          impl::Switch* make_switch(const ipr::Expr&, const ipr::Stmt&);
          impl::Handler* make_handler(const ipr::Decl&, const ipr::Block&);
          impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&,
                                                const ipr::Stmt&);
          impl::While* make_while(const ipr::Expr&, const ipr::Stmt&);
-         impl::If_then_else* make_if_then_else(const ipr::Expr&,
-                                               const ipr::Stmt&,
-                                               const ipr::Stmt&);
          impl::For* make_for();
          impl::For_in* make_for_in();
 
@@ -1954,12 +1951,11 @@ namespace ipr {
          stable_farm<impl::Return> returns;
          stable_farm<impl::Ctor_body> ctor_bodies;
          stable_farm<impl::Do> dos;
-         stable_farm<impl::If_then> ifs;
+         stable_farm<impl::If> ifs;
          stable_farm<impl::Handler> handlers;
          stable_farm<impl::Labeled_stmt> labeled_stmts;
          stable_farm<impl::Switch> switches;
          stable_farm<impl::While> whiles;
-         stable_farm<impl::If_then_else> ifelses;
          stable_farm<impl::For> fors;
          stable_farm<impl::For_in> for_ins;
       };

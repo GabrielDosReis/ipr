@@ -1575,31 +1575,20 @@ namespace ipr
             pp << needs_newline() << xpr_stmt(b.block());
          }
 
-         void visit(const If_then& s) override
+         void visit(const If& s) override
          {
             pp << xpr_identifier("if")
                << token(' ')
                << token('(') << xpr_expr(s.condition()) << token(')')
                << newline_and_indent(3)
-               << xpr_stmt(s.then_stmt(),false)
-               << newline_and_indent(-3)
-               << xpr_identifier("else")
-               << newline_and_indent(3)
-               << indentation(-3) << needs_newline();
-         }
-
-         void visit(const If_then_else& s) override
-         {
-            pp << xpr_identifier("if")
-               << token(' ')
-               << token('(') << xpr_expr(s.condition()) << token(')')
-               << newline_and_indent(3)
-               << xpr_stmt(s.then_stmt())
-               << newline_and_indent(-3)
-               << xpr_identifier("else")
-               << newline_and_indent(3)
-               << xpr_stmt(s.else_stmt())
-               << indentation(-3) << needs_newline();
+               << xpr_stmt(s.consequence());
+            if (auto alt = s.alternative()) {
+               pp << newline_and_indent(-3)
+                  << xpr_identifier("else")
+                  << newline_and_indent(3)
+                  << xpr_stmt(alt.get());
+            }
+            pp << indentation(-3) << needs_newline();
          }
 
          void visit(const Return& s) override
