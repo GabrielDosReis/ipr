@@ -20,26 +20,37 @@ namespace ipr {
    //    (1) represent programs written in full Standard C++
    //        -- except macros -- Standard C, and possibly Fortran
    //        and other C-like languages;
-   //    (2) be at the basis of program manipulations;
+   //    (2) be at the basis of semantics-based program analyses
+   //        and transformations;
    //    (3) be ahead of time, i.e. accommodate future possible
-   //        extensions to C++, e.g. "concepts".
+   //        extensions to C++, e.g. "concepts";
+   //    (4) be compiler-neutral, i.e. not the reflection of internal 
+   //        data structures of any particular compiler, no matter how popular.
    //
-   // The "meta-language" implemented by IPR is expression-based.
+   // The "meta-language" implemented by IPR is expression-based.  It
+   // does not try to mimic the barnacles that the ISO C++ specification
+   // has grown over decades -- that way lies unwarranted complexity. Rather,
+   // the IPR aims for a regular, general semantics language within which the 
+   // various restrictions and irregularities of ISO C++ are accounted for.
+   // The focus is on semantics because that is where the essence of C++ lies.
+   //
    // IPR nodes "climbing" is based on the Visitor Design Pattern.
    //
    // IPR class nodes come in two flavors:
    //     (a) the interface classes, found in this header;
    //     (b) the implementation classes, found in <ipr/impl>.
-   // The primary reason for this separation is, we don't want clients
-   // programs to critically depend on the particular implementations
+   // The primary reason for this separation is, we don't want consumers of
+   // the library to critically depend on the particular implementations
    // details of the moment.  Also, it is our intent that the interfaces
    // could be implemented in various ways depending on the particular
-   // constraints of the target tools.
+   // constraints of the target tools.  Furthermore, a given interface class
+   // can admit several implementation classes.
    //
    // A third header file <ipr/traversal> offers a set of traversal
    // facilities.  At the moment, it contains only trivial visitor classes.
    // A fourth header, <ipr/io>, contains interfaces to input/output
    // operations.  At the moment, only output in form of XPR is supported.
+   // FIXME: the XPR grammar is out-of-date and is no longer known to capture IPR.
    //
    // The interface classes are non-mutating, i.e. there is no way
    // a client program could modify a node through its interface.
@@ -51,8 +62,8 @@ namespace ipr {
    // behind that decision are discussed in the paper "Representing
    // C++ Directly, Compactly and Efficiently."
    //
-   // Warning:  If you add any new node type, you need to update
-   //           "node-category.def" for the numerical mapping.
+   // Warning:  If you add any new "leaf" node type, you need to update
+   //           "ipr/node-category.def" for the numerical mapping.
 
    struct Node;                  // universal base class for all IPR nodes
 
@@ -78,21 +89,21 @@ namespace ipr {
    // -- results of type constructor constants --
    // -------------------------------------------
    struct Array;                 // array type
-   struct As_type;               // coerce-to type
-   struct Class;                 // user-defined type - class
+   struct As_type;               // use-expression as type
+   struct Class;                 // user-defined type - declared as "class" or "struct"
    struct Decltype;              // strict type of a declaration/expression
-   struct Enum;                  // user-defined type - enum
+   struct Enum;                  // user-defined type - declared as "enum" or "class enum"
    struct Function;              // function type
-   struct Namespace;             // user-defined type - namespace
+   struct Namespace;             // user-defined type - declared as "namespace"
    struct Pointer;               // pointer type
    struct Ptr_to_member;         // pointer-to-member type
    struct Product;               // product type - not ISO C++ type
    struct Qualified;             // cv-qualified types
    struct Reference;             // reference type
-   struct Rvalue_reference;      // rvalue-reference type -- C++0x
+   struct Rvalue_reference;      // rvalue-reference type
    struct Sum;                   // sum type - not ISO C++ type
    struct Forall;                // universally quantified type - Not ISO C++ type
-   struct Union;                 // user-defined type - union
+   struct Union;                 // user-defined type - declared as "union"
    struct Auto;                  // "auto" -- each occurrence is generative
 
    // ------------------------------------------
@@ -106,7 +117,7 @@ namespace ipr {
    struct Type_id;               // C++ type-id                  const int*
    struct Ctor_name;             // constructor name                   T::T
    struct Dtor_name;             // destructor name                   T::~T
-   struct Guide_name;            // deduction guide name
+   struct Guide_name;            // deduction guide name 
    struct Rname;                 // de Bruijn (index, position),
                                  // find better name
 
@@ -125,12 +136,12 @@ namespace ipr {
    struct Complement;            // bitwise complement                  ~m
    struct Delete;                // delete-expression             delete p
    struct Demote;                // inverse of an integral or floating-point
-                                 // promotion
+                                 // promotion -- implicit conversion
    struct Deref;                 // dereference expression              *p
-   struct Expr_list;             // expression list
+   struct Expr_list;             // comma-separated expression list  x, y, z
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
    struct Typeid;                // typeid expression, like sizeof expression
-   struct Id_expr;               // an identifier used in an expression
+   struct Id_expr;               // use of a name as an expression
    struct Label;                 // a label - target of a goto-statement
                                  //         or entry of a switch-statement
    struct Materialize;           // temporary materialization
@@ -140,9 +151,9 @@ namespace ipr {
    struct Post_increment;        // post-decrement                     p--
    struct Pre_decrement;         // pre-increment                      ++p
    struct Pre_increment;         // pre-decrement                      --p
-   struct Promote;               // integral or floating-point promotion
-   struct Read;                  // lvalue to rvalue conversion
-   struct Throw;                 // throw expression           throw Bad()
+   struct Promote;               // integral or floating-point promotion -- implicit conversion
+   struct Read;                  // lvalue to rvalue conversion  -- implicit conversion
+   struct Throw;                 // throw expression               throw a
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
    struct Expansion;             // pack expansion                    t...
@@ -165,7 +176,7 @@ namespace ipr {
    struct Bitxor_assign;         // in-place bitwise exclusive or  a ^= b
    struct Call;                  // function call                  f(u, v)
    struct Cast;                  // C-style class                  (T) e
-   struct Coerce;                // generalized type conversion
+   struct Coerce;                // generalized type conversion -- implicit conversion
    struct Comma;                 // comma-operator                 a, b
    struct Const_cast;            // const-cast             const_cast<T&>(v)
    struct Datum;                 // object construction             T(v)
@@ -457,7 +468,7 @@ namespace ipr {
    // loose that information, therefore we add a template-parameter
    // (the second) to indicate the precise type of the operand.  The first
    // template-parameter designates the actual node subcategory this class
-   // provides interface for.
+   // provides an interface for.
    template<class Cat, class Operand = const Expr&>
    struct Unary : Cat {
       using Arg_type = Operand;
@@ -468,7 +479,7 @@ namespace ipr {
                                 // -- Binary<> --
    // In full generality, a binary-expression is an expression that
    // consists in (a) an operator, and (b) two operands.  In Standard
-   // C++, the two operands often are of the same type (and if they are not
+   // C++, the two operands often are of the same type (and if they are not,
    // they are implicitly converted).  In IPR, they need not be
    // of the same type.  This generality allows representations of
    // cast-expressions which are conceptually binary-expressions -- they
@@ -526,7 +537,7 @@ namespace ipr {
    // Certain constructs, such as uninstantiated template definitions,
    // are primarily syntactic with minimal semantic processing.  IPR nodes
    // can fully represent those structurally well-defined syntactic entities.
-   // However, C++11 added attributes which essentially token soups.  These
+   // However, C++11 added attributes which are essentially token soups.  These
    // attributes make the IPR interface less abstract than wanted.
 
    enum class TokenCategory : uint8_t { };
@@ -689,15 +700,15 @@ namespace ipr {
    // user-defined meaning.  In IPR, we take the general approach that
    // all operators can be given user-defined meanings.  Consequently,
    // we define this class to represent the idea that an expression
-   // has a user-supplied meaning.
+   // can have a user-supplied meaning.
    //
-   // IPR defines a language that is the superset of C++. The term classic
+   // IPR defines a language that is a superset of C++. The term classic
    // refers to the C++ language.
    struct Classic : Expr {
-      // For an operation implemented by an overloaded operator, retrieve
+      // For an operation that is given a user-supplied meaning, retrieve
       // the implementation. In non-templated context this returns a
-      // user-supplied declaration (that might be a definition). In
-      // templated contexts it might return an overload set.
+      // user-supplied declaration. In templated contexts it might return
+      // an overload set.
       virtual Optional<Expr> implementation() const = 0;
 
    protected:
@@ -716,7 +727,7 @@ namespace ipr {
    //    - template-id                       -- Template_id
    //    - type-id                           -- Type_id
    //
-   // Most names are introduced by declarations into scope.
+   // Most names are introduced by declarations into a Region.
    struct Name : Node {
       // At the moment, this class is empty because there is no
       // interesting operation that could be provided here without
@@ -745,7 +756,7 @@ namespace ipr {
    // For a function operator "operator @", "opname()" is the "@"
    // sub-part.  Notice that for the array forms of allocation
    // and deallocation operator functions, this is respectively
-   // "new[]" and "delete[]", with no space before, between, and after
+   // "new[]" and "delete[]", with no space before, between, or after
    // the square brackets.
    struct Operator : Unary<Category<Category_code::Operator, Name>, const String&> {
       Arg_type opname() const { return operand(); }
@@ -795,11 +806,18 @@ namespace ipr {
    // Deduction guides do not have names in Standard C++, and they cannot
    // be found by name lookup.  Yet, they are entities (like templates)
    // that generate compiler-internal instructions (their initializers)
-   // that when executed yield deduced template arguments.  As such, they
+   // that when executed yield deduced template-arguments.  As such, they
    // fit the IPR model of a declaration being an introduction of a name
    // in a scope, with a type and optional initializer.
    struct Guide_name : Unary<Category<Category_code::Guide_name, Name>, const Template&> {
       Arg_type mapping_decl() const { return operand(); }
+   };
+
+                                // -- Type_id --
+   // This node is used for elaborated expressions that designate types.
+   // For example, "const T*" is a Type_id , so is "int (T&)".
+   struct Type_id : Unary<Category<Category_code::Type_id, Name>, const Type&> {
+      Arg_type type_expr() const { return operand(); }
    };
 
                                 // -- Rname --
@@ -814,7 +832,6 @@ namespace ipr {
       // that function here, for it would involve a two indirections to
       // to give the result.  Consequently we define it in the implementation
       // part.
-      // pmp: swapped level and position to return 2nd and 3rd
       Arg2_type level() const { return second(); }
       Arg3_type position() const { return third(); }
    };
@@ -861,10 +878,10 @@ namespace ipr {
                                 // -- General types --
    // A type is a collection of constraints and operations that preserve
    // some invariants.  Since a Type is also an Expression, it has a type.
-   // A type of a type is what we call a "concept".  A type in IPR has a
-   // much broader significance than Standard C++ types (henceforth called
-   // "classic type").  In particular, in IPR, namespace is a type.
-   // Similarly, an overload-set has a type.
+   // A type of a type is an instance of a concept - a constraint.  A type 
+   // in IPR has a much broader significance than Standard C++ types 
+   // (henceforth called "classic type").  In particular, in IPR, "namespace"
+   // is a type. Similarly, an overload-set has a type.
    struct Type : Expr {
       // All types have names.
       virtual const Name& name() const = 0;
@@ -924,12 +941,6 @@ namespace ipr {
    {
       return (a & b) == b;
    }
-                                // -- Type_id --
-   // This node is used for elaborated expressions that designate types.
-   // For example, "const T*" is a Type_id , so is "int (T&)".
-   struct Type_id : Unary<Category<Category_code::Type_id, Name>, const Type&> {
-      Arg_type type_expr() const { return operand(); }
-   };
 
                                 // -- Array --
    // An array-type describes object expressions that designate C-style
@@ -964,7 +975,7 @@ namespace ipr {
 
                                 // -- Decltype --
    // This node represents query for the "generalized declared type"
-   // of an expression.  Likely C++0x extension.
+   // of an expression.
    struct Decltype : Unary<Category<Category_code::Decltype, Type>, const Expr&> {
       Arg_type expr() const { return operand(); }
    };
@@ -1046,7 +1057,7 @@ namespace ipr {
     };
 
                                 // -- Rvalue_reference --
-   // An rvalue-reference-type to support move semantics in C++0x.
+   // An rvalue-reference-type to support move semantics.
     struct Rvalue_reference : Unary<Category<Category_code::Rvalue_reference, Type>,
                                     const Type&> {
        // The type of the object or function an expression of this
@@ -1056,7 +1067,7 @@ namespace ipr {
 
                                 // -- Sum --
    // A Sum type represents a distinct union of types.  This is currently
-   // used only for exception specification in Function type.
+   // used only for dynamic exception specification in Function type.
    struct Sum : Unary<Category<Category_code::Sum, Type>, const Sequence<Type>&> {
       Arg_type elements() const { return operand(); }
       int size() const { return elements().size(); }
@@ -1064,8 +1075,8 @@ namespace ipr {
    };
 
                                 // -- Forall --
-   // This represents a universally quantified type, parameterized by any compile-time sort,
-   // that is all values for the parameters must designate compile-time entities.
+   // This represents a universally quantified type, parameterized by any compile-time sort;
+   // that is, all values for the parameters must designate compile-time entities.
    // It is useful for representing the type of a template declaration, and more.  In the near future,
    // when "concepts" are integrated, it will become a Ternary node where the
    // third operand will represent the "where-clause".
@@ -1094,9 +1105,9 @@ namespace ipr {
    };
 
                                 // -- Namespace --
-   // The type of a Standard C++ namespace.  A namespace is primarily
-   // interesting because it is a sequence of declarations that can be
-   // given a name.
+   // A Standard C++ namespace is a compile-time accumulative singleton variable
+   // that is initialized with a sequence of declarations.  The type of 
+   // such a variable is given by an IPR "namespace" type.
    struct Namespace : Category<Category_code::Namespace, Udt<Decl>> {
       const Sequence<Decl>& members() const final { return scope().members(); }
    };
@@ -1191,7 +1202,7 @@ namespace ipr {
    };
 
                                 // -- Expr_list --
-   // A sequence of expressions "(e1, e2, ..., eN)".  This form of expression
+   // A sequence of expressions "e1, e2, ..., eN".  This form of expression
    // is a tuple of expressions.  In particular, an Expr_list is different
    // from a Comma expression -- where each sub-expression is evaluated,
    // discarded except the last one.  The type of an Expr_list
@@ -1585,7 +1596,7 @@ namespace ipr {
    };
 
                                 // -- Parameter_list --
-   // FIXME: Parameter_list should have its category ste properly.
+   // FIXME: Parameter_list should have its category set properly.
    struct Parameter_list : Region, Sequence<Parameter> { };
 
                                 // -- Stmt --
@@ -1996,6 +2007,7 @@ namespace ipr {
    };
 
                                 // -- Typedecl --
+   // This node class represents a declaration of a user-defined type.
    struct Typedecl : Category<Category_code::Typedecl, Decl> {
       virtual const Expr& membership() const = 0;
       virtual Optional<Typedecl> definition() const = 0;
@@ -2029,36 +2041,41 @@ namespace ipr {
    };
 
                                 // -- Lexicon --
+   // This class is intended to capture the set of values for the parameters
+   // of the C++ abstract machine.  The most prominent such parameters are
+   // the built-int types of the implementation.  It is expected that a given
+   // tool can inherit from this class and provide access to the full range of
+   // extended types and values that it implements.
    struct Lexicon {
-      virtual const Type& void_type() const = 0;
-      virtual const Type& bool_type() const = 0;
-      virtual const Type& char_type() const = 0;
-      virtual const Type& schar_type() const = 0;
-      virtual const Type& uchar_type() const = 0;
-      virtual const Type& wchar_t_type() const = 0;
-      virtual const Type& char8_t_type() const = 0;
-      virtual const Type& char16_t_type() const = 0;
-      virtual const Type& char32_t_type() const = 0;
-      virtual const Type& short_type() const = 0;
-      virtual const Type& ushort_type() const = 0;
-      virtual const Type& int_type() const = 0;
-      virtual const Type& uint_type() const = 0;
-      virtual const Type& long_type() const = 0;
-      virtual const Type& ulong_type() const = 0;
-      virtual const Type& long_long_type() const = 0;
-      virtual const Type& ulong_long_type() const = 0;
-      virtual const Type& float_type() const = 0;
-      virtual const Type& double_type() const = 0;
-      virtual const Type& long_double_type() const = 0;
-      virtual const Type& ellipsis_type() const = 0;
-      virtual const Type& typename_type() const = 0;
-      virtual const Type& class_type() const = 0;
-      virtual const Type& union_type() const = 0;
-      virtual const Type& enum_type() const = 0;
-      virtual const Type& namespace_type() const = 0;
+      virtual const Type& void_type() const = 0;               // "void"
+      virtual const Type& bool_type() const = 0;               // "bool"
+      virtual const Type& char_type() const = 0;               // "char"
+      virtual const Type& schar_type() const = 0;              // "signed char"
+      virtual const Type& uchar_type() const = 0;              // "unsigned char"
+      virtual const Type& wchar_t_type() const = 0;            // "wchar_t"
+      virtual const Type& char8_t_type() const = 0;            // "char8_t"
+      virtual const Type& char16_t_type() const = 0;           // "char16_t"
+      virtual const Type& char32_t_type() const = 0;           // "char32_t"
+      virtual const Type& short_type() const = 0;              // "short"
+      virtual const Type& ushort_type() const = 0;             // "unsigned char"
+      virtual const Type& int_type() const = 0;                // "int"
+      virtual const Type& uint_type() const = 0;               // "unsigned int"
+      virtual const Type& long_type() const = 0;               // "long"
+      virtual const Type& ulong_type() const = 0;              // "unsigned long"
+      virtual const Type& long_long_type() const = 0;          // "long long"
+      virtual const Type& ulong_long_type() const = 0;         // "unsigned long long"
+      virtual const Type& float_type() const = 0;              // "float"
+      virtual const Type& double_type() const = 0;             // "double"
+      virtual const Type& long_double_type() const = 0;        // "long double"
+      virtual const Type& ellipsis_type() const = 0;           // "..."
+      virtual const Type& typename_type() const = 0;           // "typename"
+      virtual const Type& class_type() const = 0;              // "class" or "struct"
+      virtual const Type& union_type() const = 0;              // "union"
+      virtual const Type& enum_type() const = 0;               // "enum" or "enum class"
+      virtual const Type& namespace_type() const = 0;          // "namespace"
 
-      virtual const Linkage& cxx_linkage() const = 0;
-      virtual const Linkage& c_linkage() const = 0;
+      virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
+      virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
    };
                                 // -- Built-in type constants --
 
