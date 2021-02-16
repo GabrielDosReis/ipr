@@ -1789,7 +1789,7 @@ namespace ipr {
       }
 
       impl::Datum*
-      expr_factory::make_datum(const ipr::Type& t, const ipr::Expr_list& e) {
+      expr_factory::make_datum(const ipr::Type& t, const ipr::Enclosure& e) {
          return data.make(t, e);
       }
 

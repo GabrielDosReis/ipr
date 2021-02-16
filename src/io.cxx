@@ -522,7 +522,7 @@ namespace ipr
          void visit(const Datum& e) override
          {
             pp << xpr_type(e.type())
-               << token('(') << e.args() << token(')');
+               << xpr_primary_expr(e.args());
          }
 
          //        postfix-expression --

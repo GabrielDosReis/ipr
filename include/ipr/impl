@@ -1241,7 +1241,7 @@ namespace ipr {
          Coerce* make_coerce(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
-         Datum* make_datum(const ipr::Type&, const ipr::Expr_list&);
+         Datum* make_datum(const ipr::Type&, const ipr::Enclosure&);
          Div* make_div(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Div_assign* make_div_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Dot* make_dot(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});

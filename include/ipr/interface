@@ -1422,7 +1422,7 @@ namespace ipr {
    // call -- although syntactically it looks like so.  "T" will
    // be the `type()' of this expression.
    struct Datum : Binary<Category<Category_code::Datum, Classic>,
-                          const Type&, const Expr_list&> {
+                          const Type&, const Enclosure&> {
       // See comments for the various cast operators regarding type().
 
       Arg2_type args() const { return second(); }
