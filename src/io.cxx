@@ -385,13 +385,11 @@ namespace ipr
                pp << xpr_primary_expr(t.expr());
          }
          void visit(const Phantom&) final { } // nothing to print
-         void visit(const Paren_expr& e) final
+         void visit(const Enclosure& e) final
          {
-            pp << token('(') << xpr_expr(e.expr()) << token(')');
-         }
-         void visit(const Initializer_list& e) final
-         {
-            pp << token('{') << e.expr_list() << token('}');
+            static constexpr const char* syntax[] = { "\0\0", "()", "{}", "[]", "<>" };
+            const auto delimiters = syntax[static_cast<int>(e.delimiters())];
+            pp << token(delimiters[0]) << xpr_expr(e.expr()) << token(delimiters[1]);
          }
          void visit(const Expr& e) override
          {
@@ -524,7 +522,7 @@ namespace ipr
          void visit(const Datum& e) override
          {
             pp << xpr_type(e.type())
-               << token('(') << e.args() << token(')');
+               << xpr_primary_expr(e.args());
          }
 
          //        postfix-expression --

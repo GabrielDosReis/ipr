@@ -65,7 +65,7 @@ Id_expr,                            // ipr::Id_expr
 Label,                              // ipr::Label
 Materialize,                        // ipr::Materialize
 Not,                                // ipr::Not
-Paren_expr,                         // ipr::Paren_expr
+Enclosure,                          // ipr::Enclosure
 Post_decrement,                     // ipr::Post_decrement
 Post_increment,                     // ipr::Post_increment
 Pre_decrement,                      // ipr::Pre_decrement
@@ -105,7 +105,6 @@ Dynamic_cast,                       // ipr::Dynamic_cast
 Equal,                              // ipr::Equal
 Greater,                            // ipr::Greater
 Greater_equal,                      // ipr::Greater_equal
-Initializer_list,                   // ipr::Initializer_list
 Less,                               // ipr::Less
 Less_equal,                         // ipr::Less_equal
 Literal,                            // ipr::Literal

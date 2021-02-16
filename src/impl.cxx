@@ -1085,6 +1085,13 @@ namespace ipr {
          return decls;
       }
 
+      // ---------------
+      // -- Enclosure --
+      // ---------------
+      Enclosure::Enclosure(ipr::Delimiter d, const ipr::Expr& e)
+         : impl::Unary_expr<ipr::Enclosure>{ e }, delim{ d}
+      { }
+
       // -----------------
       // -- Binary_fold --
       // -----------------
@@ -1542,13 +1549,6 @@ namespace ipr {
          return x;
       }
 
-      impl::Initializer_list*
-      expr_factory::make_initializer_list(const ipr::Expr_list& e, Optional<ipr::Type> result) {
-         impl::Initializer_list* init = init_lists.make(e);
-         init->constraint = result;
-         return init;
-      }
-
       impl::Label*
       expr_factory::make_label(const ipr::Identifier& n, Optional<ipr::Type> result) {
          impl::Label* label = labels.make(n);
@@ -1585,9 +1585,11 @@ namespace ipr {
          return make_operator(get_string(s));
       }
 
-      impl::Paren_expr*
-      expr_factory::make_paren_expr(const ipr::Expr& e) {
-         return parens.make(e);
+      impl::Enclosure*
+      expr_factory::make_enclosure(ipr::Delimiter d, const ipr::Expr& e, Optional<ipr::Type> t) {
+         auto x = enclosures.make(d, e);
+         x->constraint = t;
+         return x;
       }
 
       impl::Post_increment*
@@ -1787,7 +1789,7 @@ namespace ipr {
       }
 
       impl::Datum*
-      expr_factory::make_datum(const ipr::Type& t, const ipr::Expr_list& e) {
+      expr_factory::make_datum(const ipr::Type& t, const ipr::Enclosure& e) {
          return data.make(t, e);
       }
 

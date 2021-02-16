@@ -289,12 +289,6 @@ void ipr::Visitor::visit(const Eclipsis& e)
 }
 
 void
-ipr::Visitor::visit(const Initializer_list& e)
-{
-   visit(as<Expr>(e));
-}
-
-void
 ipr::Visitor::visit(const Address& e)
 {
    visit(as<Classic>(e));
@@ -331,9 +325,9 @@ ipr::Visitor::visit(const Deref& e)
 }
 
 void
-ipr::Visitor::visit(const Paren_expr& e)
+ipr::Visitor::visit(const Enclosure& e)
 {
-   visit(as<Classic>(e));
+   visit(as<Expr>(e));
 }
 
 void

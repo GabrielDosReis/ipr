@@ -1037,7 +1037,6 @@ namespace ipr {
 		 // <<<< Yuriy Solodkyy: 2007/02/02
       };
 
-      using Initializer_list = Classic_unary_expr<ipr::Initializer_list>;
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
       using Label = Unary_expr<ipr::Label>;
@@ -1053,7 +1052,12 @@ namespace ipr {
       using Materialize = Unary_expr<ipr::Materialize>;
       using Not = Classic_unary_expr<ipr::Not>;
 
-      using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
+      struct Enclosure : impl::Unary_expr<ipr::Enclosure> {
+         Enclosure(ipr::Delimiter, const ipr::Expr&);
+         Delimiter delimiters() const final { return delim; }
+      private:
+         Delimiter delim;
+      };
 
       using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
       using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
@@ -1203,13 +1207,12 @@ namespace ipr {
          Expr_list* make_expr_list();
          Sizeof* make_sizeof(const ipr::Expr&);
          Typeid* make_typeid(const ipr::Expr&);
-         Initializer_list* make_initializer_list(const ipr::Expr_list&, Optional<ipr::Type> = {});
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
          Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
          Materialize* make_materialize(const ipr::Expr&, const ipr::Type&);
          Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
-         Paren_expr* make_paren_expr(const ipr::Expr&);
+         Enclosure* make_enclosure(ipr::Delimiter, const ipr::Expr&, Optional<ipr::Type> = { });
          Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
          Post_decrement* make_post_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
          Pre_increment* make_pre_increment(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1238,7 +1241,7 @@ namespace ipr {
          Coerce* make_coerce(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
-         Datum* make_datum(const ipr::Type&, const ipr::Expr_list&);
+         Datum* make_datum(const ipr::Type&, const ipr::Enclosure&);
          Div* make_div(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Div_assign* make_div_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Dot* make_dot(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1314,11 +1317,10 @@ namespace ipr {
          stable_farm<impl::Deref> derefs;
          stable_farm<impl::Expr_list> xlists;
          stable_farm<impl::Id_expr> id_exprs;
-         stable_farm<impl::Initializer_list> init_lists;
          stable_farm<impl::Label> labels;
          stable_farm<impl::Materialize> materializes;
          stable_farm<impl::Not> nots;
-         stable_farm<impl::Paren_expr> parens;
+         stable_farm<impl::Enclosure> enclosures;
          stable_farm<impl::Pre_increment> pre_increments;
          stable_farm<impl::Pre_decrement> pre_decrements;
          stable_farm<impl::Post_increment> post_increments;
