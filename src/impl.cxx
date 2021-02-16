@@ -1549,13 +1549,6 @@ namespace ipr {
          return x;
       }
 
-      impl::Initializer_list*
-      expr_factory::make_initializer_list(const ipr::Expr_list& e, Optional<ipr::Type> result) {
-         impl::Initializer_list* init = init_lists.make(e);
-         init->constraint = result;
-         return init;
-      }
-
       impl::Label*
       expr_factory::make_label(const ipr::Identifier& n, Optional<ipr::Type> result) {
          impl::Label* label = labels.make(n);

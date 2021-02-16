@@ -391,10 +391,6 @@ namespace ipr
             const auto delimiters = syntax[static_cast<int>(e.delimiters())];
             pp << token(delimiters[0]) << xpr_expr(e.expr()) << token(delimiters[1]);
          }
-         void visit(const Initializer_list& e) final
-         {
-            pp << token('{') << e.expr_list() << token('}');
-         }
          void visit(const Expr& e) override
          {
             pp << token('(') << xpr_expr(e) << token(')');

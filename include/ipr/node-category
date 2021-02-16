@@ -105,7 +105,6 @@ Dynamic_cast,                       // ipr::Dynamic_cast
 Equal,                              // ipr::Equal
 Greater,                            // ipr::Greater
 Greater_equal,                      // ipr::Greater_equal
-Initializer_list,                   // ipr::Initializer_list
 Less,                               // ipr::Less
 Less_equal,                         // ipr::Less_equal
 Literal,                            // ipr::Literal

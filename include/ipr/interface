@@ -188,7 +188,6 @@ namespace ipr {
    struct Equal;                 // equality comparison            a == b
    struct Greater;               // greater comparison             a > b
    struct Greater_equal;         // greater-or-equal comparison    a >= b
-   struct Initializer_list;      // brace-enclosed expression list { a, b }
    struct Less;                  // less comparison                a < b
    struct Less_equal;            // less-equal comparison          a <= b
    struct Literal;               // literal expressions            3.14
@@ -1163,16 +1162,6 @@ namespace ipr {
    // was omitted, hence the name.
    struct Eclipsis : Category<Category_code::Eclipsis, Expr> { };
 
-                                // -- Initializer_list --
-   // Representation of brace-enclosed sequence of expressions.
-   // If this expression invokes a user-defined constructor to
-   // constructor the resulting value, then its resolution points
-   // to that constructor.
-   struct Initializer_list : Unary<Category<Category_code::Initializer_list, Classic>,
-                                   const Expr_list&> {
-      const Expr_list& expr_list() const { return operand(); }
-   };
-
                                 // -- Address --
    // Address-of expression -- "&expr"
    struct Address : Unary<Category<Category_code::Address, Classic>> { };
@@ -2145,7 +2134,6 @@ namespace ipr {
       virtual void visit(const Scope&);
       virtual void visit(const Phantom&);
       virtual void visit(const Eclipsis&);
-      virtual void visit(const Initializer_list&);
 
       virtual void visit(const Address&);
       virtual void visit(const Array_delete&);

@@ -1037,7 +1037,6 @@ namespace ipr {
 		 // <<<< Yuriy Solodkyy: 2007/02/02
       };
 
-      using Initializer_list = Classic_unary_expr<ipr::Initializer_list>;
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Typeid = Unary_expr<ipr::Typeid>;
       using Label = Unary_expr<ipr::Label>;
@@ -1208,7 +1207,6 @@ namespace ipr {
          Expr_list* make_expr_list();
          Sizeof* make_sizeof(const ipr::Expr&);
          Typeid* make_typeid(const ipr::Expr&);
-         Initializer_list* make_initializer_list(const ipr::Expr_list&, Optional<ipr::Type> = {});
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
          Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
@@ -1319,7 +1317,6 @@ namespace ipr {
          stable_farm<impl::Deref> derefs;
          stable_farm<impl::Expr_list> xlists;
          stable_farm<impl::Id_expr> id_exprs;
-         stable_farm<impl::Initializer_list> init_lists;
          stable_farm<impl::Label> labels;
          stable_farm<impl::Materialize> materializes;
          stable_farm<impl::Not> nots;
