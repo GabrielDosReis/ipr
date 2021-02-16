@@ -331,9 +331,9 @@ ipr::Visitor::visit(const Deref& e)
 }
 
 void
-ipr::Visitor::visit(const Paren_expr& e)
+ipr::Visitor::visit(const Enclosure& e)
 {
-   visit(as<Classic>(e));
+   visit(as<Expr>(e));
 }
 
 void

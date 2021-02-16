@@ -1053,7 +1053,12 @@ namespace ipr {
       using Materialize = Unary_expr<ipr::Materialize>;
       using Not = Classic_unary_expr<ipr::Not>;
 
-      using Paren_expr = type_from_operand<Classic<Node<ipr::Paren_expr>>>;
+      struct Enclosure : impl::Unary_expr<ipr::Enclosure> {
+         Enclosure(ipr::Delimiter, const ipr::Expr&);
+         Delimiter delimiters() const final { return delim; }
+      private:
+         Delimiter delim;
+      };
 
       using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
       using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
@@ -1209,7 +1214,7 @@ namespace ipr {
          Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
          Materialize* make_materialize(const ipr::Expr&, const ipr::Type&);
          Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
-         Paren_expr* make_paren_expr(const ipr::Expr&);
+         Enclosure* make_enclosure(ipr::Delimiter, const ipr::Expr&, Optional<ipr::Type> = { });
          Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
          Post_decrement* make_post_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
          Pre_increment* make_pre_increment(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1318,7 +1323,7 @@ namespace ipr {
          stable_farm<impl::Label> labels;
          stable_farm<impl::Materialize> materializes;
          stable_farm<impl::Not> nots;
-         stable_farm<impl::Paren_expr> parens;
+         stable_farm<impl::Enclosure> enclosures;
          stable_farm<impl::Pre_increment> pre_increments;
          stable_farm<impl::Pre_decrement> pre_decrements;
          stable_farm<impl::Post_increment> post_increments;

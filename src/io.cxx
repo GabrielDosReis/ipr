@@ -385,9 +385,11 @@ namespace ipr
                pp << xpr_primary_expr(t.expr());
          }
          void visit(const Phantom&) final { } // nothing to print
-         void visit(const Paren_expr& e) final
+         void visit(const Enclosure& e) final
          {
-            pp << token('(') << xpr_expr(e.expr()) << token(')');
+            static constexpr const char* syntax[] = { "()", "{}", "[]", "<>" };
+            const auto delimiters = syntax[static_cast<int>(e.delimiters())];
+            pp << token(delimiters[0]) << xpr_expr(e.expr()) << token(delimiters[1]);
          }
          void visit(const Initializer_list& e) final
          {

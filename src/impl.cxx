@@ -1085,6 +1085,13 @@ namespace ipr {
          return decls;
       }
 
+      // ---------------
+      // -- Enclosure --
+      // ---------------
+      Enclosure::Enclosure(ipr::Delimiter d, const ipr::Expr& e)
+         : impl::Unary_expr<ipr::Enclosure>{ e }, delim{ d}
+      { }
+
       // -----------------
       // -- Binary_fold --
       // -----------------
@@ -1585,9 +1592,11 @@ namespace ipr {
          return make_operator(get_string(s));
       }
 
-      impl::Paren_expr*
-      expr_factory::make_paren_expr(const ipr::Expr& e) {
-         return parens.make(e);
+      impl::Enclosure*
+      expr_factory::make_enclosure(ipr::Delimiter d, const ipr::Expr& e, Optional<ipr::Type> t) {
+         auto x = enclosures.make(d, e);
+         x->constraint = t;
+         return x;
       }
 
       impl::Post_increment*

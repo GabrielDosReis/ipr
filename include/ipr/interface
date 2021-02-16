@@ -146,7 +146,7 @@ namespace ipr {
                                  //         or entry of a switch-statement
    struct Materialize;           // temporary materialization
    struct Not;                   // logical negation                 !cond
-   struct Paren_expr;            // parenthesized expression           (a)
+   struct Enclosure;             // expression in enclosed in paired delimiters, e.g. (a) or {x, y, y}
    struct Post_decrement;        // post-increment                     p++
    struct Post_increment;        // post-decrement                     p--
    struct Pre_decrement;         // pre-increment                      ++p
@@ -442,6 +442,15 @@ namespace ipr {
    inline const T&
    Sequence<T>::operator[](int p) const
    { return get(p); }
+
+                                 // -- Delimiter --
+   // Enclosure delimiter of expressions
+   enum class Delimiter {
+      Paren,                     // "()"
+      Brace,                     // "{}"
+      Bracket,                   // "[]"
+      Angle,                     // "<>"
+   };
 
                                 // -- Optional<> --
    // Occasionally, a node has an optional property (e.g. a variable
@@ -1192,12 +1201,14 @@ namespace ipr {
    // Dereference-expression -- "*expr"
    struct Deref : Unary<Category<Category_code::Deref, Classic>> { };
 
-                                // -- Paren_expr --
-   // Parenthesized-expressions -- "(expr)".  This might seem purely
+                                // -- Enclosure --
+   // Expresion enclosed in matching pair of delimiters.  This might seem purely
    // syntactical but it also has semantic implications, like when an
-   // argument-dependent lookup should be done or not, or on the accuracy
+   // argument-dependent lookup should be done or not, or order of evaluation,the accuracy
    // of an expression evaluation.
-   struct Paren_expr : Unary<Category<Category_code::Paren_expr, Classic>> {
+   // Note: an empty brace-init translates to a brace enclosure of a Phantom node.
+   struct Enclosure : Unary<Category<Category_code::Enclosure>> {
+      virtual Delimiter delimiters() const = 0;
       const Expr& expr() const { return operand(); }
    };
 
@@ -2142,7 +2153,7 @@ namespace ipr {
       virtual void visit(const Delete&);
       virtual void visit(const Demote&);
       virtual void visit(const Deref&);
-      virtual void visit(const Paren_expr&);
+      virtual void visit(const Enclosure&);
       virtual void visit(const Sizeof&);
       virtual void visit(const Expr_stmt&);
       virtual void visit(const Typeid&);

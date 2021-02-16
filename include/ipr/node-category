@@ -65,7 +65,7 @@ Id_expr,                            // ipr::Id_expr
 Label,                              // ipr::Label
 Materialize,                        // ipr::Materialize
 Not,                                // ipr::Not
-Paren_expr,                         // ipr::Paren_expr
+Enclosure,                          // ipr::Enclosure
 Post_decrement,                     // ipr::Post_decrement
 Post_increment,                     // ipr::Post_increment
 Pre_decrement,                      // ipr::Pre_decrement
