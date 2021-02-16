@@ -387,7 +387,7 @@ namespace ipr
          void visit(const Phantom&) final { } // nothing to print
          void visit(const Enclosure& e) final
          {
-            static constexpr const char* syntax[] = { "()", "{}", "[]", "<>" };
+            static constexpr const char* syntax[] = { "\0\0", "()", "{}", "[]", "<>" };
             const auto delimiters = syntax[static_cast<int>(e.delimiters())];
             pp << token(delimiters[0]) << xpr_expr(e.expr()) << token(delimiters[1]);
          }

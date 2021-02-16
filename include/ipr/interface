@@ -443,8 +443,9 @@ namespace ipr {
    { return get(p); }
 
                                  // -- Delimiter --
-   // Enclosure delimiter of expressions
+   // Enclosure delimiters of expressions
    enum class Delimiter {
+      Nothing,                   // no delimiter
       Paren,                     // "()"
       Brace,                     // "{}"
       Bracket,                   // "[]"
