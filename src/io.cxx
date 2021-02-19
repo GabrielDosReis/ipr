@@ -519,10 +519,10 @@ namespace ipr
                << token('(') << e.args() << token(')');
          }
 
-         void visit(const Datum& e) override
+         void visit(const Construction& e) override
          {
             pp << xpr_type(e.type())
-               << xpr_primary_expr(e.args());
+               << xpr_primary_expr(e.arguments());
          }
 
          //        postfix-expression --
@@ -624,14 +624,10 @@ namespace ipr
          void visit(const New& e) override
          {
             pp << xpr_identifier("new") << token(' ');
-
             if (auto p = e.placement())
                pp << token('(') << p.get() << token(") ");
-
-            pp << xpr_type(e.allocated_type());
-
-            if (auto init = e.initializer())
-               pp << token(" (") << init.get() << token(')');
+            // Note: The following does not exactly conform to the ISO C++ grammar (because of ambiguity).
+            pp << xpr_expr(e.initializer());
          }
 
          void visit(const Delete& e) override

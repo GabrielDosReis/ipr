@@ -1070,6 +1070,7 @@ namespace ipr {
       using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
       using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
       using Expansion = Classic_unary_expr<ipr::Expansion>;
+      using Construction = Classic_unary_expr<ipr::Construction>;
 
       using And = Classic_binary_expr<ipr::And>;
       using Annotation = Binary_node<ipr::Annotation>;
@@ -1088,7 +1089,6 @@ namespace ipr {
       using Coerce = Classic_binary_expr<ipr::Coerce>;
       using Comma = Classic_binary_expr<ipr::Comma>;
       using Const_cast = Conversion_expr<ipr::Const_cast>;
-      using Datum = Conversion_expr<ipr::Datum>;
       using Div = Classic_binary_expr<ipr::Div>;
       using Div_assign = Classic_binary_expr<ipr::Div_assign>;
       using Dot = Classic_binary_expr<ipr::Dot>;
@@ -1144,18 +1144,14 @@ namespace ipr {
          Category_code operation() const final;
       };
 
-      using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
+      struct New : impl::Classic_binary_expr<ipr::New> {
+         bool global = false;
 
-      struct New : Classic<Expr<ipr::New>> {
-         Optional<ipr::Expr_list> where;
-         const ipr::Type& what;
-         Optional<ipr::Expr_list> args;
-
-         New(Optional<ipr::Expr_list>, const ipr::Type&, Optional<ipr::Expr_list>);
-         Optional<ipr::Expr_list> placement() const final;
-         const ipr::Type& allocated_type() const final;
-         Optional<ipr::Expr_list> initializer() const final;
+         New(Optional<ipr::Expr_list>, const ipr::Construction&);
+         bool global_requested() const final;
       };
+
+      using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
       struct expr_factory {
          // Returns an IPR node for unified string literals.
@@ -1224,6 +1220,7 @@ namespace ipr {
          Unary_minus* make_unary_minus(const ipr::Expr&, Optional<ipr::Type> = {});
          Unary_plus* make_unary_plus(const ipr::Expr&, Optional<ipr::Type> = {});
          Expansion* make_expansion(const ipr::Expr&, Optional<ipr::Type> = {});
+         Construction* make_construction(const ipr::Type&, const ipr::Enclosure&);
 
          And* make_and(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1241,7 +1238,6 @@ namespace ipr {
          Coerce* make_coerce(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
-         Datum* make_datum(const ipr::Type&, const ipr::Enclosure&);
          Div* make_div(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Div_assign* make_div_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Dot* make_dot(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1275,8 +1271,7 @@ namespace ipr {
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
          Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifier, const ipr::Type&);
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         New* make_new(const ipr::Type& allocated, Optional<ipr::Expr_list> init = {},
-                       Optional<Expr_list> placement = {}, Optional<ipr::Type> result = {});
+         New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                        const ipr::Expr&, Optional<ipr::Type> = {});
 
@@ -1331,6 +1326,7 @@ namespace ipr {
          stable_farm<impl::Unary_minus> unary_minuses;
          stable_farm<impl::Unary_plus> unary_pluses;
          stable_farm<impl::Expansion> expansions;
+         stable_farm<impl::Construction> constructions;
 
          stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;
@@ -1348,7 +1344,6 @@ namespace ipr {
          stable_farm<impl::Call> calls;
          stable_farm<impl::Comma> commas;
          stable_farm<impl::Const_cast> ccasts;
-         stable_farm<impl::Datum> data;
          stable_farm<impl::Div> divs;
          stable_farm<impl::Div_assign> div_assigns;
          stable_farm<impl::Dot> dots;
