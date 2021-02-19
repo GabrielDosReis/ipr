@@ -643,7 +643,7 @@ ipr::Visitor::visit(const Not_equal& e)
 }
 
 void
-ipr::Visitor::visit(const Datum& e)
+ipr::Visitor::visit(const Construction& e)
 {
    visit(as<Classic>(e));
 }

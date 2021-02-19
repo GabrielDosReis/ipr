@@ -179,7 +179,7 @@ namespace ipr {
    struct Coerce;                // generalized type conversion -- implicit conversion
    struct Comma;                 // comma-operator                 a, b
    struct Const_cast;            // const-cast             const_cast<T&>(v)
-   struct Datum;                 // object construction             T(v)
+   struct Construction;          // object construction            T(v)
    struct Div;                   // division                       a / b
    struct Div_assign;            // in-place division              a /= b
    struct Dot;                   // direct member selection        x.m
@@ -1269,6 +1269,19 @@ namespace ipr {
    // Integral or floating point promotion -- "(int)'2'"
    struct Promote : Unary<Category<Category_code::Promote>> { };
 
+                                // -- Construction --
+   // An expression of the form "T(e1, e2, .. en)" or "T{e1, e2, .. en}"
+   // where "T" is a type and "ei"s are expressions.  This is not a function
+   // call -- although syntactically it looks like so.  "T" will
+   // be the `type()' of this expression.
+   // The contructor selected for the construction operation is indicated
+   // by implementation, which is inherited from Classic.
+   struct Construction : Unary<Category<Category_code::Construction, Classic>,
+                               const Enclosure&> {
+      // The sequence of arguments used for this construction
+      Arg_type arguments() const { return operand(); }
+   };
+
                                 // -- Read --
    // Lvalue-to-rvalue conversion -- "= var"
    struct Read : Unary<Category<Category_code::Read>> { };
@@ -1416,18 +1429,6 @@ namespace ipr {
                                 // -- Const_cast --
    // const_cast-expression -- "const_cast<type>(expr)".
    struct Const_cast : Cast_expr<Category_code::Const_cast> { };
-
-                                // -- Datum --
-   // An expression of the form "T(e1, e2, .. en)" where "T"
-   // is a type and "ei"s are expressions.  This is not a function
-   // call -- although syntactically it looks like so.  "T" will
-   // be the `type()' of this expression.
-   struct Datum : Binary<Category<Category_code::Datum, Classic>,
-                          const Type&, const Enclosure&> {
-      // See comments for the various cast operators regarding type().
-
-      Arg2_type args() const { return second(); }
-   };
 
                                 // -- Div --
    // Division-expression -- "a / b"
@@ -1580,10 +1581,18 @@ namespace ipr {
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
    //    ::_opt new new-placement_opt ( type-id ) new-initializer_opt
-   struct New : Category<Category_code::New, Classic> {
-      virtual Optional<Expr_list> placement() const = 0;
-      virtual const Type& allocated_type() const = 0;
-      virtual Optional<Expr_list> initializer() const = 0;
+   // Semantically, this has a binary structure where the first operand
+   // is the placement-list, and the second operand is a construction expression
+   // that indicates the new-type-id or the type-id coupled with the new-initializer if any.
+   // When the new-initializer is missing, the Enclosure of the Contruction has no delimiter
+   // and the arguments of the Enclosure is a Phantom node.
+   // The allocator function is indicated by the implementation().
+   struct New : Binary<Category<Category_code::New, Classic>,
+                       Optional<Expr_list>, const Construction&> {
+      // This predicate holds if the new-expression explicitly requested a global allocator.
+      virtual bool global_requested() const = 0;
+      Optional<Expr_list> placement() const { return first(); }
+      const Construction& initializer() const { return second(); }
    };
 
                                 // -- Conditional --
@@ -2178,7 +2187,7 @@ namespace ipr {
       virtual void visit(const Coerce&);
       virtual void visit(const Comma&);
       virtual void visit(const Const_cast&);
-      virtual void visit(const Datum&);
+      virtual void visit(const Construction&);
       virtual void visit(const Div&);
       virtual void visit(const Div_assign&);
       virtual void visit(const Dot&);

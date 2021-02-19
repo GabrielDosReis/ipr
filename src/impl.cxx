@@ -58,16 +58,11 @@ namespace ipr {
       };
 
       // -- impl::New --
-      New::New(Optional<ipr::Expr_list> where, const ipr::Type& what,
-               Optional<ipr::Expr_list> args)
-            : where{ where }, what{ what }, args{ args }
+      New::New(Optional<ipr::Expr_list> where, const ipr::Construction& expr)
+            : Classic_binary_expr<ipr::New>{ where, expr }
       { }
 
-      Optional<ipr::Expr_list> New::placement() const { return where; }
-
-      const ipr::Type& New::allocated_type() const { return what; }
-
-      Optional<ipr::Expr_list> New::initializer() const { return args; }
+      bool New::global_requested() const { return global; }
 
       // -------------------------------------
       // -- master_decl_data<ipr::Template> --
@@ -1677,6 +1672,13 @@ namespace ipr {
          return expansion;
       }
 
+      impl::Construction*
+      expr_factory::make_construction(const ipr::Type& t, const ipr::Enclosure& e) {
+         auto x = constructions.make(e);
+         x->constraint = &t;
+         return x;
+      }
+
       impl::And*
       expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
          impl::And* and_expr = ands.make(l, r);
@@ -1786,11 +1788,6 @@ namespace ipr {
       impl::Const_cast*
       expr_factory::make_const_cast(const ipr::Type& t, const ipr::Expr& e) {
          return ccasts.make(t, e);
-      }
-
-      impl::Datum*
-      expr_factory::make_datum(const ipr::Type& t, const ipr::Enclosure& e) {
-         return data.make(t, e);
       }
 
       impl::Div*
@@ -2032,9 +2029,8 @@ namespace ipr {
       }
 
       impl::New*
-      expr_factory::make_new(const ipr::Type& allocated, Optional<ipr::Expr_list> init,
-                       Optional<Expr_list> placement, Optional<ipr::Type> result) {
-         impl::New* new_expr = news.make(placement, allocated, init);
+      expr_factory::make_new(Optional<ipr::Expr_list> placement, const ipr::Construction& expr, Optional<ipr::Type> result) {
+         impl::New* new_expr = news.make(placement, expr);
          new_expr->constraint = result;
          return new_expr;
       }

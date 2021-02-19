@@ -96,7 +96,7 @@ Cast,                               // ipr::Cast
 Coerce,                             // ipr::Coerce
 Comma,                              // ipr::Comma
 Const_cast,                         // ipr::Const_cast
-Datum,                              // ipr::Datum
+Construction,                       // ipr::Construction
 Div,                                // ipr::Div
 Div_assign,                         // ipr::Div_assign
 Dot,                                // ipr::Dot
