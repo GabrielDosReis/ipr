@@ -313,7 +313,7 @@ ipr::Visitor::visit(const Delete& e)
 }
 
 void
-ipr::Visitor::visit(const Demote& e)
+ipr::Visitor::visit(const Demotion& e)
 {
    visit(as<Expr>(e));
 }
@@ -361,7 +361,7 @@ ipr::Visitor::visit(const Unary_minus& e)
 }
 
 void
-ipr::Visitor::visit(const Materialize& e)
+ipr::Visitor::visit(const Materialization& e)
 {
    visit(as<Expr>(e));
 }
@@ -397,7 +397,7 @@ ipr::Visitor::visit(const Pre_increment& e)
 }
 
 void
-ipr::Visitor::visit(const Promote& e)
+ipr::Visitor::visit(const Promotion& e)
 {
    visit(as<Expr>(e));
 }
@@ -523,7 +523,7 @@ ipr::Visitor::visit(const Call& e)
 }
 
 void
-ipr::Visitor::visit(const Coerce& e)
+ipr::Visitor::visit(const Coercion& e)
 {
    visit(as<Classic>(e));
 }

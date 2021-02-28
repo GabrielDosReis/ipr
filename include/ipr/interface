@@ -135,7 +135,7 @@ namespace ipr {
    struct Array_delete;          // array delete-expression     delete[] p
    struct Complement;            // bitwise complement                  ~m
    struct Delete;                // delete-expression             delete p
-   struct Demote;                // inverse of an integral or floating-point
+   struct Demotion;              // inverse of an integral or floating-point
                                  // promotion -- implicit conversion
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // comma-separated expression list  x, y, z
@@ -144,14 +144,14 @@ namespace ipr {
    struct Id_expr;               // use of a name as an expression
    struct Label;                 // a label - target of a goto-statement
                                  //         or entry of a switch-statement
-   struct Materialize;           // temporary materialization
+   struct Materialization;       // temporary materialization
    struct Not;                   // logical negation                 !cond
    struct Enclosure;             // expression in enclosed in paired delimiters, e.g. (a) or {x, y, y}
    struct Post_decrement;        // post-increment                     p++
    struct Post_increment;        // post-decrement                     p--
    struct Pre_decrement;         // pre-increment                      ++p
    struct Pre_increment;         // pre-decrement                      --p
-   struct Promote;               // integral or floating-point promotion -- implicit conversion
+   struct Promotion;             // integral or floating-point promotion -- implicit conversion
    struct Read;                  // lvalue to rvalue conversion  -- implicit conversion
    struct Throw;                 // throw expression               throw a
    struct Unary_minus;           // unary minus                         -a
@@ -176,7 +176,7 @@ namespace ipr {
    struct Bitxor_assign;         // in-place bitwise exclusive or  a ^= b
    struct Call;                  // function call                  f(u, v)
    struct Cast;                  // C-style class                  (T) e
-   struct Coerce;                // generalized type conversion -- implicit conversion
+   struct Coercion;              // generalized type conversion -- implicit conversion
    struct Comma;                 // comma-operator                 a, b
    struct Const_cast;            // const-cast             const_cast<T&>(v)
    struct Construction;          // object construction            T(v)
@@ -1183,9 +1183,9 @@ namespace ipr {
       const Expr& storage() const { return operand(); }
    };
 
-                                   // -- Demote --
+                                // -- Demotion --
    // Integral or floating point conversion
-   struct Demote : Unary<Category<Category_code::Demote>> { };
+   struct Demotion : Unary<Category<Category_code::Demotion>> { };
 
                                 // -- Deref --
    // Dereference-expression -- "*expr"
@@ -1241,9 +1241,9 @@ namespace ipr {
       Arg_type name() const { return operand(); }
    };
 
-                                // -- Materialize --
+                                // -- Materialization --
    // Temporary materialization
-   struct Materialize : Unary<Category<Category_code::Materialize>> { };
+   struct Materialization : Unary<Category<Category_code::Materialization>> { };
 
                                 // -- Not --
    // logical-not-expression -- "!expr"
@@ -1265,9 +1265,9 @@ namespace ipr {
    // pre-increment-expression -- "++expr".
    struct Pre_increment : Unary<Category<Category_code::Pre_increment, Classic>> { };
 
-                                // -- Promote --
+                                // -- Promotion --
    // Integral or floating point promotion -- "(int)'2'"
-   struct Promote : Unary<Category<Category_code::Promote>> { };
+   struct Promotion : Unary<Category<Category_code::Promotion>> { };
 
                                 // -- Construction --
    // An expression of the form "T(e1, e2, .. en)" or "T{e1, e2, .. en}"
@@ -1413,11 +1413,11 @@ namespace ipr {
       Arg2_type args() const { return second(); }
    };
 
-                                // -- Coerce --
+                                // -- Coercion --
    // A generalized type conversion either built-in to the language or
    // programmatically defined by either constructors or conversion
    // functions.
-   struct Coerce : Binary<Category<Category_code::Coerce, Classic>, const Expr&, const Type&> {
+   struct Coercion : Binary<Category<Category_code::Coercion, Classic>, const Expr&, const Type&> {
       Arg1_type expr() const { return first(); }
       Arg2_type target() const { return second(); }
    };
@@ -2149,7 +2149,7 @@ namespace ipr {
       virtual void visit(const Array_delete&);
       virtual void visit(const Complement&);
       virtual void visit(const Delete&);
-      virtual void visit(const Demote&);
+      virtual void visit(const Demotion&);
       virtual void visit(const Deref&);
       virtual void visit(const Enclosure&);
       virtual void visit(const Sizeof&);
@@ -2158,12 +2158,12 @@ namespace ipr {
       virtual void visit(const Id_expr&);
       virtual void visit(const Label&);
       virtual void visit(const Not&);
-      virtual void visit(const Materialize&);
+      virtual void visit(const Materialization&);
       virtual void visit(const Post_decrement&);
       virtual void visit(const Post_increment&);
       virtual void visit(const Pre_decrement&);
       virtual void visit(const Pre_increment&);
-      virtual void visit(const Promote&);
+      virtual void visit(const Promotion&);
       virtual void visit(const Read&);
       virtual void visit(const Throw&);
       virtual void visit(const Unary_minus&);
@@ -2184,7 +2184,7 @@ namespace ipr {
       virtual void visit(const Bitxor_assign&);
       virtual void visit(const Cast&);
       virtual void visit(const Call&);
-      virtual void visit(const Coerce&);
+      virtual void visit(const Coercion&);
       virtual void visit(const Comma&);
       virtual void visit(const Const_cast&);
       virtual void visit(const Construction&);

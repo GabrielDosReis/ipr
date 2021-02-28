@@ -1480,11 +1480,11 @@ namespace ipr {
          return deletes.make(e);
       }
 
-      impl::Demote*
-      expr_factory::make_demote(const ipr::Expr& e, const ipr::Type& result) {
-         impl::Demote* demote_expr = demotes.make(e);
-         demote_expr->constraint = &result;
-         return demote_expr;
+      impl::Demotion*
+      expr_factory::make_demotion(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Demotion* demotion_expr = demotions.make(e);
+         demotion_expr->constraint = &result;
+         return demotion_expr;
       }
 
       impl::Deref*
@@ -1551,11 +1551,11 @@ namespace ipr {
          return label;
       }
 
-      Materialize*
-      expr_factory::make_materialize(const ipr::Expr& e, const ipr::Type& result) {
-         impl::Materialize* materialize = materializes.make(e);
-         materialize->constraint = &result;
-         return materialize;
+      Materialization*
+      expr_factory::make_materialization(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Materialization* materialization = materializations.make(e);
+         materialization->constraint = &result;
+         return materialization;
       }
 
       impl::Not*
@@ -1615,11 +1615,11 @@ namespace ipr {
          return dec;
       }
 
-      impl::Promote*
-      expr_factory::make_promote(const ipr::Expr& e, const ipr::Type& result) {
-         impl::Promote* promote_expr = promotes.make(e);
-         promote_expr->constraint = &result;
-         return promote_expr;
+      impl::Promotion*
+      expr_factory::make_promotion(const ipr::Expr& e, const ipr::Type& result) {
+         impl::Promotion* promotion_expr = promotions.make(e);
+         promotion_expr->constraint = &result;
+         return promotion_expr;
       }
 
       impl::Read*
@@ -1771,11 +1771,11 @@ namespace ipr {
          return call;
       }
 
-      impl::Coerce*
-      expr_factory::make_coerce(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
-         impl::Coerce* coerce_expr = coerces.make(e, t);
-         coerce_expr->constraint = &result;
-         return coerce_expr;
+      impl::Coercion*
+      expr_factory::make_coercion(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         impl::Coercion* coercion_expr = coercions.make(e, t);
+         coercion_expr->constraint = &result;
+         return coercion_expr;
       }
 
       impl::Comma*
