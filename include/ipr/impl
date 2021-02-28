@@ -463,7 +463,7 @@ namespace ipr {
          int size() const final { return 1; }
          const T& get(int i) const final
          {
-            if (i == 1)
+            if (i == 0)
                return datum;
             throw std::domain_error("singleton_declset::get");
          }
