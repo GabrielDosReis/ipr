@@ -1275,7 +1275,8 @@ namespace ipr {
    // call -- although syntactically it looks like so.  "T" will
    // be the `type()' of this expression.
    // The contructor selected for the construction operation is indicated
-   // by implementation, which is inherited from Classic.
+   // by implementation, which is inherited from Classic. When the enclosure
+   // is a singleton, the node can also denote a functional cast expression.
    struct Construction : Unary<Category<Category_code::Construction, Classic>,
                                const Enclosure&> {
       // The sequence of arguments used for this construction
