@@ -19,7 +19,7 @@ namespace ipr {
    const String& String::empty_string()
    {
       struct Empty_string final : impl::Node<String> {
-         int size() const { return 0; }
+         Index size() const { return 0; }
          iterator begin() const { return ""; }
          iterator end() const { return begin(); }
       };
@@ -46,12 +46,12 @@ namespace ipr {
             return compare(lhs.scope_pos, rhs.scope_pos);
          }
 
-         int operator()(int pos, const scope_datum& s) const
+         int operator()(std::size_t pos, const scope_datum& s) const
          {
             return compare(pos, s.scope_pos);
          }
 
-         int operator()(const scope_datum& s, int pos) const
+         int operator()(const scope_datum& s, std::size_t pos) const
          {
             return compare(s.scope_pos, pos);
          }
@@ -79,13 +79,12 @@ namespace ipr {
       // -- impl::decl_sequence --
       // -------------------------
 
-      int
-      decl_sequence::size() const {
+      decl_sequence::Index decl_sequence::size() const {
          return decls.size();
       }
 
       const ipr::Decl&
-      decl_sequence::get(int i) const {
+      decl_sequence::get(Index i) const {
          scope_datum* result = decls.find(i, scope_datum::comp());
          return *util::check(result)->decl;
       }
@@ -103,13 +102,12 @@ namespace ipr {
             : name(n), where(0)
       { }
 
-      int
-      Overload::size() const {
+      Overload::Index Overload::size() const {
          return entries.size();
       }
 
       const ipr::Decl&
-      Overload::get(int i) const {
+      Overload::get(Index i) const {
          return *masters.at(i)->decl;
       }
 
@@ -144,13 +142,13 @@ namespace ipr {
          return seq.datum.type();
       }
 
-      int
+      singleton_overload::Index
       singleton_overload::size() const {
          return 1;
       }
 
       const ipr::Decl&
-      singleton_overload::get(int i) const {
+      singleton_overload::get(Index i) const {
          if (i != 1)
             throw std::domain_error("singleton_overload::get: out-of-range ");
          return seq.datum;
@@ -172,13 +170,12 @@ namespace ipr {
          throw std::domain_error("empty_overload::type");
       }
 
-      int
-      empty_overload::size() const {
+      empty_overload::Index empty_overload::size() const {
          return 0;
       }
 
       const ipr::Decl&
-      empty_overload::get(int) const {
+      empty_overload::get(Index) const {
          throw std::domain_error("impl::empty_overload::get");
       }
 
@@ -250,7 +247,7 @@ namespace ipr {
       // -- impl::Base_type --
       // ---------------------
 
-      Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, int p)
+      Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, std::size_t p)
             : base(t), where(r), scope_pos(p)
       { }
 
@@ -269,7 +266,7 @@ namespace ipr {
          return where;
       }
 
-      int
+      std::size_t
       Base_type::position() const {
          return scope_pos;
       }
@@ -283,7 +280,7 @@ namespace ipr {
       // -- impl::Enumerator --
       // ----------------------
 
-      Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, int p)
+      Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, std::size_t p)
             : id(n), constraint(t), scope_pos(p), where(0), init(0)
       { }
 
@@ -307,7 +304,7 @@ namespace ipr {
          return constraint;
       }
 
-      int
+      std::size_t
       Enumerator::position() const {
          return scope_pos;
       }
@@ -443,7 +440,7 @@ namespace ipr {
          return *util::check(where);
       }
 
-      int
+      std::size_t
       Parameter::position() const {
          return abstract_name.rep.second;
       }
@@ -752,8 +749,7 @@ namespace ipr {
       String::String(const util::string& s) : text(s)
       { }
 
-      int
-      String::size() const {
+      String::Index String::size() const {
          return text.size();
       }
 
@@ -2047,8 +2043,8 @@ namespace ipr {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         return rnames.insert(Rep{ t, map.nesting_level, map.parameters.size() },
-                              ternary_compare());
+         auto pos = static_cast<int>(map.parameters.size());
+         return rnames.insert(Rep{ t, map.nesting_level, pos }, ternary_compare());
       }
 
       impl::Mapping*

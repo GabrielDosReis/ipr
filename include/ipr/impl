@@ -78,10 +78,11 @@ namespace ipr {
          using Rep = std::deque<const void*>;
          using pointer = const T*;
          using Iterator = typename Seq::Iterator;
+         using Index = typename Seq::Index;
 
          explicit ref_sequence(std::size_t n = 0) : Rep(n) { }
 
-         int size() const final { return Rep::size(); }
+         Index size() const final { return Rep::size(); }
 
          using Seq::operator[];
          using Seq::begin;
@@ -92,7 +93,7 @@ namespace ipr {
          using Rep::push_back;
          using Rep::push_front;
 
-         const T& get(int p) const final { return *pointer(this->at(p)); }
+         const T& get(Index p) const final { return *pointer(this->at(p)); }
       };
 
                                 // -- impl::val_sequence --
@@ -104,6 +105,7 @@ namespace ipr {
          using Seq = ipr::Sequence<typename T::Interface>;
          using Impl = stable_farm<T>;
          using Iterator = typename Seq::Iterator;
+         using Index = typename Seq::Index;
 
          using Seq::operator[];
          using Seq::begin;
@@ -111,7 +113,7 @@ namespace ipr {
 
          val_sequence() : mark(this->before_begin()) { }
 
-         int size() const final
+         Index size() const final
          {
             return std::distance(Impl::begin(), Impl::end());
          }
@@ -123,7 +125,7 @@ namespace ipr {
             return &*mark;
          }
 
-         const T& get(int p) const final
+         const T& get(Index p) const final
          {
             if (p < 0 || p >= size())
                throw std::domain_error("val_sequence::get");
@@ -348,9 +350,9 @@ namespace ipr {
       struct String : impl::Node<ipr::String> {
          explicit String(const util::string&);
 
-         int size() const;
-         const char* begin() const;
-         const char* end() const;
+         Index size() const final;
+         const char* begin() const final;
+         const char* end() const final;
 
       private:
          const util::string& text;
@@ -422,7 +424,7 @@ namespace ipr {
       struct scope_datum : link<scope_datum> {
          // The position of this Decl in its scope.  It shall be set
          // at the actual declaration creation by the creating scope.
-         int scope_pos = -1;
+         std::size_t scope_pos = { };
 
          // The specifiers for this declaration.  S
          ipr::DeclSpecifiers spec = { };
@@ -440,8 +442,8 @@ namespace ipr {
       // The chain of declarations in a scope.
 
       struct decl_sequence : ipr::Sequence<ipr::Decl> {
-         int size() const final;
-         const ipr::Decl& get(int) const final;
+         Index size() const final;
+         const ipr::Decl& get(Index) const final;
          // Inserts a declaration in this sequence.
          void insert(scope_datum*);
 
@@ -457,12 +459,13 @@ namespace ipr {
 
       template<class T>
       struct singleton_declset : ipr::Sequence<ipr::Decl> {
+         using Index = typename Sequence<ipr::Decl>::Index;
          const T& datum;
 
          explicit singleton_declset(const T& t) : datum(t) { }
 
-         int size() const final { return 1; }
-         const T& get(int i) const final
+         Index size() const final { return 1; }
+         const T& get(Index i) const final
          {
             if (i == 0)
                return datum;
@@ -578,8 +581,8 @@ namespace ipr {
          explicit Overload(const ipr::Name&);
 
          const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
-         int size() const final;
-         const ipr::Decl& get(int) const final;
+         Index size() const final;
+         const ipr::Decl& get(Index) const final;
          overload_entry* lookup(const ipr::Type&) const;
 
          template<class T>
@@ -600,8 +603,8 @@ namespace ipr {
          explicit singleton_overload(const ipr::Decl&);
 
          const ipr::Type& type() const final;
-         int size() const final;
-         const ipr::Decl& get(int) const final;
+         Index size() const final;
+         const ipr::Decl& get(Index) const final;
          const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
       };
 
@@ -614,8 +617,8 @@ namespace ipr {
 
       struct empty_overload : impl::Node<ipr::Overload> {
          const ipr::Type& type() const final;
-         int size() const final;
-         const ipr::Decl& get(int) const final;
+         Index size() const final;
+         const ipr::Decl& get(Index) const final;
          const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
       };
 
@@ -670,6 +673,7 @@ namespace ipr {
       template<class Seq>
       struct typed_sequence : impl::Type<ipr::Product>,
                               ipr::Sequence<ipr::Type> {
+         using Index = typename Sequence<ipr::Type>::Index;
          Seq seq;
 
          typed_sequence() { }
@@ -679,8 +683,8 @@ namespace ipr {
          {
             return *this;
          }
-         int size() const final { return seq.size(); }
-         const ipr::Type& get(int i) const final
+         Index size() const final { return seq.size(); }
+         const ipr::Type& get(Index i) const final
          {
             return seq.get(i).type();
          }
@@ -803,7 +807,7 @@ namespace ipr {
          const ipr::Type& type() const;
          const ipr::Region& home_region() const;
          const ipr::Region& lexical_region() const;
-         int position() const;
+         std::size_t position() const;
          Optional<ipr::Expr> initializer() const final;
          // FIXME: This should go away.
          const Parameter_list& membership() const;
@@ -812,28 +816,28 @@ namespace ipr {
       struct Base_type final : unique_decl<ipr::Base_type> {
          const ipr::Type& base;
          const ipr::Region& where;
-         const int scope_pos;
+         const std::size_t scope_pos;
 
-         Base_type(const ipr::Type&, const ipr::Region&, int);
+         Base_type(const ipr::Type&, const ipr::Region&, std::size_t);
          const ipr::Type& type() const;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-         int position() const;
+         std::size_t position() const;
          Optional<ipr::Expr> initializer() const final;
       };
 
       struct Enumerator final : unique_decl<ipr::Enumerator> {
          const ipr::Name& id;
          const ipr::Enum& constraint;
-         const int scope_pos;
+         const std::size_t scope_pos;
          const ipr::Region* where;
          Optional<ipr::Expr> init;
 
-         Enumerator(const ipr::Name&, const ipr::Enum&, int);
+         Enumerator(const ipr::Name&, const ipr::Enum&, std::size_t);
          const ipr::Name& name() const;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-         int position() const;
+         std::size_t position() const;
          Optional<ipr::Expr> initializer() const final;
          // FIXME: this should go away.
          const ipr::Enum& membership() const;
@@ -847,6 +851,7 @@ namespace ipr {
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
                                  std::allocator<void> {
+         using Index = typename ipr::Sequence<ipr::Decl>::Index;
          typed_sequence<val_sequence<Member>> decls;
          empty_overload missing;
 
@@ -856,8 +861,8 @@ namespace ipr {
             decls.constraint = &t;
          }
 
-         int size() const final { return decls.size(); }
-         const Member& get(int i) const final { return decls.seq.get(i); }
+         Index size() const final { return decls.size(); }
+         const Member& get(Index i) const final { return decls.seq.get(i); }
 
          const ipr::Product& type() const final { return decls; }
 
@@ -877,8 +882,8 @@ namespace ipr {
       const ipr::Overload&
       homogeneous_scope<Member>::operator[](const ipr::Name& n) const
       {
-         const int s = decls.size();
-         for (int i = 0; i < s; ++i) {
+         const auto s = decls.size();
+         for (Index i = 0; i < s; ++i) {
             const auto& decl = decls.seq.get(i);
             if (&decl.name() == &n)
                return decl.overload;
@@ -891,13 +896,14 @@ namespace ipr {
                class RegionKind = Node<ipr::Region>>
       struct homogeneous_region : RegionKind {
          using location_span = ipr::Region::Location_span;
+         using Index = typename Sequence<Member>::Index;
          const ipr::Region& parent;
          location_span extent;
          Optional<ipr::Expr> owned_by { };
          homogeneous_scope<Member> scope;
 
-         int size() const { return scope.size(); }
-         const Member& get(int i) const { return scope.get(i); }
+         Index size() const { return scope.size(); }
+         const Member& get(Index i) const { return scope.get(i); }
          const ipr::Product& type() const { return scope.type(); }
 
          const ipr::Region& enclosing() const { return parent; }
@@ -949,7 +955,7 @@ namespace ipr {
             return this->decl_data.master_data->overload->where;
          }
 
-         int position() const
+         std::size_t position() const
          {
             return this->decl_data.scope_pos;
          }
