@@ -350,17 +350,18 @@ namespace ipr {
       using value_type = T;
       using reference = const T&;
       using pointer = const T*;
+      using Index = std::size_t;
       using iterator = Iterator;
 
-      virtual int size() const = 0;
+      virtual Index size() const = 0;
       Iterator begin() const;
       Iterator end() const;
 
-      Iterator position(int) const;
-      const T& operator[](int) const;
+      Iterator position(Index) const;
+      const T& operator[](Index) const;
 
    protected:
-      virtual const T& get(int) const = 0;
+      virtual const T& get(Index) const = 0;
    };
 
                                 // -- Sequence<>::Iterator --
@@ -374,10 +375,11 @@ namespace ipr {
       using reference = const T&;
       using pointer = const T*;
       using difference_type = ptrdiff_t;
+      using Index = typename Sequence<T>::Index;
       using iterator_category = std::bidirectional_iterator_tag;
 
       Iterator() {}
-      Iterator(const Sequence* s, int i) : seq{ s }, index{ i } { }
+      Iterator(const Sequence* s, Index i) : seq{ s }, index{ i } { }
 
       const T& operator*() const
       { return seq->get(index); }
@@ -418,13 +420,13 @@ namespace ipr {
       { return !(*this == other); }
 
    private:
-      const Sequence* seq{};
-      int index{};
+      const Sequence* seq { };
+      Index index { };
    };
 
    template<class T>
    inline typename Sequence<T>::Iterator
-   Sequence<T>::position(int i) const
+   Sequence<T>::position(Index i) const
    { return { this, i }; }
 
    template<class T>
@@ -439,7 +441,7 @@ namespace ipr {
 
    template<class T>
    inline const T&
-   Sequence<T>::operator[](int p) const
+   Sequence<T>::operator[](Index p) const
    { return get(p); }
 
                                  // -- Delimiter --
@@ -631,7 +633,8 @@ namespace ipr {
    // Strings in IPR are immutable, and therefore unified.
    struct String : Category<Category_code::String, Node> {
       using iterator = const char*;
-      virtual int size() const = 0;
+      using Index = std::size_t;
+      virtual Index size() const = 0;
       virtual iterator begin() const = 0;
       virtual iterator end() const  = 0;
       static const String& empty_string();            // dedicated node for an empty string
@@ -877,7 +880,7 @@ namespace ipr {
       virtual const Overload& operator[](const Name&) const = 0;
 
       // How may declarations are there in this Scope.
-      int size() const { return members().size(); }
+      auto size() const { return members().size(); }
 
       Iterator begin() const { return members().begin(); }
       Iterator end() const { return members().end(); }
@@ -1024,9 +1027,10 @@ namespace ipr {
    // A Product represents a Cartesian product of Types.  Pragmatically,
    // it may be viewed as a Sequence of Types.  It is a Type.
    struct Product : Unary<Category<Category_code::Product, Type>, const Sequence<Type>&> {
+      using Index = std::size_t;
       Arg_type elements() const { return operand(); }
-      int size() const { return elements().size(); }
-      const Type& operator[](int i) const { return elements()[i]; }
+      auto size() const { return elements().size(); }
+      const Type& operator[](Index i) const { return elements()[i]; }
    };
 
                                 // -- Ptr_to_member --
@@ -1078,9 +1082,10 @@ namespace ipr {
    // A Sum type represents a distinct union of types.  This is currently
    // used only for dynamic exception specification in Function type.
    struct Sum : Unary<Category<Category_code::Sum, Type>, const Sequence<Type>&> {
+      using Index = std::size_t;
       Arg_type elements() const { return operand(); }
-      int size() const { return elements().size(); }
-      const Type& operator[](int i) const { return elements()[i]; }
+      auto size() const { return elements().size(); }
+      const Type& operator[](Index i) const { return elements()[i]; }
    };
 
                                 // -- Forall --
@@ -1209,9 +1214,10 @@ namespace ipr {
    // discarded except the last one.  The type of an Expr_list
    // is a Product.
    struct Expr_list : Unary<Category<Category_code::Expr_list>, const Sequence<Expr>&> {
+      using Index = std::size_t;
       Arg_type elements() const { return operand(); }
-      int size() const { return elements().size(); }
-      const Expr& operator[](int i) const { return elements()[i]; }
+      auto size() const { return elements().size(); }
+      const Expr& operator[](Index i) const { return elements()[i]; }
    };
 
                                 // -- Sizeof --
@@ -1908,7 +1914,7 @@ namespace ipr {
 
       virtual Optional<Expr> initializer() const = 0;
 
-      virtual int position() const = 0;
+      virtual std::size_t position() const = 0;
 
       // This is the first seen declaration for name() in a given
       // translation unit.  The master declaration is therefore the
