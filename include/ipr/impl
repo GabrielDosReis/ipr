@@ -56,14 +56,14 @@ namespace ipr {
       // --------------------------------------
       // -- Implementations of ipr::Sequence --
       // --------------------------------------
-                                // -- ipr::Sequence --
       // The Sequence<> interface admits various implementations.
       // Here is the list of the implementations currently in use:
-      //   (a) ref_sequence<>; (b) val_sequence<>;
+      //   (a) ref_sequence<>;
+      //   (b) val_sequence<>;
       //   (c) empty_sequence<T>.
       // Variants exist in form of
-      //   (i) decl_sequence; (ii) singleton_declset<T>.
-
+      //   (i) decl_sequence;
+      //  (ii) singleton_declset<T>.
 
                                 // -- impl::ref_sequence --
       // The class ref_sequence<T> implements Sequence<T> by storing
@@ -72,8 +72,9 @@ namespace ipr {
       // of redeclarations in decl-sets.
       // In general, it can be used to implement the notion of sub-sequence.
 
-      template<class T, class Seq = Sequence<T>>
-      struct ref_sequence : Seq, private std::deque<const void*> {
+      template<typename T>
+      struct ref_sequence : ipr::Sequence<T>, private std::deque<const void*> {
+         using Seq = Sequence<T>;
          using Rep = std::deque<const void*>;
          using pointer = const T*;
          using Iterator = typename Seq::Iterator;
@@ -98,9 +99,9 @@ namespace ipr {
       // The class val_sequence<T> implements Sequence<T> by storing
       // the actual values, instead of references to values (as is
       // the case of ref_sequence<T>).
-
-      template<class T, class Seq = Sequence<T>>
-      struct val_sequence : Seq, private stable_farm<T> {
+      template<typename T>
+      struct val_sequence : ipr::Sequence<typename T::Interface>, private stable_farm<T> {
+         using Seq = ipr::Sequence<typename T::Interface>;
          using Impl = stable_farm<T>;
          using Iterator = typename Seq::Iterator;
 
@@ -838,31 +839,15 @@ namespace ipr {
          const ipr::Enum& membership() const;
       };
 
-      // A sequence of homogenous node can be represented directly
-      // as a container of the concrete implementations classes
-      // instad of pointers to the interface nodes.  This is the
-      // case in particular for enumerators or parameters.
-
-      template<class Member>
-      struct homogeneous_sequence : ipr::Sequence<typename Member::Interface> {
-         val_sequence<Member> seq;
-
-         int size() const final { return seq.size(); }
-         const Member& get(int i) const final { return seq.get(i); }
-
-         template<typename... Args>
-         Member* push_back(const Args&... args)
-         {
-            return seq.push_back(args...);
-         }
-      };
-
-
+      // A sequence of homogenous node can be represented directly as a container
+      // of the concrete implementations classes instead of pointers to the 
+      // interface nodes.  This is the case, in particular, for enumerators of 
+      // an enumeration or parameters in a parameter list.
       template<class Member>
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
                                  std::allocator<void> {
-         typed_sequence<homogeneous_sequence<Member>> decls;
+         typed_sequence<val_sequence<Member>> decls;
          empty_overload missing;
 
          explicit
@@ -2139,6 +2124,7 @@ namespace ipr {
 
       template<typename T>
       struct unit_base : T {
+         using Interface = T;
          unit_base(impl::Lexicon& l)
                : context{ l },
                  global_ns{ nullptr, context.namespace_type() }
@@ -2195,7 +2181,7 @@ namespace ipr {
       };
 
       struct Module : ipr::Module {
-         using ImplUnits = impl::val_sequence<impl::Module_unit, ipr::Sequence<ipr::Module_unit>>;
+         using ImplUnits = impl::val_sequence<impl::Module_unit>;
          impl::Lexicon& lexicon;
          impl::Module_name stems;
          impl::Interface_unit iface;
