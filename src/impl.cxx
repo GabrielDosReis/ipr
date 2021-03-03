@@ -46,12 +46,12 @@ namespace ipr {
             return compare(lhs.scope_pos, rhs.scope_pos);
          }
 
-         int operator()(std::size_t pos, const scope_datum& s) const
+         int operator()(Decl_position pos, const scope_datum& s) const
          {
             return compare(pos, s.scope_pos);
          }
 
-         int operator()(const scope_datum& s, std::size_t pos) const
+         int operator()(const scope_datum& s, Decl_position pos) const
          {
             return compare(s.scope_pos, pos);
          }
@@ -85,7 +85,7 @@ namespace ipr {
 
       const ipr::Decl&
       decl_sequence::get(Index i) const {
-         scope_datum* result = decls.find(i, scope_datum::comp());
+         scope_datum* result = decls.find(Decl_position{ i }, scope_datum::comp());
          return *util::check(result)->decl;
       }
 
@@ -247,7 +247,7 @@ namespace ipr {
       // -- impl::Base_type --
       // ---------------------
 
-      Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, std::size_t p)
+      Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, Decl_position p)
             : base(t), where(r), scope_pos(p)
       { }
 
@@ -266,8 +266,7 @@ namespace ipr {
          return where;
       }
 
-      std::size_t
-      Base_type::position() const {
+      Decl_position Base_type::position() const {
          return scope_pos;
       }
 
@@ -280,7 +279,7 @@ namespace ipr {
       // -- impl::Enumerator --
       // ----------------------
 
-      Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, std::size_t p)
+      Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, Decl_position p)
             : id(n), constraint(t), scope_pos(p), where(0), init(0)
       { }
 
@@ -304,8 +303,7 @@ namespace ipr {
          return constraint;
       }
 
-      std::size_t
-      Enumerator::position() const {
+      Decl_position Enumerator::position() const {
          return scope_pos;
       }
 
@@ -427,12 +425,12 @@ namespace ipr {
 
       const ipr::Region&
       Parameter::home_region() const {
-         return *util::check(where);
+         return util::check(where)->region();
       }
 
       const ipr::Region&
       Parameter::lexical_region() const {
-         return *util::check(where);
+         return util::check(where)->region();
       }
 
       const ipr::Parameter_list&
@@ -440,9 +438,8 @@ namespace ipr {
          return *util::check(where);
       }
 
-      std::size_t
-      Parameter::position() const {
-         return abstract_name.rep.second;
+      Decl_position Parameter::position() const {
+         return abstract_name.rep.third;
       }
 
       Optional<ipr::Expr> Parameter::initializer() const {
@@ -697,8 +694,8 @@ namespace ipr {
       // -- impl::Enum --
       // ----------------
 
-      Enum::Enum(const ipr::Region& r, const ipr::Type& t, Kind k)
-            : body(r, t), enum_kind(k)
+      Enum::Enum(const ipr::Region& r, Kind k)
+            : body(r), enum_kind(k)
       {
          body.owned_by = this;
       }
@@ -717,7 +714,8 @@ namespace ipr {
 
       impl::Enumerator*
       Enum::add_member(const ipr::Name& n) {
-         impl::Enumerator* e = body.scope.push_back(n, *this, body.size());
+         Decl_position pos { members().size() };
+         impl::Enumerator* e = body.scope.push_back(n, *this, pos);
          e->where = &body;
          return e;
       }
@@ -728,7 +726,7 @@ namespace ipr {
 
       Class::Class(const ipr::Region& pr, const ipr::Type& t)
             : impl::Udt<ipr::Class>(&pr, t),
-              base_subobjects(pr, t) {
+              base_subobjects(pr) {
          base_subobjects.owned_by = this;
       }
 
@@ -739,8 +737,8 @@ namespace ipr {
 
       impl::Base_type*
       Class::declare_base(const ipr::Type& t) {
-         return base_subobjects.scope.push_back(t, base_subobjects,
-                                                base_subobjects.size());
+         Decl_position pos { bases().size() };
+         return base_subobjects.scope.push_back(t, base_subobjects, pos);
       }
 
       // ------------------
@@ -767,14 +765,23 @@ namespace ipr {
       // -- impl::Parameter_list --
       // --------------------------
 
-      Parameter_list::Parameter_list(const ipr::Region& p, const ipr::Type& t)
-            : Base(p, t)
+      Parameter_list::Parameter_list(const ipr::Region& p)
+            : parms(p)
       { }
+
+      const ipr::Product& Parameter_list::type() const { return parms.scope.type(); }
+
+      const ipr::Region& Parameter_list::region() const { return parms; }
+
+      const ipr::Sequence<ipr::Parameter>&
+      Parameter_list::members() const {
+         return parms.scope.decls.seq;
+      }
 
       impl::Parameter*
       Parameter_list::add_member(const ipr::Name& n, const impl::Rname& rn)
       {
-         impl::Parameter* param = scope.decls.seq.push_back(n, rn);
+         impl::Parameter* param = parms.scope.push_back(n, rn);
          param->where = this;
 
          return param;
@@ -1018,8 +1025,8 @@ namespace ipr {
       }
 
       impl::Enum*
-      type_factory::make_enum(const ipr::Region& pr, const ipr::Type& t, Enum::Kind k) {
-         return enums.make(pr, t, k);
+      type_factory::make_enum(const ipr::Region& pr, Enum::Kind k) {
+         return enums.make(pr, k);
       }
 
       impl::Class*
@@ -1096,13 +1103,13 @@ namespace ipr {
       // -- impl::Mapping --
       // -------------------
 
-      Mapping::Mapping(const ipr::Region& pr, const ipr::Type& t, int d)
-            : parameters(pr, t), value_type(0),
+      Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
+            : parameters(pr), value_type(0),
               body(0), nesting_level(d)
       {
         // 31Oct08 added by PIR to avoid exceptions,
         //   when querying the region (parameters) for its owner
-        parameters.owned_by = this;
+        parameters.parms.owned_by = this;
       }
 
       const ipr::Parameter_list&
@@ -1120,8 +1127,7 @@ namespace ipr {
          return body.get();
       }
 
-      int
-      Mapping::depth() const {
+      Mapping_level Mapping::depth() const {
          return nesting_level;
       }
 
@@ -1158,7 +1164,7 @@ namespace ipr {
       template<class T>
       inline void
       Scope::add_member(T* decl) {
-         decl->decl_data.scope_pos = decls.seq.size();
+         decl->decl_data.scope_pos = Decl_position{ decls.seq.size() };
          decls.seq.insert(&decl->decl_data);
       }
 
@@ -2043,14 +2049,13 @@ namespace ipr {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         auto pos = static_cast<int>(map.parameters.size());
+         Decl_position pos { map.parameters.size() };
          return rnames.insert(Rep{ t, map.nesting_level, pos }, ternary_compare());
       }
 
       impl::Mapping*
-      expr_factory::make_mapping(const ipr::Region& r, const ipr::Type& t,
-                                 int l) {
-         return mappings.make(r, t, l);
+      expr_factory::make_mapping(const ipr::Region& r, Mapping_level l) {
+         return mappings.make(r, l);
       }
 
 
@@ -2370,7 +2375,9 @@ namespace ipr {
 
       impl::Enum*
       Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
-         return types.make_enum(pr, enumtype, k);
+         auto t = types.make_enum(pr, k);
+         t->constraint = &enumtype;
+         return t;
       }
 
       impl::Namespace*
@@ -2384,8 +2391,11 @@ namespace ipr {
       }
 
       impl::Mapping*
-      Lexicon::make_mapping(const ipr::Region& r) {
-         return expr_factory::make_mapping(r, anytype);
+      Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
+         auto x = expr_factory::make_mapping(r, l);
+         // Note: the parameters form a Product type needing its type set
+         x->parameters.parms.scope.decls.constraint = &anytype;
+         return x;
       }
 
       impl::Parameter*

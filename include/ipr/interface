@@ -454,6 +454,12 @@ namespace ipr {
       Angle,                     // "<>"
    };
 
+   // Nesting level of a mapping
+   enum class Mapping_level : std::size_t { };
+
+   // Position of a declaration in its declarative region
+   enum class Decl_position : std::size_t { };
+
                                 // -- Optional<> --
    // Occasionally, a node has an optional property (e.g. a variable
    // has an optional initializer).  This class template captures
@@ -839,7 +845,8 @@ namespace ipr {
    // The "level" is the nesting-depth, starting from 1, of the parameter.
    // the "position" is its position, starting from 0, in the
    // parameter-list at a given level.
-   struct Rname : Ternary<Category<Category_code::Rname, Name>, const Type&, int, int> {
+   struct Rname : Ternary<Category<Category_code::Rname, Name>,
+                          const Type&, Mapping_level, Decl_position> {
       // Although the type() of an Rname is its first operand, we don't define
       // that function here, for it would involve a two indirections to
       // to give the result.  Consequently we define it in the implementation
@@ -1510,7 +1517,7 @@ namespace ipr {
       // Mappings may have nested mappings (e.g. member templates of
       // templates)
       // The depth of a template declaration is its nesting level.
-      virtual int depth() const = 0;
+      virtual Mapping_level depth() const = 0;
    };
 
                                 // -- Member_init --
@@ -1613,8 +1620,18 @@ namespace ipr {
    };
 
                                 // -- Parameter_list --
-   // FIXME: Parameter_list should have its category set properly.
-   struct Parameter_list : Region, Sequence<Parameter> { };
+   // The sequence of parameter declarations to an abstraction (mapping).  A parameter-list
+   // has a declarative region that covers the entirety of the abstraction it is associated with.
+   // While a parameter-list node is essentially a container, viewing like an expression allows
+   // an operation such as `type()`, yielding a `Product`, that can be useful in constructing the type
+   // of the mapping being parameterized.
+   struct Parameter_list : Category<Category_code::Parameter_list> {
+      virtual const Region& region() const = 0;
+      virtual const Sequence<Parameter>& members() const = 0;
+      auto begin() const { return members().begin(); }
+      auto end() const { return members().end(); }
+      auto size() const { return members().size(); }
+   };
 
                                 // -- Stmt --
    // The view that a statement is kind of expression does not follow from
@@ -1914,7 +1931,7 @@ namespace ipr {
 
       virtual Optional<Expr> initializer() const = 0;
 
-      virtual std::size_t position() const = 0;
+      virtual Decl_position position() const = 0;
 
       // This is the first seen declaration for name() in a given
       // translation unit.  The master declaration is therefore the

@@ -15,6 +15,20 @@
 
 namespace ipr
 {
+   Printer& operator<<(Printer& p, Mapping_level x)
+   {
+      auto n = static_cast<std::size_t>(x);
+      p.channel() << n;
+      return p;
+   }
+
+   Printer& operator<<(Printer& p, Decl_position x)
+   {
+      auto n = static_cast<std::size_t>(x);
+      p.channel() << n;
+      return p;
+   }
+
    struct pp_base : Constant_visitor<Missing_overrider> {
       explicit pp_base(Printer& p) : pp(p) { }
       using Visitor::visit;
@@ -129,7 +143,7 @@ namespace ipr
          {
             if (i != 0)
                pp << token(", ");
-            pp << xpr_decl(l[i]);
+            pp << xpr_decl(l.members()[i]);
          }
       return pp;
    }
