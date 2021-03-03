@@ -424,7 +424,7 @@ namespace ipr {
       struct scope_datum : link<scope_datum> {
          // The position of this Decl in its scope.  It shall be set
          // at the actual declaration creation by the creating scope.
-         std::size_t scope_pos = { };
+         Decl_position scope_pos = { };
 
          // The specifiers for this declaration.  S
          ipr::DeclSpecifiers spec = { };
@@ -807,7 +807,7 @@ namespace ipr {
          const ipr::Type& type() const;
          const ipr::Region& home_region() const;
          const ipr::Region& lexical_region() const;
-         std::size_t position() const;
+         Decl_position position() const;
          Optional<ipr::Expr> initializer() const final;
          // FIXME: This should go away.
          const Parameter_list& membership() const;
@@ -816,28 +816,28 @@ namespace ipr {
       struct Base_type final : unique_decl<ipr::Base_type> {
          const ipr::Type& base;
          const ipr::Region& where;
-         const std::size_t scope_pos;
+         const Decl_position scope_pos;
 
-         Base_type(const ipr::Type&, const ipr::Region&, std::size_t);
+         Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
          const ipr::Type& type() const;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-         std::size_t position() const;
+         Decl_position position() const;
          Optional<ipr::Expr> initializer() const final;
       };
 
       struct Enumerator final : unique_decl<ipr::Enumerator> {
          const ipr::Name& id;
          const ipr::Enum& constraint;
-         const std::size_t scope_pos;
+         const Decl_position scope_pos;
          const ipr::Region* where;
          Optional<ipr::Expr> init;
 
-         Enumerator(const ipr::Name&, const ipr::Enum&, std::size_t);
+         Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
          const ipr::Name& name() const;
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
-         std::size_t position() const;
+         Decl_position position() const;
          Optional<ipr::Expr> initializer() const final;
          // FIXME: this should go away.
          const ipr::Enum& membership() const;
@@ -854,12 +854,6 @@ namespace ipr {
          using Index = typename ipr::Sequence<ipr::Decl>::Index;
          typed_sequence<val_sequence<Member>> decls;
          empty_overload missing;
-
-         explicit
-         homogeneous_scope(const ipr::Type& t)
-         {
-            decls.constraint = &t;
-         }
 
          Index size() const final { return decls.size(); }
          const Member& get(Index i) const final { return decls.seq.get(i); }
@@ -902,26 +896,23 @@ namespace ipr {
          Optional<ipr::Expr> owned_by { };
          homogeneous_scope<Member> scope;
 
-         Index size() const { return scope.size(); }
-         const Member& get(Index i) const { return scope.get(i); }
-         const ipr::Product& type() const { return scope.type(); }
-
          const ipr::Region& enclosing() const { return parent; }
          const ipr::Scope& bindings() const { return scope; }
          const location_span& span() const { return extent; }
          const ipr::Expr& owner() const { return owned_by.get(); }
 
-         homogeneous_region(const ipr::Region& p, const ipr::Type& t)
-               : parent(p), scope(t)
+         explicit homogeneous_region(const ipr::Region& p)
+               : parent(p)
          { }
       };
 
-      struct Parameter_list : homogeneous_region<impl::Parameter,
-                                 impl::Node<ipr::Parameter_list>> {
-         using Base = homogeneous_region<impl::Parameter,
-                                         impl::Node<ipr::Parameter_list>>;
+      struct Parameter_list : impl::Node<ipr::Parameter_list> {
+         homogeneous_region<impl::Parameter> parms;
 
-         Parameter_list(const ipr::Region&, const ipr::Type&);
+         explicit Parameter_list(const ipr::Region&);
+         const ipr::Product& type() const final;
+         const ipr::Region& region() const final;
+         const ipr::Sequence<ipr::Parameter>& members() const final;
 
          impl::Parameter* add_member(const ipr::Name&, const impl::Rname&);
       };
@@ -955,7 +946,7 @@ namespace ipr {
             return this->decl_data.master_data->overload->where;
          }
 
-         std::size_t position() const
+         Decl_position position() const
          {
             return this->decl_data.scope_pos;
          }
@@ -1098,14 +1089,14 @@ namespace ipr {
          impl::Parameter_list parameters;
          Optional<ipr::Type> value_type;
          Optional<ipr::Expr> body;
-         const int nesting_level;
+         const Mapping_level nesting_level;
 
-         Mapping(const ipr::Region&, const ipr::Type&, int);
+         Mapping(const ipr::Region&, Mapping_level);
 
          const ipr::Parameter_list& params() const final;
          const ipr::Type& result_type() const final;
          const ipr::Expr& result() const final;
-         int depth() const final;
+         Mapping_level depth() const final;
          impl::Parameter* param(const ipr::Name&, const impl::Rname&);
       };
 
@@ -1268,7 +1259,7 @@ namespace ipr {
 
          Rname* rname_for_next_param(const Mapping&, const ipr::Type&);
 
-         Mapping* make_mapping(const ipr::Region&, const ipr::Type&, int = 0);
+         Mapping* make_mapping(const ipr::Region&, Mapping_level);
 
       private:
          util::string::arena string_pool;
@@ -1733,7 +1724,7 @@ namespace ipr {
          Kind kind() const final;
          impl::Enumerator* add_member(const ipr::Name&);
 
-         Enum(const ipr::Region&, const ipr::Type&, Kind);
+         Enum(const ipr::Region&, Kind);
       };
 
       using Union = Udt<ipr::Union>;
@@ -1779,7 +1770,7 @@ namespace ipr {
          impl::Sum* make_sum(const ipr::Sequence<ipr::Type>&);
          impl::Forall* make_forall(const ipr::Product&, const ipr::Type&);
 
-         impl::Enum* make_enum(const ipr::Region&, const ipr::Type&, Enum::Kind);
+         impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
          impl::Class* make_class(const ipr::Region&, const ipr::Type&);
          impl::Union* make_union(const ipr::Region&, const ipr::Type&);
          impl::Namespace* make_namespace(const ipr::Region*, const ipr::Type&);
@@ -2073,7 +2064,7 @@ namespace ipr {
          const ipr::Forall& get_forall(const ipr::Product&,
                                            const ipr::Type&);
 
-         impl::Mapping* make_mapping(const ipr::Region&);
+         impl::Mapping* make_mapping(const ipr::Region&, Mapping_level = { });
          impl::Parameter* make_parameter(const ipr::Name&, const ipr::Type&,
                                          impl::Mapping&);
 

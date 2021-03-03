@@ -58,6 +58,7 @@ namespace ipr
 
       void indent(int n) { pending_indentation += n; }
       int indent() const { return pending_indentation; }
+      std::ostream& channel() { return stream; }
 
       // This series of declarations cannot be adequately be reduced
       // into one template declaration, because it would tend to
@@ -127,6 +128,8 @@ namespace ipr
    Printer& operator<<(Printer&, const Translation_unit&);
 
    Printer& operator<<(Printer&, const Identifier&);
+   Printer& operator<<(Printer&, Mapping_level);
+   Printer& operator<<(Printer&, Decl_position);
 }
 
 #endif // IPR_IO_INCLUDED
