@@ -581,6 +581,13 @@ namespace ipr
             pp << xpr_identifier("typeid")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
+
+         //       noexcept '(' expression ')'
+         void visit(const Noexcept& e) final
+         {
+            pp << xpr_identifier("noexcept")
+               << token('(') << xpr_expr(e.operand()) << token(')');
+         }
       };
    }
 

@@ -1146,6 +1146,7 @@ namespace ipr {
       using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
       using Expansion = Classic_unary_expr<ipr::Expansion>;
       using Construction = Classic_unary_expr<ipr::Construction>;
+      using Noexcept = Unary_expr<ipr::Noexcept>;
 
       using And = Classic_binary_expr<ipr::And>;
       using Annotation = Binary_node<ipr::Annotation>;
@@ -1296,6 +1297,7 @@ namespace ipr {
          Unary_plus* make_unary_plus(const ipr::Expr&, Optional<ipr::Type> = {});
          Expansion* make_expansion(const ipr::Expr&, Optional<ipr::Type> = {});
          Construction* make_construction(const ipr::Type&, const ipr::Enclosure&);
+         Noexcept* make_noexcept(const ipr::Expr&, Optional<ipr::Type> = { });
 
          And* make_and(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1402,6 +1404,7 @@ namespace ipr {
          stable_farm<impl::Unary_plus> unary_pluses;
          stable_farm<impl::Expansion> expansions;
          stable_farm<impl::Construction> constructions;
+         stable_farm<impl::Noexcept> noexcepts;
 
          stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;

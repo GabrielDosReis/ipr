@@ -157,6 +157,7 @@ namespace ipr {
    struct Unary_minus;           // unary minus                         -a
    struct Unary_plus;            // unary plus                          +a
    struct Expansion;             // pack expansion                    t...
+   struct Noexcept;              // noexcept expression        noexcept(e)
 
    // --------------------------------------------------------
    // -- results of binary expression constructor constants --
@@ -1256,6 +1257,9 @@ namespace ipr {
    // sizeof-expression -- "sizeof expr" or "sizeof (int)"
    struct Sizeof : Unary<Category<Category_code::Sizeof>> { };
 
+                                // -- Noexcept --
+   struct Noexcept : Unary<Category<Category_code::Noexcept>> { };
+
                                 // -- Typeid --
    // typeid-expression -- "typeid (expr)", or "typeid (int)"
    struct Typeid : Unary<Category<Category_code::Typeid>> { };
@@ -1289,7 +1293,7 @@ namespace ipr {
 
                                 // -- Post_decrement --
    // post-decrement-expression -- "expr--".
-   struct Post_decrement : Unary<Category<Category_code::Post_decrement,Classic>> { };
+   struct Post_decrement : Unary<Category<Category_code::Post_decrement, Classic>> { };
 
                                 // -- Post_increment --
    // post-increment-expression -- "expr++".
@@ -2218,6 +2222,7 @@ namespace ipr {
       virtual void visit(const Unary_minus&);
       virtual void visit(const Unary_plus&);
       virtual void visit(const Expansion&);
+      virtual void visit(const Noexcept&);
 
       virtual void visit(const Scope_ref&);
       virtual void visit(const And&);

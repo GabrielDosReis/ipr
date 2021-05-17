@@ -427,6 +427,12 @@ ipr::Visitor::visit(const Expansion& e)
 }
 
 void
+ipr::Visitor::visit(const Noexcept& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Scope_ref& n)
 {
    visit(as<Classic>(n));
