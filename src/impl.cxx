@@ -1723,6 +1723,14 @@ namespace ipr {
          return x;
       }
 
+      impl::Noexcept*
+      expr_factory::make_noexcept(const ipr::Expr& e, Optional<ipr::Type> t)
+      {
+         auto x = noexcepts.make(e);
+         x->constraint = t;
+         return x;
+      }
+
       impl::And*
       expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> result) {
          impl::And* and_expr = ands.make(l, r);

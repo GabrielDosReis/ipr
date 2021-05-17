@@ -74,8 +74,9 @@ Promotion,                          // ipr::Promotion
 Read,                               // ipr::Read
 Throw,                              // ipr::Throw
 Unary_minus,                        // ipr::Unary_minus
-Unary_plus,                         // ipr::Unary_plus;
+Unary_plus,                         // ipr::Unary_plus
 Expansion,                          // ipr::Expansion
+Noexcept,                           // ipr::Noexcept
 
 Scope_ref,                          // ipr::Scope_ref
 Plus,                               // ipr::Plus
