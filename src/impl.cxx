@@ -36,6 +36,48 @@ namespace ipr {
             : text{ s }, location{ l }, token_value{ v }, token_category{ c }
       { }
 
+      const ipr::BasicAttribute&
+      attr_factory::make_basic_attribute(const ipr::Token& t)
+      {
+         return *basics.make(t);
+      }
+
+      const ipr::ScopedAttribute&
+      attr_factory::make_scoped_attribute(const ipr::Token& s, const ipr::Token& m)
+      {
+         return *scopeds.make(s, m);
+      }
+
+      const ipr::LabeledAttribute&
+      attr_factory::make_labeled_attribute(const ipr::Token& l, const ipr::Attribute& a)
+      {
+         return *labeleds.make(l, a);
+      }
+
+      const ipr::CalledAttribute&
+      attr_factory::make_called_attribute(const ipr::Attribute& f, const ipr::Sequence<ipr::Attribute>& s)
+      {
+         return *calleds.make(f, s);
+      }
+
+      const ipr::ExpandedAttribute&
+      attr_factory::make_expanded_attribute(const ipr::Token& t, const ipr::Attribute& a)
+      {
+         return *expandeds.make(t, a);
+      }
+
+      const ipr::FactoredAttribute&
+      attr_factory::make_factored_attribute(const ipr::Token& t, const ipr::Sequence<ipr::Attribute>& s)
+      {
+         return *factoreds.make(t, s);
+      }
+
+      const ipr::ElaboratedAttribute&
+      attr_factory::make_elaborated_attribute(const ipr::Expr& x)
+      {
+         return *elaborateds.make(x);
+      }
+
       const ipr::Sequence<ipr::Identifier>& Module_name::stems() const {
          return components;
       }
