@@ -557,8 +557,10 @@ namespace ipr {
    // However, C++11 added attributes which are essentially token soups.  These
    // attributes make the IPR interface less abstract than wanted.
 
+   // General classification of tokens, e.g. identifier, number, space, comment, etc.
    enum class TokenCategory : uint8_t { };
 
+   // A numerical value associated with each token.
    enum class TokenValue : uint16_t { };
 
    struct Lexeme {
@@ -577,26 +579,46 @@ namespace ipr {
       virtual void accept(Visitor&) const = 0;
    };
 
-   struct BalancedAttributeSequence : Sequence<Attribute> {
-   };
-
+   // A simple token used as attribute.
    struct BasicAttribute : Attribute {
       virtual const Token& token() const = 0;
    };
 
+   // An attribute of the form `token1 :: token2'
    struct ScopedAttribute : Attribute {
       virtual const Token& scope() const = 0;
       virtual const Token& member() const = 0;
    };
 
+   // An attribute of the form `token : attribute'.
    struct LabeledAttribute : Attribute {
       virtual const Token& label() const = 0;
       virtual const Attribute& attribute() const = 0;
    };
 
+   // An attribute of the form `f(args)'.
    struct CalledAttribute : Attribute {
-      virtual const Token& callee() const = 0;
-      virtual const BalancedAttributeSequence& arguments() const = 0;
+      virtual const Attribute& function() const = 0;
+      virtual const Sequence<Attribute>& arguments() const = 0;
+   };
+
+   // An attribute of the form `attribute...'
+   struct ExpandedAttribute : Attribute {
+      virtual const Token& expander() const = 0;
+      virtual const Attribute& operand() const = 0;
+   };
+
+   // An attribute of the form `[[using check: memory(3), type(2)]]'
+   struct FactoredAttribute : Attribute {
+      virtual const Token& factor() const = 0;
+      virtual const Sequence<Attribute>& terms() const = 0;
+   };
+
+   // An attribute of the form `[[ expr ]]', where `expr' is the elaboration result
+   // of parsing and semantics analysis of the enclosed token sequence.  This is a 
+   // common non-standard form of attribute.
+   struct ElaboratedAttribute : Attribute {
+      virtual const Expr& elaboration() const = 0;
    };
 
    struct Attribute::Visitor {
@@ -604,6 +626,9 @@ namespace ipr {
       virtual void visit(const ScopedAttribute&) = 0;
       virtual void visit(const LabeledAttribute&) = 0;
       virtual void visit(const CalledAttribute&) = 0;
+      virtual void visit(const ExpandedAttribute&) = 0;
+      virtual void visit(const FactoredAttribute&) = 0;
+      virtual void visit(const ElaboratedAttribute&) = 0;
    };
 
                                 // -- Module_name --
