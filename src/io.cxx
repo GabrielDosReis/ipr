@@ -637,6 +637,12 @@ namespace ipr
                << token(' ') << xpr_expr(e.operand());
          }
 
+         void visit(const Args_cardinality& e) final
+         {
+            pp << xpr_identifier("sizeof") << token("...")
+               << token('(') << xpr_expr(e.operand()) << token(')');
+         }
+
          void visit(const Unary_plus& e) override
          {
             pp << token('+') << xpr_expr(e.operand());

@@ -337,6 +337,12 @@ ipr::Visitor::visit(const Sizeof& e)
 }
 
 void
+ipr::Visitor::visit(const Args_cardinality& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Typeid& e)
 {
    visit(as<Expr>(e));
