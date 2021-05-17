@@ -1113,6 +1113,7 @@ namespace ipr {
       };
 
       using Sizeof = Unary_expr<ipr::Sizeof>;
+      using Args_cardinality = Unary_expr<ipr::Args_cardinality>;
       using Typeid = Unary_expr<ipr::Typeid>;
       using Label = Unary_expr<ipr::Label>;
 
@@ -1278,6 +1279,7 @@ namespace ipr {
          Dtor_name* make_dtor_name(const ipr::Type&);
          Expr_list* make_expr_list();
          Sizeof* make_sizeof(const ipr::Expr&);
+         Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
          Typeid* make_typeid(const ipr::Expr&);
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
@@ -1405,6 +1407,7 @@ namespace ipr {
          stable_farm<impl::Expansion> expansions;
          stable_farm<impl::Construction> constructions;
          stable_farm<impl::Noexcept> noexcepts;
+         stable_farm<impl::Args_cardinality> cardinalities;
 
          stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;

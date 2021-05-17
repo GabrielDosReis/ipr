@@ -1690,6 +1690,13 @@ namespace ipr {
          return sizeofs.insert(t, unary_compare());
       }
 
+      impl::Args_cardinality*
+      expr_factory::make_args_cardinality(const ipr::Expr& e, Optional<ipr::Type> t) {
+         auto x = cardinalities.make(e);
+         x->constraint = t;
+         return x;
+      }
+
       impl::Typeid*
       expr_factory::make_typeid(const ipr::Expr& t) {
          return xtypeids.insert(t, unary_compare());

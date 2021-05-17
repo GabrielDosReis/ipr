@@ -77,6 +77,7 @@ Unary_minus,                        // ipr::Unary_minus
 Unary_plus,                         // ipr::Unary_plus
 Expansion,                          // ipr::Expansion
 Noexcept,                           // ipr::Noexcept
+Args_cardinality,                   // ipr::Args_cardinality
 
 Scope_ref,                          // ipr::Scope_ref
 Plus,                               // ipr::Plus

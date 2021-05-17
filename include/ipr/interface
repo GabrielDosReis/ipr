@@ -158,6 +158,7 @@ namespace ipr {
    struct Unary_plus;            // unary plus                          +a
    struct Expansion;             // pack expansion                    t...
    struct Noexcept;              // noexcept expression        noexcept(e)
+   struct Args_cardinality;      // arguments count in a parameter pack: sizeof...(args)
 
    // --------------------------------------------------------
    // -- results of binary expression constructor constants --
@@ -1257,6 +1258,9 @@ namespace ipr {
    // sizeof-expression -- "sizeof expr" or "sizeof (int)"
    struct Sizeof : Unary<Category<Category_code::Sizeof>> { };
 
+                                // -- Args_cardinality --
+   struct Args_cardinality : Unary<Category<Category_code::Args_cardinality>> { };
+
                                 // -- Noexcept --
    struct Noexcept : Unary<Category<Category_code::Noexcept>> { };
 
@@ -2206,6 +2210,7 @@ namespace ipr {
       virtual void visit(const Deref&);
       virtual void visit(const Enclosure&);
       virtual void visit(const Sizeof&);
+      virtual void visit(const Args_cardinality&);
       virtual void visit(const Expr_stmt&);
       virtual void visit(const Typeid&);
       virtual void visit(const Id_expr&);
