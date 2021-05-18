@@ -289,6 +289,12 @@ void ipr::Visitor::visit(const Eclipsis& e)
 }
 
 void
+ipr::Visitor::visit(const Symbol& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Address& e)
 {
    visit(as<Classic>(e));

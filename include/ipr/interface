@@ -131,6 +131,7 @@ namespace ipr {
    // -------------------------------------------------------
    // -- results of unary expression constructor constants --
    // -------------------------------------------------------
+   struct Symbol;                // self-evaluating symbolic values: 'int' or 'nullptr'
    struct Address;               // address-of                          &a
    struct Array_delete;          // array delete-expression     delete[] p
    struct Complement;            // bitwise complement                  ~m
@@ -1192,7 +1193,7 @@ namespace ipr {
    // unknown bound, e.g. in "unsigned char charset[];", or in an empty expression-statement.
    // We do not unify Phantom expressions, as two arrays with
    // unknown bounds may not designate the same type.
-   struct Phantom : Category<Category_code::Phantom, Expr> { };
+   struct Phantom : Category<Category_code::Phantom> { };
 
 
                                 // -- Eclipsis --
@@ -1200,7 +1201,14 @@ namespace ipr {
    // Note: that `...' is not the pack expansion operator.  There is no operand to the `...' here.
    // While the syntax looks the same, the meaning is really different.  It stands for something
    // was omitted, hence the name.
-   struct Eclipsis : Category<Category_code::Eclipsis, Expr> { };
+   struct Eclipsis : Category<Category_code::Eclipsis> { };
+
+                                // -- Symbol --
+   // Representation of self-evaluating (generalized) expressions, i.e. irreducible expressions.
+   // That includes builtin types, as well as designated special values such as `nullptr'.
+   struct Symbol : Unary<Category<Category_code::Symbol>, const Name&> {
+      const Name& name() const { return operand(); }
+   };
 
                                 // -- Address --
    // Address-of expression -- "&expr"
@@ -2141,6 +2149,10 @@ namespace ipr {
       virtual const Type& enum_type() const = 0;               // "enum" or "enum class"
       virtual const Type& namespace_type() const = 0;          // "namespace"
 
+      virtual const Expr& nullptr_value() const = 0;           // "nullptr"      -- technically not a parameter
+                                                               // to the C++ abstract machine, but provided as
+                                                               // example of symbolic value representation.
+
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
    };
@@ -2202,6 +2214,7 @@ namespace ipr {
       virtual void visit(const Phantom&);
       virtual void visit(const Eclipsis&);
 
+      virtual void visit(const Symbol&);
       virtual void visit(const Address&);
       virtual void visit(const Array_delete&);
       virtual void visit(const Complement&);
