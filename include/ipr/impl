@@ -1088,6 +1088,11 @@ namespace ipr {
       using Phantom = Expr<ipr::Phantom>;
       using Eclipsis = Expr<ipr::Eclipsis>;
 
+      struct Symbol final : Unary_expr<ipr::Symbol> {
+         explicit Symbol(const ipr::Name&);
+         Symbol(const ipr::Name&, const ipr::Type&);
+      };
+
       using Address = Classic_unary_expr<ipr::Address>;
       using Array_delete = Classic_unary_expr<ipr::Array_delete>;
       using Complement = Classic_unary_expr<ipr::Complement>;
@@ -1268,6 +1273,7 @@ namespace ipr {
 
          Guide_name* make_guide_name(const ipr::Template&);
 
+         Symbol* make_symbol(const ipr::Name&, Optional<ipr::Type> = { });
          Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
          Array_delete* make_array_delete(const ipr::Expr&);
          Complement* make_complement(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1382,6 +1388,7 @@ namespace ipr {
          stable_farm<impl::Phantom> phantoms;
          stable_farm<impl::Eclipsis> eclipses;
 
+         stable_farm<impl::Symbol> symbols;
          stable_farm<impl::Address> addresses;
          stable_farm<impl::Annotation> annotations;
          stable_farm<impl::Array_delete> array_deletes;
@@ -2125,6 +2132,8 @@ namespace ipr {
          const ipr::Type& enum_type() const final;
          const ipr::Type& namespace_type() const final;
 
+         const ipr::Expr& nullptr_value() const final;
+
          const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 
          const ipr::As_type& get_as_type(const ipr::Expr&);
@@ -2214,6 +2223,8 @@ namespace ipr {
          const impl::Builtin<ipr::As_type> doubletype;
          const impl::Builtin<ipr::As_type> longdoubletype;
          const impl::Builtin<ipr::As_type> ellipsistype;
+
+         const impl::Symbol null;
 
          template<class T> T* finish_type(T*);
       };

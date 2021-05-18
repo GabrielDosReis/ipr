@@ -99,6 +99,17 @@ namespace ipr {
          }
       };
 
+      // -- impl::Symbol --
+      Symbol::Symbol(const ipr::Name& n)
+         : Unary_expr<ipr::Symbol>{ n }
+      { }
+
+      Symbol::Symbol(const ipr::Name& n, const ipr::Type& t)
+         : Unary_expr<ipr::Symbol>{ n }
+      {
+         constraint = &t;
+      }
+
       // -- impl::New --
       New::New(Optional<ipr::Expr_list> where, const ipr::Construction& expr)
             : Classic_binary_expr<ipr::New>{ where, expr }
@@ -1513,6 +1524,12 @@ namespace ipr {
          return eclipses.make(&t);
       }
 
+      impl::Symbol*
+      expr_factory::make_symbol(const ipr::Name& n, Optional<ipr::Type> t)
+      {
+         return make(symbols, n).with_type(t);
+      }
+
       impl::Address*
       expr_factory::make_address(const ipr::Expr& e, Optional<ipr::Type> t)
       {
@@ -2106,7 +2123,8 @@ namespace ipr {
               doubletype(get_identifier("double"), cxx_linkage(), anytype),
               longdoubletype(get_identifier("long double"),
                              cxx_linkage(), anytype),
-              ellipsistype(get_identifier("..."), cxx_linkage(), anytype)
+              ellipsistype(get_identifier("..."), cxx_linkage(), anytype),
+              null(get_identifier("nullptr"), get_decltype(null))
       {
          record_builtin_type(anytype);
          record_builtin_type(classtype);
@@ -2235,6 +2253,8 @@ namespace ipr {
       const ipr::Type& Lexicon::enum_type() const { return enumtype; }
 
       const ipr::Type& Lexicon::namespace_type() const { return namespacetype; }
+
+      const ipr::Expr& Lexicon::nullptr_value() const { return null; }
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
