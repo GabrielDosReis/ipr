@@ -312,20 +312,11 @@ namespace ipr {
       template<typename T>
       using Unary_node = Unary<Node<T>>;
 
-      // FIXME: This class template logically inherits from impl::Unary<T>,
-      // FIXME as it was in previous versions.
-      // FIXME: However, VC++2015 got utterly confused.
-      template<class Interface>
-      struct type_from_operand : Interface {
-         using typename Interface::Arg_type;
-	      Arg_type rep;
-
-         explicit type_from_operand(Arg_type a) : rep(a) { }
-         const ipr::Type& type() const final
-         {
-            return rep.type();
-         }
-         Arg_type operand() const final { return rep; }
+      template<class Base>
+      struct type_from_operand : Unary_node<Base> {
+         using typename Base::Arg_type;
+         explicit type_from_operand(Arg_type a) : Unary_node<Base>{a} { }
+         const ipr::Type& type() const final { return this->operand().type(); }
       };
 
       template<class Interface>
@@ -349,28 +340,12 @@ namespace ipr {
       template<typename T>
       using Binary_node = Binary<Node<T>>;
 
-      // FIXME: see comment on type_from_operand.  VC++2015 bug.
-      // FIXME: This class template logically inherits from impl::Binary<T>,
-      // FIXME as it was in previous versions.
-      // FIXME: However, VC++2015 got utterly confused.
-      template<class Interface>
-      struct type_from_second : Interface {
-         using typename Interface::Arg1_type;
-         using typename Interface::Arg2_type;
-         struct Rep {
-            Arg1_type first;
-            Arg2_type second;
-         };
-         Rep rep;
-
-         type_from_second(Arg1_type f, Arg2_type s) : rep{ f, s } { }
-
-         const ipr::Type& type() const final
-         {
-            return this->rep.second.type();
-         }
-         Arg1_type first() const final { return rep.first; }
-         Arg2_type second() const final { return rep.second; }
+      template<class Base>
+      struct type_from_second : Binary_node<Base> {
+         using typename Base::Arg1_type;
+         using typename Base::Arg2_type;
+         type_from_second(Arg1_type f, Arg2_type s) : Binary_node<Base>{ f, s } { }
+         const ipr::Type& type() const final { return this->second().type(); }
       };
 
 
@@ -832,6 +807,22 @@ namespace ipr {
          {
             return attrs;
          }
+      };
+
+      // Capture the commonality of controlled statements such as `do-statement',
+      // `while-statement', and `switch-statement'.  This special class is introduced
+      // instead of reusing `type_from_second' because otherwise the contruction of
+      // nodes of such classes would require constructing the control expression and
+      // the body statement first, which can be awkward.
+      template<typename Base>
+      struct Controlled_stmt : Stmt<Node<Base>> {
+         using typename Base::Arg1_type;
+         using typename Base::Arg2_type;
+         std::remove_reference_t<Arg1_type>* control { };
+         std::remove_reference_t<Arg2_type>* stmt { };
+         Arg1_type first() const final { return *util::check(control); }
+         Arg2_type second() const final { return *util::check(stmt); }
+         const ipr::Type& type() const final { return second().type(); }
       };
 
       // The class template Decl<> implements common operations
@@ -1906,16 +1897,16 @@ namespace ipr {
       // ----------------------------------
 
       using Ctor_body = Binary<Stmt<Expr<ipr::Ctor_body>>>;
-      using Do = type_from_second<Stmt<Node<ipr::Do>>>;
-      using Expr_stmt = type_from_operand<Stmt<Node<ipr::Expr_stmt>>>;
-      using Empty_stmt = type_from_operand<Stmt<Node<ipr::Empty_stmt>>>;
-      using Goto = type_from_operand<Stmt<Node<ipr::Goto>>>;
-      using Handler = type_from_second<Stmt<Node<ipr::Handler>>>;
+      using Do = Controlled_stmt<ipr::Do>;
+      using Expr_stmt = type_from_operand<Stmt<ipr::Expr_stmt>>;
+      using Empty_stmt = type_from_operand<Stmt<ipr::Empty_stmt>>;
+      using Goto = type_from_operand<Stmt<ipr::Goto>>;
+      using Handler = type_from_second<Stmt<ipr::Handler>>;
       using If = Ternary<Stmt<Expr<ipr::If>>>;
-      using Labeled_stmt = type_from_second<Stmt<Node<ipr::Labeled_stmt>>>;
-      using Return = type_from_operand<Stmt<Node<ipr::Return>>>;
-      using Switch = type_from_second<Stmt<Node<ipr::Switch>>>;
-      using While = type_from_second<Stmt<Node<ipr::While>>>;
+      using Labeled_stmt = type_from_second<Stmt<ipr::Labeled_stmt>>;
+      using Return = type_from_operand<Stmt<ipr::Return>>;
+      using Switch = Controlled_stmt<ipr::Switch>;
+      using While = Controlled_stmt<ipr::While>;
 
       // A Block holds a heterogeneous region, suitable for
       // recording the set of declarations appearing in that
@@ -2015,14 +2006,14 @@ namespace ipr {
          impl::Expr_stmt* make_expr_stmt(const ipr::Expr&);
          impl::Goto* make_goto(const ipr::Expr&);
          impl::Return* make_return(const ipr::Expr&);
-         impl::Do* make_do(const ipr::Stmt&, const ipr::Expr&);
+         impl::Do* make_do();
          impl::If* make_if(const ipr::Expr&, const ipr::Stmt&);
          impl::If* make_if(const ipr::Expr&, const ipr::Stmt&, const ipr::Stmt&);
-         impl::Switch* make_switch(const ipr::Expr&, const ipr::Stmt&);
+         impl::Switch* make_switch();
          impl::Handler* make_handler(const ipr::Decl&, const ipr::Block&);
          impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&,
                                                const ipr::Stmt&);
-         impl::While* make_while(const ipr::Expr&, const ipr::Stmt&);
+         impl::While* make_while();
          impl::For* make_for();
          impl::For_in* make_for_in();
 
