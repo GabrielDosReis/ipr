@@ -1206,6 +1206,8 @@ namespace ipr {
                                 // -- Symbol --
    // Representation of self-evaluating (generalized) expressions, i.e. irreducible expressions.
    // That includes builtin types, as well as designated special values such as `nullptr'.
+   // Note: A symbol is uniquely identified by the pair (name, type), so a symbol can be `overloaded'.
+   // Symbol nodes are unified, as they are self-evaluating, e.g. core values.
    struct Symbol : Unary<Category<Category_code::Symbol>, const Name&> {
       const Name& name() const { return operand(); }
    };

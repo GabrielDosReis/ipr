@@ -1509,6 +1509,18 @@ namespace ipr {
          return *linkages.insert(lang, unary_compare());
       }
 
+      const ipr::Symbol&
+      expr_factory::get_symbol(const ipr::Name& n, const ipr::Type& t)
+      {
+         const auto comparator = [](auto& x, auto& y) {
+            if (auto cmp = compare(x.name(), x.name()))
+               return cmp;
+            return compare(x.type(), y.type());
+         };
+
+         return *symbols.insert(impl::Symbol{ n, t }, comparator);
+      }
+
       impl::Phantom*
       expr_factory::make_phantom() {
          return phantoms.make();
@@ -1522,12 +1534,6 @@ namespace ipr {
       impl::Eclipsis* expr_factory::make_eclipsis(const ipr::Type& t)
       {
          return eclipses.make(&t);
-      }
-
-      impl::Symbol*
-      expr_factory::make_symbol(const ipr::Name& n, Optional<ipr::Type> t)
-      {
-         return make(symbols, n).with_type(t);
       }
 
       impl::Address*
