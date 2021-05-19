@@ -1236,6 +1236,9 @@ namespace ipr {
          const ipr::Linkage& get_linkage(const std::string&);
          const ipr::Linkage& get_linkage(const ipr::String&);
 
+         // Return a symbol with a given name and type.
+         const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
+
          Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
 
          // Build a node for a missing expression of an unspecified type.
@@ -1264,7 +1267,6 @@ namespace ipr {
 
          Guide_name* make_guide_name(const ipr::Template&);
 
-         Symbol* make_symbol(const ipr::Name&, Optional<ipr::Type> = { });
          Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
          Array_delete* make_array_delete(const ipr::Expr&);
          Complement* make_complement(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1379,7 +1381,7 @@ namespace ipr {
          stable_farm<impl::Phantom> phantoms;
          stable_farm<impl::Eclipsis> eclipses;
 
-         stable_farm<impl::Symbol> symbols;
+         util::rb_tree::container<impl::Symbol> symbols;
          stable_farm<impl::Address> addresses;
          stable_farm<impl::Annotation> annotations;
          stable_farm<impl::Array_delete> array_deletes;
