@@ -1277,9 +1277,9 @@ namespace ipr {
          Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
          Dtor_name* make_dtor_name(const ipr::Type&);
          Expr_list* make_expr_list();
-         Sizeof* make_sizeof(const ipr::Expr&);
+         Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
          Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
-         Typeid* make_typeid(const ipr::Expr&);
+         Typeid* make_typeid(const ipr::Expr&, Optional<ipr::Type> = { });
          impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
          Id_expr* make_id_expr(const ipr::Decl&);
          Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
@@ -1375,13 +1375,13 @@ namespace ipr {
          util::rb_tree::container<impl::Rname> rnames;
          util::rb_tree::container<impl::Template_id> template_ids;
          util::rb_tree::container<impl::Type_id> type_ids;
-         util::rb_tree::container<impl::Sizeof> sizeofs;
-         util::rb_tree::container<impl::Typeid> xtypeids;
 
          stable_farm<impl::Phantom> phantoms;
          stable_farm<impl::Eclipsis> eclipses;
 
          util::rb_tree::container<impl::Symbol> symbols;
+         stable_farm<impl::Sizeof> sizeofs;
+         stable_farm<impl::Typeid> xtypeids;
          stable_farm<impl::Address> addresses;
          stable_farm<impl::Annotation> annotations;
          stable_farm<impl::Array_delete> array_deletes;

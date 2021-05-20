@@ -1716,8 +1716,9 @@ namespace ipr {
       }
 
       impl::Sizeof*
-      expr_factory::make_sizeof(const ipr::Expr& t) {
-         return sizeofs.insert(t, unary_compare());
+      expr_factory::make_sizeof(const ipr::Expr& e, Optional<ipr::Type> t)
+      {
+         return make(sizeofs, e).with_type(t);
       }
 
       impl::Args_cardinality*
@@ -1727,8 +1728,9 @@ namespace ipr {
       }
 
       impl::Typeid*
-      expr_factory::make_typeid(const ipr::Expr& t) {
-         return xtypeids.insert(t, unary_compare());
+      expr_factory::make_typeid(const ipr::Expr& e, Optional<ipr::Type> t)
+      {
+         return make(xtypeids, e).with_type(t);
       }
 
       impl::Unary_minus*
