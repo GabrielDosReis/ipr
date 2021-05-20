@@ -2434,8 +2434,9 @@ namespace ipr {
          return m.param(n, *rname_for_next_param(m, t));
       }
 
-      const ipr::Auto& Lexicon::get_auto() {
-         auto t = autos.make();
+      const ipr::Auto& Lexicon::get_auto()
+      {
+         auto t = make(autos).with_type(anytype);
          t->id = &get_identifier("auto");
          return *t;
       }
