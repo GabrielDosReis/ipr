@@ -1603,7 +1603,7 @@ namespace ipr {
    // Checked base to derived class conversion. This is always a non-implicit
    // conversion and exists to add additional semantic context to otherwise
    // explicit conversion nodes.
-   struct Narrow : Binary<Category<narrow_cat>, const Expr&, const Type&> {
+   struct Narrow : Binary<Category<Category_code::Narrow>, const Expr&, const Type&> {
 
       Arg1_type expr() const { return first(); }
       Arg2_type derived() const { return second(); }
@@ -1657,7 +1657,7 @@ namespace ipr {
 
                                 // -- Widen --
    // Derived to base class conversion
-   struct Widen : Binary<Category<widen_cat>, const Expr&, const Type&> {
+   struct Widen : Binary<Category<Category_code::Widen>, const Expr&, const Type&> {
       Arg1_type expr() const { return first(); }
       Arg2_type base() const { return second(); }
    };

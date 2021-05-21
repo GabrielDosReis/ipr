@@ -1988,10 +1988,8 @@ namespace ipr {
       }
 
       impl::Narrow*
-      expr_factory::make_narrow(const ipr::Expr& e, const ipr::Class& c, const ipr::Type& result) {
-         impl::Narrow* narrow = narrows.make(e, c);
-         narrow->constraint = &result;
-         return narrow;
+      expr_factory::make_narrow(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         return make(narrows, e, t).with_type(result);
       }
 
       impl::Not_equal*
@@ -2020,9 +2018,7 @@ namespace ipr {
 
       impl::Pretend*
       expr_factory::make_pretend(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
-         impl::Pretend* pretend = pretends.make(e, t);
-         pretend->constraint = &result;
-         return pretend;
+         return make(pretends, e, t).with_type(result);
       }
 
       impl::Qualification*
@@ -2068,10 +2064,8 @@ namespace ipr {
       }
 
       impl::Widen*
-      expr_factory::make_widen(const ipr::Expr& e, const ipr::Class& c, const ipr::Type& result) {
-         impl::Widen* widen = widens.make(e, c);
-         widen->constraint = &result;
-         return widen;
+      expr_factory::make_widen(const ipr::Expr& e, const ipr::Type& t, const ipr::Type& result) {
+         return make(widens, e, t).with_type(result);
       }
 
       impl::Binary_fold*

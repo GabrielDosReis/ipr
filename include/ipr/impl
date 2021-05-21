@@ -1338,7 +1338,7 @@ namespace ipr {
          Modulo_assign* make_modulo_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Mul* make_mul(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Mul_assign* make_mul_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Narrow* make_narrow(const ipr::Expr&, const ipr::Class&, const ipr::Type&);
+         Narrow* make_narrow(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Not_equal* make_not_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Or* make_or(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Plus* make_plus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1353,7 +1353,7 @@ namespace ipr {
          Template_id* make_template_id(const ipr::Name&,
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
-         Widen* make_widen(const ipr::Expr&, const ipr::Class&, const ipr::Type&);
+         Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
