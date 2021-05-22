@@ -655,6 +655,12 @@ ipr::Visitor::visit(const Mul_assign& e)
 }
 
 void
+ipr::Visitor::visit(const Narrow& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
 ipr::Visitor::visit(const Not_equal& e)
 {
    visit(as<Classic>(e));
@@ -670,6 +676,18 @@ void
 ipr::Visitor::visit(const Or& e)
 {
    visit(as<Classic>(e));
+}
+
+void
+ipr::Visitor::visit(const Pretend& e)
+{
+   visit(as<Expr>(e));
+}
+
+void
+ipr::Visitor::visit(const Qualification& e)
+{
+   visit(as<Expr>(e));
 }
 
 void
@@ -709,7 +727,7 @@ ipr::Visitor::visit(const Static_cast& e)
 }
 
 void
-ipr::Visitor::visit(const Qualification& e)
+ipr::Visitor::visit(const Widen& e)
 {
    visit(as<Expr>(e));
 }

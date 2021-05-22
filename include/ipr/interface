@@ -203,13 +203,17 @@ namespace ipr {
    struct Modulo_assign;         // in=place modulo arithmetic     a %= b
    struct Mul;                   // multiplication                 a * b
    struct Mul_assign;            // in-place multiplication        a *= b
+   struct Narrow;                // checked base to derived class conversion
    struct Not_equal;             // not-equality comparison        a != b
    struct Or;                    // logical or                     a || b
+   struct Pretend;               // generalization of bitcast and reinterpret cast
+   struct Qualification;         // cv-qualification conversion
    struct Reinterpret_cast;      // reinterpret-cast  reinterpret_cast<T>(v)
    struct Rshift;                // right shift                    a >> b
    struct Rshift_assign;         // in-place right shift           a >>= b
    struct Static_cast;           // static-cast            static_cast<T>(v)
-   struct Qualification;         // cv-qualification conversion
+   struct Widen;                 // derived to base class conversion
+
    struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
@@ -1595,6 +1599,16 @@ namespace ipr {
    // In-place multiplication-expression -- "a *= b"
    struct Mul_assign : Binary<Category<Category_code::Mul_assign, Classic>> { };
 
+                                   // -- Narrow --
+   // Checked base to derived class conversion. This is always a non-implicit
+   // conversion and exists to add additional semantic context to otherwise
+   // explicit conversion nodes.
+   struct Narrow : Binary<Category<Category_code::Narrow>, const Expr&, const Type&> {
+
+      Arg1_type expr() const { return first(); }
+      Arg2_type derived() const { return second(); }
+   };
+
                                 // -- Not_equal --
    // Inequality-comparison-expression -- "a != b"
    struct Not_equal : Binary<Category<Category_code::Not_equal, Classic>> { };
@@ -1602,6 +1616,20 @@ namespace ipr {
                                 // -- Or --
    // logical-or-expression -- "a || b"
    struct Or : Binary<Category<Category_code::Or, Classic>> { };
+
+                                // -- Pretend --
+   // Generalization of bitcast and reinterpret cast
+   struct Pretend : Binary<Category<Category_code::Pretend>, const Expr&, const Type&> {
+      Arg1_type expr() const { return first(); }
+      Arg2_type target() const { return second(); }
+   };
+
+                                // -- Qualification --
+   // A conversion that add cv-qualifiers
+   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifier> {
+      Arg1_type expr() const { return first(); }
+      Arg2_type qualifier() const { return second(); }
+   };
 
                                 // -- Reinterpret_cast --
    // An expression of the form "reinterpret_cast<type>(expr)"
@@ -1627,11 +1655,11 @@ namespace ipr {
    // An expression of the form "static_cast<type>(expr)".
    struct Static_cast : Cast_expr<Category_code::Static_cast> { };
 
-                                   // -- Qualification --
-   // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifier> {
+                                // -- Widen --
+   // Derived to base class conversion
+   struct Widen : Binary<Category<Category_code::Widen>, const Expr&, const Type&> {
       Arg1_type expr() const { return first(); }
-      Arg2_type qualifier() const { return second(); }
+      Arg2_type base() const { return second(); }
    };
 
                                 // -- New --
@@ -2282,16 +2310,19 @@ namespace ipr {
       virtual void visit(const Modulo_assign&);
       virtual void visit(const Mul&);
       virtual void visit(const Mul_assign&);
+      virtual void visit(const Narrow&);
       virtual void visit(const Not_equal&);
       virtual void visit(const Or&);
       virtual void visit(const Plus&);
       virtual void visit(const Plus_assign&);
+      virtual void visit(const Pretend&);
+      virtual void visit(const Qualification&);
       virtual void visit(const Reinterpret_cast&);
       virtual void visit(const Rshift&);
       virtual void visit(const Rshift_assign&);
       virtual void visit(const Static_cast&);
+      virtual void visit(const Widen&);
       virtual void visit(const Binary_fold&);
-      virtual void visit(const Qualification&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);

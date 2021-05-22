@@ -1198,17 +1198,20 @@ namespace ipr {
       using Modulo_assign = Classic_binary_expr<ipr::Modulo_assign>;
       using Mul = Classic_binary_expr<ipr::Mul>;
       using Mul_assign = Classic_binary_expr<ipr::Mul_assign>;
+      using Narrow = Binary_expr<ipr::Narrow>;
       using Not_equal = Classic_binary_expr<ipr::Not_equal>;
       using Or = Classic_binary_expr<ipr::Or>;
       using Plus = Classic_binary_expr<ipr::Plus>;
       using Plus_assign = Classic_binary_expr<ipr::Plus_assign>;
+      using Pretend = Binary_expr<ipr::Pretend>;
+      using Qualification = Binary_expr<ipr::Qualification>;
       using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
       using Rshift = Classic_binary_expr<ipr::Rshift>;
       using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
       using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_node<ipr::Template_id>;
-      using Qualification = Binary_expr<ipr::Qualification>;
+      using Widen = Binary_expr<ipr::Widen>;
 
       struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
          Category_code fold_op;
@@ -1335,10 +1338,13 @@ namespace ipr {
          Modulo_assign* make_modulo_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Mul* make_mul(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Mul_assign* make_mul_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Narrow* make_narrow(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Not_equal* make_not_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Or* make_or(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Plus* make_plus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Plus_assign* make_plus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Pretend* make_pretend(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
+         Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifier, const ipr::Type&);
          Reinterpret_cast* make_reinterpret_cast(const ipr::Type&,
                                                  const ipr::Expr&);
          Scope_ref* make_scope_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1347,7 +1353,7 @@ namespace ipr {
          Template_id* make_template_id(const ipr::Name&,
                                        const ipr::Expr_list&);
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
-         Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifier, const ipr::Type&);
+         Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
@@ -1444,15 +1450,18 @@ namespace ipr {
          stable_farm<impl::Modulo_assign> modulo_assigns;
          stable_farm<impl::Mul> muls;
          stable_farm<impl::Mul_assign> mul_assigns;
+         stable_farm<impl::Narrow> narrows;
          stable_farm<impl::Not_equal> not_equals;
          stable_farm<impl::Or> ors;
          stable_farm<impl::Plus> pluses;
          stable_farm<impl::Plus_assign> plus_assigns;
+         stable_farm<impl::Pretend> pretends;
+         stable_farm<impl::Qualification> qualifications;
          stable_farm<impl::Reinterpret_cast> rcasts;
          stable_farm<impl::Rshift> rshifts;
          stable_farm<impl::Rshift_assign> rshift_assigns;
          stable_farm<impl::Static_cast> scasts;
-         stable_farm<impl::Qualification> qualifications;
+         stable_farm<impl::Widen> widens;
          stable_farm<impl::Binary_fold> folds;
 
          stable_farm<impl::New> news;

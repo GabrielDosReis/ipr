@@ -119,16 +119,19 @@ Modulo,                             // ipr::Modulo
 Modulo_assign,                      // ipr::Modulo_assign
 Mul,                                // ipr::Mul
 Mul_assign,                         // ipr::Mul_assign
+Narrow,                             // ipr::Narrow
 Not_equal,                          // ipr::Not_equal
 Or,                                 // ipr::Or
+Pretend,                            // ipr::Pretend
+Qualification,                      // ipr::Qualification
 Reinterpret_cast,                   // ipr::Reinterpret_cast
 Rshift,                             // ipr::Rshift,
 Rshift_assign,                      // ipr::Rshift_assign
 Static_cast,                        // ipr::Static_cast
+Widen,                              // ipr::Widen
 Minus,                              // ipr::Minus
 Minus_assign,                       // ipr::Minus_assign
 Binary_fold,                        // ipr::Binary_fold
-Qualification,                      // ipr::Qualification
 
 New,                                // ipr::New
 Conditional,                        // ipr::Conditional
@@ -139,7 +142,7 @@ Break,                              // ipr::Break
 Continue,                           // ipr::Continue
 Ctor_body,                          // ipr::Ctor_body
 Do,                                 // ipr::Do
-Expr_stmt,                          // ipr::expr_stmt_cat,
+Expr_stmt,                          // ipr::Expr_stmt,
 For,                                // ipr::For
 For_in,                             // ipr::For_in
 Goto,                               // ipr::Goto
