@@ -1115,7 +1115,7 @@ namespace ipr
       void visit(const Function& t) final
       {
          pp << token('(');
-         pp << map.params();
+         pp << map.parameters();
          pp << token(')');
          pp << xpr_exception_spec(t.throws());
 
@@ -1125,7 +1125,7 @@ namespace ipr
       void visit(const Forall&) final
       {
          pp << token('<');
-         pp << map.params();
+         pp << map.parameters();
          pp << token('>');
          pp << xpr_initializer(map.result());
       }

@@ -160,7 +160,7 @@ namespace ipr {
          explicit node_ref(const T& t) : node(t) { }
       };
 
-                                // -- Token --
+                                // -- impl::Token --
       struct Token : ipr::Lexeme, ipr::Token {
          const String& spelling() const final { return text; }
          const Source_location& locus() const final { return location; }
@@ -270,14 +270,93 @@ namespace ipr {
          stable_farm<impl::ElaboratedAttribute> elaborateds;
       };
 
-                                // -- Module_name --
+      // -- implementation for ipr::Capture
+      struct Capture : ipr::Capture {
+         using Interface = ipr::Capture;
+         Capture(const ipr::Decl& d, ipr::Capture_mode m) : decl{d}, md{m} { }
+         ipr::Capture_mode mode() const final { return md; }
+         const ipr::Decl& entity() const final { return decl; }
+      private:
+         const ipr::Decl& decl;
+         const ipr::Capture_mode md;
+      };
+
+      // -- Generic implementation of ipr::Capture_specification
+      template<typename T>
+      struct Capture_specification : T {
+         void accept(typename T::Visitor& v) const final { v.visit(*this); }
+      };
+
+      // -- implementation of ipr::Capture_specification::Default
+      struct Default_capture_specification : Capture_specification<ipr::Capture_specification::Default> {
+         explicit Default_capture_specification(Capture_mode m) : md{m} { }
+         Capture_mode mode() const final { return md; }
+      private:
+         const Capture_mode md;
+      };
+
+      // -- implementation of ipr::Capture_specification::Implicit_object
+      struct Implicit_object_capture_specification : Capture_specification<ipr::Capture_specification::Implicit_object> {
+         explicit Implicit_object_capture_specification(Capture_mode m) : md{m} { }
+         Capture_mode how() const final { return md; }
+      private:
+         const Capture_mode md;
+      };
+
+      // -- implementation of ipr::Capture_specification::Enclosing_local
+      struct Enclosing_local_capture_specification : Capture_specification<ipr::Capture_specification::Enclosing_local> {
+         Enclosing_local_capture_specification(const ipr::Decl& x, Capture_mode m) : decl{x}, md{m} { }
+         Capture_mode mode() const final { return md; }
+         const ipr::Identifier& name() const final;
+         const ipr::Decl& declaration() const final { return decl; }
+      private:
+         const ipr::Decl& decl;
+         const Capture_mode md;
+      };
+
+      // -- implementation of ipr::Capture_capture::Binding
+      struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
+         Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Capture_mode m) : id{n}, init{x}, md{m} { }
+         Capture_mode mode() const final { return md; }
+         const ipr::Identifier& name() const { return id; }
+         const ipr::Expr& initializer() const { return init; }
+      private:
+         const ipr::Identifier& id;
+         const ipr::Expr& init;
+         const Capture_mode md;
+      };
+
+      // -- implementation of ipr::Capture_specification::Expansion.
+      struct Expansion_capture_specification : Capture_specification<ipr::Capture_specification::Expansion> {
+         explicit Expansion_capture_specification(const Named& x) : cap{x} { }
+         const Named& what() const final { return cap; }
+      private:
+         const Named& cap;
+      };
+
+      // -- capture specification factory
+      struct capture_spec_factory {
+         const ipr::Capture_specification::Default& default_capture(ipr::Capture_mode);
+         const ipr::Capture_specification::Implicit_object& implicit_object_capture(ipr::Capture_mode);
+         const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, ipr::Capture_mode);
+         const ipr::Capture_specification::Binding& binding_capture(const ipr::Identifier&, const ipr::Expr&, ipr::Capture_mode);
+         const ipr::Capture_specification::Expansion& expansion_capture(const ipr::Capture_specification::Named&);
+      private:
+         stable_farm<impl::Default_capture_specification> defaults;
+         stable_farm<impl::Implicit_object_capture_specification> implicits;
+         stable_farm<impl::Enclosing_local_capture_specification> enclosings;
+         stable_farm<impl::Binding_capture_specification> bindings;
+         stable_farm<impl::Expansion_capture_specification> expansions;
+      };
+
+                                // -- impl::Module_name --
       struct Module_name : ipr::Module_name {
          ref_sequence<ipr::Identifier> components;
 
          const ipr::Sequence<ipr::Identifier>& stems() const final;
       };
 
-                                // -- Node --
+                                // -- impl::Node --
       template<class T>
       struct Node : T {
          using Interface = T;
@@ -992,10 +1071,12 @@ namespace ipr {
 
       struct Parameter_list : impl::Node<ipr::Parameter_list> {
          homogeneous_region<impl::Parameter> parms;
+         const Mapping_level nesting;
 
-         explicit Parameter_list(const ipr::Region&);
+         Parameter_list(const ipr::Region&, Mapping_level);
          const ipr::Product& type() const final;
          const ipr::Region& region() const final;
+         Mapping_level level() const final { return nesting; }
          const ipr::Sequence<ipr::Parameter>& members() const final;
 
          impl::Parameter* add_member(const ipr::Name&, const impl::Rname&);
@@ -1082,6 +1163,28 @@ namespace ipr {
       struct Symbol final : Unary_expr<ipr::Symbol> {
          explicit Symbol(const ipr::Name&);
          Symbol(const ipr::Name&, const ipr::Type&);
+      };
+
+      struct Lambda : impl::Node<ipr::Lambda> {
+         Optional<ipr::Closure> constraint;
+         Optional<ipr::Type> value_type;
+         impl::Parameter_list parms;
+         const ipr::Expr* body = nullptr;
+         Optional<ipr::Expr> decl_constraint;
+         impl::ref_sequence<ipr::Attribute> attrs;
+         impl::ref_sequence<ipr::Capture_specification> env_spec;
+         Optional<ipr::Expr> eh;
+         Lambda_specifiers lam_spec;
+
+         const ipr::Closure& type() const final { return constraint.get(); }
+         Optional<ipr::Type> target() const final { return value_type; }
+         const ipr::Parameter_list& parameters() const final { return parms; }
+         Optional<ipr::Expr> requirement() const final { return decl_constraint; }
+         const ipr::Expr& result() const final;
+         const ipr::Sequence<ipr::Attribute>& attributes() const final { return attrs; }
+         Optional<ipr::Expr> eh_specification() const final { return eh; }
+         Lambda_specifiers specifiers() const final { return lam_spec; }
+         const ipr::Sequence<ipr::Capture_specification>& captures() const final { return env_spec; }
       };
 
       using Address = Classic_unary_expr<ipr::Address>;
@@ -1177,17 +1280,14 @@ namespace ipr {
       using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
 
       struct Mapping : impl::Expr<ipr::Mapping> {
-         impl::Parameter_list parameters;
+         impl::Parameter_list parms;
          Optional<ipr::Type> value_type;
          Optional<ipr::Expr> body;
-         const Mapping_level nesting_level;
 
          Mapping(const ipr::Region&, Mapping_level);
-
-         const ipr::Parameter_list& params() const final;
-         const ipr::Type& result_type() const final;
+         const ipr::Parameter_list& parameters() const final { return parms; }
+         const ipr::Type& target() const final;
          const ipr::Expr& result() const final;
-         Mapping_level depth() const final;
          impl::Parameter* param(const ipr::Name&, const impl::Rname&);
       };
 
@@ -1356,6 +1456,7 @@ namespace ipr {
          Rname* rname_for_next_param(const Mapping&, const ipr::Type&);
 
          Mapping* make_mapping(const ipr::Region&, Mapping_level);
+         Lambda make_lambda(const ipr::Region&, Mapping_level);
 
       private:
          util::string::arena string_pool;
@@ -1842,6 +1943,13 @@ namespace ipr {
       struct Auto : impl::Type<ipr::Auto> {
       };
 
+      struct Closure : impl::Udt<ipr::Closure> {
+         impl::val_sequence<impl::Capture> captures;
+
+         Closure(const ipr::Region&, const ipr::Type&);
+         const ipr::Sequence<ipr::Capture>& members() const final { return captures; }
+      };
+
       // This class is responsible for creating nodes that
       // represent types.  It is responsible for the storage
       // management that is implied.  Notice that the type nodes
@@ -1873,7 +1981,7 @@ namespace ipr {
          impl::Class* make_class(const ipr::Region&, const ipr::Type&);
          impl::Union* make_union(const ipr::Region&, const ipr::Type&);
          impl::Namespace* make_namespace(const ipr::Region*, const ipr::Type&);
-
+         impl::Closure* make_closure(const ipr::Region&, const ipr::Type&);
       private:
          util::rb_tree::container<impl::Array> arrays;
          util::rb_tree::container<impl::Decltype> decltypes;
@@ -1891,6 +1999,7 @@ namespace ipr {
          stable_farm<impl::Class> classes;
          stable_farm<impl::Union> unions;
          stable_farm<impl::Namespace> namespaces;
+         stable_farm<impl::Closure> closures;
       };
 
 

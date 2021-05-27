@@ -71,13 +71,12 @@ namespace ipr {
       // node is from the category indicated by the template parameter.
       // This is a cheap, specialized version of dynamic cast.
       template<class T>
-      const T*
+      inline const T*
       view(const Node& n)
       {
          struct visitor : Constant_visitor<No_op> {
-            const T* result;
-            visitor() : result() { }
-            void visit(const T& n) override { result = &n; }
+            const T* result = nullptr;
+            void visit(const T& n) final { result = &n; }
          };
 
          visitor vis { };
