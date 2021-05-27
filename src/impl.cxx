@@ -78,6 +78,43 @@ namespace ipr {
          return *elaborateds.make(x);
       }
 
+      const ipr::Identifier&
+      Enclosing_local_capture_specification::name() const
+      {
+         return *util::check(util::view<ipr::Identifier>(decl.name()));
+      }
+
+      // -- impl::capture_spec_factory --
+      const ipr::Capture_specification::Default&
+      capture_spec_factory::default_capture(ipr::Capture_mode m)
+      {
+         return *defaults.make(m);
+      }
+
+      const ipr::Capture_specification::Implicit_object&
+      capture_spec_factory::implicit_object_capture(ipr::Capture_mode m)
+      {
+         return *implicits.make(m);
+      }
+
+      const ipr::Capture_specification::Enclosing_local&
+      capture_spec_factory::enclosing_local_capture(const ipr::Decl& d, ipr::Capture_mode m)
+      {
+         return *enclosings.make(d, m);
+      }
+
+      const ipr::Capture_specification::Binding&
+      capture_spec_factory::binding_capture(const ipr::Identifier& n, const ipr::Expr& x, ipr::Capture_mode m)
+      {
+         return *bindings.make(n, x, m);
+      }
+
+      const ipr::Capture_specification::Expansion&
+      capture_spec_factory::expansion_capture(const ipr::Capture_specification::Named& c)
+      {
+         return *expansions.make(c);
+      }
+
       const ipr::Sequence<ipr::Identifier>& Module_name::stems() const {
          return components;
       }
@@ -429,7 +466,7 @@ namespace ipr {
       const ipr::Parameter_list& Fundecl::parameters() const {
          if (data.index() == 0)
             return *util::check(data.parameters());
-         return util::check(data.mapping())->parameters;
+         return util::check(data.mapping())->parms;
       }
 
       Optional<ipr::Mapping> Fundecl::mapping() const {
@@ -817,6 +854,11 @@ namespace ipr {
          return base_subobjects.scope.push_back(t, base_subobjects, pos);
       }
 
+      // -- impl::Closure --
+      Closure::Closure(const ipr::Region& r, const ipr::Type& t)
+         : impl::Udt<ipr::Closure>(&r, t)
+      { }
+
       // ------------------
       // -- impl::String --
       // ------------------
@@ -841,8 +883,8 @@ namespace ipr {
       // -- impl::Parameter_list --
       // --------------------------
 
-      Parameter_list::Parameter_list(const ipr::Region& p)
-            : parms(p)
+      Parameter_list::Parameter_list(const ipr::Region& p, Mapping_level l)
+            : parms(p), nesting{ l }
       { }
 
       const ipr::Product& Parameter_list::type() const { return parms.scope.type(); }
@@ -1121,6 +1163,11 @@ namespace ipr {
          return namespaces.make(pr, t);
       }
 
+      impl::Closure* type_factory::make_closure(const ipr::Region& r, const ipr::Type& t)
+      {
+         return closures.make(r, t);
+      }
+
       // ---------------------
       // -- impl::Expr_list --
       // ---------------------
@@ -1180,21 +1227,16 @@ namespace ipr {
       // -------------------
 
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
-            : parameters(pr), value_type(0),
-              body(0), nesting_level(d)
+            : parms(pr, d), value_type(0),
+              body(0)
       {
         // 31Oct08 added by PIR to avoid exceptions,
         //   when querying the region (parameters) for its owner
-        parameters.parms.owned_by = this;
-      }
-
-      const ipr::Parameter_list&
-      Mapping::params() const {
-         return parameters;
+        parms.parms.owned_by = this;
       }
 
       const ipr::Type&
-      Mapping::result_type() const {
+      Mapping::target() const {
          return value_type.get();
       }
 
@@ -1203,13 +1245,9 @@ namespace ipr {
          return body.get();
       }
 
-      Mapping_level Mapping::depth() const {
-         return nesting_level;
-      }
-
       impl::Parameter*
       Mapping::param(const ipr::Name& n, const impl::Rname& rn) {
-         return parameters.add_member(n, rn);
+         return parms.add_member(n, rn);
       }
 
       // -------------------------------
@@ -2091,8 +2129,9 @@ namespace ipr {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         Decl_position pos { map.parameters.size() };
-         return rnames.insert(Rep{ t, map.nesting_level, pos }, ternary_compare());
+         Decl_position pos { map.parms.size() };
+         auto lvl = map.parameters().level();
+         return rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
       }
 
       impl::Mapping*
@@ -2439,7 +2478,7 @@ namespace ipr {
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
          auto x = expr_factory::make_mapping(r, l);
          // Note: the parameters form a Product type needing its type set
-         x->parameters.parms.scope.decls.constraint = &anytype;
+         x->parms.parms.scope.decls.constraint = &anytype;
          return x;
       }
 

@@ -37,6 +37,7 @@ Sum,                                // ipr::Sum
 Forall,                             // ipr::Forall
 Union,                              // ipr::Union
 Auto,                               // ipr::Auto
+Closure,                            // ipr::Closure
 
 Identifier,                         // ipr::Identifier
 Operator,                           // ipr::Operator
@@ -51,6 +52,7 @@ Rname,                              // ipr::Rname
 
 Phantom,                            // ipr::Phantom
 Eclipsis,                           // ipr::Eclipsis
+Lambda,                             // ipr::Lambda
 
 Symbol,                             // ipr::Symbol
 Address,                            // ipr::Address

@@ -105,6 +105,7 @@ namespace ipr {
    struct Forall;                // universally quantified type - Not ISO C++ type
    struct Union;                 // user-defined type - declared as "union"
    struct Auto;                  // "auto" -- each occurrence is generative
+   struct Closure;               // closure type -- type of lambda expression, with capture data
 
    // ------------------------------------------
    // -- results of name constructor constants --
@@ -127,6 +128,7 @@ namespace ipr {
    struct Phantom;               // placeholder for arrays of unknown bounds,
                                  // rethrow, empty parts of a For, etc...
    struct Eclipsis;              // the `...' in a unary fold
+   struct Lambda;                // Lambda expression, packing an environment and a code pointer
 
    // -------------------------------------------------------
    // -- results of unary expression constructor constants --
@@ -636,6 +638,86 @@ namespace ipr {
       virtual void visit(const ExpandedAttribute&) = 0;
       virtual void visit(const FactoredAttribute&) = 0;
       virtual void visit(const ElaboratedAttribute&) = 0;
+   };
+
+                                // -- DeclSpecifiers --
+   enum class DeclSpecifiers : uint32_t {
+      None       = 0,
+      Register   = 1 << 0,   // Banned from C++17.
+      Static     = 1 << 1,
+      Extern     = 1 << 2,
+      Mutable    = 1 << 3,
+      Thread     = 1 << 4,
+      StorageClass  = Register | Static | Extern | Mutable | Thread,
+
+      Inline     = 1 << 5,
+      Virtual    = 1 << 6,   // also used as storage class specifier
+                             // for virtual base subobjects
+      Explicit   = 1 << 7,
+      Pure       = 1 << 8, 
+      FunctionSpecifier = Inline | Virtual | Explicit | Pure,
+
+      Friend     = 1 << 9,
+      Typedef    = 1 << 10,
+
+      Public     = 1 << 11,
+      Protected  = 1 << 12,
+      Private    = 1 << 13,
+      AccessProtection = Public | Protected | Private,
+
+      Export     = 1 << 14,  // For exported declarations.
+      Constexpr  = 1 << 15,  // C++ 11
+      Consteval  = 1 << 16,  // C++20
+   };
+
+   constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
+   }
+
+   constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a | b;
+   }
+
+   constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
+   }
+
+   constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a & b;
+   }
+
+   constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
+   }
+
+   constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
+   {
+      return a = a ^ b;
+   }
+
+   constexpr bool implies(DeclSpecifiers a, DeclSpecifiers b)
+   {
+      return (a & b) == b;
+   }
+
+                                 // -- Lambda_specifiers --
+   // Declaration specifiers that can appear on a lambda expression.
+   enum class Lambda_specifiers : uint32_t {
+      None = 0,
+      Mutable    = 1 << 0,
+      Constexpr  = 1 << 1,
+      Consteval  = 1 << 2,
+   };
+
+   // The available modes of lambda captures
+   enum class Capture_mode {
+      Value,                                    // Default capture by value ("=" squiggle)
+      Reference,                                // Default capture by reference ("&" squiggle)
    };
 
                                 // -- Module_name --
@@ -1192,6 +1274,26 @@ namespace ipr {
    struct Auto : Category<Category_code::Auto, Type> {
    };
 
+
+   // A capture is a description of how a local entity is referenced in a lambda expression.
+   // It is essentially a pair (Capture_mode, Decl) where the first component tells how the 
+   // entity is referenced (by value or by reference), and a declaration that specifies the 
+   // declarative semantic properties of the captured entity.
+   // Note: A Capture should not be confused with a Capture_specification: the specification
+   //       is a prescription of how an entity should be captured (either explicitly or implicitly) 
+   //       in a lambda, whereas a capture is a result of executing that prescription.
+   struct Capture {
+      virtual Capture_mode mode() const = 0;
+      virtual const Decl& entity() const = 0;
+   };
+
+                                // -- Closure --
+   // A closure type is the type of a lambda expression, which ISO C++ confusingly requires
+   // to be a non-union class type.  The logical representation in the IPR has it as a distinct
+   // (generative) user-defined type whose members are captures.   Each lambda expression has
+   // its own unique type, even if its members would be otherwise the same.
+   struct Closure : Category<Category_code::Closure, Udt<Capture>> { };
+
                                 // -- Phantom --
    // This nodes represents a missing expression, as in the "bound" of an array type with
    // unknown bound, e.g. in "unsigned char charset[];", or in an empty expression-statement.
@@ -1206,6 +1308,81 @@ namespace ipr {
    // While the syntax looks the same, the meaning is really different.  It stands for something
    // was omitted, hence the name.
    struct Eclipsis : Category<Category_code::Eclipsis> { };
+
+   // Semantic description of the variety of lambda capture specifications:
+   //   - default captures: indicated by the squiggles "=" (by value), and "&" (by reference) at source level
+   //   - implicit object: indicated by "this" (by reference), and "*this" (by value) at source level
+   //   - named symbols: local enclosing variable, and locally introduced variable (with initializer) at source level
+   struct Capture_specification {
+      struct Default;                           // default lambda capture specification
+      struct Implicit_object;                   // capture mode of implicit object
+      struct Named;                             // named simple capture; base of Simple and With_initializer
+      struct Enclosing_local;                   // simply named captured local entity
+      struct Binding;                           // capture with initialization
+      struct Expansion;                         // expansion of a lambda capture
+
+      struct Visitor;
+      virtual void accept(Visitor&) const = 0;
+   };
+
+                                // -- Lambda --
+   struct Lambda : Category<Category_code::Lambda> {
+      virtual const Closure& type() const override = 0;           // a lambda is of a (unique) closure type
+      virtual Optional<Type> target() const = 0;                  // return type, optionally specified at source level
+      virtual const Parameter_list& parameters() const = 0;
+      virtual Optional<Expr> requirement() const = 0;             // declaration constraint possibly involving parameters
+      virtual const Expr& result() const = 0;                     // body of the lambda
+      virtual const Sequence<Attribute>& attributes() const = 0;  // optional attribute-list applying to the lambda
+      virtual Optional<Expr> eh_specification() const = 0;
+      virtual Lambda_specifiers specifiers() const = 0;
+      virtual const Sequence<Capture_specification>& captures() const = 0;
+   };
+
+   // Default lambda capture specification
+   struct Capture_specification::Default : Capture_specification {
+      virtual Capture_mode mode() const = 0;
+   };
+
+   // Lambda capture specification of the implicit object in a non-static member context.
+   // The designation of the capture is defined by how(), where:
+   //   - Capture_mode::Reference means 'this'
+   //   - Capture_mode::Value means '*this'
+   // Note: an alternative design is to introduced a distinct enum for representing the
+   //       designation of the implicit object (say 'This' and 'Self), but that would
+   //       have just obscured the fundamental semantics correspondence.
+   struct Capture_specification::Implicit_object : Capture_specification {
+      virtual Capture_mode how() const = 0;
+   };
+
+   // Base of lambda captures designated by an given name.
+   struct Capture_specification::Named : Capture_specification {
+      virtual const Identifier& name() const = 0;
+      virtual Capture_mode mode() const = 0;
+   };
+
+   // Lambda capture referencing a local entity from the enclosing context.
+   struct Capture_specification::Enclosing_local : Capture_specification::Named {
+      virtual const Decl& declaration() const = 0;
+   };
+
+   // Lambda capture introducing an alias bound to the result of evaluating
+   // an expression in the (local) context of the lambda body.
+   struct Capture_specification::Binding : Capture_specification::Named {
+      virtual const Expr& initializer() const = 0;
+   };
+
+   // Lambda capture expansion of either an enclosing variable pack, or a local binding pack.
+   struct Capture_specification::Expansion : Capture_specification {
+      virtual const Named& what() const = 0;
+   };
+
+   struct Capture_specification::Visitor {
+      virtual void visit(const Default&) = 0;
+      virtual void visit(const Implicit_object&) = 0;
+      virtual void visit(const Enclosing_local&) = 0;
+      virtual void visit(const Binding&) = 0;
+      virtual void visit(const Expansion&) = 0;
+   };
 
                                 // -- Symbol --
    // Representation of self-evaluating (generalized) expressions, i.e. irreducible expressions.
@@ -1555,16 +1732,11 @@ namespace ipr {
                                 // -- Mapping --
    // This node represents a parameterized expression.
    // Its type is a Function in case of parameterized classic expression,
-   // and Template otherwise.
+   // and Forall otherwise.
    struct Mapping : Category<Category_code::Mapping> {
-      virtual const Parameter_list& params() const = 0;
-      virtual const Type& result_type() const = 0;
+      virtual const Parameter_list& parameters() const = 0;
+      virtual const Type& target() const = 0;
       virtual const Expr& result() const = 0;
-
-      // Mappings may have nested mappings (e.g. member templates of
-      // templates)
-      // The depth of a template declaration is its nesting level.
-      virtual Mapping_level depth() const = 0;
    };
 
                                 // -- Member_init --
@@ -1698,6 +1870,7 @@ namespace ipr {
    // of the mapping being parameterized.
    struct Parameter_list : Category<Category_code::Parameter_list> {
       virtual const Region& region() const = 0;
+      virtual Mapping_level level() const = 0;
       virtual const Sequence<Parameter>& members() const = 0;
       auto begin() const { return members().begin(); }
       auto end() const { return members().end(); }
@@ -1901,70 +2074,6 @@ namespace ipr {
       const Expr* expr;
    };
 
-                                // -- DeclSpecifiers --
-   enum class DeclSpecifiers : uint32_t {
-      None       = 0,
-      Register   = 1 << 0,   // Banned from C++17.
-      Static     = 1 << 1,
-      Extern     = 1 << 2,
-      Mutable    = 1 << 3,
-      Thread     = 1 << 4,
-      StorageClass  = Register | Static | Extern | Mutable | Thread,
-
-      Inline     = 1 << 5,
-      Virtual    = 1 << 6,   // also used as storage class specifier
-                             // for virtual base subobjects
-      Explicit   = 1 << 7,
-      Pure       = 1 << 8,
-      FunctionSpecifier = Inline | Virtual | Explicit | Pure,
-
-      Friend     = 1 << 9,
-      Typedef    = 1 << 10,
-
-      Public     = 1 << 11,
-      Protected  = 1 << 12,
-      Private    = 1 << 13,
-      AccessProtection = Public | Protected | Private,
-
-      Export     = 1 << 14,  // For exported declarations.
-      Constexpr  = 1 << 15   // C++ 11
-   };
-
-   constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
-   }
-
-   inline DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a | b;
-   }
-
-   constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
-   }
-
-   inline DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a & b;
-   }
-
-   constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
-   }
-
-   inline DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a ^ b;
-   }
-
-   constexpr bool implies(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return (a & b) == b;
-   }
-
                                 // -- Decl --
    // Only declaration-statements are statements from Standard C++ perspective.
    // However, we find it simpler just to take the general rule that a declaration
@@ -2028,7 +2137,7 @@ namespace ipr {
       virtual const Sequence<Decl>& specializations() const = 0;
       virtual const Mapping& mapping() const = 0;
 
-      const Parameter_list& params() const { return mapping().params(); }
+      const Parameter_list& parameters() const { return mapping().parameters(); }
       const Expr& result() const { return mapping().result(); }
 
       virtual Optional<Template> definition() const = 0;
@@ -2243,6 +2352,7 @@ namespace ipr {
       virtual void visit(const Scope&);
       virtual void visit(const Phantom&);
       virtual void visit(const Eclipsis&);
+      virtual void visit(const Lambda&);
 
       virtual void visit(const Symbol&);
       virtual void visit(const Address&);
