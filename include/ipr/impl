@@ -1160,6 +1160,11 @@ namespace ipr {
       using Phantom = Expr<ipr::Phantom>;
       using Eclipsis = Expr<ipr::Eclipsis>;
 
+      struct This : impl::Expr<ipr::This> {
+         Optional<ipr::Decl> owner;
+         Optional<ipr::Decl> context() const final { return owner; }
+      };
+
       struct Symbol final : Unary_expr<ipr::Symbol> {
          explicit Symbol(const ipr::Name&);
          Symbol(const ipr::Name&, const ipr::Type&);
@@ -1350,6 +1355,7 @@ namespace ipr {
          const ipr::Phantom* make_phantom(const ipr::Type&);
 
          Eclipsis* make_eclipsis(const ipr::Type&);
+         This* make_this();
 
          // Returns an IPR node for a typed literal expression.
          Literal* make_literal(const ipr::Type&, const ipr::String&);
@@ -1485,6 +1491,7 @@ namespace ipr {
 
          stable_farm<impl::Phantom> phantoms;
          stable_farm<impl::Eclipsis> eclipses;
+         stable_farm<impl::This> these;
 
          util::rb_tree::container<impl::Symbol> symbols;
          stable_farm<impl::Sizeof> sizeofs;
