@@ -429,7 +429,7 @@ namespace ipr {
       // -- impl::Template --
       // --------------------
 
-      Template::Template() : init{}, lexreg{} { }
+      Template::Template() : member_of{}, init{}, lexreg{} { }
 
       const ipr::Template&
       Template::primary_template() const {
