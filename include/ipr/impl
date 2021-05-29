@@ -671,7 +671,7 @@ namespace ipr {
       struct master_decl_data : basic_decl_data<Interface>, overload_entry {
          // The declaration that is considered to be the definition.
          Optional<Interface> def { };
-         Optional<ipr::Linkage> langlinkage { };
+         util::ref<const ipr::Linkage> langlinkage { };
 
          // The overload set that contains this master declaration.  It
          // shall be set at the time the node for the master declaration
@@ -691,7 +691,7 @@ namespace ipr {
          using Base = basic_decl_data<ipr::Template>;
          // The declaration that is considered to be the definition.
          Optional<ipr::Template> def { };
-         Optional<ipr::Linkage> langlinkage { };
+         util::ref<ipr::Linkage> langlinkage { };
          const ipr::Template* primary;
          const ipr::Region* home;
 
@@ -942,7 +942,7 @@ namespace ipr {
       template<class Interface>
       struct unique_decl : impl::Stmt<Node<Interface>> {
          ipr::DeclSpecifiers spec;
-         Optional<ipr::Linkage> langlinkage { };
+         util::ref<const ipr::Linkage> langlinkage { };
          singleton_overload overload;
 
          unique_decl() : spec(ipr::DeclSpecifiers::None),
@@ -965,13 +965,10 @@ namespace ipr {
          Optional<ipr::Expr> init;
 
          Parameter(const ipr::Name&, const impl::Rname&);
-
          const ipr::Name& name() const;
          const ipr::Type& type() const;
-         const ipr::Region& home_region() const;
-         const ipr::Region& lexical_region() const;
          Decl_position position() const;
-         Optional<ipr::Expr> initializer() const final;
+         Optional<ipr::Expr> initializer() const final { return init; }
          // FIXME: This should go away.
          const Parameter_list& membership() const;
       };
@@ -1001,7 +998,7 @@ namespace ipr {
          const ipr::Region& lexical_region() const;
          const ipr::Region& home_region() const;
          Decl_position position() const;
-         Optional<ipr::Expr> initializer() const final;
+         Optional<ipr::Expr> initializer() const final { return init; }
          // FIXME: this should go away.
          const ipr::Enum& membership() const;
       };
@@ -1171,7 +1168,7 @@ namespace ipr {
       };
 
       struct Lambda : impl::Node<ipr::Lambda> {
-         Optional<ipr::Closure> constraint;
+         util::ref<const ipr::Closure> constraint;
          Optional<ipr::Type> value_type;
          impl::Parameter_list parms;
          const ipr::Expr* body = nullptr;
@@ -1286,7 +1283,7 @@ namespace ipr {
 
       struct Mapping : impl::Expr<ipr::Mapping> {
          impl::Parameter_list parms;
-         Optional<ipr::Type> value_type;
+         util::ref<const ipr::Type> value_type;
          Optional<ipr::Expr> body;
 
          Mapping(const ipr::Region&, Mapping_level);
@@ -1582,18 +1579,17 @@ namespace ipr {
 
 
       struct Template : impl::Decl<ipr::Template> {
-         const ipr::Udt<ipr::Decl>* member_of;
+         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          impl::Mapping* init;
-         const ipr::Region* lexreg;
+         util::ref<const ipr::Region> lexreg;
          impl::Expr_list args;
 
          Template();
-
          const ipr::Template& primary_template() const final;
          const ipr::Sequence<ipr::Decl>& specializations() const final;
          const ipr::Mapping& mapping() const final;
          Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const final;
+         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>
@@ -1631,11 +1627,11 @@ namespace ipr {
 
       struct Alias : impl::Decl<ipr::Alias> {
          const ipr::Expr* aliasee;
-         const ipr::Region* lexreg;
+         util::ref<const ipr::Region> lexreg;
 
          Alias();
-         Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const;
+         Optional<ipr::Expr> initializer() const final { return aliasee; }
+         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>
@@ -1645,12 +1641,11 @@ namespace ipr {
 
       struct Var : impl::Decl<ipr::Var> {
          Optional<ipr::Expr> init;
-         const ipr::Region* lexreg;
+         util::ref<const ipr::Region> lexreg;
 
          Var();
-
-         Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const final;
+         Optional<ipr::Expr> initializer() const final { return init; }
+         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>
@@ -1660,19 +1655,18 @@ namespace ipr {
 
       // FIXME: Field should use unique_decl, not impl::Decl.
       struct Field : impl::Decl<ipr::Field> {
-         const ipr::Udt<ipr::Decl>* member_of;
+         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          Optional<ipr::Expr> init;
 
          Field();
-
-         const ipr::Udt<ipr::Decl>& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
 
          // Override ipr::Decl::lexical_region.  Which is the
          // same as home_region for a Field.  Note that fields
          // are always nonstatic data members.
-         const ipr::Region& lexical_region() const final;
-         const ipr::Region& home_region() const final;
-         Optional<ipr::Expr> initializer() const final;
+         const ipr::Region& lexical_region() const final { return membership().region(); }
+         const ipr::Region& home_region() const final { return membership().region(); }
+         Optional<ipr::Expr> initializer() const final { return init; }
       };
 
       template<>
@@ -1682,17 +1676,16 @@ namespace ipr {
 
       // FIXME: Bitfield should use unique_decl, not impl::Decl
       struct Bitfield : impl::Decl<ipr::Bitfield> {
-         const ipr::Expr* length;
-         const ipr::Udt<ipr::Decl>* member_of;
+         util::ref<const ipr::Expr> length;
+         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          Optional<ipr::Expr> init;
 
          Bitfield();
-
-         const ipr::Expr& precision() const final;
-         const ipr::Region& lexical_region() const final;
-         const ipr::Region& home_region() const final;
-         const ipr::Udt<ipr::Decl>& membership() const final;
-         Optional<ipr::Expr> initializer() const final;
+         const ipr::Expr& precision() const final { return length.get(); }
+         const ipr::Region& lexical_region() const final { return membership().region(); }
+         const ipr::Region& home_region() const final { return membership().region(); }
+         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
+         Optional<ipr::Expr> initializer() const final { return init; }
       };
 
       template<>
@@ -1702,14 +1695,14 @@ namespace ipr {
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
          Optional<ipr::Type> init;
-         const ipr::Expr* member_of;
-         const ipr::Region* lexreg;
+         util::ref<const ipr::Expr> member_of;
+         util::ref<const ipr::Region> lexreg;
 
          Typedecl();
 
-         const ipr::Expr& membership() const final;
-         Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const final;
+         const ipr::Expr& membership() const final { return member_of.get(); }
+         Optional<ipr::Expr> initializer() const final { return init; }
+         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>
@@ -1727,17 +1720,17 @@ namespace ipr {
       };
 
       struct Fundecl : impl::Decl<ipr::Fundecl> {
-         const ipr::Udt<ipr::Decl>* member_of;
+         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          fundecl_data data;
-         const ipr::Region* lexreg;
+         util::ref<const ipr::Region> lexreg;
 
          Fundecl();
 
          const ipr::Parameter_list& parameters() const final;
          Optional<ipr::Mapping> mapping() const final;
-         const ipr::Udt<ipr::Decl>& membership() const final;
+         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
          Optional<ipr::Expr> initializer() const final;
-         const ipr::Region& lexical_region() const final;
+         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>

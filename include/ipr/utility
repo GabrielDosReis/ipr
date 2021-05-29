@@ -27,6 +27,20 @@ namespace ipr {
          return ptr;
       }
 
+      // At various places in the implementation of the IPR interface, certain logical
+      // references are stored as pointers because of implementation necessity, or sometimes convenience.
+      // This wrapper class ensures that when the data behind those logical references are 
+      // access the implementation pointer is not null.  Note that the role served by this
+      // class is not the same as ipr::Optional (which is a genuine representation of optional information),
+      // or std::reference_wrapper (which assumes existence of reference to begin with).
+      template<typename T>
+      struct ref {
+         ref(T* p = { }) : ptr{p} { }
+         T& get() const { return *util::check(ptr); }
+      private:
+         T* ptr;
+      };
+
       // --------------------
       // -- Red-back trees --
       // --------------------

@@ -2202,6 +2202,8 @@ namespace ipr {
    // a parameter list.
    struct Parameter : Category<Category_code::Parameter, Decl> {
       virtual const Parameter_list& membership() const = 0;
+      const Region& lexical_region() const final { return membership().region(); }
+      const Region& home_region() const final { return membership().region(); }
       Optional<Expr> default_value() const { return initializer(); }
    };
 

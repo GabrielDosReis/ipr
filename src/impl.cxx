@@ -317,48 +317,15 @@ namespace ipr {
       // -- impl::Alias --
       // -----------------
 
-      Alias::Alias() : aliasee(0), lexreg(0)
+      Alias::Alias() : aliasee{nullptr}, lexreg{}
       { }
-
-      Optional<ipr::Expr> Alias::initializer() const {
-         return { aliasee };
-      }
-
-      const ipr::Region&
-      Alias::lexical_region() const {
-         return *util::check(lexreg);
-      }
 
       // --------------------
       // -- impl::Bitfield --
       // --------------------
 
-      Bitfield::Bitfield() : length(0), member_of(0), init(0)
+      Bitfield::Bitfield() : length{}, member_of{}, init{}
       { }
-
-      const ipr::Expr&
-      Bitfield::precision() const {
-         return *util::check(length);
-      }
-
-      const ipr::Udt<ipr::Decl>&
-      Bitfield::membership() const {
-         return *util::check(member_of);
-      }
-
-      Optional<ipr::Expr> Bitfield::initializer() const {
-         return init;
-      }
-
-      const ipr::Region&
-      Bitfield::lexical_region() const {
-         return util::check(member_of)->region();
-      }
-
-      const ipr::Region&
-      Bitfield::home_region() const {
-         return util::check(member_of)->region();
-      }
 
       // ---------------------
       // -- impl::Base_type --
@@ -424,43 +391,20 @@ namespace ipr {
          return scope_pos;
       }
 
-      Optional<ipr::Expr> Enumerator::initializer() const {
-         return init;
-      }
-
       // -----------------
       // -- impl::Field --
       // -----------------
 
       Field::Field()
-            : member_of(0), init(0)
+            : member_of{}, init{}
       { }
-
-      Optional<ipr::Expr> Field::initializer() const {
-         return init;
-      }
-
-      const ipr::Udt<ipr::Decl>&
-      Field::membership() const {
-         return *util::check(member_of);
-      }
-
-      const ipr::Region&
-      Field::lexical_region() const {
-         return util::check(member_of)->region();
-      }
-
-      const ipr::Region&
-      Field::home_region() const {
-         return util::check(member_of)->region();
-      }
 
       // -------------------
       // -- impl::Fundecl --
       // -------------------
 
       Fundecl::Fundecl()
-            : member_of(nullptr), data{ }, lexreg(nullptr)
+            : member_of{}, data{}, lexreg{}
       { }
 
       const ipr::Parameter_list& Fundecl::parameters() const {
@@ -475,27 +419,17 @@ namespace ipr {
          return { data.mapping() };
       }
 
-      const ipr::Udt<ipr::Decl>&
-      Fundecl::membership() const {
-         return *util::check(member_of);
-      }
-
       Optional<ipr::Expr> Fundecl::initializer() const {
          if (data.index() == 0)
             return { };
          return { data.mapping() };
       }
 
-      const ipr::Region&
-      Fundecl::lexical_region() const {
-         return *util::check(lexreg);
-      }
-
       // --------------------
       // -- impl::Template --
       // --------------------
 
-      Template::Template() : member_of(0), init(0), lexreg(0) { }
+      Template::Template() : member_of{}, init{}, lexreg{} { }
 
       const ipr::Template&
       Template::primary_template() const {
@@ -516,18 +450,13 @@ namespace ipr {
          return { util::check(init)->body };
       }
 
-      const ipr::Region&
-      Template::lexical_region() const {
-         return *util::check(lexreg);
-      }
-
       // ---------------------
       // -- impl::Parameter --
       // ---------------------
 
       Parameter::Parameter(const ipr::Name& n, const impl::Rname& rn)
             :id(n), abstract_name(rn),
-             where(0), init(0)
+             where{}, init{}
       { }
 
       const ipr::Name&
@@ -540,16 +469,6 @@ namespace ipr {
          return abstract_name.rep.first;
       }
 
-      const ipr::Region&
-      Parameter::home_region() const {
-         return util::check(where)->region();
-      }
-
-      const ipr::Region&
-      Parameter::lexical_region() const {
-         return util::check(where)->region();
-      }
-
       const ipr::Parameter_list&
       Parameter::membership() const {
          return *util::check(where);
@@ -559,47 +478,19 @@ namespace ipr {
          return abstract_name.rep.third;
       }
 
-      Optional<ipr::Expr> Parameter::initializer() const {
-         return init;
-      }
-
       // --------------------
       // -- impl::Typedecl --
       // --------------------
 
-      Typedecl::Typedecl() : init{ }, member_of(0), lexreg(0)
+      Typedecl::Typedecl() : init{}, member_of{}, lexreg{}
       { }
-
-      Optional<ipr::Expr> Typedecl::initializer() const { return init; }
-
-      const ipr::Expr&
-      Typedecl::membership() const {
-         return *util::check(member_of);
-      }
-
-      const ipr::Region&
-      Typedecl::lexical_region() const {
-         // return util::check(member_of)->region();
-         // 31OCT08 - PIR: since a Typedecl has a lexreg field
-         //    I assume that it should be returned by lexical_region()
-         return *util::check(lexreg);
-      }
 
       // ---------------
       // -- impl::Var --
       // ---------------
 
-      Var::Var() : init(0), lexreg(0)
+      Var::Var() : init{}, lexreg{}
       { }
-
-      Optional<ipr::Expr> Var::initializer() const {
-         return init;
-      }
-
-      const ipr::Region&
-      Var::lexical_region() const {
-         return *util::check(lexreg);
-      }
 
       // -----------------
       // -- impl::Block --
