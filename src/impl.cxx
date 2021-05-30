@@ -497,7 +497,7 @@ namespace ipr {
       // -----------------
 
       Block::Block(const ipr::Region& pr, const ipr::Type& t)
-            : region(&pr, t)
+            : region(&pr)
       {
          // >>>> pmp 16jun08
          // regions' owners are set typically by IPR
@@ -1087,11 +1087,6 @@ namespace ipr {
             : impl::Unary<impl::Expr<ipr::Id_expr>>(n)
       { }
 
-      const ipr::Type&
-      Id_expr::type() const {
-         return constraint.get();
-      }
-
       Optional<ipr::Expr>
       Id_expr::resolution() const {
          return decls;
@@ -1144,20 +1139,7 @@ namespace ipr {
       // -------------------------------
       // -- impl::Scope --
       // -------------------------------
-      Scope::Scope(const ipr::Region& r, const ipr::Type& t) : region(r)
-      {
-         decls.constraint = &t;
-      }
-
-      const ipr::Type&
-      Scope::type() const {
-         return decls;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      Scope::members() const {
-         return decls.seq;
-      }
+      Scope::Scope() { }
 
       const ipr::Overload&
       Scope::operator[](const ipr::Name& n) const {
@@ -1323,23 +1305,13 @@ namespace ipr {
       // -- impl::Region --
       // --------------------------------
 
-      Region::Region(const ipr::Region* pr, const ipr::Type& t)
-            : parent(pr), owned_by(0), scope(*this, t)
+      Region::Region(const ipr::Region* pr)
+            : parent(pr), owned_by()
       { }
 
       const ipr::Region&
       Region::enclosing() const {
          return *util::check(parent);
-      }
-
-      const ipr::Scope&
-      Region::bindings() const {
-         return scope;
-      }
-
-      const Region::location_span&
-      Region::span() const {
-         return extent;
       }
 
       const ipr::Expr&
@@ -1349,7 +1321,7 @@ namespace ipr {
 
       Region*
       Region::make_subregion() {
-         return subregions.make(this, scope.type().type());
+         return subregions.make(this);
       }
 
 

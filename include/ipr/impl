@@ -521,7 +521,7 @@ namespace ipr {
          Optional<ipr::Type> constraint;
 
          Expr(Optional<ipr::Type> t = { }) : constraint{ t } { }
-         const ipr::Type& type() const override { return constraint.get(); }
+         const ipr::Type& type() const final { return constraint.get(); }
       };
 
       // Short hand for the implementation of generic expression nodes.
@@ -1222,7 +1222,6 @@ namespace ipr {
          Optional<ipr::Expr> decls { };
 
          explicit Id_expr(const ipr::Name&);
-         const ipr::Type& type() const final;
          Optional<ipr::Expr> resolution() const final;
       };
 
@@ -1745,11 +1744,10 @@ namespace ipr {
       // a homogeneous scope, implemented by homogeneous_scope.
 
       struct Scope : impl::Node<ipr::Scope> {
-         Scope(const ipr::Region&, const ipr::Type&);
-
-         const ipr::Type& type() const;
-         const ipr::Sequence<ipr::Decl>& members() const;
-         const ipr::Overload& operator[](const ipr::Name&) const;
+         Scope();
+         const ipr::Type& type() const final { return decls; }
+         const ipr::Sequence<ipr::Decl>& members() const final { return decls.seq; }
+         const ipr::Overload& operator[](const ipr::Name&) const final;
 
          impl::Alias* make_alias(const ipr::Name&, const ipr::Expr&);
          impl::Var* make_var(const ipr::Name&, const ipr::Type&);
@@ -1761,7 +1759,6 @@ namespace ipr {
          impl::Template* make_secondary_template(const ipr::Name&, const ipr::Forall&);
 
       private:
-         const ipr::Region& region;
          util::rb_tree::container<impl::Overload> overloads;
          typed_sequence<decl_sequence> decls;
          empty_overload missing;
@@ -1789,10 +1786,10 @@ namespace ipr {
          const ipr::Expr* owned_by;
          impl::Scope scope;
 
-         const ipr::Region& enclosing() const;
-         const ipr::Scope& bindings() const;
-         const location_span& span() const;
-         const ipr::Expr& owner() const;
+         const ipr::Region& enclosing() const final;
+         const ipr::Scope& bindings() const final { return scope; }
+         const location_span& span() const final { return extent; }
+         const ipr::Expr& owner() const final;
 
          impl::Region* make_subregion();
 
@@ -1838,7 +1835,7 @@ namespace ipr {
             return scope.make_secondary_template(n, t);
          }
 
-         Region(const ipr::Region*, const ipr::Type&);
+         explicit Region(const ipr::Region*);
 
       private:
          stable_farm<Region> subregions;
@@ -1852,7 +1849,7 @@ namespace ipr {
       template<class Interface>
       struct Udt : impl::Type<Interface> {
          Region body;
-         Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr, t)
+         Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr)
          {
             this->constraint = &t;
             body.owned_by = this;
@@ -2064,7 +2061,7 @@ namespace ipr {
       // expresion; for flexibility, it is made in a way that
       // supports settings of its components after construction.
 
-      struct For : Stmt<Expr<ipr::For>> {
+      struct For : impl::Stmt<impl::Node<ipr::For>> {
          const ipr::Expr* init;
          const ipr::Expr* cond;
          const ipr::Expr* inc;
@@ -2079,7 +2076,7 @@ namespace ipr {
          const ipr::Stmt& body() const final;
       };
 
-      struct For_in : Stmt<Expr<ipr::For_in>> {
+      struct For_in : impl::Stmt<impl::Node<ipr::For_in>> {
          const ipr::Var* var;
          const ipr::Expr* seq;
          const ipr::Stmt* stmt;
