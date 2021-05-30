@@ -1990,7 +1990,6 @@ namespace ipr {
          impl::Closure* make_closure(const ipr::Region&, const ipr::Type&);
       private:
          util::rb_tree::container<impl::Array> arrays;
-         util::rb_tree::container<impl::Decltype> decltypes;
          util::rb_tree::container<impl::As_type> type_refs;
          util::rb_tree::container<impl::Function> functions;
          util::rb_tree::container<impl::Pointer> pointers;
@@ -2001,6 +2000,7 @@ namespace ipr {
          util::rb_tree::container<impl::Rvalue_reference> refrefs;
          util::rb_tree::container<impl::Sum> sums;
          util::rb_tree::container<impl::Forall> foralls;
+         stable_farm<impl::Decltype> decltypes;
          stable_farm<impl::Enum> enums;
          stable_farm<impl::Class> classes;
          stable_farm<impl::Union> unions;
@@ -2030,29 +2030,27 @@ namespace ipr {
       // block.  It also holds a sequence of handlers, when the
       // block actually represents a C++ try-block.
 
-      struct Block : impl::Stmt<Node<ipr::Block>> {
-         Region region;
-         ref_sequence<ipr::Stmt> stmt_seq;
-         ref_sequence<ipr::Handler> handler_seq;
+      struct Block : impl::Stmt<Expr<ipr::Block>> {
+         impl::Region region;
+         impl::ref_sequence<ipr::Stmt> stmt_seq;
+         impl::ref_sequence<ipr::Handler> handler_seq;
 
-         Block(const ipr::Region&, const ipr::Type&);
-
-         const ipr::Type& type() const final;
-         const ipr::Scope& members() const final;
-         const ipr::Sequence<ipr::Stmt>& body() const final;
-         const ipr::Sequence<ipr::Handler>& handlers() const final;
+         explicit Block(const ipr::Region&);
+         const ipr::Scope& members() const final { return region.scope; }
+         const ipr::Sequence<ipr::Stmt>& body() const final { return stmt_seq; }
+         const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 
          // The scope of declarations in this block
-         Scope* scope() { return &region.scope; }
+         impl::Scope* scope() { return &region.scope; }
 
-         void add_stmt(const ipr::Stmt* s)
+         void add_stmt(const ipr::Stmt& s)
          {
-            stmt_seq.push_back(s);
+            stmt_seq.push_back(&s);
          }
 
-         void add_handler(const ipr::Handler* h)
+         void add_handler(const ipr::Handler& h)
          {
-            handler_seq.push_back(h);
+            handler_seq.push_back(&h);
          }
       };
 
@@ -2062,31 +2060,29 @@ namespace ipr {
       // supports settings of its components after construction.
 
       struct For : impl::Stmt<impl::Node<ipr::For>> {
-         const ipr::Expr* init;
-         const ipr::Expr* cond;
-         const ipr::Expr* inc;
-         const ipr::Stmt* stmt;
+         util::ref<const ipr::Expr> init;
+         util::ref<const ipr::Expr> cond;
+         util::ref<const ipr::Expr> inc;
+         util::ref<const ipr::Stmt> stmt;
 
          For();
-
-         const ipr::Type& type() const final;
-         const ipr::Expr& initializer() const final;
-         const ipr::Expr& condition() const final;
-         const ipr::Expr& increment() const final;
-         const ipr::Stmt& body() const final;
+         const ipr::Type& type() const final { return body().type(); }
+         const ipr::Expr& initializer() const final { return init.get(); }
+         const ipr::Expr& condition() const final { return cond.get(); }
+         const ipr::Expr& increment() const final { return inc.get(); }
+         const ipr::Stmt& body() const final { return stmt.get(); }
       };
 
       struct For_in : impl::Stmt<impl::Node<ipr::For_in>> {
-         const ipr::Var* var;
-         const ipr::Expr* seq;
-         const ipr::Stmt* stmt;
+         util::ref<const ipr::Var> var;
+         util::ref<const ipr::Expr> seq;
+         util::ref<const ipr::Stmt> stmt;
 
          For_in();
-
-         const ipr::Type& type() const final;
-         const ipr::Var& variable() const final;
-         const ipr::Expr& sequence() const final;
-         const ipr::Stmt& body() const final;
+         const ipr::Type& type() const final { return body().type(); }
+         const ipr::Var& variable() const final { return var.get(); }
+         const ipr::Expr& sequence() const final { return seq.get(); }
+         const ipr::Stmt& body() const final { return stmt.get(); }
       };
 
 
@@ -2094,19 +2090,19 @@ namespace ipr {
       // transfers control out of.
 
       struct Break : Stmt<Expr<ipr::Break>> {
-         const ipr::Stmt* stmt;
+         util::ref<const ipr::Stmt> stmt;
 
          Break();
-         const ipr::Stmt& from() const final;
+         const ipr::Stmt& from() const final { return stmt.get(); }
       };
 
       // Like a Break, a Continue node can refer back to the
       // iteration-statement containing it.
       struct Continue : Stmt<Expr<ipr::Continue>> {
-         const ipr::Stmt* stmt;
+         util::ref<const ipr::Stmt> stmt;
 
          Continue();
-         const ipr::Stmt& iteration() const final;
+         const ipr::Stmt& iteration() const final { return stmt.get(); }
       };
 
 
@@ -2117,7 +2113,7 @@ namespace ipr {
          impl::Break* make_break(const ipr::Type&);
          impl::Continue* make_continue(const ipr::Type&);
          impl::Empty_stmt* make_empty_stmt(const ipr::Type&);
-         impl::Block* make_block(const ipr::Region&, const ipr::Type&);
+         impl::Block* make_block(const ipr::Region&, Optional<ipr::Type> = { });
          impl::Ctor_body* make_ctor_body(const ipr::Expr_list&,
                                          const ipr::Block&);
          impl::Expr_stmt* make_expr_stmt(const ipr::Expr&);

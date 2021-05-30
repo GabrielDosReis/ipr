@@ -496,112 +496,36 @@ namespace ipr {
       // -- impl::Block --
       // -----------------
 
-      Block::Block(const ipr::Region& pr, const ipr::Type& t)
+      Block::Block(const ipr::Region& pr)
             : region(&pr)
       {
-         // >>>> pmp 16jun08
-         // regions' owners are set typically by IPR
          region.owned_by = this;
-         // <<<< pmp 16jun08
-      }
-
-      const ipr::Type&
-      Block::type() const {
-         return region.scope.type();
-      }
-
-      const ipr::Scope&
-      Block::members() const {
-         return region.scope;
-      }
-
-      const ipr::Sequence<ipr::Stmt>&
-      Block::body() const {
-         return stmt_seq;
-      }
-
-      const ipr::Sequence<ipr::Handler>&
-      Block::handlers() const {
-         return handler_seq;
       }
 
       // ---------------
       // -- impl::For --
       // ---------------
 
-      For::For() : init(0), cond(0), inc(0), stmt(0) { }
-
-      const ipr::Type&
-      For::type() const {
-         return util::check(stmt)->type();
-      }
-
-      const ipr::Expr&
-      For::initializer() const {
-         return *util::check(init);
-      }
-
-      const ipr::Expr&
-      For::condition() const {
-         return *util::check(cond);
-      }
-
-      const ipr::Expr&
-      For::increment() const {
-         return *util::check(inc);
-      }
-
-      const ipr::Stmt&
-      For::body() const {
-         return *util::check(stmt);
-      }
+      For::For() : init{}, cond{}, inc{}, stmt{}
+      { }
 
       // ------------------
       // -- impl::For_in --
       // ------------------
-      For_in::For_in() : var(), seq(), stmt() { }
-
-      const ipr::Var&
-      For_in::variable() const {
-         return *util::check(var);
-      }
-
-      const ipr::Expr&
-      For_in::sequence() const {
-         return *util::check(seq);
-      }
-
-      const ipr::Type&
-      For_in::type() const {
-         return util::check(stmt)->type();
-      }
-
-      const ipr::Stmt&
-      For_in::body() const {
-         return *util::check(stmt);
-      }
+      For_in::For_in() : var{}, seq{}, stmt{}
+      { }
 
       // -----------------
       // -- impl::Break --
       // -----------------
 
-      Break::Break() : stmt(0) { }
-
-      const ipr::Stmt&
-      Break::from() const {
-         return *util::check(stmt);
-      }
+      Break::Break() : stmt{} { }
 
       // --------------------
       // -- impl::Continue --
       // --------------------
 
-      Continue::Continue() : stmt(0) { }
-
-      const ipr::Stmt&
-      Continue::iteration() const {
-         return *util::check(stmt);
-      }
+      Continue::Continue() : stmt{} { }
 
       // ------------------------
       // -- impl::stmt_factory --
@@ -623,8 +547,8 @@ namespace ipr {
       }
 
       impl::Block*
-      stmt_factory::make_block(const ipr::Region& pr, const ipr::Type& t) {
-         return blocks.make(pr, t);
+      stmt_factory::make_block(const ipr::Region& pr, Optional<ipr::Type> t) {
+         return make(blocks, pr).with_type(t);
       }
 
       impl::Ctor_body*
@@ -927,7 +851,7 @@ namespace ipr {
       impl::Decltype*
       type_factory::make_decltype(const ipr::Expr& e)
       {
-         return decltypes.insert(e, unary_compare());
+         return decltypes.make(e);
       }
 
       impl::As_type*
