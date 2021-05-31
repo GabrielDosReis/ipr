@@ -168,6 +168,12 @@ ipr::Visitor::visit(const Class& t)
 }
 
 void
+ipr::Visitor::visit(const Closure& t)
+{
+   visit(as<Type>(t));
+}
+
+void
 ipr::Visitor::visit(const Decltype& t)
 {
    visit(as<Type>(t));
