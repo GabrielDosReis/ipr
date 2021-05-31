@@ -441,15 +441,6 @@ namespace ipr {
          return util::check(decl_data.master_data)->specs;
       }
 
-      const ipr::Mapping&
-      Template::mapping() const {
-         return *util::check(init);
-      }
-
-      Optional<ipr::Expr> Template::initializer() const {
-         return { util::check(init)->body };
-      }
-
       // ---------------------
       // -- impl::Parameter --
       // ---------------------
@@ -1037,28 +1028,19 @@ namespace ipr {
       // -------------------
 
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
-            : parms(pr, d), value_type(0),
-              body(0)
+            : parms{pr, d}, value_type{}, body{}
       {
-        // 31Oct08 added by PIR to avoid exceptions,
-        //   when querying the region (parameters) for its owner
         parms.parms.owned_by = this;
-      }
-
-      const ipr::Type&
-      Mapping::target() const {
-         return value_type.get();
-      }
-
-      const ipr::Expr&
-      Mapping::result() const {
-         return body.get();
       }
 
       impl::Parameter*
       Mapping::param(const ipr::Name& n, const impl::Rname& rn) {
          return parms.add_member(n, rn);
       }
+
+      // -- impl::Lambda
+      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}
+      { }
 
       // -------------------------------
       // -- impl::Scope --
@@ -1920,6 +1902,11 @@ namespace ipr {
       impl::Mapping*
       expr_factory::make_mapping(const ipr::Region& r, Mapping_level l) {
          return mappings.make(r, l);
+      }
+
+      impl::Lambda* expr_factory::make_lambda(const ipr::Region& r, Mapping_level l)
+      {
+         return lambdas.make(r, l);
       }
 
 
