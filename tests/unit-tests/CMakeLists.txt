@@ -20,5 +20,22 @@ set_target_properties(${TEST_BINARY}
       CXX_EXTENSIONS OFF
 )
 
+target_compile_options(${TEST_BINARY}
+   PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:
+         /W2           # Usual warnings
+         /permissive-  # Turn on strict language conformance
+         /EHsc         # Turn on exception handling semantics
+      >
+      $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
+         -Wall         # Turn on all useful warnings
+         -pedantic     # Turn on strict language conformance
+      >
+      $<$<CXX_COMPILER_ID:Clang>:
+		 -Wno-overloaded-virtual                   # Too many false positives
+		 -Wno-delete-non-abstract-non-virtual-dtor # System headers plagued
+      >
+)
+
 add_test(simple ${TEST_BINARY})
 

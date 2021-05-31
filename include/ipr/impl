@@ -1056,10 +1056,11 @@ namespace ipr {
          Optional<ipr::Expr> owned_by { };
          homogeneous_scope<Member> scope;
 
-         const ipr::Region& enclosing() const { return parent; }
-         const ipr::Scope& bindings() const { return scope; }
-         const location_span& span() const { return extent; }
-         const ipr::Expr& owner() const { return owned_by.get(); }
+         const ipr::Region& enclosing() const final { return parent; }
+         const ipr::Scope& bindings() const final { return scope; }
+         const location_span& span() const final { return extent; }
+         const ipr::Expr& owner() const final { return owned_by.get(); }
+         bool global() const final { return false; }
 
          explicit homogeneous_region(const ipr::Region& p)
                : parent(p)
@@ -1781,15 +1782,16 @@ namespace ipr {
 
       struct Region : impl::Node<ipr::Region> {
          using location_span = ipr::Region::Location_span;
-         const ipr::Region* parent;
+         Optional<ipr::Region> parent;
          location_span extent;
-         const ipr::Expr* owned_by;
+         util::ref<const ipr::Expr> owned_by;
          impl::Scope scope;
 
-         const ipr::Region& enclosing() const final;
+         const ipr::Region& enclosing() const final { return parent.get(); }
          const ipr::Scope& bindings() const final { return scope; }
          const location_span& span() const final { return extent; }
-         const ipr::Expr& owner() const final;
+         const ipr::Expr& owner() const final { return owned_by.get(); }
+         bool global() const final { return not parent.is_valid(); }
 
          impl::Region* make_subregion();
 
@@ -1835,7 +1837,7 @@ namespace ipr {
             return scope.make_secondary_template(n, t);
          }
 
-         explicit Region(const ipr::Region*);
+         explicit Region(Optional<ipr::Region>);
 
       private:
          stable_farm<Region> subregions;
