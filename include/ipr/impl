@@ -691,7 +691,7 @@ namespace ipr {
          using Base = basic_decl_data<ipr::Template>;
          // The declaration that is considered to be the definition.
          Optional<ipr::Template> def { };
-         util::ref<ipr::Linkage> langlinkage { };
+         util::ref<const ipr::Linkage> langlinkage { };
          const ipr::Template* primary;
          const ipr::Region* home;
 
