@@ -681,6 +681,20 @@ namespace ipr {
 
          template<class T>
          int operator()(const Unary<T>& lhs,
+                        const typename Unary<T>::Arg_type& rhs) const
+         {
+            return compare(lhs.rep, rhs);
+         }
+
+         template<class T>
+         int operator()(const typename Unary<T>::Arg_type& lhs,
+                        const Unary<T>& rhs) const
+         {
+            return compare(lhs, rhs.rep);
+         }
+
+         template<class T>
+         int operator()(const Unary<T>& lhs,
                         const ipr::Sequence<ipr::Type>& rhs) const
          {
             return util::lexicographical_compare()
