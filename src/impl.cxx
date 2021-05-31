@@ -1229,19 +1229,10 @@ namespace ipr {
       // -- impl::Region --
       // --------------------------------
 
-      Region::Region(const ipr::Region* pr)
-            : parent(pr), owned_by()
+      Region::Region(Optional<ipr::Region> pr)
+            : parent{pr}, owned_by{}
       { }
 
-      const ipr::Region&
-      Region::enclosing() const {
-         return *util::check(parent);
-      }
-
-      const ipr::Expr&
-      Region::owner() const {
-         return *util::check(owned_by);
-      }
 
       Region*
       Region::make_subregion() {

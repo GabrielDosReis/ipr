@@ -794,7 +794,7 @@ namespace ipr {
    // A Region node represents a region of program text.  It is mostly
    // useful for capturing the notion of scope (in Standard C++ sense).
    // In IPR, we're using a generalized notion of Scope (a sequence of
-   // declarations).  The  notion of Region helps making precise when
+   // declarations).  The  notion of Region helps make precise when
    // some implicit actions like cleanup-ups happen, or nesting of scopes.
    // The sequence of declarations appearing in a Region makes up the
    // Scope of that region.
@@ -804,6 +804,7 @@ namespace ipr {
       virtual const Region& enclosing() const = 0;
       virtual const Scope& bindings() const = 0;
       virtual const Expr& owner() const = 0;
+      virtual bool global() const = 0;                   // is this region the global region?
    };
 
                                 // -- Expr --

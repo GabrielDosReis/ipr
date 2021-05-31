@@ -1,5 +1,5 @@
 cmake_minimum_required(
-   VERSION 3.5
+   VERSION 3.8
 )
 
 option(BUILD_DOC
@@ -8,7 +8,7 @@ option(BUILD_DOC
 )
 
 project(ipr
-   VERSION 0.47
+   VERSION 0.50
    LANGUAGES CXX
 )
 
@@ -29,7 +29,7 @@ set_target_properties(${PROJECT_NAME}
    PROPERTIES
       CXX_STANDARD 17
       CXX_STANDARD_REQUIRED ON
-	  CXX_EXTENSIONS OFF
+	   CXX_EXTENSIONS OFF
 )
 				
 target_compile_options(${PROJECT_NAME}
