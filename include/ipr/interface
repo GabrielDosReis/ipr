@@ -2349,6 +2349,7 @@ namespace ipr {
       virtual void visit(const Type&) = 0;
       virtual void visit(const Array&);
       virtual void visit(const Class&);
+      virtual void visit(const Closure&);
       virtual void visit(const Decltype&);
       virtual void visit(const Enum&);
       virtual void visit(const As_type&);
