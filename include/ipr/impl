@@ -897,10 +897,10 @@ namespace ipr {
       struct Controlled_stmt : Stmt<Node<Base>> {
          using typename Base::Arg1_type;
          using typename Base::Arg2_type;
-         std::remove_reference_t<Arg1_type>* control { };
-         std::remove_reference_t<Arg2_type>* stmt { };
-         Arg1_type first() const final { return *util::check(control); }
-         Arg2_type second() const final { return *util::check(stmt); }
+         util::ref<std::remove_reference_t<Arg1_type>> control;
+         util::ref<std::remove_reference_t<Arg2_type>> stmt;
+         Arg1_type first() const final { return control.get(); }
+         Arg2_type second() const final { return stmt.get(); }
          const ipr::Type& type() const final { return second().type(); }
       };
 
@@ -961,16 +961,16 @@ namespace ipr {
       struct Parameter final : unique_decl<ipr::Parameter> {
          const ipr::Name& id;
          const impl::Rname& abstract_name;
-         const ipr::Parameter_list* where;
+         util::ref<const ipr::Parameter_list> where;
          Optional<ipr::Expr> init;
 
          Parameter(const ipr::Name&, const impl::Rname&);
-         const ipr::Name& name() const;
-         const ipr::Type& type() const;
-         Decl_position position() const;
+         const ipr::Name& name() const final { return id; }
+         const ipr::Type& type() const final;
+         Decl_position position() const final;
          Optional<ipr::Expr> initializer() const final { return init; }
          // FIXME: This should go away.
-         const Parameter_list& membership() const;
+         const Parameter_list& membership() const final { return where.get(); }
       };
 
       struct Base_type final : unique_decl<ipr::Base_type> {
@@ -979,10 +979,10 @@ namespace ipr {
          const Decl_position scope_pos;
 
          Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
-         const ipr::Type& type() const;
-         const ipr::Region& lexical_region() const;
-         const ipr::Region& home_region() const;
-         Decl_position position() const;
+         const ipr::Type& type() const final { return base; }
+         const ipr::Region& lexical_region() const final { return where; }
+         const ipr::Region& home_region() const final { return where; }
+         Decl_position position() const final { return scope_pos; }
          Optional<ipr::Expr> initializer() const final;
       };
 
@@ -990,17 +990,17 @@ namespace ipr {
          const ipr::Name& id;
          const ipr::Enum& constraint;
          const Decl_position scope_pos;
-         const ipr::Region* where;
+         util::ref<const ipr::Region> where;
          Optional<ipr::Expr> init;
 
          Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
-         const ipr::Name& name() const;
-         const ipr::Region& lexical_region() const;
-         const ipr::Region& home_region() const;
-         Decl_position position() const;
+         const ipr::Name& name() const final { return id; }
+         const ipr::Region& lexical_region() const final { return where.get(); }
+         const ipr::Region& home_region() const final { return where.get(); }
+         Decl_position position() const final { return scope_pos; }
          Optional<ipr::Expr> initializer() const final { return init; }
          // FIXME: this should go away.
-         const ipr::Enum& membership() const;
+         const ipr::Enum& membership() const final { return constraint; }
       };
 
       // A sequence of homogenous node can be represented directly as a container

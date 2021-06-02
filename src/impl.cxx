@@ -335,25 +335,6 @@ namespace ipr {
             : base(t), where(r), scope_pos(p)
       { }
 
-      const ipr::Type&
-      Base_type::type() const {
-         return base;
-      }
-
-      const ipr::Region&
-      Base_type::lexical_region() const {
-         return where;
-      }
-
-      const ipr::Region&
-      Base_type::home_region() const {
-         return where;
-      }
-
-      Decl_position Base_type::position() const {
-         return scope_pos;
-      }
-
       Optional<ipr::Expr>
       Base_type::initializer() const {
          throw std::domain_error("impl::Base_type::initializer");
@@ -366,30 +347,6 @@ namespace ipr {
       Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, Decl_position p)
             : id(n), constraint(t), scope_pos(p), where(0), init(0)
       { }
-
-      const ipr::Name&
-      Enumerator::name() const {
-         return id;
-      }
-
-      const ipr::Region&
-      Enumerator::lexical_region() const {
-         return *util::check(where);
-      }
-
-      const ipr::Region&
-      Enumerator::home_region() const {
-         return *util::check(where);
-      }
-
-      const ipr::Enum&
-      Enumerator::membership() const {
-         return constraint;
-      }
-
-      Decl_position Enumerator::position() const {
-         return scope_pos;
-      }
 
       // -----------------
       // -- impl::Field --
@@ -450,19 +407,9 @@ namespace ipr {
              where{}, init{}
       { }
 
-      const ipr::Name&
-      Parameter::name() const {
-         return id;
-      }
-
       const ipr::Type&
       Parameter::type() const {
          return abstract_name.rep.first;
-      }
-
-      const ipr::Parameter_list&
-      Parameter::membership() const {
-         return *util::check(where);
       }
 
       Decl_position Parameter::position() const {
