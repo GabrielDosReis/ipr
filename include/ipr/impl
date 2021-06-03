@@ -919,7 +919,7 @@ namespace ipr {
             return util::check(decl_data.master_data)->langlinkage.get();
          }
 
-         const ipr::Region& home_region() const override {
+         const ipr::Region& home_region() const final {
             return *util::check(util::check(decl_data.master_data)->home);
          }
 
@@ -967,10 +967,9 @@ namespace ipr {
          Parameter(const ipr::Name&, const impl::Rname&);
          const ipr::Name& name() const final { return id; }
          const ipr::Type& type() const final;
+         const ipr::Region& home_region() const final { return where.get().region(); }
          Decl_position position() const final;
          Optional<ipr::Expr> initializer() const final { return init; }
-         // FIXME: This should go away.
-         const Parameter_list& membership() const final { return where.get(); }
       };
 
       struct Base_type final : unique_decl<ipr::Base_type> {
@@ -980,6 +979,10 @@ namespace ipr {
 
          Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
          const ipr::Type& type() const final { return base; }
+         // FIXME: for a base-class subobject, the home region and lexical
+         //        region are slightly different.  The home region should be that
+         //        of the class this is a base class, whereas the lexical region
+         //        should be the actual lexical region where the base type was specified.
          const ipr::Region& lexical_region() const final { return where; }
          const ipr::Region& home_region() const final { return where; }
          Decl_position position() const final { return scope_pos; }
@@ -995,12 +998,11 @@ namespace ipr {
 
          Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
          const ipr::Name& name() const final { return id; }
+         const ipr::Type& type() const final { return constraint; }
          const ipr::Region& lexical_region() const final { return where.get(); }
          const ipr::Region& home_region() const final { return where.get(); }
          Decl_position position() const final { return scope_pos; }
          Optional<ipr::Expr> initializer() const final { return init; }
-         // FIXME: this should go away.
-         const ipr::Enum& membership() const final { return constraint; }
       };
 
       // A sequence of homogenous node can be represented directly as a container
@@ -1581,7 +1583,6 @@ namespace ipr {
 
 
       struct Template : impl::Decl<ipr::Template> {
-         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          util::ref<impl::Mapping> init;
          util::ref<const ipr::Region> lexreg;
          impl::Expr_list args;
@@ -1632,11 +1633,9 @@ namespace ipr {
 
       struct Alias : impl::Decl<ipr::Alias> {
          const ipr::Expr* aliasee;
-         util::ref<const ipr::Region> lexreg;
 
          Alias();
          Optional<ipr::Expr> initializer() const final { return aliasee; }
-         const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
       template<>
@@ -1660,17 +1659,9 @@ namespace ipr {
 
       // FIXME: Field should use unique_decl, not impl::Decl.
       struct Field : impl::Decl<ipr::Field> {
-         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          Optional<ipr::Expr> init;
 
          Field();
-         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
-
-         // Override ipr::Decl::lexical_region.  Which is the
-         // same as home_region for a Field.  Note that fields
-         // are always nonstatic data members.
-         const ipr::Region& lexical_region() const final { return membership().region(); }
-         const ipr::Region& home_region() const final { return membership().region(); }
          Optional<ipr::Expr> initializer() const final { return init; }
       };
 
@@ -1682,14 +1673,10 @@ namespace ipr {
       // FIXME: Bitfield should use unique_decl, not impl::Decl
       struct Bitfield : impl::Decl<ipr::Bitfield> {
          util::ref<const ipr::Expr> length;
-         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          Optional<ipr::Expr> init;
 
          Bitfield();
          const ipr::Expr& precision() const final { return length.get(); }
-         const ipr::Region& lexical_region() const final { return membership().region(); }
-         const ipr::Region& home_region() const final { return membership().region(); }
-         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
          Optional<ipr::Expr> initializer() const final { return init; }
       };
 
@@ -1700,12 +1687,9 @@ namespace ipr {
 
       struct Typedecl : impl::Decl<ipr::Typedecl> {
          Optional<ipr::Type> init;
-         util::ref<const ipr::Expr> member_of;
          util::ref<const ipr::Region> lexreg;
 
          Typedecl();
-
-         const ipr::Expr& membership() const final { return member_of.get(); }
          Optional<ipr::Expr> initializer() const final { return init; }
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
@@ -1725,7 +1709,6 @@ namespace ipr {
       };
 
       struct Fundecl : impl::Decl<ipr::Fundecl> {
-         util::ref<const ipr::Udt<ipr::Decl>> member_of;
          fundecl_data data;
          util::ref<const ipr::Region> lexreg;
 
@@ -1733,7 +1716,6 @@ namespace ipr {
 
          const ipr::Parameter_list& parameters() const final;
          Optional<ipr::Mapping> mapping() const final;
-         const ipr::Udt<ipr::Decl>& membership() const final { return member_of.get(); }
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
@@ -1868,7 +1850,6 @@ namespace ipr {
          declare_alias(const ipr::Name& n, const ipr::Type& t)
          {
             impl::Alias* alias = body.declare_alias(n, t);
-            //alias->member_of = this; // FIX: Add member_of to Alias
             return alias;
          }
 
@@ -1876,7 +1857,6 @@ namespace ipr {
          declare_field(const ipr::Name& n, const ipr::Type& t)
          {
             impl::Field* field = body.declare_field(n, t);
-            field->member_of = this;
             return field;
          }
 
@@ -1884,7 +1864,6 @@ namespace ipr {
          declare_bitfield(const ipr::Name& n, const ipr::Type& t)
          {
             impl::Bitfield* field = body.declare_bitfield(n, t);
-            field->member_of = this;
             return field;
          }
 
@@ -1899,7 +1878,6 @@ namespace ipr {
          declare_type(const ipr::Name& n, const ipr::Type& t)
          {
             impl::Typedecl* typedecl = body.declare_type(n, t);
-            typedecl->member_of = this;
             return typedecl;
          }
 
@@ -1907,7 +1885,6 @@ namespace ipr {
          declare_fun(const ipr::Name& n, const ipr::Function& t)
          {
             impl::Fundecl* fundecl = body.declare_fun(n, t);
-            fundecl->member_of = this;
             return fundecl;
          }
 
@@ -1915,7 +1892,6 @@ namespace ipr {
          declare_primary_template(const ipr::Name& n, const ipr::Forall& t)
          {
             impl::Template* map = body.declare_primary_template(n, t);
-            map->member_of = this;
             return map;
          }
 
@@ -1923,7 +1899,6 @@ namespace ipr {
          declare_secondary_template(const ipr::Name& n, const ipr::Forall& t)
          {
             impl::Template* map = body.declare_secondary_template(n, t);
-            map->member_of = this;
             return map;
          }
       };
