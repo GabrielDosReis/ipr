@@ -317,14 +317,14 @@ namespace ipr {
       // -- impl::Alias --
       // -----------------
 
-      Alias::Alias() : aliasee{nullptr}, lexreg{}
+      Alias::Alias() : aliasee{nullptr}
       { }
 
       // --------------------
       // -- impl::Bitfield --
       // --------------------
 
-      Bitfield::Bitfield() : length{}, member_of{}, init{}
+      Bitfield::Bitfield() : length{}, init{}
       { }
 
       // ---------------------
@@ -352,8 +352,7 @@ namespace ipr {
       // -- impl::Field --
       // -----------------
 
-      Field::Field()
-            : member_of{}, init{}
+      Field::Field() : init{}
       { }
 
       // -------------------
@@ -361,7 +360,7 @@ namespace ipr {
       // -------------------
 
       Fundecl::Fundecl()
-            : member_of{}, data{}, lexreg{}
+            : data{}, lexreg{}
       { }
 
       const ipr::Parameter_list& Fundecl::parameters() const {
@@ -386,7 +385,7 @@ namespace ipr {
       // -- impl::Template --
       // --------------------
 
-      Template::Template() : member_of{}, init{}, lexreg{} { }
+      Template::Template() : init{}, lexreg{} { }
 
       const ipr::Template&
       Template::primary_template() const {
@@ -420,7 +419,7 @@ namespace ipr {
       // -- impl::Typedecl --
       // --------------------
 
-      Typedecl::Typedecl() : init{}, member_of{}, lexreg{}
+      Typedecl::Typedecl() : init{}, lexreg{}
       { }
 
       // ---------------

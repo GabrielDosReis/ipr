@@ -2115,8 +2115,7 @@ namespace ipr {
 
       virtual const Name& name() const = 0;
 
-      // The region where the declaration really belongs to.  This region is
-      // the same for all declarations.
+      // The region where the declaration really belongs to.
       virtual const Region& home_region() const = 0;
 
       // The region where this declaration appears -- purely lexical.
@@ -2162,8 +2161,6 @@ namespace ipr {
                                 // -- Enumerator --
    // This represents a classic enumerator.
    struct Enumerator : Category<Category_code::Enumerator, Decl> {
-      const Type& type() const final { return membership(); }
-      virtual const Enum& membership() const = 0;
    };
 
                                 // -- Asm --
@@ -2182,6 +2179,7 @@ namespace ipr {
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<Category_code::Alias, Decl> {
       const Type& type() const { return initializer().get().type(); }
+      const Region& lexical_region() const final { return home_region(); }
    };
 
                                 // -- Base_type --
@@ -2202,9 +2200,7 @@ namespace ipr {
    // A parameter is uniquely characterized by its position in
    // a parameter list.
    struct Parameter : Category<Category_code::Parameter, Decl> {
-      virtual const Parameter_list& membership() const = 0;
-      const Region& lexical_region() const final { return membership().region(); }
-      const Region& home_region() const final { return membership().region(); }
+      const Region& lexical_region() const final { return home_region(); }
       Optional<Expr> default_value() const { return initializer(); }
    };
 
@@ -2212,7 +2208,6 @@ namespace ipr {
    // This node represents a function declaration. Notice that the
    // exception specification is actually made part of the function type.
    struct Fundecl : Category<Category_code::Fundecl, Decl> {
-      virtual const Type& membership() const = 0;
       virtual Optional<Mapping> mapping() const = 0;
       virtual const Parameter_list& parameters() const = 0;
       virtual Optional<Fundecl> definition() const = 0;
@@ -2228,20 +2223,19 @@ namespace ipr {
                                 // -- Field --
    // This node represents a nonstatic data member.
    struct Field : Category<Category_code::Field, Decl> {
-      virtual const Type& membership() const = 0;
+      const Region& lexical_region() const final { return home_region(); }
    };
 
                                 // -- Bitfield --
    // A bit-field data member.
    struct Bitfield : Category<Category_code::Bitfield, Decl> {
       virtual const Expr& precision() const = 0;
-      virtual const Type& membership() const = 0;
+      const Region& lexical_region() const final { return home_region(); }
    };
 
                                 // -- Typedecl --
    // This node class represents a declaration of a user-defined type.
    struct Typedecl : Category<Category_code::Typedecl, Decl> {
-      virtual const Expr& membership() const = 0;
       virtual Optional<Typedecl> definition() const = 0;
    };
 
