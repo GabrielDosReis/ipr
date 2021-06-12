@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <typeinfo>
+#include <type_traits>
 #include <cassert>
 #include <iterator>
 #include <utility>
@@ -677,6 +678,26 @@ namespace ipr {
          int operator()(const ipr::Node& lhs, const node_ref<T>& rhs) const
          {
             return compare(lhs, rhs.node);
+         }
+
+         template<class T,
+            class = std::enable_if_t<!std::is_same_v<
+              std::remove_reference_t<typename Unary<T>::Arg_type>,
+              const ipr::Sequence<ipr::Type>>>>
+         int operator()(const Unary<T>& lhs,
+                        const typename Unary<T>::Arg_type& rhs) const
+         {
+            return compare(lhs.rep, rhs);
+         }
+
+         template<class T,
+            class = std::enable_if_t<!std::is_same_v<
+              std::remove_reference_t<typename Unary<T>::Arg_type>,
+              const ipr::Sequence<ipr::Type>>>>
+         int operator()(const typename Unary<T>::Arg_type& lhs,
+                        const Unary<T>& rhs) const
+         {
+            return compare(lhs, rhs.rep);
          }
 
          template<class T>
