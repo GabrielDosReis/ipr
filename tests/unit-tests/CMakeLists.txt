@@ -3,6 +3,7 @@ set(TEST_BINARY unittests)
 add_executable(${TEST_BINARY}
    conversions.cpp
    simple.cpp
+   words.cxx
 )
 
 target_link_libraries(${TEST_BINARY}
@@ -15,7 +16,7 @@ target_include_directories(${TEST_BINARY}
 
 set_target_properties(${TEST_BINARY}
    PROPERTIES
-      CXX_STANDARD 17
+      CXX_STANDARD 20
       CXX_STANDARD_REQUIRED ON
       CXX_EXTENSIONS OFF
 )

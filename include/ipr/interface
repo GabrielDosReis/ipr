@@ -752,6 +752,7 @@ namespace ipr {
 
                                 // -- String --
    // Strings in IPR are immutable, and therefore unified.
+   // FIXME: Internal representation should default to UTF-8 encoding.
    struct String : Category<Category_code::String, Node> {
       using iterator = const char*;
       using Index = std::size_t;
