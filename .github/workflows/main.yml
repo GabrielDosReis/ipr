@@ -21,10 +21,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install GCC, Clang, CMake
-      run: sudo apt-get install g++-10 clang-12 build-essential cmake
+      run: sudo apt-get install build-essential cmake
 
     - name: Configure CMake
-      run: mkdir build && cmake -Bbuild -DCMAKE_CXX_COMPILER=${{ strategy.matrix.compiler }}
+      run: mkdir build && cmake -Bbuild -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
 
     - name: Build project
       run: cmake --build ./build --parallel
