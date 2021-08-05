@@ -733,6 +733,22 @@ namespace ipr {
 
          template<class T>
          int operator()(const Unary<T>& lhs,
+                        const typename Unary<T>::Arg_type& rhs) const
+         {
+            return compare(lhs.rep, rhs);
+         }
+
+         template<class T>
+         int operator()(const typename Unary<T>::Arg_type& lhs,
+                        const Unary<T>& rhs) const
+         {
+            return compare(lhs, rhs.rep);
+         }
+      };
+
+      struct unary_lexicographic_compare {
+         template<class T>
+         int operator()(const Unary<T>& lhs,
                         const ipr::Sequence<ipr::Type>& rhs) const
          {
             return util::lexicographical_compare()
@@ -915,7 +931,7 @@ namespace ipr {
 
       impl::Product*
       type_factory::make_product(const ipr::Sequence<ipr::Type>& seq) {
-         return products.insert(seq, unary_compare());
+         return products.insert(seq, unary_lexicographic_compare());
       }
 
       impl::Ptr_to_member*
@@ -937,7 +953,7 @@ namespace ipr {
 
       impl::Sum*
       type_factory::make_sum(const ipr::Sequence<ipr::Type>& seq) {
-         return sums.insert(seq, unary_compare());
+         return sums.insert(seq, unary_lexicographic_compare());
       }
 
       impl::Forall*
@@ -2089,7 +2105,7 @@ namespace ipr {
       const ipr::Product&
       Lexicon::get_product(const ref_sequence<ipr::Type>& s) {
          return *finish_type
-            (types.make_product(*type_seqs.insert(s, unary_compare())));
+            (types.make_product(*type_seqs.insert(s, unary_lexicographic_compare())));
       }
 
       const ipr::Ptr_to_member&
@@ -2116,7 +2132,7 @@ namespace ipr {
       const ipr::Sum&
       Lexicon::get_sum(const ref_sequence<ipr::Type>& s) {
          return *finish_type
-            (types.make_sum(*type_seqs.insert(s, unary_compare())));
+            (types.make_sum(*type_seqs.insert(s, unary_lexicographic_compare())));
       }
 
       const ipr::Forall&

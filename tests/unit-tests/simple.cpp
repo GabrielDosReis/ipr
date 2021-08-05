@@ -1,5 +1,4 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest/doctest.h"
+#include <doctest/doctest.h>
 
 #include <ipr/impl>
 #include <ipr/io>
@@ -51,5 +50,13 @@ TEST_CASE("Can create and print line numbers")
   // Now we should see a location printed.
   // File name is printed as a file index for brevity
   CHECK(ss.str().find("F1:1:2") != std::string::npos);
+}
+
+TEST_CASE("linkages are deduplicated") {
+  using namespace ipr;
+  impl::Lexicon lexicon{};
+  auto& l1 = lexicon.cxx_linkage();
+  auto& l2 = lexicon.cxx_linkage();
+  CHECK(&l1 == &l2);
 }
 
