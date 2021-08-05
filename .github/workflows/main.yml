@@ -13,15 +13,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++-10, clang++-12]
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install GCC, CMake
-      run: sudo apt-get install build-essential cmake
+    - name: Install GCC, Clang, CMake
+      run: sudo apt-get install g++-10 clang-12 build-essential cmake
 
     - name: Configure CMake
-      run: mkdir build && cmake -Bbuild
+      run: mkdir build && cmake -Bbuild -DCMAKE_CXX_COMPILER=${{ strategy.matrix.compiler }}
 
     - name: Build project
       run: cmake --build ./build --parallel
