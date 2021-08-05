@@ -1,6 +1,7 @@
 set(TEST_BINARY unittests)
 
 add_executable(${TEST_BINARY}
+   main.cpp
    conversions.cpp
    simple.cpp
 )
