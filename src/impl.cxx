@@ -91,7 +91,7 @@ namespace ipr::util {
         // Dynamically allocated words are slotted by their hash codes into singly-linked lists.
         const hash_code h { std::hash<word_view>{ }(w) };
         auto& bucket = (*this)[h];
-        constexpr auto eq = [&w](auto& x) { return x.text() == w; };
+        const auto eq = [&w](auto& x) { return x.text() == w; };
         if (const auto p = std::find_if(bucket.begin(), bucket.end(), eq); p != bucket.end())
             return *p;
         const auto fresh = strings.make_string(w.data(), w.length());
