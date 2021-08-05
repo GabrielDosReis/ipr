@@ -16,6 +16,7 @@
 #include <forward_list>
 #include <variant>
 #include <functional>
+#include <string_view>
 #include <ipr/interface>
 #include <ipr/utility>
 
@@ -37,6 +38,46 @@
 // impl::Unary overrides ipr::Node::accept() and forward to the right
 // ipr::Visitor::visit() hook.
 
+namespace ipr::impl {
+                             // -- impl::Node --
+   template<class T>
+   struct Node : T {
+      using Interface = T;
+      void accept(ipr::Visitor& v) const final { v.visit(*this); }
+   };
+}
+
+namespace ipr::util {
+   // Type for representing the hash of data (mostly character strings) used internally.
+   enum class hash_code : std::size_t { };
+
+   // Type of view over words as stored internally.
+   // FIXME: The word view should base on UTF-8 encoding.
+   using word_view = std::string_view;
+}
+
+namespace ipr::impl {
+                             // -- impl::String --
+   struct String : impl::Node<ipr::String> {
+      constexpr String(const char* s) : txt{ s } { }
+      constexpr String(util::word_view w) : txt{ w } { }
+      constexpr const auto& text() const { return txt; }
+      constexpr Index size() const final { return text().length(); }
+      constexpr const char* begin() const final { return text().data(); }
+      constexpr const char* end() const final { return begin() + text().length(); }
+   private:
+      const util::word_view txt;
+   };
+}
+
+namespace ipr::util {
+   // String pool.  Used to intern words used for external designation of entities.
+   struct string_pool : private std::map<hash_code, std::forward_list<impl::String>> {
+      const ipr::String& intern(word_view);
+   private:
+      util::string::arena strings;
+   };
+}
 
 namespace ipr {
    namespace impl {
@@ -162,19 +203,18 @@ namespace ipr {
 
                                 // -- impl::Token --
       struct Token : ipr::Lexeme, ipr::Token {
-         const String& spelling() const final { return text; }
+         Token(const ipr::String&, const Source_location&, TokenValue, TokenCategory);
+         const ipr::String& spelling() const final { return text; }
          const Source_location& locus() const final { return location; }
          const ipr::Lexeme& lexeme() const final { return *this; }
          TokenValue value() const final { return token_value; }
          TokenCategory category() const final { return token_category; }
 
       private:
-         const String& text;
+         const ipr::String& text;
          Source_location location;
          TokenValue token_value;
          TokenCategory token_category;
-         Token(const String&, const Source_location&, TokenValue, TokenCategory);
-         friend impl::Lexicon;
       };
 
       // -- Parameterized implementation of ipr::Attribute.
@@ -356,12 +396,6 @@ namespace ipr {
          const ipr::Sequence<ipr::Identifier>& stems() const final;
       };
 
-                                // -- impl::Node --
-      template<class T>
-      struct Node : T {
-         using Interface = T;
-         void accept(ipr::Visitor& v) const final { v.visit(*this); }
-      };
 
       template<typename T,
           typename std::enable_if_t<std::is_scalar_v<T>, int> = 0>
@@ -491,18 +525,6 @@ namespace ipr {
          using Base::Base;
 
          const ipr::Type& type() const { return this->rep.first; }
-      };
-
-                                // -- String --
-      struct String : impl::Node<ipr::String> {
-         explicit String(const util::string&);
-
-         Index size() const final;
-         const char* begin() const final;
-         const char* end() const final;
-
-      private:
-         const util::string& text;
       };
 
                                 // -- Linkage --
@@ -1336,12 +1358,10 @@ namespace ipr {
 
       struct expr_factory {
          // Returns an IPR node for unified string literals.
-         const ipr::String& get_string(const char*);
-         const ipr::String& get_string(const std::string&);
+         const ipr::String& get_string(util::word_view);
 
          // Returns an IPR node a language linkage.
-         const ipr::Linkage& get_linkage(const char*);
-         const ipr::Linkage& get_linkage(const std::string&);
+         const ipr::Linkage& get_linkage(util::word_view);
          const ipr::Linkage& get_linkage(const ipr::String&);
 
          // Return a symbol with a given name and type.
@@ -1359,20 +1379,17 @@ namespace ipr {
 
          // Returns an IPR node for a typed literal expression.
          Literal* make_literal(const ipr::Type&, const ipr::String&);
-         Literal* make_literal(const ipr::Type&, const char*);
-         Literal* make_literal(const ipr::Type&, const std::string&);
+         Literal* make_literal(const ipr::Type&, util::word_view);
 
          // Builds an IPR object for an identifier.
          Identifier* make_identifier(const ipr::String&);
-         Identifier* make_identifier(const char*);
-         Identifier* make_identifier(const std::string&);
+         Identifier* make_identifier(util::word_view);
 
          Suffix* make_suffix(const ipr::Identifier&);
 
          // Builds an IPR object for an operator name.
          Operator* make_operator(const ipr::String&);
-         Operator* make_operator(const char*);
-         Operator* make_operator(const std::string&);
+         Operator* make_operator(util::word_view);
 
          Guide_name* make_guide_name(const ipr::Template&);
 
@@ -1471,8 +1488,7 @@ namespace ipr {
          Lambda* make_lambda(const ipr::Region&, Mapping_level);
 
       private:
-         util::string::arena string_pool;
-         util::rb_tree::container<impl::String> strings;
+         util::string_pool strings;
 
          // Language linkage nodes.
          util::rb_tree::container<impl::Linkage> linkages;
@@ -1577,8 +1593,6 @@ namespace ipr {
          stable_farm<impl::Conditional> conds;
          stable_farm<impl::Mapping> mappings;
          stable_farm<impl::Lambda> lambdas;
-
-         const ipr::String& get_string(const char*, int);
       };
 
 
@@ -2161,14 +2175,12 @@ namespace ipr {
          const ipr::Linkage& cxx_linkage() const final;
          const ipr::Linkage& c_linkage() const final;
 
-         const ipr::Identifier& get_identifier(const char*);
-         const ipr::Identifier& get_identifier(const std::string&);
+         const ipr::Identifier& get_identifier(util::word_view);
          const ipr::Identifier& get_identifier(const ipr::String&);
 
          const ipr::Suffix& get_suffix(const ipr::Identifier&);
 
-         const ipr::Operator& get_operator(const char*);
-         const ipr::Operator& get_operator(const std::string&);
+         const ipr::Operator& get_operator(util::word_view);
          const ipr::Operator& get_operator(const ipr::String&);
 
          const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
@@ -2179,8 +2191,7 @@ namespace ipr {
          const ipr::Template_id& get_template_id(const ipr::Name&,
                                                  const ipr::Expr_list&);
 
-         const ipr::Literal& get_literal(const ipr::Type&, const char*);
-         const ipr::Literal& get_literal(const ipr::Type&, const std::string&);
+         const ipr::Literal& get_literal(const ipr::Type&, util::word_view);
          const ipr::Literal& get_literal(const ipr::Type&, const ipr::String&);
 
          const ipr::Type& void_type() const final;

@@ -14,7 +14,8 @@
 #include <iterator>
 #include <utility>
 #include <cstring>
-#include <string>
+#include <array>
+
 namespace ipr {
    const String& String::empty_string()
    {
@@ -27,10 +28,79 @@ namespace ipr {
       static constexpr Empty_string empty { };
       return empty;
    }
+}
 
+namespace ipr::impl {
+    namespace {
+        // A table of statically known words used in the internal representation.
+        constexpr impl::String known_words[] {
+           "...",
+           "C",
+           "C++",
+           "bool",
+           "char",
+           "char16_t",
+           "char32_t",
+           "char8_t",
+           "class",
+           "double",
+           "enum",
+           "float",
+           "int",
+           "long",
+           "long double",
+           "long long",
+           "namespace",
+           "nullptr",
+           "short",
+           "signed char",
+           "typename",
+           "union",
+           "unsigned char",
+           "unsigned int",
+           "unsigned long",
+           "unsigned long long",
+           "unsigned short",
+           "void",
+           "wchar_t",
+        };
 
-   namespace impl {
+        // Lexicographical less-than comparison between two known words.
+        constexpr bool word_less(const impl::String& x, const impl::String& y)
+        {
+           return x.text() < y.text();
+        }
 
+        // Ensure the table of statically known words is lexicographically sorted.
+        static_assert(std::is_sorted(std::begin(known_words), std::end(known_words), word_less));
+    }
+}
+
+namespace ipr::util {
+    const ipr::String& string_pool::intern(word_view w)
+    {
+       if (w.empty())
+         return ipr::String::empty_string();
+
+        // For statically known words, just return the statically allocated address.
+        constexpr auto lt = [](auto& x, auto& y) { return x.text() < y; };
+        if (const auto p = std::lower_bound(std::begin(impl::known_words), std::end(impl::known_words), w, lt);
+            p < std::end(impl::known_words) and p->text() == w)
+            return *p;
+
+        // Dynamically allocated words are slotted by their hash codes into singly-linked lists.
+        const hash_code h { std::hash<word_view>{ }(w) };
+        auto& bucket = (*this)[h];
+        const auto eq = [&w](auto& x) { return x.text() == w; };
+        if (const auto p = std::find_if(bucket.begin(), bucket.end(), eq); p != bucket.end())
+            return *p;
+        const auto fresh = strings.make_string(w.data(), w.length());
+        bucket.emplace_front(util::word_view(fresh->data, fresh->length));
+        return bucket.front();
+    }
+}
+
+namespace ipr::impl {
       Token::Token(const ipr::String& s, const Source_location& l,
                    TokenValue v, TokenCategory c)
             : text{ s }, location{ l }, token_value{ v }, token_category{ c }
@@ -611,26 +681,6 @@ namespace ipr {
          : impl::Udt<ipr::Closure>(&r, t)
       { }
 
-      // ------------------
-      // -- impl::String --
-      // ------------------
-      String::String(const util::string& s) : text(s)
-      { }
-
-      String::Index String::size() const {
-         return text.size();
-      }
-
-      const char*
-      String::begin() const {
-         return text.begin();
-      }
-
-      const char*
-      String::end() const {
-         return text.end();
-      }
-
       // --------------------------
       // -- impl::Parameter_list --
       // --------------------------
@@ -750,18 +800,18 @@ namespace ipr {
          }
       };
 
-	  struct id_compare
-	  {
-		  int operator()(const ipr::Identifier& lhs, const ipr::String& rhs) const
-		  {
-			  return compare(lhs.string(), rhs);
-		  }
+      struct id_compare
+      {
+          int operator()(const ipr::Identifier& lhs, const ipr::String& rhs) const
+          {
+              return compare(lhs.string(), rhs);
+          }
 
-		  int operator()(const ipr::String& lhs, const ipr::Identifier& rhs) const
-		  {
-			  return compare(lhs, rhs.string());
-		  }
-	  };
+          int operator()(const ipr::String& lhs, const ipr::Identifier& rhs) const
+          {
+              return compare(lhs, rhs.string());
+          }
+      };
 
 
       // >>>> Yuriy Solodkyy: 2008/07/10
@@ -770,14 +820,14 @@ namespace ipr {
       // on RHS we would be called with already allocated Pointer types. Thus we
       // have to check whether any of the existing Pointer types does not already
       // have a points_to (its operand()) equal to the type in LHS.
-	  struct unified_type_compare
-	  {
+      struct unified_type_compare
+      {
           template<class Cat, class Operand>
-    	  int operator()(const ipr::Type& lhs, const ipr::Unary<Cat,Operand>& rhs) const
-		  {
+          int operator()(const ipr::Type& lhs, const ipr::Unary<Cat,Operand>& rhs) const
+          {
               return compare(lhs, rhs.operand());
-		  }
-	  };
+          }
+      };
       // <<<< Yuriy Solodkyy: 2008/07/10
 
       impl::Array*
@@ -1187,81 +1237,15 @@ namespace ipr {
       // ------------------------
       // -- impl::expr_factory --
       // ------------------------
-
       const ipr::String&
-      expr_factory::get_string(const char* s) {
-         return get_string(s,std::strlen(s));
+      expr_factory::get_string(util::word_view w) {
+         return strings.intern(w);
       }
-
-      const ipr::String&
-      expr_factory::get_string(const std::string& s) {
-         return get_string(s.data(), s.size());
-      }
-
-      struct string_comp {
-         using proxy = std::pair<const char*, int>;
-
-         struct char_compare {
-            int operator()(unsigned char lhs, unsigned char rhs) const
-            {
-               return compare(lhs, rhs);
-            }
-         };
-
-         int
-         operator()(const proxy& lhs, const impl::String& rhs) const
-         {
-            return util::lexicographical_compare()
-               (lhs.first, lhs.first + lhs.second,
-                rhs.begin(), rhs.end(), char_compare());
-         }
-
-         int
-         operator()(const impl::String& lhs, const proxy& rhs) const
-         {
-            return util::lexicographical_compare()
-               (lhs.begin(), lhs.end(),
-                rhs.first, rhs.first + rhs.second, char_compare());
-         }
-
-         int
-         operator()(const util::string& lhs, const impl::String& rhs) const
-         {
-            return util::lexicographical_compare()
-               (lhs.data, lhs.data + lhs.length,
-                rhs.begin(), rhs.end(), char_compare());
-         }
-
-         int
-         operator()(const impl::String& lhs, const util::string& rhs) const
-         {
-            return util::lexicographical_compare()
-               (lhs.begin(), lhs.end(),
-                rhs.data, rhs.data + rhs.length, char_compare());
-         }
-      };
-
-      const ipr::String&
-      expr_factory::get_string(const char* s, int n) {
-         const impl::String* item = strings.find(std::make_pair(s, n),
-                                                 string_comp());
-         if (item == 0)
-            item = strings.insert(*string_pool.make_string(s, n),
-                                  string_comp());
-
-         return *item;
-      }
-
 
       // -- Language linkage
       const ipr::Linkage&
-      expr_factory::get_linkage(const char* s) {
-         return get_linkage(get_string(s));
-      }
-
-      const ipr::Linkage&
-      expr_factory::get_linkage(const std::string& s) {
-         return get_linkage(get_string(s));
+      expr_factory::get_linkage(util::word_view w) {
+         return get_linkage(get_string(w));
       }
 
       const ipr::Linkage&
@@ -1361,13 +1345,8 @@ namespace ipr {
       }
 
       impl::Identifier*
-      expr_factory::make_identifier(const char* s) {
-         return make_identifier(get_string(s));
-      }
-
-      impl::Identifier*
-      expr_factory::make_identifier(const std::string& s) {
-         return make_identifier(get_string(s));
+      expr_factory::make_identifier(util::word_view w) {
+         return make_identifier(get_string(w));
       }
 
       impl::Suffix*
@@ -1418,13 +1397,8 @@ namespace ipr {
       }
 
       impl::Operator*
-      expr_factory::make_operator(const char* s) {
-         return make_operator(get_string(s));
-      }
-
-      impl::Operator*
-      expr_factory::make_operator(const std::string& s) {
-         return make_operator(get_string(s));
+      expr_factory::make_operator(util::word_view w) {
+         return make_operator(get_string(w));
       }
 
       impl::Enclosure*
@@ -1685,17 +1659,12 @@ namespace ipr {
       impl::Literal*
       expr_factory::make_literal(const ipr::Type& t, const ipr::String& s) {
          using rep = impl::Literal::Rep;
-		 return lits.insert(rep{ t, s }, binary_compare());
+         return lits.insert(rep{ t, s }, binary_compare());
       }
 
       impl::Literal*
-      expr_factory::make_literal(const ipr::Type& t, const char* s) {
-         return make_literal(t, get_string(s));
-      }
-
-      impl::Literal*
-      expr_factory::make_literal(const ipr::Type& t, const std::string& s) {
-         return make_literal(t, get_string(s));
+      expr_factory::make_literal(const ipr::Type& t, util::word_view w) {
+         return make_literal(t, get_string(w));
       }
 
       impl::Lshift*
@@ -1960,13 +1929,8 @@ namespace ipr {
       Lexicon::~Lexicon() { }
 
       const ipr::Literal&
-      Lexicon::get_literal(const ipr::Type& t, const char* s) {
-         return get_literal(t, get_string(s));
-      }
-
-      const ipr::Literal&
-      Lexicon::get_literal(const ipr::Type& t, const std::string& s) {
-         return get_literal(t, get_string(s));
+      Lexicon::get_literal(const ipr::Type& t, util::word_view w) {
+         return get_literal(t, get_string(w));
       }
 
       const ipr::Literal&
@@ -1975,13 +1939,8 @@ namespace ipr {
       }
 
       const ipr::Identifier&
-      Lexicon::get_identifier(const char* s) {
-         return get_identifier(get_string(s));
-      }
-
-      const ipr::Identifier&
-      Lexicon::get_identifier(const std::string& s) {
-         return get_identifier(get_string(s));
+      Lexicon::get_identifier(util::word_view w) {
+         return get_identifier(get_string(w));
       }
 
       const ipr::Identifier&
@@ -2072,13 +2031,8 @@ namespace ipr {
       }
 
       const ipr::Operator&
-      Lexicon::get_operator(const char* s) {
-         return get_operator(get_string(s));
-      }
-
-      const ipr::Operator&
-      Lexicon::get_operator(const std::string& s) {
-         return get_operator(get_string(s));
+      Lexicon::get_operator(util::word_view w) {
+         return get_operator(get_string(w));
       }
 
       const ipr::Operator&
@@ -2258,8 +2212,6 @@ namespace ipr {
       impl::Module_unit* Module::make_unit() {
          return units.push_back(lexicon, *this);
       }
-
-   }
 }
 
 
