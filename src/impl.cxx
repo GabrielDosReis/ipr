@@ -100,9 +100,7 @@ namespace ipr::util {
     }
 }
 
-
-namespace ipr {
-   namespace impl {
+namespace ipr::impl {
       Token::Token(const ipr::String& s, const Source_location& l,
                    TokenValue v, TokenCategory c)
             : text{ s }, location{ l }, token_value{ v }, token_category{ c }
@@ -802,18 +800,18 @@ namespace ipr {
          }
       };
 
-	  struct id_compare
-	  {
-		  int operator()(const ipr::Identifier& lhs, const ipr::String& rhs) const
-		  {
-			  return compare(lhs.string(), rhs);
-		  }
+      struct id_compare
+      {
+          int operator()(const ipr::Identifier& lhs, const ipr::String& rhs) const
+          {
+              return compare(lhs.string(), rhs);
+          }
 
-		  int operator()(const ipr::String& lhs, const ipr::Identifier& rhs) const
-		  {
-			  return compare(lhs, rhs.string());
-		  }
-	  };
+          int operator()(const ipr::String& lhs, const ipr::Identifier& rhs) const
+          {
+              return compare(lhs, rhs.string());
+          }
+      };
 
 
       // >>>> Yuriy Solodkyy: 2008/07/10
@@ -822,14 +820,14 @@ namespace ipr {
       // on RHS we would be called with already allocated Pointer types. Thus we
       // have to check whether any of the existing Pointer types does not already
       // have a points_to (its operand()) equal to the type in LHS.
-	  struct unified_type_compare
-	  {
+      struct unified_type_compare
+      {
           template<class Cat, class Operand>
-    	  int operator()(const ipr::Type& lhs, const ipr::Unary<Cat,Operand>& rhs) const
-		  {
+          int operator()(const ipr::Type& lhs, const ipr::Unary<Cat,Operand>& rhs) const
+          {
               return compare(lhs, rhs.operand());
-		  }
-	  };
+          }
+      };
       // <<<< Yuriy Solodkyy: 2008/07/10
 
       impl::Array*
@@ -1661,7 +1659,7 @@ namespace ipr {
       impl::Literal*
       expr_factory::make_literal(const ipr::Type& t, const ipr::String& s) {
          using rep = impl::Literal::Rep;
-		 return lits.insert(rep{ t, s }, binary_compare());
+         return lits.insert(rep{ t, s }, binary_compare());
       }
 
       impl::Literal*
@@ -2214,8 +2212,6 @@ namespace ipr {
       impl::Module_unit* Module::make_unit() {
          return units.push_back(lexicon, *this);
       }
-
-   }
 }
 
 
