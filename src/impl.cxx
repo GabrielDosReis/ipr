@@ -72,7 +72,10 @@ namespace ipr::impl {
         }
 
         // Ensure the table of statically known words is lexicographically sorted.
+        // FIXME: Unfortunately, GCC's support for basic C++20 constexpr algorithms is wobbly.
+#        if !__GNUC__        
         static_assert(std::is_sorted(std::begin(known_words), std::end(known_words), word_less));
+#        endif
     }
 }
 
