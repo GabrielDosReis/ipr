@@ -8,12 +8,14 @@
 #ifndef IPR_UTILITY_INCLUDED
 #define IPR_UTILITY_INCLUDED
 
+#include <cstddef>
 #include <utility>
 #include <memory>
 #include <new>
 #include <stdexcept>
 #include <algorithm>
 #include <iosfwd>
+#include <memory>
 
 namespace ipr {
    namespace util {
@@ -59,32 +61,30 @@ namespace ipr {
       // trees in both "intrusive" and "non-intrusive" forms.
 
       namespace rb_tree {
+         // Marker used to designate a tree node as either 'black' or 'red'.
+         enum class Color { Black, Red };
+
          // The type of the links used to chain together data in
          // a red-black tree.
          template<class Node>
          struct link {
-            enum Color { Black, Red };
             enum Dir { Left, Right, Parent };
-
-            link() : arm(), color(Red) { }
 
             Node*& parent() { return arm[Parent]; }
             Node*& left() { return arm[Left]; }
             Node*& right() { return arm[Right]; }
 
-            Node* arm[3];
-            Color color;
+            Node* arm[3] { };
+            Color color = Color::Red;
          };
 
          template<class Node>
          struct core {
-            core() : root{ }, count{ } { }
-
-            int size() const { return count; }
+            std::ptrdiff_t size() const { return count; }
 
          protected:
-            Node* root;
-            int count;
+            Node* root { };
+            std::ptrdiff_t count { };
 
             // Do a left rotation about X.  X->left() is assumed nonnull,
             // which after the manoeuvre becomes X's parent.
@@ -149,47 +149,53 @@ namespace ipr {
          void
          core<Node>::fixup_insert(Node* z)
          {
-            while (z != root && z->parent()->color == Node::Red) {
+            while (z != root && z->parent()->color == Color::Red) {
                if (z->parent() == z->parent()->parent()->left()) {
                   Node* y = z->parent()->parent()->right();
-                  if (y != nullptr && y->color == Node::Red) {
-                     z->parent()->color = Node::Black;
-                     y->color = Node::Black;
-                     z->parent()->parent()->color = Node::Red;
+                  if (y != nullptr && y->color == Color::Red) {
+                     z->parent()->color = Color::Black;
+                     y->color = Color::Black;
+                     z->parent()->parent()->color = Color::Red;
                      z = z->parent()->parent();
                   } else {
                      if (z->parent()->right() == z) {
                         z = z->parent();
                         rotate_left(z);
                      }
-                     z->parent()->color = Node::Black;
-                     z->parent()->parent()->color = Node::Red;
+                     z->parent()->color = Color::Black;
+                     z->parent()->parent()->color = Color::Red;
                      rotate_right(z->parent()->parent());
                   }
                } else {
                   Node* y = z->parent()->parent()->left();
-                  if (y != nullptr && y->color == Node::Red) {
-                     z->parent()->color = Node::Black;
-                     y->color = Node::Black;
-                     z->parent()->parent()->color = Node::Red;
+                  if (y != nullptr && y->color == Color::Red) {
+                     z->parent()->color = Color::Black;
+                     y->color = Color::Black;
+                     z->parent()->parent()->color = Color::Red;
                      z = z->parent()->parent();
                   } else {
                      if (z->parent()->left() == z) {
                         z = z->parent();
                         rotate_right(z);
                      }
-                     z->parent()->color = Node::Black;
-                     z->parent()->parent()->color = Node::Red;
+                     z->parent()->color = Color::Black;
+                     z->parent()->parent()->color = Color::Red;
                      rotate_left(z->parent()->parent());
                   }
                }
 
             }
 
-            root->color = Node::Black;
+            root->color = Color::Black;
          }
 
 
+         // A chain is an rb-tree that supports search and insertion, with
+         // the comparison object passed as a parameter instead of being built
+         // into the tree type directly.  The comparison object `cmp` is always
+         // invoked as `cmp(data, key)` where `data` designates an existing
+         // object stored at a node in the chain, and `key` is the parameter by which
+         // the tree is searched.
          template<class Node>
          struct chain : core<Node> {
             template<class Comp>
@@ -207,7 +213,7 @@ namespace ipr {
             bool found = false;
             Node* result = this->root;
             while (result != nullptr && !found) {
-               int ordering = comp(key, *result) ;
+               auto ordering = comp(*result, key) ;
                if (ordering < 0)
                   result = result->left();
                else if (ordering > 0)
@@ -229,7 +235,7 @@ namespace ipr {
 
             bool found = false;
             while (!found && *slot != nullptr) {
-               int ordering = comp(*z, **slot);
+               auto ordering = comp(**slot, *z);
                if (ordering < 0) {
                   up = *slot;
                   slot = &up->left();
@@ -245,13 +251,13 @@ namespace ipr {
             if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
                this->root = z;
-               z->color = Node::Black;
+               z->color = Color::Black;
             }
             else if (*slot == nullptr) {
                // key is not present, do what we're asked to do.
                *slot = z;
                z->parent() = up;
-               z->color = Node::Red;
+               z->color = Color::Red;
                this->fixup_insert(z);
             }
 
@@ -266,7 +272,7 @@ namespace ipr {
 
 
          template<typename T>
-         struct container : core<node<T>> {
+         struct container : core<node<T>>, private std::allocator<node<T>> {
             template<typename Key, class Comp>
             T* find(const Key&, Comp) const;
 
@@ -278,28 +284,20 @@ namespace ipr {
             T* insert(const Key&, Comp);
 
          private:
-            node<T>* allocate() {
-               return static_cast<node<T>*>(operator new (sizeof(node<T>)));
-            }
-
-            void deallocate(node<T>* n) {
-               operator delete(n);
-            }
-
             template<class U>
             node<T>* make_node(const U& u) {
-               node<T>* n = allocate();
+               node<T>* n = this->allocate(1);
                new (&n->data) T(u);
-               n->arm[node<T>::Left] = nullptr;
-               n->arm[node<T>::Right] = nullptr;
-               n->arm[node<T>::Parent] = nullptr;
+               n->left() = nullptr;
+               n->right() = nullptr;
+               n->parent() = nullptr;
                return n;
             }
 
             void destroy_node(node<T>* n) {
                if (n != nullptr) {
                   n->data.~T();
-                  this->deallocate(n);
+                  this->deallocate(n, 1);
                }
             }
          };
@@ -310,7 +308,7 @@ namespace ipr {
          container<T>::find(const Key& key, Comp comp) const
          {
             for (node<T>* x = this->root; x != nullptr; ) {
-               int ordering = comp(key, x->data);
+               auto ordering = comp(x->data, key);
                if (ordering < 0)
                   x = x->left();
                else if (ordering > 0)
@@ -330,7 +328,7 @@ namespace ipr {
             if (this->root == nullptr) {
                // This is the first time we're inserting into the tree.
                this->root = make_node(key);
-               this->root->color = node<T>::Black;
+               this->root->color = Color::Black;
                ++this->count;
                return &this->root->data;
             }
@@ -341,7 +339,7 @@ namespace ipr {
             bool found = false;
 
             for (where = this->root; where != nullptr && !found; where = *slot) {
-               int ordering = comp(key, where->data);
+               auto ordering = comp(where->data, key);
                if (ordering < 0) {
                   parent = where;
                   slot = &where->left();
@@ -358,7 +356,7 @@ namespace ipr {
                // key is not present, do what we're asked to do.
                where = *slot = make_node(key);
                where->parent() = parent;
-               where->color = node<T>::Red;
+               where->color = Color::Red;
                ++this->count;
                this->fixup_insert(where);
             }

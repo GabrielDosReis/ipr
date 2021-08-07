@@ -823,9 +823,9 @@ namespace ipr::impl {
       struct unified_type_compare
       {
           template<class Cat, class Operand>
-          int operator()(const ipr::Type& lhs, const ipr::Unary<Cat,Operand>& rhs) const
+          int operator()(const ipr::Unary<Cat,Operand>& lhs, const ipr::Type& rhs) const
           {
-              return compare(lhs, rhs.operand());
+              return compare(lhs.operand(), rhs);
           }
       };
       // <<<< Yuriy Solodkyy: 2008/07/10
@@ -1256,13 +1256,15 @@ namespace ipr::impl {
       const ipr::Symbol&
       expr_factory::get_symbol(const ipr::Name& n, const ipr::Type& t)
       {
-         const auto comparator = [](auto& x, auto& y) {
-            if (auto cmp = compare(x.name(), x.name()))
+         const auto comparator = [&t](auto& x, auto& y) {
+            if (auto cmp = compare(x.name(), y))
                return cmp;
-            return compare(x.type(), y.type());
+            return compare(x.type(), t);
          };
 
-         return *symbols.insert(impl::Symbol{ n, t }, comparator);
+         auto sym = symbols.insert(n, comparator);
+         sym->constraint = &t;
+         return *sym;
       }
 
       impl::Phantom*
