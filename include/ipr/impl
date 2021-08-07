@@ -38,10 +38,24 @@
 // impl::Unary overrides ipr::Node::accept() and forward to the right
 // ipr::Visitor::visit() hook.
 
+namespace ipr::util {
+   // Interface nodes are neither copyable nor moveable, by virtue of being abstract classes.
+   // Similarly, implementation of those interfaces are not intended to be copyable nor moveable.
+   // This utility class captures the intent of disabling the automatic generation of the usual
+   // copy/move operations.  The class definition is more verbose than the intent.
+   struct immotile {
+      immotile() = default;
+      immotile(immotile&&) = delete;
+      immotile(const immotile&) = delete;
+      immotile& operator=(immotile&&) = delete;
+      immotile& operator=(const immotile&) = delete;
+   };
+}
+
 namespace ipr::impl {
                              // -- impl::Node --
    template<class T>
-   struct Node : T {
+   struct Node : T, util::immotile {
       using Interface = T;
       void accept(ipr::Visitor& v) const final { v.visit(*this); }
    };
@@ -798,9 +812,9 @@ namespace ipr {
          }
 
          int
-         operator()(const ipr::Type& t, const overload_entry& e) const
+         operator()(const overload_entry& e, const ipr::Type& t) const
          {
-            return (*this)(t, e.type);
+            return (*this)(e.type, t);
          }
 
          int
