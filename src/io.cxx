@@ -13,8 +13,29 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace ipr
-{
+namespace ipr {
+   // Format a sequence of items via a transformer.
+   template<typename F, typename T>
+   static Printer& sequenced(Printer& pp, const Sequence<T>& s, F f)
+   {
+      std::for_each(s.begin(), s.end(), f);
+      return pp;
+   }
+
+   // Format a comma-separated sequence of items
+   template<typename F, typename T>
+   static Printer& comma_separated(Printer& pp, const Sequence<T>& s)
+   {
+      auto worker = [&pp, first = true](auto& x) mutable {
+         if (not first)
+            pp << ", ";
+         pp << F(x);
+         first = false;
+      };
+      std::for_each(s.begin(), s.end(), worker);
+      return pp;
+   }
+
    Printer& operator<<(Printer& p, Mapping_level x)
    {
       auto n = static_cast<std::size_t>(x);
@@ -108,14 +129,7 @@ namespace ipr
    static inline Printer&
    operator<<(Printer& pp, const Expr_list& l)
    {
-      const int n = l.size();
-      for (int i = 0; i < n; ++i)
-         {
-            if (i != 0)
-               pp << token(", ");
-            pp << xpr_expr(l[i]);
-         }
-      return pp;
+      return comma_separated<xpr_expr>(pp, l.elements());
    }
 
 
@@ -123,14 +137,7 @@ namespace ipr
    static inline Printer&
    operator<<(Printer& pp, const Sequence<Type>& s)
    {
-      const int n = s.size();
-      for (int i = 0; i < n; ++i)
-         {
-            if (i != 0)
-               pp << token(", ");
-            pp << xpr_type(s[i]);
-         }
-      return pp;
+      return comma_separated<xpr_type>(pp, s);
    }
 
 
@@ -138,14 +145,7 @@ namespace ipr
    static inline Printer&
    operator<<(Printer& pp, const Parameter_list& l)
    {
-      const int n = l.size();
-      for (int i = 0; i < n; ++i)
-         {
-            if (i != 0)
-               pp << token(", ");
-            pp << xpr_decl(l.members()[i]);
-         }
-      return pp;
+      return comma_separated<xpr_decl>(pp, l.elements());
    }
 
    struct xpr_initializer {
@@ -1244,13 +1244,7 @@ namespace ipr
 
       void visit(const Scope& s) final
       {
-         const Sequence<Decl>& decls = s.members();
-         const int n = decls.size();
-         for (int i = 0; i < n; ++i)
-            {
-               pp << xpr_decl(decls[i], true)
-                  << newline();
-            }
+         sequenced(pp, s.elements(), [&pp = pp](auto& d) { pp << xpr_decl(d, true) << newline(); });
       }
 
       void visit(const Expr_list& e) final { pp << e; }
@@ -1301,18 +1295,11 @@ namespace ipr
    {
       const Sequence<Base_type>& bases = x.bases;
       const int n = bases.size();
-      if (n > 0)
-         {
-            pp << token('(');
-            for (int i = 0; i < n; ++i)
-               {
-                  if (i != 0)
-                     pp << token(", ");
-                  pp << xpr_decl(bases[i]);
-               }
-            pp << token(')');
-         }
-
+      if (not bases.empty()) {
+         pp << token('(');
+         comma_separated<xpr_decl>(pp, bases);
+         pp << token(')');
+      }
       return pp;
    }
 
@@ -1573,19 +1560,11 @@ namespace ipr
          {
             pp << token('{')
                << needs_newline() << indentation(3);
-            const Sequence<ipr::Stmt>& body = s.body();
-            int n = body.size();
-            for (int i = 0; i < n; ++i)
-               pp << xpr_stmt(body[i])
-                  << needs_newline();
+            sequenced(pp, s.body(), [&pp = pp](auto& e) { pp << xpr_stmt(e) << needs_newline(); });
             pp << newline_and_indent(-3)
                << token('}')
                << needs_newline();
-
-            const Sequence<Handler>& handlers = s.handlers();
-            n = handlers.size();
-            for (int i = 0; i < n; ++i)
-               pp << xpr_stmt(handlers[i],false);
+            sequenced(pp, s.handlers(), [&pp = pp](auto& h) { pp << xpr_stmt(h, false); });
          }
 
          void visit(const Ctor_body& b) final
