@@ -11,7 +11,7 @@
 char
 ipr::util::string::operator[](int i) const
 {
-   if (i < 0 || i >= length)
+   if (i < 0 or i >= length)
       throw std::domain_error("invalid index for util::string::operator[]");
    return data[i];
 }

@@ -16,7 +16,7 @@ namespace ipr {
    structurally_same(const Unary<Cat, Op>& lhs, const Unary<Cat, Op>& rhs)
    {
       return physically_same(lhs, rhs)
-         || structurally_same(lhs.operand(), rhs.operand());
+         or structurally_same(lhs.operand(), rhs.operand());
    }
 
    template<class Cat, class Op1, class Op2>
@@ -25,8 +25,8 @@ namespace ipr {
                      const Binary<Cat, Op1, Op2>& rhs)
    {
       return physically_same(lhs, rhs)
-         || (structurally_same(lhs.first(), rhs.first())
-             && structurally_same(lhs.first(), rhs.first()));
+         or (structurally_same(lhs.first(), rhs.first())
+             and structurally_same(lhs.first(), rhs.first()));
    }
 
    template<class Cat, class Op1, class Op2, class Op3>
@@ -35,9 +35,9 @@ namespace ipr {
                      const Ternary<Cat, Op1, Op2, Op3>& rhs)
    {
       return physically_same(lhs, rhs)
-         || (structurally_same(lhs.first(), rhs.first())
-             && structurally_same(lhs.second(), rhs.second())
-             && structurally_same(lhs.third(), rhs.third()));
+         or (structurally_same(lhs.first(), rhs.first())
+             and structurally_same(lhs.second(), rhs.second())
+             and structurally_same(lhs.third(), rhs.third()));
    }
 }
 

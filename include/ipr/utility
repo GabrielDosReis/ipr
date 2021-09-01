@@ -149,10 +149,10 @@ namespace ipr {
          void
          core<Node>::fixup_insert(Node* z)
          {
-            while (z != root && z->parent()->color == Color::Red) {
+            while (z != root and z->parent()->color == Color::Red) {
                if (z->parent() == z->parent()->parent()->left()) {
                   Node* y = z->parent()->parent()->right();
-                  if (y != nullptr && y->color == Color::Red) {
+                  if (y != nullptr and y->color == Color::Red) {
                      z->parent()->color = Color::Black;
                      y->color = Color::Black;
                      z->parent()->parent()->color = Color::Red;
@@ -168,7 +168,7 @@ namespace ipr {
                   }
                } else {
                   Node* y = z->parent()->parent()->left();
-                  if (y != nullptr && y->color == Color::Red) {
+                  if (y != nullptr and y->color == Color::Red) {
                      z->parent()->color = Color::Black;
                      y->color = Color::Black;
                      z->parent()->parent()->color = Color::Red;
@@ -212,7 +212,7 @@ namespace ipr {
          {
             bool found = false;
             Node* result = this->root;
-            while (result != nullptr && !found) {
+            while (result != nullptr and not found) {
                auto ordering = comp(*result, key) ;
                if (ordering < 0)
                   result = result->left();
@@ -234,7 +234,7 @@ namespace ipr {
             Node* up = nullptr;
 
             bool found = false;
-            while (!found && *slot != nullptr) {
+            while (not found and *slot != nullptr) {
                auto ordering = comp(**slot, *z);
                if (ordering < 0) {
                   up = *slot;
@@ -338,7 +338,7 @@ namespace ipr {
             node<T>* where = nullptr;
             bool found = false;
 
-            for (where = this->root; where != nullptr && !found; where = *slot) {
+            for (where = this->root; where != nullptr and not found; where = *slot) {
                auto ordering = comp(where->data, key);
                if (ordering < 0) {
                   parent = where;
@@ -425,7 +425,7 @@ namespace ipr {
          int operator()(In1 first1, In1 last1, In2 first2, In2 last2,
                         Compare compare) const
          {
-            for (; first1 != last1 && first2 != last2; ++first1, ++first2)
+            for (; first1 != last1 and first2 != last2; ++first1, ++first2)
                if (int cmp = compare(*first1, *first2))
                   return cmp;
 

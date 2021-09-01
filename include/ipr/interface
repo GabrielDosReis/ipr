@@ -423,10 +423,10 @@ namespace ipr {
       }
 
       bool operator==(Iterator other) const
-      { return seq == other.seq && index == other.index; }
+      { return seq == other.seq and index == other.index; }
 
       bool operator!=(Iterator other) const
-      { return !(*this == other); }
+      { return not(*this == other); }
 
    private:
       const Sequence* seq { };

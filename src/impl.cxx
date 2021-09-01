@@ -2013,10 +2013,10 @@ namespace ipr::impl {
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
-         if (!t->constraint.is_valid())
+         if (not t->constraint.is_valid())
             t->constraint = &anytype;
 
-         if (!t->id.is_valid())
+         if (not t->id.is_valid())
             t->id = make_type_id(*t);
 
          return t;
