@@ -364,11 +364,10 @@ namespace ipr {
       using iterator = Iterator;
 
       virtual Index size() const = 0;
+      bool empty() const { return not (size() > 0); }
       Iterator begin() const;
       Iterator end() const;
-
       Iterator position(Index) const;
-      const T& operator[](Index) const;
 
    protected:
       virtual const T& get(Index) const = 0;
@@ -448,11 +447,6 @@ namespace ipr {
    inline typename Sequence<T>::Iterator
    Sequence<T>::end() const
    { return { this, size() }; }
-
-   template<class T>
-   inline const T&
-   Sequence<T>::operator[](Index p) const
-   { return get(p); }
 
                                  // -- Delimiter --
    // Enclosure delimiters of expressions
@@ -978,9 +972,6 @@ namespace ipr {
    // look-up by type.  The result of such lookup is the sequence of
    // declarations of that name with that type.
    struct Overload : Sequence<Decl>, Category<Category_code::Overload> {
-      // Bring Sequence<Decl>::operator[] into
-      // scope before overloading.
-      using Sequence<Decl>::operator[];
       virtual const Sequence<Decl>& operator[](const Type&) const = 0;
    };
 
@@ -997,18 +988,17 @@ namespace ipr {
       using Iterator = Sequence<Decl>::Iterator;
 
       // The sequence of declarations this scope contain.
-      virtual const Sequence<Decl>& members() const = 0;
+      virtual const Sequence<Decl>& elements() const = 0;
 
       // Look-up by name returns the overload-set of all declarations,
       // for the subscripting name, contained in this scope.
       virtual const Overload& operator[](const Name&) const = 0;
 
       // How may declarations are there in this Scope.
-      auto size() const { return members().size(); }
+      auto size() const { return elements().size(); }
 
-      Iterator begin() const { return members().begin(); }
-      Iterator end() const { return members().end(); }
-      const Decl& operator[](int i) const { return members()[i]; }
+      Iterator begin() const { return elements().begin(); }
+      Iterator end() const { return elements().end(); }
    };
 
                                 // -- General types --
@@ -1154,7 +1144,7 @@ namespace ipr {
       using Index = std::size_t;
       Arg_type elements() const { return operand(); }
       auto size() const { return elements().size(); }
-      const Type& operator[](Index i) const { return elements()[i]; }
+      const Type& operator[](Index i) const { return *elements().position(i); }
    };
 
                                 // -- Ptr_to_member --
@@ -1209,7 +1199,7 @@ namespace ipr {
       using Index = std::size_t;
       Arg_type elements() const { return operand(); }
       auto size() const { return elements().size(); }
-      const Type& operator[](Index i) const { return elements()[i]; }
+      const Type& operator[](Index i) const { return *elements().position(i); }
    };
 
                                 // -- Forall --
@@ -1247,18 +1237,18 @@ namespace ipr {
    // that is initialized with a sequence of declarations.  The type of 
    // such a variable is given by an IPR "namespace" type.
    struct Namespace : Category<Category_code::Namespace, Udt<Decl>> {
-      const Sequence<Decl>& members() const final { return scope().members(); }
+      const Sequence<Decl>& members() const final { return scope().elements(); }
    };
 
                                 // -- Class --
    struct Class : Category<Category_code::Class, Udt<Decl>> {
-      const Sequence<Decl>& members() const final { return scope().members(); }
+      const Sequence<Decl>& members() const final { return scope().elements(); }
       virtual const Sequence<Base_type>& bases() const = 0;
    };
 
                                 // -- Union --
    struct Union : Category<Category_code::Union, Udt<Decl>> {
-      const Sequence<Decl>& members() const final { return scope().members(); }
+      const Sequence<Decl>& members() const final { return scope().elements(); }
    };
 
                                 // -- Enum --
@@ -1459,7 +1449,6 @@ namespace ipr {
       using Index = std::size_t;
       Arg_type elements() const { return operand(); }
       auto size() const { return elements().size(); }
-      const Expr& operator[](Index i) const { return elements()[i]; }
    };
 
                                 // -- Sizeof --
@@ -1888,10 +1877,10 @@ namespace ipr {
    struct Parameter_list : Category<Category_code::Parameter_list> {
       virtual const Region& region() const = 0;
       virtual Mapping_level level() const = 0;
-      virtual const Sequence<Parameter>& members() const = 0;
-      auto begin() const { return members().begin(); }
-      auto end() const { return members().end(); }
-      auto size() const { return members().size(); }
+      virtual const Sequence<Parameter>& elements() const = 0;
+      auto begin() const { return elements().begin(); }
+      auto end() const { return elements().end(); }
+      auto size() const { return elements().size(); }
    };
 
                                 // -- Stmt --
@@ -1977,7 +1966,7 @@ namespace ipr {
                                 // -- Block --
    // A Block is any sequence of statements bracketed by curly braces.
    struct Block : Category<Category_code::Block, Stmt> {
-      virtual const Scope& members() const = 0;
+      virtual const Scope& elements() const = 0;
       virtual const Sequence<Stmt>& body() const = 0;
       virtual const Sequence<Handler>& handlers() const = 0;
    };

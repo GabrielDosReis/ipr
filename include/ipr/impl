@@ -139,7 +139,6 @@ namespace ipr {
 
          Index size() const final { return Rep::size(); }
 
-         using Seq::operator[];
          using Seq::begin;
          using Seq::end;
 
@@ -162,7 +161,6 @@ namespace ipr {
          using Iterator = typename Seq::Iterator;
          using Index = typename Seq::Index;
 
-         using Seq::operator[];
          using Seq::begin;
          using Seq::end;
 
@@ -1058,7 +1056,7 @@ namespace ipr {
 
          const ipr::Product& type() const final { return decls; }
 
-         const ipr::Sequence<ipr::Decl>& members() const final { return *this; }
+         const ipr::Sequence<ipr::Decl>& elements() const final { return *this; }
 
          const ipr::Overload& operator[](const Name&) const final;
 
@@ -1113,7 +1111,7 @@ namespace ipr {
          const ipr::Product& type() const final;
          const ipr::Region& region() const final;
          Mapping_level level() const final { return nesting; }
-         const ipr::Sequence<ipr::Parameter>& members() const final;
+         const ipr::Sequence<ipr::Parameter>& elements() const final;
 
          impl::Parameter* add_member(const ipr::Name&, const impl::Rname&);
       };
@@ -1762,7 +1760,7 @@ namespace ipr {
       struct Scope : impl::Node<ipr::Scope> {
          Scope();
          const ipr::Type& type() const final { return decls; }
-         const ipr::Sequence<ipr::Decl>& members() const final { return decls.seq; }
+         const ipr::Sequence<ipr::Decl>& elements() const final { return decls.seq; }
          const ipr::Overload& operator[](const ipr::Name&) const final;
 
          impl::Alias* make_alias(const ipr::Name&, const ipr::Expr&);
@@ -2046,7 +2044,7 @@ namespace ipr {
          impl::ref_sequence<ipr::Handler> handler_seq;
 
          explicit Block(const ipr::Region&);
-         const ipr::Scope& members() const final { return region.scope; }
+         const ipr::Scope& elements() const final { return region.scope; }
          const ipr::Sequence<ipr::Stmt>& body() const final { return stmt_seq; }
          const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 

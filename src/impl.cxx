@@ -694,7 +694,7 @@ namespace ipr::impl {
       const ipr::Region& Parameter_list::region() const { return parms; }
 
       const ipr::Sequence<ipr::Parameter>&
-      Parameter_list::members() const {
+      Parameter_list::elements() const {
          return parms.scope.decls.seq;
       }
 
