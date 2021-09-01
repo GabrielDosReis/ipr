@@ -274,7 +274,7 @@ namespace ipr {
             pp << xpr_identifier("operator");
 
             const ipr::String& s = o.opname();
-            if (!std::isalpha(*s.begin()))
+            if (not std::isalpha(*s.begin()))
                {
                   pp.write(s.begin(), s.end());
                   pp << Printer::None;

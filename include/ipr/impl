@@ -180,7 +180,7 @@ namespace ipr {
 
          const T& get(Index p) const final
          {
-            if (p < 0 || p >= size())
+            if (p < 0 or p >= size())
                throw std::domain_error("val_sequence::get");
 
             auto b = Impl::begin();
