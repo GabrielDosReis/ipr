@@ -39,7 +39,6 @@ jobs:
     - name: Run Tests
       run: ctest build
 
-jobs:
   build-other:
     runs-on: ${{ matrix.os }}
     name: Build & Test (${{ matrix.os }})
