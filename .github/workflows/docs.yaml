@@ -1,27 +1,34 @@
-name: Ubuntu-Docs
+name: Docs
 
 on:
   push:
     paths:
       - 'doc/**'
+      - '.github/workflows/docs.yaml'
     branches: [ master ]
   pull_request:
     paths:
       - 'doc/**'
+      - '.github/workflows/docs.yaml'
     branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    name: Build Ubuntu
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install GCC, CMake
-      run: sudo apt-get install build-essential cmake texlive texlive-latex-extra
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential cmake texlive texlive-latex-extra
 
-    - name: Configure CMake
-      run: mkdir build && cmake -Bbuild -DBUILD_DOC=ON
-
-    - name: Build project
-      run: make -C build doc
+    - name: Configure & Build CMake
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: build
+        cmakeAppendedArgs: -DBUILD_DOC=ON
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        buildWithCMakeArgs: --target doc

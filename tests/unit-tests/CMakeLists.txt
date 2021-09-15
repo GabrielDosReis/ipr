@@ -12,7 +12,7 @@ target_link_libraries(${TEST_BINARY}
 )
 
 target_include_directories(${TEST_BINARY}
-  PRIVATE ${DOCTEST_INCLUDE_DIR}
+  SYSTEM PRIVATE ${DOCTEST_INCLUDE_DIR}
 )
 
 set_target_properties(${TEST_BINARY}
