@@ -11,24 +11,49 @@ on:
     branches: [ master ]
 
 jobs:
-  build-test:
-    runs-on: ${{ matrix.os }}
-    name: Build & Test (${{ matrix.os }})
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build & Test (ubuntu-latest, ${{ matrix.compiler }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        generator: [UnixMakefiles]
-        include:
-          - os: windows-latest
-            generator: VS16Win64
+        compiler: [g++-10, clang++-12]
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install GCC, CMake
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: sudo apt-get install build-essential cmake
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential cmake
+
+    - name: Configure & Build
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: build
+        buildWithCMakeArgs: --parallel
+        cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+        cmakeGenerator: UnixMakefiles
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+
+    - name: Run Tests
+      run: ctest build
+
+jobs:
+  build-other:
+    runs-on: ${{ matrix.os }}
+    name: Build & Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            generator: UnixMakefiles
+          - os: windows-latest
+            generator: VS16Win64
+
+    steps:
+    - uses: actions/checkout@v2
 
     - name: Configure & Build
       uses: lukka/run-cmake@v3
@@ -39,4 +64,3 @@ jobs:
 
     - name: Run Tests
       run: ctest build
-
