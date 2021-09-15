@@ -28,9 +28,7 @@ jobs:
 
     - name: Install GCC, CMake
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential cmake
+      run: sudo apt-get install build-essential cmake
 
     - name: Configure & Build
       uses: lukka/run-cmake@v3

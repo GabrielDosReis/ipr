@@ -35,13 +35,14 @@ jobs:
         cmakeBuildDirectory: ${{ env.build }}
         ignoreSystemHeaders: true
         resultsDirectory: ${{ env.results }}
-        ruleset: AllRules.ruleset
+        ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
     - name: Upload SARIF as Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: sarif-files
         path: ${{ env.results }}
+        if-no-files-found: error
 
     - name: Upload SARIF to GitHub
       uses: github/codeql-action/upload-sarif@v1
