@@ -1,0 +1,50 @@
+name: Analysis
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ master ]
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ master ]
+
+env:
+  build: '${{ github.workspace }}/build'
+  results: '${{ github.workspace }}/build/results'
+
+jobs:
+  build:
+    name: Microsoft C++ Code Analysis
+    runs-on: windows-2019
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure CMake
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: ${{ env.build }}
+        buildWithCMake: false
+        cmakeGenerator: VS16Win64
+
+    - name: Run Microsoft Visual C++ Analysis
+      uses: microsoft/msvc-code-analysis-action@redesign
+      with:
+        cmakeBuildDirectory: ${{ env.build }}
+        ignoreSystemHeaders: true
+        resultsDirectory: ${{ env.results }}
+        ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
+
+    - name: Upload SARIF as Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sarif-files
+        path: ${{ env.results }}
+        if-no-files-found: error
+
+    - name: Upload SARIF to GitHub
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: ${{ env.results }}

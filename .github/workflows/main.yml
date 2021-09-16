@@ -1,4 +1,4 @@
-name: Ubuntu-Build
+name: Build & Test
 
 on:
   push:
@@ -11,24 +11,55 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
+    name: ubuntu-latest - ${{ matrix.compiler }}
     strategy:
+      fail-fast: false
       matrix:
         compiler: [g++-10, clang++-12]
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install GCC, Clang, CMake
-      run: sudo apt-get install build-essential cmake
+    - name: Install GCC, CMake
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential cmake
 
-    - name: Configure CMake
-      run: mkdir build && cmake -Bbuild -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+    - name: Configure & Build
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: build
+        buildWithCMakeArgs: --parallel
+        cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+        cmakeGenerator: UnixMakefiles
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
 
-    - name: Build project
-      run: cmake --build ./build --parallel
+    - name: Run Tests
+      run: ctest build
 
-    - name: Run tests
-      run: cmake --build ./build --target test --parallel
+  build-other:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            generator: UnixMakefiles
+          - os: windows-latest
+            generator: VS16Win64
 
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Configure & Build
+      uses: lukka/run-cmake@v3
+      with:
+        buildDirectory: build
+        buildWithCMakeArgs: --parallel
+        cmakeGenerator: ${{ matrix.generator }}
+
+    - name: Run Tests
+      run: ctest build

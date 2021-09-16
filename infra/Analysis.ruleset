@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="IPR Ruleset" Description="This ruleset purposefully includes zero warnings to create a empty baseline for IPR repo." ToolsVersion="10.0">
+  <IncludeAll Action="None" />
+</RuleSet>
