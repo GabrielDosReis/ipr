@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="IPR Ruleset" Description="This ruleset purposefully includes zero warnings to create a empty baseline for IPR repo." ToolsVersion="10.0">
-  <IncludeAll Action="None" />
+<RuleSet Name="IPR Ruleset" Description="Warnings to enable for the Microsoft C++ Code Analysis for IPR repository." ToolsVersion="10.0">
+   <!-- Default rules available in Visual Studio -->
+  <Include Path="NativeRecommendedRules.ruleset" Action="Default" />
+  <!-- Enforcement of the C++ Core Guidelines -->
+  <Include Path="CppCoreCheckRules.ruleset" Action="Default" />
+
+  <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
+    <!-- Excluded warnings -->
+    <Rule Id="C26440" Action="None" /> <!-- Declare noexcept -->
+  </Rules>
 </RuleSet>
