@@ -213,7 +213,7 @@ namespace ipr {
             bool found = false;
             Node* result = this->root;
             while (result != nullptr and not found) {
-               auto ordering = comp(*result, key) ;
+               const auto ordering = comp(*result, key) ;
                if (ordering < 0)
                   result = result->left();
                else if (ordering > 0)
@@ -235,7 +235,7 @@ namespace ipr {
 
             bool found = false;
             while (not found and *slot != nullptr) {
-               auto ordering = comp(**slot, *z);
+               const auto ordering = comp(**slot, *z);
                if (ordering < 0) {
                   up = *slot;
                   slot = &up->left();
@@ -308,7 +308,7 @@ namespace ipr {
          container<T>::find(const Key& key, Comp comp) const
          {
             for (node<T>* x = this->root; x != nullptr; ) {
-               auto ordering = comp(x->data, key);
+               const auto ordering = comp(x->data, key);
                if (ordering < 0)
                   x = x->left();
                else if (ordering > 0)
@@ -339,7 +339,7 @@ namespace ipr {
             bool found = false;
 
             for (where = this->root; where != nullptr and not found; where = *slot) {
-               auto ordering = comp(where->data, key);
+               const auto ordering = comp(where->data, key);
                if (ordering < 0) {
                   parent = where;
                   slot = &where->left();
@@ -400,7 +400,7 @@ namespace ipr {
          util::string* allocate(int);
          int remaining_header_count() const
          {
-            return (int)(next_header - &mem->storage[0]);
+            return static_cast<int>(next_header - &mem->storage[0]);
          }
 
          struct pool;
@@ -426,7 +426,7 @@ namespace ipr {
                         Compare compare) const
          {
             for (; first1 != last1 and first2 != last2; ++first1, ++first2)
-               if (int cmp = compare(*first1, *first2))
+               if (const auto cmp = compare(*first1, *first2))
                   return cmp;
 
             return first1 == last1 ? (first2 == last2 ? 0 : -1) : 1;

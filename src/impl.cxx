@@ -20,9 +20,9 @@ namespace ipr {
    const String& String::empty_string()
    {
       struct Empty_string final : impl::Node<String> {
-         Index size() const { return 0; }
-         iterator begin() const { return ""; }
-         iterator end() const { return begin(); }
+         Index size() const final { return 0; }
+         iterator begin() const final { return ""; }
+         iterator end() const final { return begin(); }
       };
 
       static constexpr Empty_string empty { };
@@ -230,9 +230,8 @@ namespace ipr::impl {
 
       master_decl_data<ipr::Template>::
       master_decl_data(impl::Overload* ovl, const ipr::Type& t)
-            : Base(this), overload_entry(t),
-              primary(0),home(0),
-              overload(ovl)
+            : Base{this}, overload_entry{t},
+              primary{}, home{}, overload{ovl}
       { }
 
       // -------------------------
@@ -259,7 +258,7 @@ namespace ipr::impl {
       // --------------------
 
       Overload::Overload(const ipr::Name& n)
-            : name(n), where(0)
+            : name{n}, where{}
       { }
 
       Overload::Index Overload::size() const {
@@ -415,7 +414,7 @@ namespace ipr::impl {
       // ----------------------
 
       Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, Decl_position p)
-            : id(n), constraint(t), scope_pos(p), where(0), init(0)
+            : id{n}, constraint{t}, scope_pos{p}, where{}, init{}
       { }
 
       // -----------------
@@ -649,7 +648,7 @@ namespace ipr::impl {
 
       impl::Enumerator*
       Enum::add_member(const ipr::Name& n) {
-         Decl_position pos { members().size() };
+         const Decl_position pos { members().size() };
          impl::Enumerator* e = body.scope.push_back(n, *this, pos);
          e->where = &body;
          return e;
@@ -672,7 +671,7 @@ namespace ipr::impl {
 
       impl::Base_type*
       Class::declare_base(const ipr::Type& t) {
-         Decl_position pos { bases().size() };
+         const Decl_position pos { bases().size() };
          return base_subobjects.scope.push_back(t, base_subobjects, pos);
       }
 
@@ -785,7 +784,7 @@ namespace ipr::impl {
          int operator()(const Binary<T>& lhs,
                         const typename Binary<T>::Rep& rhs) const
          {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
 
             return compare(lhs.rep.second, rhs.second);
          }
@@ -869,8 +868,8 @@ namespace ipr::impl {
          int operator()(const Ternary<T>& lhs,
                         const typename Ternary<T>::Rep& rhs) const
          {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
+            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (const auto cmp = compare(lhs.rep.second, rhs.second)) return cmp;
 
             return compare(lhs.rep.third, rhs.third);
          }
@@ -879,8 +878,8 @@ namespace ipr::impl {
          int operator()(const typename Ternary<T>::Rep& lhs,
                         const Ternary<T>& rhs) const
          {
-            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
+            if (const auto cmp = compare(lhs.first, rhs.rep.first)) return cmp;
+            if (const auto cmp = compare(lhs.second, rhs.rep.second)) return cmp;
 
             return compare(lhs.third, rhs.rep.third);
          }
@@ -891,9 +890,9 @@ namespace ipr::impl {
          int operator()(const Quaternary<T>& lhs,
                         const typename Quaternary<T>::Rep& rhs) const
          {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
-            if (int cmp = compare(lhs.rep.third, rhs.third)) return cmp;
+            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (const auto cmp = compare(lhs.rep.second, rhs.second)) return cmp;
+            if (const auto cmp = compare(lhs.rep.third, rhs.third)) return cmp;
 
             return compare(lhs.rep.fourth, rhs.fourth);
          }
@@ -902,9 +901,9 @@ namespace ipr::impl {
          int operator()(const typename Quaternary<T>::Rep& lhs,
                         const Quaternary<T>& rhs) const
          {
-            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
-            if (int cmp = compare(lhs.third, rhs.rep.third)) return cmp;
+            if (const auto cmp = compare(lhs.first, rhs.rep.first)) return cmp;
+            if (const auto cmp = compare(lhs.second, rhs.rep.second)) return cmp;
+            if (const auto cmp = compare(lhs.third, rhs.rep.third)) return cmp;
 
             return compare(lhs.fourth, rhs.rep.fourth);
          }
@@ -1051,7 +1050,7 @@ namespace ipr::impl {
       }
 
       // -- impl::Lambda
-      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}
+      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}, lam_spec{}
       { }
 
       // -------------------------------
@@ -1061,7 +1060,7 @@ namespace ipr::impl {
 
       const ipr::Overload&
       Scope::operator[](const ipr::Name& n) const {
-         if (impl::Overload* ovl = overloads.find(n, node_compare()))
+         if (const impl::Overload* ovl = overloads.find(n, node_compare()))
             return *ovl;
          return missing;
       }
@@ -1078,7 +1077,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(i.type());
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Alias* decl = aliases.declare(ovl, i.type());
             decl->aliasee = &i;
             add_member(decl);
@@ -1097,7 +1096,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Var* var = vars.declare(ovl, t);
             add_member(var);
             return var;
@@ -1114,7 +1113,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Field* field = fields.declare(ovl, t);
             add_member(field);
             return field;
@@ -1131,7 +1130,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Bitfield* field = bitfields.declare(ovl, t);
             add_member(field);
             return field;
@@ -1152,11 +1151,9 @@ namespace ipr::impl {
 
          // Does the overload-set already contain a decl with that type?
          overload_entry* master = ovl->lookup(t);
-         impl::Typedecl* decl;
-         if (master == 0)       // no, this is the first declaration
-             decl = typedecls.declare(ovl, t);
-         else                   // just re-declare.
-            decl = typedecls.redeclare(master);
+         impl::Typedecl* decl = master == nullptr ?
+            typedecls.declare(ovl, t) : // no, this is the first declaration
+            typedecls.redeclare(master); // just re-declare.
          add_member(decl);      // remember we saw a declaration.
          return decl;
       }
@@ -1167,7 +1164,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Fundecl* decl = fundecls.declare(ovl, t);
             add_member(decl);
             return decl;
@@ -1185,7 +1182,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Template* decl = primary_maps.declare(ovl, t);
             decl->decl_data.master_data->primary = decl;
             add_member(decl);
@@ -1205,7 +1202,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Template* decl = secondary_maps.declare(ovl, t);
             // FXIME: record this a secondary map and set its primary.
             add_member(decl);
@@ -1257,7 +1254,7 @@ namespace ipr::impl {
       expr_factory::get_symbol(const ipr::Name& n, const ipr::Type& t)
       {
          const auto comparator = [&t](auto& x, auto& y) {
-            if (auto cmp = compare(x.name(), y))
+            if (const auto cmp = compare(x.name(), y))
                return cmp;
             return compare(x.type(), t);
          };
@@ -1827,8 +1824,8 @@ namespace ipr::impl {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         Decl_position pos { map.parms.size() };
-         auto lvl = map.parameters().level();
+         const Decl_position pos { map.parms.size() };
+         const auto lvl = map.parameters().level();
          return rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
       }
 

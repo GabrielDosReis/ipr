@@ -667,7 +667,8 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
+      return static_cast<DeclSpecifiers>(
+         std::underlying_type_t<DeclSpecifiers>(a) | std::underlying_type_t<DeclSpecifiers>(b));
    }
 
    constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -677,7 +678,8 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
+      return static_cast<DeclSpecifiers>(
+         std::underlying_type_t<DeclSpecifiers>(a) & std::underlying_type_t<DeclSpecifiers>(b));
    }
 
    constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -687,7 +689,8 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
+      return static_cast<DeclSpecifiers>(
+         std::underlying_type_t<DeclSpecifiers>(a) ^ std::underlying_type_t<DeclSpecifiers>(b));
    }
 
    constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -1030,7 +1033,8 @@ namespace ipr {
    constexpr Type_qualifier
    operator|(Type_qualifier a, Type_qualifier b)
    {
-      return Type_qualifier(uint8_t(a) | uint8_t(b));
+      return static_cast<Type_qualifier>(
+         std::underlying_type_t<Type_qualifier>(a) | std::underlying_type_t<Type_qualifier>(b));
    }
 
    inline Type_qualifier&
@@ -1042,7 +1046,8 @@ namespace ipr {
    constexpr Type_qualifier
    operator&(Type_qualifier a, Type_qualifier b)
    {
-      return Type_qualifier(uint8_t(a) & uint8_t(b));
+      return static_cast<Type_qualifier>(
+         std::underlying_type_t<Type_qualifier>(a) & std::underlying_type_t<Type_qualifier>(b));
    }
 
    inline Type_qualifier&
@@ -1054,7 +1059,8 @@ namespace ipr {
    constexpr Type_qualifier
    operator^(Type_qualifier a, Type_qualifier b)
    {
-      return Type_qualifier(uint8_t(a) ^ uint8_t(b));
+      return static_cast<Type_qualifier>(
+         std::underlying_type_t<Type_qualifier>(a) ^ std::underlying_type_t<Type_qualifier>(b));
    }
 
    inline Type_qualifier&
@@ -2168,7 +2174,7 @@ namespace ipr {
    // An alias is always initialized -- with what it is an alias for.
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<Category_code::Alias, Decl> {
-      const Type& type() const { return initializer().get().type(); }
+      const Type& type() const override { return initializer().get().type(); }
       const Region& lexical_region() const final { return home_region(); }
    };
 
@@ -2183,7 +2189,7 @@ namespace ipr {
       // A base-object is, by definition, unnamed.  However, it
       // is convenient to refer to it by the name of the corresponding
       // type -- in C++ tradition.
-      const Name& name() const { return type().name(); }
+      const Name& name() const override { return type().name(); }
    };
 
                                 // -- Parameter --

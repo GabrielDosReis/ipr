@@ -8,5 +8,19 @@
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
     <!-- Excluded warnings -->
     <Rule Id="C26440" Action="None" /> <!-- Declare noexcept -->
+    <Rule Id="C26455" Action="None" /> <!-- Declare noexcept (ctor) -->
+    <Rule Id="C26436" Action="None" /> <!-- Virtual dtors -->
+    <Rule Id="C26481" Action="None" /> <!-- No pointer arithmetic -->
+    <Rule Id="C26485" Action="None" /> <!-- No pointer decay -->
+    <!-- Memory management -->
+    <Rule Id="C26409" Action="None" /> <!-- No new/delete -->
+    <Rule Id="C26401" Action="None" /> <!-- Do not delete non-owner pointer -->
+    <Rule Id="C26482" Action="None" /> <!-- No allocation to non-owner pointer -->
+    <!-- Usage of GSL -->
+    <Rule Id="C26429" Action="None" /> <!-- Use gsl::not_null -->
+    <Rule Id="C26446" Action="None" /> <!-- Use gsl::at -->
+    <Rule Id="C26482" Action="None" /> <!-- Only index with constant expr -->
+    <!-- False positives, re-enabled if fixed -->
+    <Rule Id="C26434" Action="None" /> <!-- Hides non-virtual -->
   </Rules>
 </RuleSet>
