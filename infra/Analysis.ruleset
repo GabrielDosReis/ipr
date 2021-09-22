@@ -15,7 +15,7 @@
     <!-- Memory management -->
     <Rule Id="C26409" Action="None" /> <!-- No new/delete -->
     <Rule Id="C26401" Action="None" /> <!-- Do not delete non-owner pointer -->
-    <Rule Id="C26482" Action="None" /> <!-- No allocation to non-owner pointer -->
+    <Rule Id="C26406" Action="None" /> <!-- No allocation to non-owner pointer -->
     <!-- Usage of GSL -->
     <Rule Id="C26429" Action="None" /> <!-- Use gsl::not_null -->
     <Rule Id="C26446" Action="None" /> <!-- Use gsl::at -->
