@@ -667,8 +667,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return static_cast<DeclSpecifiers>(
-         static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -678,8 +677,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return static_cast<DeclSpecifiers>(
-         static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -689,8 +687,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return static_cast<DeclSpecifiers>(
-         static_cast<uint32_t>(a) ^ static_cast<uint32_t>(b));
+      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -1033,8 +1030,7 @@ namespace ipr {
    constexpr Type_qualifier
    operator|(Type_qualifier a, Type_qualifier b)
    {
-      return static_cast<Type_qualifier>(
-         static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+      return Type_qualifier(uint8_t(a) | uint8_t(b));
    }
 
    inline Type_qualifier&
@@ -1046,8 +1042,7 @@ namespace ipr {
    constexpr Type_qualifier
    operator&(Type_qualifier a, Type_qualifier b)
    {
-      return static_cast<Type_qualifier>(
-         static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
+      return Type_qualifier(uint8_t(a) & uint8_t(b));
 
    }
 
@@ -1060,8 +1055,7 @@ namespace ipr {
    constexpr Type_qualifier
    operator^(Type_qualifier a, Type_qualifier b)
    {
-      return static_cast<Type_qualifier>(
-         static_cast<uint8_t>(a) ^ static_cast<uint8_t>(b));
+      return Type_qualifier(uint8_t(a) ^ uint8_t(b));
    }
 
    inline Type_qualifier&
