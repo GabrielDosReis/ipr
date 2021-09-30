@@ -34,6 +34,7 @@ jobs:
       with:
         cmakeBuildDirectory: ${{ env.build }}
         ignoreSystemHeaders: true
+        ignoredTargetPaths: ${{ github.workspace }}/tests
         resultsDirectory: ${{ env.results }}
         ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
