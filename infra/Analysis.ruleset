@@ -12,6 +12,7 @@
     <Rule Id="C26436" Action="None" /> <!-- Virtual dtors -->
     <Rule Id="C26481" Action="None" /> <!-- No pointer arithmetic -->
     <Rule Id="C26485" Action="None" /> <!-- No pointer decay -->
+    <Rule Id="C26445" Action="None" /> <!-- No reference for views -->
     <!-- Memory management -->
     <Rule Id="C26409" Action="None" /> <!-- No new/delete -->
     <Rule Id="C26401" Action="None" /> <!-- Do not delete non-owner pointer -->
