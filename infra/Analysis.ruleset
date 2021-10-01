@@ -5,6 +5,7 @@
   <!-- Enforcement of the C++ Core Guidelines -->
   <Include Path="CppCoreCheckRules.ruleset" Action="Default" />
 
+  <!-- TODO: remove -->
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
     <!-- Excluded warnings -->
     <Rule Id="C26440" Action="None" /> <!-- Declare noexcept -->
