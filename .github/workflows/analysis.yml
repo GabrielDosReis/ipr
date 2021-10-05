@@ -12,7 +12,6 @@ on:
 
 env:
   build: '${{ github.workspace }}/build'
-  results: '${{ github.workspace }}/build/results'
 
 jobs:
   build:
@@ -30,22 +29,21 @@ jobs:
         cmakeGenerator: VS16Win64
 
     - name: Run Microsoft Visual C++ Analysis
+      id: run-analysis
       uses: microsoft/msvc-code-analysis-action@redesign
       with:
         cmakeBuildDirectory: ${{ env.build }}
-        ignoreSystemHeaders: true
         ignoredTargetPaths: ${{ github.workspace }}/tests
-        resultsDirectory: ${{ env.results }}
         ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
-    - name: Upload SARIF as Artifacts
+    - name: Upload SARIF as an Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: sarif-files
-        path: ${{ env.results }}
+        name: sarif-file
+        path: ${{ steps.run-analysis.output.sarif }}
         if-no-files-found: error
 
     - name: Upload SARIF to GitHub
       uses: github/codeql-action/upload-sarif@v1
       with:
-        sarif_file: ${{ env.results }}
+        sarif_file: ${{ steps.run-analysis.output.sarif }}
