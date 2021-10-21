@@ -14,7 +14,7 @@ env:
   build: '${{ github.workspace }}/build'
 
 jobs:
-  microsoft:
+  build:
     name: Microsoft C++ Code Analysis
     runs-on: windows-latest
 
