@@ -83,6 +83,7 @@ Expansion,                          // ipr::Expansion
 Noexcept,                           // ipr::Noexcept
 Args_cardinality,                   // ipr::Args_cardinality
 
+Rewrite,                            // ipr::Rewrite
 Scope_ref,                          // ipr::Scope_ref
 Plus,                               // ipr::Plus
 Plus_assign,                        // ipr::Plus_assign

@@ -220,6 +220,7 @@ namespace ipr {
    struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
+   struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
 
    // --------------------------------------------------------
    // -- result of trinary expression constructor constants --
@@ -1554,6 +1555,17 @@ namespace ipr {
    // operator, but the general IPR model here allows it.
    struct Expansion : Unary<Category<Category_code::Expansion, Classic>> { };
 
+                                // -- Rewrite --
+   // Various ISO C++ syntactic constructs are defined - unwwisely -
+   // via translation to more elaborate sequences of tokens or parse trees.
+   // The `source()` is the construct as written in the input source code, and the
+   // `target()` is the internal expression giving meaning to the source.
+   struct Rewrite : Binary<Category<Category_code::Rewrite>> {
+      const Expr& source() const { return first(); }
+      const Expr& target() const { return second(); }
+      const Type& type() const final { return second().type(); }
+   };
+
                                 // -- Member_selection<> --
    // This class factorizes the commonalities of various object member
    // selection operation.
@@ -2386,6 +2398,7 @@ namespace ipr {
       virtual void visit(const Expansion&);
       virtual void visit(const Noexcept&);
 
+      virtual void visit(const Rewrite&);
       virtual void visit(const Scope_ref&);
       virtual void visit(const And&);
       virtual void visit(const Array_ref&);
