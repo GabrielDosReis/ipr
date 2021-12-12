@@ -1287,6 +1287,7 @@ namespace ipr {
       using Construction = Classic_unary_expr<ipr::Construction>;
       using Noexcept = Unary_expr<ipr::Noexcept>;
 
+      using Rewrite = Binary_node<ipr::Rewrite>;
       using And = Classic_binary_expr<ipr::And>;
       using Annotation = Binary_node<ipr::Annotation>;
       using Array_ref = Classic_binary_expr<ipr::Array_ref>;
@@ -1438,6 +1439,7 @@ namespace ipr {
          Construction* make_construction(const ipr::Type&, const ipr::Enclosure&);
          Noexcept* make_noexcept(const ipr::Expr&, Optional<ipr::Type> = { });
 
+         Rewrite* make_rewrite(const ipr::Expr&, const ipr::Expr&);
          And* make_and(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
          Arrow* make_arrow(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1551,6 +1553,7 @@ namespace ipr {
          stable_farm<impl::Noexcept> noexcepts;
          stable_farm<impl::Args_cardinality> cardinalities;
 
+         stable_farm<impl::Rewrite> rewrites;
          stable_farm<impl::Scope_ref> scope_refs;
          stable_farm<impl::And> ands;
          stable_farm<impl::Array_ref> array_refs;

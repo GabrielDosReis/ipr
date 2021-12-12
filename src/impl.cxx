@@ -1504,6 +1504,11 @@ namespace ipr::impl {
          return make(noexcepts, e).with_type(t);
       }
 
+      impl::Rewrite* expr_factory::make_rewrite(const ipr::Expr& s, const ipr::Expr& t)
+      {
+         return rewrites.make(s, t);
+      }
+
       impl::And*
       expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t) 
       {
