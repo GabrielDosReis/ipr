@@ -1352,6 +1352,7 @@ namespace ipr {
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_node<ipr::Template_id>;
       using Widen = Binary_expr<ipr::Widen>;
+      using Where = Binary_node<ipr::Where>;
 
       struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
          Category_code fold_op;
@@ -1492,6 +1493,7 @@ namespace ipr {
          Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
          Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
          Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Where* make_where(const ipr::Expr&, const ipr::Expr&);
          New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
          Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                        const ipr::Expr&, Optional<ipr::Type> = {});
@@ -1602,6 +1604,7 @@ namespace ipr {
          stable_farm<impl::Static_cast> scasts;
          stable_farm<impl::Widen> widens;
          stable_farm<impl::Binary_fold> folds;
+         stable_farm<impl::Where> wheres;
 
          stable_farm<impl::New> news;
          stable_farm<impl::Coercion> coercions;

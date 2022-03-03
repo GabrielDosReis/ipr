@@ -770,6 +770,11 @@ void ipr::Visitor::visit(const Binary_fold& e)
    visit(as<Classic>(e));
 }
 
+void ipr::Visitor::visit(const Where& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Conditional& e)
 {
