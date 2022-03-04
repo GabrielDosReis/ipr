@@ -1815,6 +1815,12 @@ namespace ipr::impl {
          return make(folds, op, l, r).with_type(t);
       }
 
+      impl::Where*
+      expr_factory::make_where(const ipr::Expr& main, const ipr::Expr& locals)
+      {
+         return wheres.make(main, locals);
+      }
+
       impl::New*
       expr_factory::make_new(Optional<ipr::Expr_list> where, const ipr::Construction& expr, Optional<ipr::Type> t)
       {

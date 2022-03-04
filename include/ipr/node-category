@@ -136,6 +136,7 @@ Widen,                              // ipr::Widen
 Minus,                              // ipr::Minus
 Minus_assign,                       // ipr::Minus_assign
 Binary_fold,                        // ipr::Binary_fold
+Where,                              // ipr::Where
 
 New,                                // ipr::New
 Conditional,                        // ipr::Conditional

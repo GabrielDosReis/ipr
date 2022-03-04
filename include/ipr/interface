@@ -221,6 +221,7 @@ namespace ipr {
 
    struct Mapping;               // function
    struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
+   struct Where;                 // expression with local bindings or restrictions
 
    // --------------------------------------------------------
    // -- result of trinary expression constructor constants --
@@ -1852,6 +1853,19 @@ namespace ipr {
       Arg2_type base() const { return second(); }
    };
 
+                                // -- Where --
+   // An expression referencing declarations or restrictions, local to that expression.
+   // The expressions or declarations in `attendant()` are evaluated first, and then
+   // `main()` is evaluated in the dynamic evaluation cone established by `attendant()`.
+   // As usual, variables declared by bindings in `attendant()` are destructed in reverse 
+   // order of declarations at the end of their scopes, which occur after the complete
+   // evaluation of `main()`.
+   struct Where : Binary<Category<Category_code::Where>> {
+      const Expr& main() const { return first(); }
+      const Expr& attendant() const { return second(); }
+      const Type& type() const final { return main().type(); }
+   };
+
                                 // -- New --
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
@@ -2450,6 +2464,7 @@ namespace ipr {
       virtual void visit(const Static_cast&);
       virtual void visit(const Widen&);
       virtual void visit(const Binary_fold&);
+      virtual void visit(const Where&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);
