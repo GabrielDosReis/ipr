@@ -1860,6 +1860,8 @@ namespace ipr {
    // As usual, variables declared by bindings in `attendant()` are destructed in reverse 
    // order of declarations at the end of their scopes, which occur after the complete
    // evaluation of `main()`.
+   // Note: An `attendant()` of type `Scope` indicates that the where-expression introduces
+   //       local bindings.
    struct Where : Binary<Category<Category_code::Where>> {
       const Expr& main() const { return first(); }
       const Expr& attendant() const { return second(); }

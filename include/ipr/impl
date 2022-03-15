@@ -1345,7 +1345,8 @@ namespace ipr {
       using Static_cast = Conversion_expr<ipr::Static_cast>;
       using Template_id = Binary_node<ipr::Template_id>;
       using Widen = Binary_expr<ipr::Widen>;
-      using Where = Binary_node<ipr::Where>;
+      // A Where node where the attendant() is not a scope.
+      using Where_no_decl = Binary_node<ipr::Where>;
 
       struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
          Category_code fold_op;
@@ -1362,250 +1363,6 @@ namespace ipr {
       };
 
       using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
-
-      struct expr_factory {
-         // Returns an IPR node for unified string literals.
-         const ipr::String& get_string(util::word_view);
-
-         // Returns an IPR node a language linkage.
-         const ipr::Linkage& get_linkage(util::word_view);
-         const ipr::Linkage& get_linkage(const ipr::String&);
-
-         // Return a symbol with a given name and type.
-         const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
-
-         Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
-
-         // Build a node for a missing expression of an unspecified type.
-         Phantom* make_phantom();
-         // Build an unspecified expression node of a given type.
-         const ipr::Phantom* make_phantom(const ipr::Type&);
-
-         Eclipsis* make_eclipsis(const ipr::Type&);
-         This* make_this();
-
-         // Returns an IPR node for a typed literal expression.
-         Literal* make_literal(const ipr::Type&, const ipr::String&);
-         Literal* make_literal(const ipr::Type&, util::word_view);
-
-         // Builds an IPR object for an identifier.
-         Identifier* make_identifier(const ipr::String&);
-         Identifier* make_identifier(util::word_view);
-
-         Suffix* make_suffix(const ipr::Identifier&);
-
-         // Builds an IPR object for an operator name.
-         Operator* make_operator(const ipr::String&);
-         Operator* make_operator(util::word_view);
-
-         Guide_name* make_guide_name(const ipr::Template&);
-
-         Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
-         Array_delete* make_array_delete(const ipr::Expr&);
-         Complement* make_complement(const ipr::Expr&, Optional<ipr::Type> = {});
-         Conversion* make_conversion(const ipr::Type&);
-         Ctor_name* make_ctor_name(const ipr::Type&);
-         Delete* make_delete(const ipr::Expr&);
-         Demotion* make_demotion(const ipr::Expr&, const ipr::Type&);
-         Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
-         Dtor_name* make_dtor_name(const ipr::Type&);
-         Expr_list* make_expr_list();
-         Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
-         Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
-         Typeid* make_typeid(const ipr::Expr&, Optional<ipr::Type> = { });
-         impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
-         Id_expr* make_id_expr(const ipr::Decl&);
-         Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
-         Materialization* make_materialization(const ipr::Expr&, const ipr::Type&);
-         Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
-         Enclosure* make_enclosure(ipr::Delimiter, const ipr::Expr&, Optional<ipr::Type> = { });
-         Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
-         Post_decrement* make_post_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
-         Pre_increment* make_pre_increment(const ipr::Expr&, Optional<ipr::Type> = {});
-         Pre_decrement* make_pre_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
-         Promotion* make_promotion(const ipr::Expr&, const ipr::Type&);
-         Read* make_read(const ipr::Expr&, const ipr::Type&);
-         Throw* make_throw(const ipr::Expr&, Optional<ipr::Type> = {});
-         Type_id* make_type_id(const ipr::Type&);
-         Unary_minus* make_unary_minus(const ipr::Expr&, Optional<ipr::Type> = {});
-         Unary_plus* make_unary_plus(const ipr::Expr&, Optional<ipr::Type> = {});
-         Expansion* make_expansion(const ipr::Expr&, Optional<ipr::Type> = {});
-         Construction* make_construction(const ipr::Type&, const ipr::Enclosure&);
-         Noexcept* make_noexcept(const ipr::Expr&, Optional<ipr::Type> = { });
-
-         Rewrite* make_rewrite(const ipr::Expr&, const ipr::Expr&);
-         And* make_and(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Arrow* make_arrow(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Arrow_star* make_arrow_star(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Assign* make_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitand* make_bitand(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitand_assign* make_bitand_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitor* make_bitor(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitor_assign* make_bitor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitxor* make_bitxor(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Bitxor_assign* make_bitxor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Cast* make_cast(const ipr::Type&, const ipr::Expr&);
-         Call* make_call(const ipr::Expr&, const ipr::Expr_list&, Optional<ipr::Type> = {});
-         Coercion* make_coercion(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
-         Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
-         Div* make_div(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Div_assign* make_div_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Dot* make_dot(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Dot_star* make_dot_star(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Dynamic_cast* make_dynamic_cast(const ipr::Type&, const ipr::Expr&);
-         Equal* make_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Greater* make_greater(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Greater_equal* make_greater_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Less* make_less(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Less_equal* make_less_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Lshift* make_lshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Lshift_assign* make_lshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Member_init* make_member_init(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Minus* make_minus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Minus_assign* make_minus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Modulo* make_modulo(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Modulo_assign* make_modulo_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Mul* make_mul(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Mul_assign* make_mul_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Narrow* make_narrow(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
-         Not_equal* make_not_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Or* make_or(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Plus* make_plus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Plus_assign* make_plus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Pretend* make_pretend(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
-         Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifier, const ipr::Type&);
-         Reinterpret_cast* make_reinterpret_cast(const ipr::Type&,
-                                                 const ipr::Expr&);
-         Scope_ref* make_scope_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Rshift* make_rshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Rshift_assign* make_rshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Template_id* make_template_id(const ipr::Name&,
-                                       const ipr::Expr_list&);
-         Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
-         Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
-         Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-         Where* make_where(const ipr::Expr&, const ipr::Expr&);
-         New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
-         Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
-                                       const ipr::Expr&, Optional<ipr::Type> = {});
-
-         Rname* rname_for_next_param(const Mapping&, const ipr::Type&);
-
-         Mapping* make_mapping(const ipr::Region&, Mapping_level);
-         Lambda* make_lambda(const ipr::Region&, Mapping_level);
-
-      private:
-         util::string_pool strings;
-
-         // Language linkage nodes.
-         util::rb_tree::container<impl::Linkage> linkages;
-
-         util::rb_tree::container<impl::Conversion> convs;
-         util::rb_tree::container<impl::Ctor_name> ctors;
-         util::rb_tree::container<impl::Dtor_name> dtors;
-         util::rb_tree::container<impl::Identifier> ids;
-         util::rb_tree::container<impl::Suffix> suffixes;
-         util::rb_tree::container<impl::Literal> lits;
-         util::rb_tree::container<impl::Operator> ops;
-         util::rb_tree::container<impl::Guide_name> guide_ids;
-         util::rb_tree::container<impl::Rname> rnames;
-         util::rb_tree::container<impl::Template_id> template_ids;
-         util::rb_tree::container<impl::Type_id> type_ids;
-
-         stable_farm<impl::Phantom> phantoms;
-         stable_farm<impl::Eclipsis> eclipses;
-         stable_farm<impl::This> these;
-
-         util::rb_tree::container<impl::Symbol> symbols;
-         stable_farm<impl::Sizeof> sizeofs;
-         stable_farm<impl::Typeid> xtypeids;
-         stable_farm<impl::Address> addresses;
-         stable_farm<impl::Annotation> annotations;
-         stable_farm<impl::Array_delete> array_deletes;
-         stable_farm<impl::Complement> complements;
-         stable_farm<impl::Delete> deletes;
-         stable_farm<impl::Demotion> demotions;
-         stable_farm<impl::Deref> derefs;
-         stable_farm<impl::Expr_list> xlists;
-         stable_farm<impl::Id_expr> id_exprs;
-         stable_farm<impl::Label> labels;
-         stable_farm<impl::Materialization> materializations;
-         stable_farm<impl::Not> nots;
-         stable_farm<impl::Enclosure> enclosures;
-         stable_farm<impl::Pre_increment> pre_increments;
-         stable_farm<impl::Pre_decrement> pre_decrements;
-         stable_farm<impl::Post_increment> post_increments;
-         stable_farm<impl::Post_decrement> post_decrements;
-         stable_farm<impl::Promotion> promotions;
-         stable_farm<impl::Read> reads;
-         stable_farm<impl::Throw> throws;
-         stable_farm<impl::Unary_minus> unary_minuses;
-         stable_farm<impl::Unary_plus> unary_pluses;
-         stable_farm<impl::Expansion> expansions;
-         stable_farm<impl::Construction> constructions;
-         stable_farm<impl::Noexcept> noexcepts;
-         stable_farm<impl::Args_cardinality> cardinalities;
-
-         stable_farm<impl::Rewrite> rewrites;
-         stable_farm<impl::Scope_ref> scope_refs;
-         stable_farm<impl::And> ands;
-         stable_farm<impl::Array_ref> array_refs;
-         stable_farm<impl::Arrow> arrows;
-         stable_farm<impl::Arrow_star> arrow_stars;
-         stable_farm<impl::Assign> assigns;
-         stable_farm<impl::Bitand> bitands;
-         stable_farm<impl::Bitand_assign> bitand_assigns;
-         stable_farm<impl::Bitor> bitors;
-         stable_farm<impl::Bitor_assign> bitor_assigns;
-         stable_farm<impl::Bitxor> bitxors;
-         stable_farm<impl::Bitxor_assign> bitxor_assigns;
-         stable_farm<impl::Cast> casts;
-         stable_farm<impl::Call> calls;
-         stable_farm<impl::Comma> commas;
-         stable_farm<impl::Const_cast> ccasts;
-         stable_farm<impl::Div> divs;
-         stable_farm<impl::Div_assign> div_assigns;
-         stable_farm<impl::Dot> dots;
-         stable_farm<impl::Dot_star> dot_stars;
-         stable_farm<impl::Dynamic_cast> dcasts;
-         stable_farm<impl::Equal> equals;
-         stable_farm<impl::Greater> greaters;
-         stable_farm<impl::Greater_equal> greater_equals;
-         stable_farm<impl::Less> lesses;
-         stable_farm<impl::Less_equal> less_equals;
-         stable_farm<impl::Lshift> lshifts;
-         stable_farm<impl::Lshift_assign> lshift_assigns;
-         stable_farm<impl::Member_init> member_inits;
-         stable_farm<impl::Minus> minuses;
-         stable_farm<impl::Minus_assign> minus_assigns;
-         stable_farm<impl::Modulo> modulos;
-         stable_farm<impl::Modulo_assign> modulo_assigns;
-         stable_farm<impl::Mul> muls;
-         stable_farm<impl::Mul_assign> mul_assigns;
-         stable_farm<impl::Narrow> narrows;
-         stable_farm<impl::Not_equal> not_equals;
-         stable_farm<impl::Or> ors;
-         stable_farm<impl::Plus> pluses;
-         stable_farm<impl::Plus_assign> plus_assigns;
-         stable_farm<impl::Pretend> pretends;
-         stable_farm<impl::Qualification> qualifications;
-         stable_farm<impl::Reinterpret_cast> rcasts;
-         stable_farm<impl::Rshift> rshifts;
-         stable_farm<impl::Rshift_assign> rshift_assigns;
-         stable_farm<impl::Static_cast> scasts;
-         stable_farm<impl::Widen> widens;
-         stable_farm<impl::Binary_fold> folds;
-         stable_farm<impl::Where> wheres;
-
-         stable_farm<impl::New> news;
-         stable_farm<impl::Coercion> coercions;
-         stable_farm<impl::Conditional> conds;
-         stable_farm<impl::Mapping> mappings;
-         stable_farm<impl::Lambda> lambdas;
-      };
-
 
       struct Template : impl::Decl<ipr::Template> {
          util::ref<impl::Mapping> init;
@@ -2077,10 +1834,285 @@ namespace ipr {
          const ipr::Stmt& iteration() const final { return stmt.get(); }
       };
 
+      // This template will be instantiated to implementations
+      // of several builtin type singletons.  It does not reuse
+      // implementations of Type, and Binary, to save space since
+      // most data needed by those implementations are shared.
+      template<class T>
+      struct Builtin : impl::Expr<T> {
+         using Arg1_type = typename T::Arg1_type;
+         using Arg2_type = typename T::Arg2_type;
+         Builtin(const ipr::Name& n, Arg2_type l, const ipr::Type& t)
+               : impl::Expr<T>(&t), id(n), link(l) { }
+
+         const ipr::Name& name() const final { return id; }
+         Arg1_type first() const final { return *this; }
+         Arg2_type second() const final { return link; }
+
+      private:
+         const ipr::Name& id;
+         Arg2_type link;
+      };
+
+      // Type of `Where`-nodes introducing declarations in their `attendant()` expressions.
+      // Note: See impl::Where_no_decls for the degenerated case where the `attendant()`
+      //       is just a classic expression, with no declaration introduced.
+      struct Where : impl::Node<ipr::Where> {
+         impl::Region region;                            // hosts the declarations in the `attendant()`.
+         util::ref<const ipr::Expr> result;              // the `main()` expression.
+
+         explicit Where(const ipr::Region&);
+         const ipr::Expr& first() const final { return result.get(); }
+         const ipr::Scope& second() const final { return region.bindings(); }
+      };
+
+      struct expr_factory {
+         // Returns an IPR node for unified string literals.
+         const ipr::String& get_string(util::word_view);
+
+         // Returns an IPR node a language linkage.
+         const ipr::Linkage& get_linkage(util::word_view);
+         const ipr::Linkage& get_linkage(const ipr::String&);
+
+         // Return a symbol with a given name and type.
+         const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
+
+         Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
+
+         // Build a node for a missing expression of an unspecified type.
+         Phantom* make_phantom();
+         // Build an unspecified expression node of a given type.
+         const ipr::Phantom* make_phantom(const ipr::Type&);
+
+         Eclipsis* make_eclipsis(const ipr::Type&);
+         This* make_this();
+
+         // Returns an IPR node for a typed literal expression.
+         Literal* make_literal(const ipr::Type&, const ipr::String&);
+         Literal* make_literal(const ipr::Type&, util::word_view);
+
+         // Builds an IPR object for an identifier.
+         Identifier* make_identifier(const ipr::String&);
+         Identifier* make_identifier(util::word_view);
+
+         Suffix* make_suffix(const ipr::Identifier&);
+
+         // Builds an IPR object for an operator name.
+         Operator* make_operator(const ipr::String&);
+         Operator* make_operator(util::word_view);
+
+         Guide_name* make_guide_name(const ipr::Template&);
+
+         Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
+         Array_delete* make_array_delete(const ipr::Expr&);
+         Complement* make_complement(const ipr::Expr&, Optional<ipr::Type> = {});
+         Conversion* make_conversion(const ipr::Type&);
+         Ctor_name* make_ctor_name(const ipr::Type&);
+         Delete* make_delete(const ipr::Expr&);
+         Demotion* make_demotion(const ipr::Expr&, const ipr::Type&);
+         Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
+         Dtor_name* make_dtor_name(const ipr::Type&);
+         Expr_list* make_expr_list();
+         Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
+         Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
+         Typeid* make_typeid(const ipr::Expr&, Optional<ipr::Type> = { });
+         impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
+         Id_expr* make_id_expr(const ipr::Decl&);
+         Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
+         Materialization* make_materialization(const ipr::Expr&, const ipr::Type&);
+         Not* make_not(const ipr::Expr&, Optional<ipr::Type> = {});
+         Enclosure* make_enclosure(ipr::Delimiter, const ipr::Expr&, Optional<ipr::Type> = { });
+         Post_increment* make_post_increment(const ipr::Expr&, Optional<ipr::Type> = {});
+         Post_decrement* make_post_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
+         Pre_increment* make_pre_increment(const ipr::Expr&, Optional<ipr::Type> = {});
+         Pre_decrement* make_pre_decrement(const ipr::Expr&, Optional<ipr::Type> = {});
+         Promotion* make_promotion(const ipr::Expr&, const ipr::Type&);
+         Read* make_read(const ipr::Expr&, const ipr::Type&);
+         Throw* make_throw(const ipr::Expr&, Optional<ipr::Type> = {});
+         Type_id* make_type_id(const ipr::Type&);
+         Unary_minus* make_unary_minus(const ipr::Expr&, Optional<ipr::Type> = {});
+         Unary_plus* make_unary_plus(const ipr::Expr&, Optional<ipr::Type> = {});
+         Expansion* make_expansion(const ipr::Expr&, Optional<ipr::Type> = {});
+         Construction* make_construction(const ipr::Type&, const ipr::Enclosure&);
+         Noexcept* make_noexcept(const ipr::Expr&, Optional<ipr::Type> = { });
+
+         Rewrite* make_rewrite(const ipr::Expr&, const ipr::Expr&);
+         And* make_and(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Array_ref* make_array_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Arrow* make_arrow(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Arrow_star* make_arrow_star(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Assign* make_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitand* make_bitand(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitand_assign* make_bitand_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitor* make_bitor(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitor_assign* make_bitor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitxor* make_bitxor(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Bitxor_assign* make_bitxor_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Cast* make_cast(const ipr::Type&, const ipr::Expr&);
+         Call* make_call(const ipr::Expr&, const ipr::Expr_list&, Optional<ipr::Type> = {});
+         Coercion* make_coercion(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
+         Comma* make_comma(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Const_cast* make_const_cast(const ipr::Type&, const ipr::Expr&);
+         Div* make_div(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Div_assign* make_div_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Dot* make_dot(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Dot_star* make_dot_star(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Dynamic_cast* make_dynamic_cast(const ipr::Type&, const ipr::Expr&);
+         Equal* make_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Greater* make_greater(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Greater_equal* make_greater_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Less* make_less(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Less_equal* make_less_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Lshift* make_lshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Lshift_assign* make_lshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Member_init* make_member_init(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Minus* make_minus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Minus_assign* make_minus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Modulo* make_modulo(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Modulo_assign* make_modulo_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Mul* make_mul(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Mul_assign* make_mul_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Narrow* make_narrow(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
+         Not_equal* make_not_equal(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Or* make_or(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Plus* make_plus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Plus_assign* make_plus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Pretend* make_pretend(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
+         Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifier, const ipr::Type&);
+         Reinterpret_cast* make_reinterpret_cast(const ipr::Type&,
+                                                 const ipr::Expr&);
+         Scope_ref* make_scope_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Rshift* make_rshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Rshift_assign* make_rshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Template_id* make_template_id(const ipr::Name&,
+                                       const ipr::Expr_list&);
+         Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
+         Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
+         Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
+         Where* make_where(const ipr::Region&);
+         Where_no_decl* make_where(const ipr::Expr&, const ipr::Expr&);
+         New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
+         Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
+                                       const ipr::Expr&, Optional<ipr::Type> = {});
+
+         Rname* rname_for_next_param(const Mapping&, const ipr::Type&);
+
+         Mapping* make_mapping(const ipr::Region&, Mapping_level);
+         Lambda* make_lambda(const ipr::Region&, Mapping_level);
+
+      private:
+         util::string_pool strings;
+
+         // Language linkage nodes.
+         util::rb_tree::container<impl::Linkage> linkages;
+
+         util::rb_tree::container<impl::Conversion> convs;
+         util::rb_tree::container<impl::Ctor_name> ctors;
+         util::rb_tree::container<impl::Dtor_name> dtors;
+         util::rb_tree::container<impl::Identifier> ids;
+         util::rb_tree::container<impl::Suffix> suffixes;
+         util::rb_tree::container<impl::Literal> lits;
+         util::rb_tree::container<impl::Operator> ops;
+         util::rb_tree::container<impl::Guide_name> guide_ids;
+         util::rb_tree::container<impl::Rname> rnames;
+         util::rb_tree::container<impl::Template_id> template_ids;
+         util::rb_tree::container<impl::Type_id> type_ids;
+
+         stable_farm<impl::Phantom> phantoms;
+         stable_farm<impl::Eclipsis> eclipses;
+         stable_farm<impl::This> these;
+
+         util::rb_tree::container<impl::Symbol> symbols;
+         stable_farm<impl::Sizeof> sizeofs;
+         stable_farm<impl::Typeid> xtypeids;
+         stable_farm<impl::Address> addresses;
+         stable_farm<impl::Annotation> annotations;
+         stable_farm<impl::Array_delete> array_deletes;
+         stable_farm<impl::Complement> complements;
+         stable_farm<impl::Delete> deletes;
+         stable_farm<impl::Demotion> demotions;
+         stable_farm<impl::Deref> derefs;
+         stable_farm<impl::Expr_list> xlists;
+         stable_farm<impl::Id_expr> id_exprs;
+         stable_farm<impl::Label> labels;
+         stable_farm<impl::Materialization> materializations;
+         stable_farm<impl::Not> nots;
+         stable_farm<impl::Enclosure> enclosures;
+         stable_farm<impl::Pre_increment> pre_increments;
+         stable_farm<impl::Pre_decrement> pre_decrements;
+         stable_farm<impl::Post_increment> post_increments;
+         stable_farm<impl::Post_decrement> post_decrements;
+         stable_farm<impl::Promotion> promotions;
+         stable_farm<impl::Read> reads;
+         stable_farm<impl::Throw> throws;
+         stable_farm<impl::Unary_minus> unary_minuses;
+         stable_farm<impl::Unary_plus> unary_pluses;
+         stable_farm<impl::Expansion> expansions;
+         stable_farm<impl::Construction> constructions;
+         stable_farm<impl::Noexcept> noexcepts;
+         stable_farm<impl::Args_cardinality> cardinalities;
+
+         stable_farm<impl::Rewrite> rewrites;
+         stable_farm<impl::Scope_ref> scope_refs;
+         stable_farm<impl::And> ands;
+         stable_farm<impl::Array_ref> array_refs;
+         stable_farm<impl::Arrow> arrows;
+         stable_farm<impl::Arrow_star> arrow_stars;
+         stable_farm<impl::Assign> assigns;
+         stable_farm<impl::Bitand> bitands;
+         stable_farm<impl::Bitand_assign> bitand_assigns;
+         stable_farm<impl::Bitor> bitors;
+         stable_farm<impl::Bitor_assign> bitor_assigns;
+         stable_farm<impl::Bitxor> bitxors;
+         stable_farm<impl::Bitxor_assign> bitxor_assigns;
+         stable_farm<impl::Cast> casts;
+         stable_farm<impl::Call> calls;
+         stable_farm<impl::Comma> commas;
+         stable_farm<impl::Const_cast> ccasts;
+         stable_farm<impl::Div> divs;
+         stable_farm<impl::Div_assign> div_assigns;
+         stable_farm<impl::Dot> dots;
+         stable_farm<impl::Dot_star> dot_stars;
+         stable_farm<impl::Dynamic_cast> dcasts;
+         stable_farm<impl::Equal> equals;
+         stable_farm<impl::Greater> greaters;
+         stable_farm<impl::Greater_equal> greater_equals;
+         stable_farm<impl::Less> lesses;
+         stable_farm<impl::Less_equal> less_equals;
+         stable_farm<impl::Lshift> lshifts;
+         stable_farm<impl::Lshift_assign> lshift_assigns;
+         stable_farm<impl::Member_init> member_inits;
+         stable_farm<impl::Minus> minuses;
+         stable_farm<impl::Minus_assign> minus_assigns;
+         stable_farm<impl::Modulo> modulos;
+         stable_farm<impl::Modulo_assign> modulo_assigns;
+         stable_farm<impl::Mul> muls;
+         stable_farm<impl::Mul_assign> mul_assigns;
+         stable_farm<impl::Narrow> narrows;
+         stable_farm<impl::Not_equal> not_equals;
+         stable_farm<impl::Or> ors;
+         stable_farm<impl::Plus> pluses;
+         stable_farm<impl::Plus_assign> plus_assigns;
+         stable_farm<impl::Pretend> pretends;
+         stable_farm<impl::Qualification> qualifications;
+         stable_farm<impl::Reinterpret_cast> rcasts;
+         stable_farm<impl::Rshift> rshifts;
+         stable_farm<impl::Rshift_assign> rshift_assigns;
+         stable_farm<impl::Static_cast> scasts;
+         stable_farm<impl::Widen> widens;
+         stable_farm<impl::Binary_fold> folds;
+         stable_farm<impl::Where_no_decl> where_nodecls;
+         stable_farm<impl::Where> wheres;
+
+         stable_farm<impl::New> news;
+         stable_farm<impl::Coercion> coercions;
+         stable_farm<impl::Conditional> conds;
+         stable_farm<impl::Mapping> mappings;
+         stable_farm<impl::Lambda> lambdas;
+      };
 
       // This factory class takes on the implementation burden of
       // allocating storage for statement nodes and their constructions.
-
       struct stmt_factory : expr_factory {
          impl::Break* make_break(const ipr::Type&);
          impl::Continue* make_continue(const ipr::Type&);
@@ -2120,28 +2152,6 @@ namespace ipr {
          stable_farm<impl::For> fors;
          stable_farm<impl::For_in> for_ins;
       };
-
-
-      // This template will be instantiated to implementations
-      // of several builtin type singletons.  It does not reuse
-      // implementations of Type, and Binary, to save space since
-      // most data needed by those implementations are shared.
-      template<class T>
-      struct Builtin : impl::Expr<T> {
-         using Arg1_type = typename T::Arg1_type;
-         using Arg2_type = typename T::Arg2_type;
-         Builtin(const ipr::Name& n, Arg2_type l, const ipr::Type& t)
-               : impl::Expr<T>(&t), id(n), link(l) { }
-
-         const ipr::Name& name() const final { return id; }
-         Arg1_type first() const final { return *this; }
-         Arg2_type second() const final { return link; }
-
-      private:
-         const ipr::Name& id;
-         Arg2_type link;
-      };
-
 
                                 // -- impl::Lexicon --
       struct Lexicon : ipr::Lexicon, stmt_factory {
