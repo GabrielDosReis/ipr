@@ -1233,6 +1233,7 @@ namespace ipr::impl {
          return subregions.make(this);
       }
 
+      Where::Where(const ipr::Region& parent) : region{&parent} { }
 
       // ------------------------
       // -- impl::expr_factory --
@@ -1816,9 +1817,15 @@ namespace ipr::impl {
       }
 
       impl::Where*
-      expr_factory::make_where(const ipr::Expr& main, const ipr::Expr& locals)
+      expr_factory::make_where(const ipr::Region& parent)
       {
-         return wheres.make(main, locals);
+         return wheres.make(parent);
+      }
+
+      impl::Where_no_decl*
+      expr_factory::make_where(const ipr::Expr& main, const ipr::Expr& attendant)
+      {
+         return where_nodecls.make(main, attendant);
       }
 
       impl::New*
