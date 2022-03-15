@@ -871,14 +871,6 @@ namespace ipr {
          }
       };
 
-      // This class template maps an interface type to its actual
-      // implementation type.  It is mostly used for getting the
-      // implementation type of declaration interfaces.
-
-      template<class>
-      struct traits {
-      };
-
                                 // -----------------
                                 // -- impl::Rname --
                                 // -----------------
@@ -1116,9 +1108,10 @@ namespace ipr {
          impl::Parameter* add_member(const ipr::Name&, const impl::Rname&);
       };
 
-      template<class T>
-      struct decl_rep : traits<T>::rep {
-         decl_rep(master_decl_data<T>* mdd)
+      template<typename T>
+      struct decl_rep : T {
+         using Interface = typename T::Interface;
+         decl_rep(master_decl_data<Interface>* mdd)
          {
             this->decl_data.master_data = mdd;
             this->decl_data.decl = this;
@@ -1160,7 +1153,7 @@ namespace ipr {
             return this->decl_data.master_data->declset;
          }
 
-         Optional<T> definition() const
+         Optional<Interface> definition() const
          {
             return this->decl_data.master_data->def;
          }
@@ -1630,32 +1623,28 @@ namespace ipr {
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
-      template<>
-      struct traits<ipr::Template> {
-         using rep = impl::Template;
-      };
-
-      template<class Interface>
+      template<typename T>
       struct decl_factory {
-         stable_farm<decl_rep<Interface>> decls;
+         using Interface = typename T::Interface;
+         stable_farm<decl_rep<T>> decls;
          stable_farm<master_decl_data<Interface>> master_info;
 
          // We have gotten an overload-set for a name, and we are about
          // to enter the first declaration for that name with the type T.
-         decl_rep<Interface>* declare(Overload* ovl, const ipr::Type& t)
+         decl_rep<T>* declare(Overload* ovl, const ipr::Type& t)
          {
             // Grab bookkeeping memory for this master declaration.
             master_decl_data<Interface>* data = master_info.make(ovl, t);
             // The actual representation for the declaration points back
             // to the master declaration bookkeeping store.
-            decl_rep<Interface>* master = decls.make(data);
+            decl_rep<T>* master = decls.make(data);
             // Inform the overload-set that we have a new master declaration.
             ovl->push_back(data);
 
             return master;
          }
 
-         decl_rep<Interface>* redeclare(overload_entry* decl)
+         decl_rep<T>* redeclare(overload_entry* decl)
          {
             return decls.make
                (static_cast<master_decl_data<Interface>*>(decl));
@@ -1670,11 +1659,6 @@ namespace ipr {
          Optional<ipr::Expr> initializer() const final { return aliasee; }
       };
 
-      template<>
-      struct traits<ipr::Alias> {
-         using rep = impl::Alias;
-      };
-
       struct Var : impl::Decl<ipr::Var> {
          Optional<ipr::Expr> init;
          util::ref<const ipr::Region> lexreg;
@@ -1684,22 +1668,12 @@ namespace ipr {
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
 
-      template<>
-      struct traits<ipr::Var> {
-         using rep = impl::Var;
-      };
-
       // FIXME: Field should use unique_decl, not impl::Decl.
       struct Field : impl::Decl<ipr::Field> {
          Optional<ipr::Expr> init;
 
          Field();
          Optional<ipr::Expr> initializer() const final { return init; }
-      };
-
-      template<>
-      struct traits<ipr::Field> {
-         using rep = impl::Field;
       };
 
       // FIXME: Bitfield should use unique_decl, not impl::Decl
@@ -1712,11 +1686,6 @@ namespace ipr {
          Optional<ipr::Expr> initializer() const final { return init; }
       };
 
-      template<>
-      struct traits<ipr::Bitfield> {
-         using rep = impl::Bitfield;
-      };
-
       struct Typedecl : impl::Decl<ipr::Typedecl> {
          Optional<ipr::Type> init;
          util::ref<const ipr::Region> lexreg;
@@ -1724,11 +1693,6 @@ namespace ipr {
          Typedecl();
          Optional<ipr::Expr> initializer() const final { return init; }
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
-      };
-
-      template<>
-      struct traits<ipr::Typedecl> {
-         using rep = impl::Typedecl;
       };
 
       // For a non-defining function declaration, the parameters - if any is named
@@ -1751,12 +1715,6 @@ namespace ipr {
          Optional<ipr::Expr> initializer() const final;
          const ipr::Region& lexical_region() const final { return lexreg.get(); }
       };
-
-      template<>
-      struct traits<ipr::Fundecl> {
-         using rep = impl::Fundecl;
-      };
-
 
       // A heterogeneous scope is a sequence of declarations of
       // almost of kinds.  The omitted kinds being parameters,
@@ -1783,14 +1741,14 @@ namespace ipr {
          typed_sequence<decl_sequence> decls;
          empty_overload missing;
 
-         decl_factory<ipr::Alias> aliases;
-         decl_factory<ipr::Var> vars;
-         decl_factory<ipr::Field> fields;
-         decl_factory<ipr::Bitfield> bitfields;
-         decl_factory<ipr::Fundecl> fundecls;
-         decl_factory<ipr::Typedecl> typedecls;
-         decl_factory<ipr::Template> primary_maps;
-         decl_factory<ipr::Template> secondary_maps;
+         decl_factory<impl::Alias> aliases;
+         decl_factory<impl::Var> vars;
+         decl_factory<impl::Field> fields;
+         decl_factory<impl::Bitfield> bitfields;
+         decl_factory<impl::Fundecl> fundecls;
+         decl_factory<impl::Typedecl> typedecls;
+         decl_factory<impl::Template> primary_maps;
+         decl_factory<impl::Template> secondary_maps;
 
          template<class T> inline void add_member(T*);
       };
