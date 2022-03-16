@@ -429,7 +429,6 @@ namespace ipr {
          Arg_type rep;
 
          explicit Unary(Arg_type a) : rep{ a } { }
-
          Arg_type operand() const final { return rep; }
       };
 
@@ -456,7 +455,6 @@ namespace ipr {
 
          Binary(const Rep& r) : rep(r) { }
          Binary(Arg1_type f, Arg2_type s) : rep{ f, s } { }
-
          Arg1_type first() const final { return rep.first; }
          Arg2_type second() const final { return rep.second; }
       };
@@ -488,7 +486,6 @@ namespace ipr {
 
          Ternary(const Rep& r) : rep(r) { }
          Ternary(Arg1_type f, Arg2_type s, Arg3_type t) : rep{ f, s, t } { }
-
          Arg1_type first() const final { return rep.first; }
          Arg2_type second() const final { return rep.second; }
          Arg3_type third() const final { return rep.third; }
@@ -510,7 +507,6 @@ namespace ipr {
 
          Quaternary(const Rep& r) : rep(r) { }
          Quaternary(Arg1_type f, Arg2_type s, Arg3_type t, Arg4_type u) : rep{ f, s, t, u } { }
-
          Arg1_type first() const final { return rep.first; }
          Arg2_type second() const final { return rep.second; }
          Arg3_type third() const final { return rep.third; }
@@ -880,6 +876,11 @@ namespace ipr {
          // It was not strictly necessary to actually define this class
          // and the function type().  See the comments in <ipr/interface>.
          const ipr::Type& type() const;
+      };
+
+      template<typename T, Phases f>
+      struct Directive : impl::Expr<T> {
+         Phases phases() const final { return f; }
       };
 
       // Stmt<S> implements the common operations of statements.
@@ -1737,6 +1738,29 @@ namespace ipr {
          stable_farm<impl::Closure> closures;
       };
 
+      // -- Implementation of directives --
+      struct Asm : impl::Directive<ipr::Asm, Phases::Code_generation> {
+         explicit Asm(const ipr::String&);
+         const ipr::String& text() const final { return txt; }
+      private:
+         const ipr::String& txt;
+      };
+
+      struct Static_assert : impl::Directive<ipr::Static_assert, Phases::Elaboration> {
+         Static_assert(const ipr::Expr&, Optional<ipr::String>);
+         const ipr::Expr& condition() const final { return cond; }
+         Optional<ipr::String> message() const final { return txt; }
+      private:
+         const ipr::Expr& cond;
+         Optional<ipr::String> txt;
+      };
+
+      struct Using_directive : impl::Directive<ipr::Using_directive, Phases::Elaboration> {
+         explicit Using_directive(const ipr::Scope&);
+         const ipr::Scope& nominated_scope() const final { return scope; }
+      private:
+         const ipr::Scope& scope;
+      };
 
       // ----------------------------------
       // -- Implementation of statements --
@@ -1758,21 +1782,20 @@ namespace ipr {
       // recording the set of declarations appearing in that
       // block.  It also holds a sequence of handlers, when the
       // block actually represents a C++ try-block.
-
       struct Block : impl::Stmt<Expr<ipr::Block>> {
          impl::Region region;
-         impl::ref_sequence<ipr::Stmt> stmt_seq;
+         impl::ref_sequence<ipr::Expr> stmt_seq;
          impl::ref_sequence<ipr::Handler> handler_seq;
 
          explicit Block(const ipr::Region&);
          const ipr::Scope& elements() const final { return region.scope; }
-         const ipr::Sequence<ipr::Stmt>& body() const final { return stmt_seq; }
+         const ipr::Sequence<ipr::Expr>& body() const final { return stmt_seq; }
          const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 
          // The scope of declarations in this block
          impl::Scope* scope() { return &region.scope; }
 
-         void add_stmt(const ipr::Stmt& s)
+         void add_stmt(const ipr::Expr& s)
          {
             stmt_seq.push_back(&s);
          }
@@ -2111,9 +2134,19 @@ namespace ipr {
          stable_farm<impl::Lambda> lambdas;
       };
 
+      struct dir_factory {
+         impl::Asm* make_asm(const ipr::String&, const ipr::Type&);
+         impl::Static_assert* make_static_assert(const ipr::Expr&, Optional<ipr::String> = { });
+         impl::Using_directive* make_using_directive(const ipr::Scope&, const ipr::Type&);
+      private:
+         stable_farm<impl::Asm> asms;
+         stable_farm<impl::Static_assert> asserts;
+         stable_farm<impl::Using_directive> dirs;
+      };
+
       // This factory class takes on the implementation burden of
       // allocating storage for statement nodes and their constructions.
-      struct stmt_factory : expr_factory {
+      struct stmt_factory : expr_factory, dir_factory {
          impl::Break* make_break(const ipr::Type&);
          impl::Continue* make_continue(const ipr::Type&);
          impl::Empty_stmt* make_empty_stmt(const ipr::Type&);

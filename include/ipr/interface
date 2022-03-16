@@ -78,6 +78,7 @@ namespace ipr {
    struct Expr;                  // general expressions
    struct Name;                  // general names
    struct Type;                  // general types
+   struct Directive;             // general directives
    struct Stmt;                  // general statements
    struct Decl;                  // general declarations
 
@@ -249,11 +250,19 @@ namespace ipr {
    struct Switch;                // switch-statement
    struct While;                 // while-statement
 
+   // -----------------------------------------------
+   // -- result of directive constructor constants --
+   // -----------------------------------------------
+   struct Asm;                   // asm-declaration
+   struct Deduction_guide;       // deduction-guide declaration
+   struct Static_assert;         // static-assert declaration
+   struct Using_declaration;     // using-declaration
+   struct Using_directive;       // using-directive
+ 
    // -------------------------------------------------
    // -- result of declaration constructor constants --
    // -------------------------------------------------
    struct Alias;                 // alias-declaration
-   struct Asm;                   // asm-declaration
    struct Base_type;             // base-class in class inheritance
    struct Enumerator;            // enumerator in enumeration-declaration
    struct Field;                 // field in union or class declaration
@@ -263,7 +272,6 @@ namespace ipr {
    struct Parameter;             // function or template parameter
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
-   struct Using_directive;       // using-directive
 
    // ------------------------
    // -- distinguished node --
@@ -280,6 +288,28 @@ namespace ipr {
    // -- built-ins, but not constants --
    // ----------------------------------
    struct Global_scope;          // global namespace -- "::"
+
+   // ---------------------------
+   // -- Phases of translation --
+   // ---------------------------
+   // A bitmask type for the various phases of C++ program translation.
+   enum class Phases {
+      Unknown              = 0x0000,   // Unknown translation phase
+      Reading              = 0x0001,   // Opening and reading an input source
+      Lexing               = 0x0002,   // Lexical decomposition of input source
+      Preprocessing        = 0x0004,   // Macro expansion and friends
+      Parsing              = 0x0008,   // Grammatical decomposition of the input source
+      Name_resolution      = 0x0010,   // Name lookup
+      Typing               = 0x0020,   // Type assignment of expressions
+      Evaluation           = 0x0040,   // Compile-time evaluation
+      Instantiation        = 0x0080,   // Template instantiation phase
+      Code_generation      = 0x0100,   // Code generation phase
+      Linking              = 0x0200,   // Linking phase
+      Loading              = 0x0400,   // Program loading phase
+      Execution            = 0x0800,   // Runtime execution
+
+      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation
+   };
 
 
                                 // -- Category_node --
@@ -1911,6 +1941,50 @@ namespace ipr {
       auto size() const { return elements().size(); }
    };
 
+                                // -- Directive --
+   // Standard C++ has grammar hacks where certain constructs are
+   // classified as declarations, by they don't actually declare any name.
+   // Rather, the modify the behavior of the implementation in certain ways.
+   // For example, a using-declaration does not declare a name: it changes
+   // the usual name lookup rules to consider new scopes.  A static-assert
+   // does not declare anything: it halts translation when a certain condition
+   // does not hold; otherwise a no-op.
+   // These constructs are generally known as directives.  They were made
+   // declarations in Standard C++, so that they could appear at non-local 
+   // scopes -- where general declarations live. 
+   struct Directive : Expr {
+      virtual Phases phases() const = 0;
+   protected:
+      constexpr Directive(Category_code c) : Expr{ c } { }
+   };
+
+                                // -- Asm --
+   // An asm-declaration, a directive in IPR.
+   // This directive affects only code generation, where it might inject
+   // executable instructions or affect the linker behavior.
+   // Its type should be set to "void".
+   struct Asm : Category<Category_code::Asm, Directive> {
+      virtual const String& text() const = 0;
+   };
+
+                                // -- Static_assert --
+   // A static assertion: a directive that halts the elaboration phase.
+   // No runtime code is ever generated.
+   // Its type should be set to "bool". 
+   struct Static_assert : Category<Category_code::Static_assert, Directive> {
+      virtual const Expr& condition() const = 0;
+      virtual Optional<String> message() const = 0;
+   };
+
+                                // -- Using_directive --
+   // A standard C++ using-directive or a using-enum-declaration 
+   // (nominating additional scopes) for elaboration purposes.
+   // Its type should be "namespace" if it nominates a namespace,
+   // or "enum" or "enum class" if it nominates an enumeration.
+   struct Using_directive : Category<Category_code::Using_directive, Directive> {
+      virtual const Scope& nominated_scope() const = 0;
+   };
+
                                 // -- Stmt --
    // The view that a statement is kind of expression does not follow from
    // Standard C++ specification.  It is a design choice we made based on
@@ -1939,6 +2013,8 @@ namespace ipr {
    //              ,----> D.S. <----,
    //              |                |
    //         Declaration       Statement
+   //
+   //    3. In general, IPR is an expression-based language.
    //
    //
    // When combined, the two diagrams yield
@@ -1992,10 +2068,10 @@ namespace ipr {
    };
 
                                 // -- Block --
-   // A Block is any sequence of statements bracketed by curly braces.
+   // A Block is any sequence of general expressions bracketed by curly braces.
    struct Block : Category<Category_code::Block, Stmt> {
       virtual const Scope& elements() const = 0;
-      virtual const Sequence<Stmt>& body() const = 0;
+      virtual const Sequence<Expr>& body() const = 0;
       virtual const Sequence<Handler>& handlers() const = 0;
    };
 
@@ -2179,15 +2255,6 @@ namespace ipr {
                                 // -- Enumerator --
    // This represents a classic enumerator.
    struct Enumerator : Category<Category_code::Enumerator, Decl> {
-   };
-
-                                // -- Asm --
-   // An asm-declaration.  While this sort of declaration does not
-   // actually introduce any name, it was made a declaration in C++,
-   // so that it could appear at non-local scopes -- where general
-   // declarations live.  Its name is "asm" and its type is "void".
-   struct Asm : Category<Category_code::Asm, Decl> {
-      virtual const String& text() const = 0;
    };
 
                                 // - Alias --
@@ -2472,6 +2539,11 @@ namespace ipr {
       virtual void visit(const New&);
       virtual void visit(const Mapping&);
 
+      virtual void visit(const Directive&) = 0;
+      virtual void visit(const Asm&);
+      virtual void visit(const Static_assert&);
+      virtual void visit(const Using_directive&);
+
       virtual void visit(const Stmt&) = 0;
       virtual void visit(const Labeled_stmt&);
       virtual void visit(const Block&);
@@ -2500,7 +2572,6 @@ namespace ipr {
       virtual void visit(const Parameter_list&);
       virtual void visit(const Typedecl&);
       virtual void visit(const Var&);
-      virtual void visit(const Asm&);
 
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);
