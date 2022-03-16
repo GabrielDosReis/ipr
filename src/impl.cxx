@@ -355,6 +355,15 @@ namespace ipr::impl {
          return rep.first;
       }
 
+      // -- Directives --
+      Asm::Asm(const ipr::String& s) : txt{s} { }
+
+      Static_assert::Static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+         : cond{e}, txt{s}
+      { }
+
+      Using_directive::Using_directive(const ipr::Scope& s) : scope{s} { }
+
       namespace {
          // Helper function for building expression nodes with type assignment.
          template<typename T, typename... Args>
@@ -533,6 +542,22 @@ namespace ipr::impl {
       // --------------------
 
       Continue::Continue() : stmt{} { }
+
+      // -- impl::dir_factory --
+      impl::Asm* dir_factory::make_asm(const ipr::String& s, const ipr::Type& t)
+      {
+         return make(asms, s).with_type(t);
+      }
+
+      impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+      {
+         return asserts.make(e, s);
+      }
+
+      impl::Using_directive* dir_factory::make_using_directive(const ipr::Scope& s, const ipr::Type& t)
+      {
+         return make(dirs, s).with_type(t);
+      }
 
       // ------------------------
       // -- impl::stmt_factory --

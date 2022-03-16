@@ -793,6 +793,26 @@ ipr::Visitor::visit(const Mapping& s)
    visit(as<Expr>(s));
 }
 
+// -- Directives visiting hooks --
+
+void
+ipr::Visitor::visit(const Asm& d)
+{
+   visit(as<Directive>(d));
+}
+
+void
+ipr::Visitor::visit(const Static_assert& d)
+{
+   visit(as<Directive>(d));
+}
+
+void
+ipr::Visitor::visit(const Using_directive& d)
+{
+   visit(as<Directive>(d));
+}
+
 // -- Statements visiting hooks --
 
 void
@@ -891,12 +911,6 @@ ipr::Visitor::visit(const Handler& s)
 
 void
 ipr::Visitor::visit(const Alias& d)
-{
-   visit(as<Decl>(d));
-}
-
-void
-ipr::Visitor::visit(const Asm& d)
 {
    visit(as<Decl>(d));
 }
