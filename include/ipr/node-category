@@ -142,6 +142,12 @@ New,                                // ipr::New
 Conditional,                        // ipr::Conditional
 Scope,                              // ipr::Scope
 
+Asm,                                // ipr::Asm
+Deduction_guide,                    // ipr::Deduction_guide
+Static_assert,                      // ipr::Static_assert
+Using_declaration,                  // ipr::Using_declaration
+Using_directive,                    // ipr::Using_directive
+
 Block,                              // ipr::Block
 Break,                              // ipr::Break
 Continue,                           // ipr::Continue
@@ -159,7 +165,6 @@ Switch,                             // ipr::Switch
 While,                              // ipr::While
 
 Alias,                              // ipr::Alias
-Asm,                                // ipr::Asm
 Base_type,                          // ipr::Base_type
 Enumerator,                         // ipr::Enumerator
 Field,                              // ipr::Field
@@ -169,7 +174,6 @@ Template,                           // ipr::Template
 Parameter,                          // ipr::Parameter
 Typedecl,                           // ipr::Typedecl
 Var,                                // ipr::Var
-Using_directive,                    // ipr::Using_directive
 
 Unit,                               // ipr::Unit
 
