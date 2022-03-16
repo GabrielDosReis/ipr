@@ -11,6 +11,18 @@ on:
     branches: [ master ]
 
 jobs:
+  job:
+    name: ${{ matrix.os }}-${{ matrix.workflow }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest:
+            triplet: x64-linux
+          - os: windows-latest:
+            triplet: x64-windows
+
   build-linux:
     runs-on: ubuntu-latest
     name: ubuntu-latest - ${{ matrix.compiler }}
@@ -53,6 +65,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
 
     - name: Configure & Build
       uses: lukka/run-cmake@v3
