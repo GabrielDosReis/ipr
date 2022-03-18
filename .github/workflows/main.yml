@@ -23,7 +23,7 @@ jobs:
             compiler: [g++-10, clang++-12]
             generator: UnixMakefiles
           - os: windows-latest
-            generator: VS16Win64
+            generator: Ninja
             
     steps:
       - uses: actions/checkout@v2
