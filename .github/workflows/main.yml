@@ -23,6 +23,7 @@ jobs:
             compiler: [g++-10, clang++-12]
             generator: UnixMakefiles
           - os: windows-latest
+            compiler: CL
             generator: Ninja
             
     steps:
