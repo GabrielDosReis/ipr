@@ -191,6 +191,11 @@ ipr::Visitor::visit(const As_type& t)
    visit(as<Type>(t));
 }
 
+void ipr::Visitor::visit(const Tor& t)
+{
+   visit(as<Type>(t));
+}
+
 void
 ipr::Visitor::visit(const Function& t)
 {

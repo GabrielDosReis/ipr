@@ -94,6 +94,7 @@ namespace ipr {
    struct Class;                 // user-defined type - declared as "class" or "struct"
    struct Decltype;              // strict type of a declaration/expression
    struct Enum;                  // user-defined type - declared as "enum" or "class enum"
+   struct Tor;                   // types of constructors and destructors - not ISO C++ types
    struct Function;              // function type
    struct Namespace;             // user-defined type - declared as "namespace"
    struct Pointer;               // pointer type
@@ -1136,6 +1137,24 @@ namespace ipr {
    // of an expression.
    struct Decltype : Unary<Category<Category_code::Decltype, Type>, const Expr&> {
       Arg_type expr() const { return operand(); }
+   };
+
+                                // -- Tor --
+   // A node of this class represents a Type for either a constructor or a destructor.
+   // Formally, ISO C++ does not assign types to those special functions; however, a
+   // type-based representation of C++ semantics must assign types to such declarations.
+   // Although a low-level (e.g. ABI-level) representation of a contructor and a destructor
+   // may look at them as just some regular function, and assign them a Function type,
+   // the higher level semantics of C++ is best served by a dedicated type to abstract
+   // over ABI interpretation.
+   struct Tor : Ternary<Category<Category_code::Tor, Type>,
+                        const Expr&, const Type&, const Linkage&> {
+      // The parameter-list to a tor type.  Always empty for a Standard C++ destructor.
+      Arg1_type source() const { return first(); }
+      // The exception-specification for this tor type.
+      Arg2_type throws() const { return second(); }
+      // The language linkage for this to type.  Default is "C++".
+      Arg3_type lang_linkage() const { return third(); }
    };
 
                                 // -- Function --
@@ -2432,6 +2451,7 @@ namespace ipr {
       virtual void visit(const Decltype&);
       virtual void visit(const Enum&);
       virtual void visit(const As_type&);
+      virtual void visit(const Tor&);
       virtual void visit(const Function&);
       virtual void visit(const Namespace&);
       virtual void visit(const Pointer&);
