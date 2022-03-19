@@ -1995,6 +1995,32 @@ namespace ipr {
       virtual Optional<String> message() const = 0;
    };
 
+
+                                // -- Using_declaration --
+   // A using-declaration is directive that instructs the C++ translator to look up
+   // a set of names ('designator'), and for each declaration in the qualified lookup 
+   // result of a designator create a synonymous declaration, subject to constraints.
+   struct Using_declaration : Category<Category_code::Using_declaration, Directive> {
+      struct Designator;
+      virtual const Sequence<Designator>& designators() const = 0;
+   };
+
+   // A using-declarator: a qualified name, along with a denomination mode.
+   struct Using_declaration::Designator {
+      enum class Mode {
+         Normal      = 0x00,              // Normal interpretation of qualified name lookup
+         Type        = 0x01,              // The qualified name is assumed to name a type
+         Expansion   = 0x02,              // The designator needs expansion
+      };
+
+      Designator(const Scope_ref& p, Mode m) : sr{&p}, md{m} { }
+      const Scope_ref& path() const { return *sr; }
+      Mode mode() const { return md; }
+   private:
+      const Scope_ref* sr;
+      Mode md;
+   };
+
                                 // -- Using_directive --
    // A standard C++ using-directive or a using-enum-declaration 
    // (nominating additional scopes) for elaboration purposes.
@@ -2562,6 +2588,7 @@ namespace ipr {
       virtual void visit(const Directive&) = 0;
       virtual void visit(const Asm&);
       virtual void visit(const Static_assert&);
+      virtual void visit(const Using_declaration&);
       virtual void visit(const Using_directive&);
 
       virtual void visit(const Stmt&) = 0;

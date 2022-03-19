@@ -362,6 +362,10 @@ namespace ipr::impl {
          : cond{e}, txt{s}
       { }
 
+      single_using_declaration::single_using_declaration(const ipr::Scope_ref& s, Designator::Mode m)
+         : what{s, m}
+      { }
+
       Using_directive::Using_directive(const ipr::Scope& s) : scope{s} { }
 
       namespace {
@@ -552,6 +556,17 @@ namespace ipr::impl {
       impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
       {
          return asserts.make(e, s);
+      }
+
+      impl::single_using_declaration*
+      dir_factory::make_using_declaration(const ipr::Scope_ref& s, ipr::Using_declaration::Designator::Mode m)
+      {
+         return singles.make(s, m);
+      }
+
+      impl::Using_declaration* dir_factory::make_using_declaration()
+      {
+         return usings.make();
       }
 
       impl::Using_directive* dir_factory::make_using_directive(const ipr::Scope& s, const ipr::Type& t)
