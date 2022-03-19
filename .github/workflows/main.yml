@@ -27,7 +27,7 @@ jobs:
           - os: windows-latest
             compiler: g++-10
           - os: windows-latest
-            compiler: clang-12
+            compiler: clang++-12
             
     steps:
       - uses: actions/checkout@v2
