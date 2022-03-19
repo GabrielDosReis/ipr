@@ -150,13 +150,31 @@ namespace ipr {
          const T& get(Index p) const final { return *pointer(this->at(p)); }
       };
 
+      // -- When a class implements an interface, return that interface;
+      // -- otherwise, the type itself.
+      template<typename T>
+      concept Has_interface = requires { typename T::Interface; };
+
+      template<typename T>
+      struct abstraction {
+         using type = T;
+      };
+
+      template<Has_interface T>
+      struct abstraction<T> {
+         using type = typename T::Interface;
+      };
+
+      template<typename T>
+      using interface = typename abstraction<T>::type;
+
                                 // -- impl::val_sequence --
       // The class val_sequence<T> implements Sequence<T> by storing
       // the actual values, instead of references to values (as is
       // the case of ref_sequence<T>).
       template<typename T>
-      struct val_sequence : ipr::Sequence<typename T::Interface>, private stable_farm<T> {
-         using Seq = ipr::Sequence<typename T::Interface>;
+      struct val_sequence : ipr::Sequence<interface<T>>, private stable_farm<T> {
+         using Seq = ipr::Sequence<interface<T>>;
          using Impl = stable_farm<T>;
          using Iterator = typename Seq::Iterator;
          using Index = typename Seq::Index;
@@ -205,6 +223,25 @@ namespace ipr {
          {
             throw std::domain_error("empty_sequence::get");
          }
+      };
+
+      // A sequence implementation for the case of a collection consisting of exactly one element.  
+      template<typename T>
+      struct singleton : ipr::Sequence<T> {
+         using Index = typename Sequence<T>::Index;
+
+         template<typename... Args>
+         singleton(Args&&... args) : item{args...} { }
+
+         Index size() const final { return 1; }
+         const T& get(Index i) const final
+         {
+            if (i == 0)
+               return item;
+            throw std::domain_error("singleton_sequence::get");
+         }
+      private:
+         T item;
       };
 
       template<class T>
@@ -1761,6 +1798,20 @@ namespace ipr {
          Optional<ipr::String> txt;
       };
 
+      // Implementation of ipr::Using_declaration in case where using-declarator-list is a singleton.
+      struct single_using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
+         single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
+         const ipr::Sequence<Designator>& designators() const final { return what; }
+      private:
+         singleton<Designator> what;
+      };
+
+      struct Using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
+         impl::val_sequence<Designator> seq;
+
+         const ipr::Sequence<Designator>& designators() const final { return seq; }
+      };
+
       struct Using_directive : impl::Directive<ipr::Using_directive, Phases::Elaboration> {
          explicit Using_directive(const ipr::Scope&);
          const ipr::Scope& nominated_scope() const final { return scope; }
@@ -2143,10 +2194,15 @@ namespace ipr {
       struct dir_factory {
          impl::Asm* make_asm(const ipr::String&, const ipr::Type&);
          impl::Static_assert* make_static_assert(const ipr::Expr&, Optional<ipr::String> = { });
+         impl::single_using_declaration* make_using_declaration(const ipr::Scope_ref&,
+                                                                ipr::Using_declaration::Designator::Mode);
+         impl::Using_declaration* make_using_declaration();
          impl::Using_directive* make_using_directive(const ipr::Scope&, const ipr::Type&);
       private:
          stable_farm<impl::Asm> asms;
          stable_farm<impl::Static_assert> asserts;
+         stable_farm<impl::single_using_declaration> singles;
+         stable_farm<impl::Using_declaration> usings;
          stable_farm<impl::Using_directive> dirs;
       };
 
