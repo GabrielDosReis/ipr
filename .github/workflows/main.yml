@@ -18,13 +18,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        include:
+        compiler: [g++-10, clang-12, MSVC]
+        exclude:
           - os: ubuntu-latest
-            compiler: [g++-10, clang++-12]
-            generator: UnixMakefiles
+            compiler: MSVC
+          - os: ubuntu-latest
+            compiler: MSVC
           - os: windows-latest
-            compiler: CL
-            generator: Ninja
+            compiler: g++-10
+          - os: windows-latest
+            compiler: clang-12
             
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +46,6 @@ jobs:
           buildDirectory: build
           buildWithCMakeArgs: --parallel
           cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-          cmakeGenerator: $${ matrix.generator }}
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
       - name: Configure and build
         uses: lukka/run-cmake@v3
@@ -51,7 +53,7 @@ jobs:
         with:
           buildDirectory: build
           buildWithCMakeArgs: --parallel
-          cmakeGenerator: ${{ matrix.generator }}
+          cmakeGenerator: Ninja
 
       - name: Run Tests
         run: ctest build
