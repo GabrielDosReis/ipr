@@ -19,10 +19,10 @@ jobs:
       matrix:
         os: [ubuntu-20.04, windows-2019]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             compiler: [g++-10, clang++-12]
             generator: UnixMakefiles
-          - os: windows-latest
+          - os: windows-2019
             compiler: CL
             generator: Ninja
             
