@@ -13,16 +13,16 @@ on:
 jobs:
   build-and-test:
     name: ${{ matrix.os }} -x- ${{ matrix.compiler }}
-    runs-on: $${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-2019]
+        os: [ubuntu-latest, windows-latest]
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             compiler: [g++-10, clang++-12]
             generator: UnixMakefiles
-          - os: windows-2019
+          - os: windows-latest
             compiler: CL
             generator: Ninja
             
