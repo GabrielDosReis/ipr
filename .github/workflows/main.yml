@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        compiler: [g++-10, clang-12, MSVC]
+        compiler: [g++-10, clang++-12, MSVC]
         exclude:
           - os: ubuntu-latest
             compiler: MSVC
