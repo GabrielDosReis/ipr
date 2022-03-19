@@ -839,6 +839,9 @@ namespace ipr {
       template<typename T>
       using Binary_type = Binary<Type<T>>;
 
+      template<typename T>
+      using Ternary_type = Ternary<Type<T>>;
+
       // Scopes, as expressions, have Product types.  Such types could
       // be implemented directly as a separate sequence of types.
       // However, it would require coordination from the various
@@ -1164,6 +1167,7 @@ namespace ipr {
       using Array = Binary_type<ipr::Array>;
       using Decltype = Unary_type<ipr::Decltype>;
       using As_type = Binary_type<ipr::As_type>;
+      using Tor = Ternary_type<ipr::Tor>;
       using Function = Quaternary<Type<ipr::Function>>;
       using Pointer = Unary_type<ipr::Pointer>;
       using Product = Unary_type<ipr::Product>;
@@ -1702,6 +1706,7 @@ namespace ipr {
          impl::Qualified* make_qualified(ipr::Type_qualifier,
                                          const ipr::Type&);
          impl::Decltype* make_decltype(const ipr::Expr&);
+         impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&, const ipr::Linkage&);
          impl::Function* make_function(const ipr::Product&, const ipr::Type&,
                                        const ipr::Sum&, const ipr::Linkage&);
          impl::Pointer* make_pointer(const ipr::Type&);
@@ -1721,6 +1726,7 @@ namespace ipr {
       private:
          util::rb_tree::container<impl::Array> arrays;
          util::rb_tree::container<impl::As_type> type_refs;
+         util::rb_tree::container<impl::Tor> tors;
          util::rb_tree::container<impl::Function> functions;
          util::rb_tree::container<impl::Pointer> pointers;
          util::rb_tree::container<impl::Product> products;

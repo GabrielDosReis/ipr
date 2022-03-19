@@ -25,6 +25,7 @@ Class,                              // ipr::Class
 Decltype,                           // ipr::Decltype
 As_type,                            // ipr::As_type
 Enum,                               // ipr::Enum
+Tor,                                // ipr::Tor
 Function,                           // ipr::Function
 Namespace,                          // ipr::Namespace
 Pointer,                            // ipr::Pointer

@@ -1294,7 +1294,6 @@ namespace ipr {
    operator<<(Printer& pp, xpr_base_classes x)
    {
       const Sequence<Base_type>& bases = x.bases;
-      const int n = bases.size();
       if (not bases.empty()) {
          pp << token('(');
          comma_separated<xpr_decl>(pp, bases);

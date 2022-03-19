@@ -935,6 +935,13 @@ namespace ipr::impl {
          }
       };
 
+      impl::Tor*
+      type_factory::make_tor(const ipr::Product& s, const ipr::Sum& e, const ipr::Linkage& l)
+      {
+         using rep = impl::Tor::Rep;
+         return tors.insert(rep{ s, e, l }, ternary_compare());
+      }
+
       impl::Function*
       type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
                                   const ipr::Sum& e, const ipr::Linkage& l)
