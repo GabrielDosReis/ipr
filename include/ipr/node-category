@@ -64,6 +64,7 @@ Delete,                             // ipr::Delete
 Demotion,                           // ipr::Demotion
 Deref,                              // ipr::Deref
 Expr_list,                          // ipr::Expr_list
+Alignof,                            // ipr::Alignof
 Sizeof,                             // ipr::Sizeof
 Typeid,                             // ipr::Typeid
 Id_expr,                            // ipr::Id_expr
