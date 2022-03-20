@@ -1286,6 +1286,7 @@ namespace ipr {
 		 // <<<< Yuriy Solodkyy: 2007/02/02
       };
 
+      using Alignof = Unary_expr<ipr::Alignof>;
       using Sizeof = Unary_expr<ipr::Sizeof>;
       using Args_cardinality = Unary_expr<ipr::Args_cardinality>;
       using Typeid = Unary_expr<ipr::Typeid>;
@@ -1993,6 +1994,7 @@ namespace ipr {
          Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
          Dtor_name* make_dtor_name(const ipr::Type&);
          Expr_list* make_expr_list();
+         Alignof* make_alignof(const ipr::Expr&, Optional<ipr::Type> = { });
          Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
          Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
          Typeid* make_typeid(const ipr::Expr&, Optional<ipr::Type> = { });
@@ -2103,6 +2105,7 @@ namespace ipr {
          stable_farm<impl::This> these;
 
          util::rb_tree::container<impl::Symbol> symbols;
+         stable_farm<impl::Alignof> alignofs;
          stable_farm<impl::Sizeof> sizeofs;
          stable_farm<impl::Typeid> xtypeids;
          stable_farm<impl::Address> addresses;

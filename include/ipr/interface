@@ -145,6 +145,7 @@ namespace ipr {
                                  // promotion -- implicit conversion
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // comma-separated expression list  x, y, z
+   struct Alignof;               // alignment query                  alignof(T)
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
    struct Typeid;                // typeid expression, like sizeof expression
    struct Id_expr;               // use of a name as an expression
@@ -1502,6 +1503,10 @@ namespace ipr {
       auto size() const { return elements().size(); }
    };
 
+                                // -- Alignof --
+   //  Alignment query of a type, or any expression.
+   struct Alignof : Unary<Category<Category_code::Alignof>> { };
+
                                 // -- Sizeof --
    // sizeof-expression -- "sizeof expr" or "sizeof (int)"
    struct Sizeof : Unary<Category<Category_code::Sizeof>> { };
@@ -2507,6 +2512,7 @@ namespace ipr {
       virtual void visit(const Demotion&);
       virtual void visit(const Deref&);
       virtual void visit(const Enclosure&);
+      virtual void visit(const Alignof&);
       virtual void visit(const Sizeof&);
       virtual void visit(const Args_cardinality&);
       virtual void visit(const Expr_stmt&);

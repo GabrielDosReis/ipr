@@ -357,6 +357,11 @@ ipr::Visitor::visit(const Enclosure& e)
    visit(as<Expr>(e));
 }
 
+void ipr::Visitor::visit(const Alignof& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Sizeof& e)
 {

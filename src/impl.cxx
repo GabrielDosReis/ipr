@@ -1504,6 +1504,11 @@ namespace ipr::impl {
          return type_ids.insert(t, unary_compare());
       }
 
+      impl::Alignof* expr_factory::make_alignof(const ipr::Expr& e, Optional<ipr::Type> t)
+      {
+         return make(alignofs, e).with_type(t);
+      }
+
       impl::Sizeof*
       expr_factory::make_sizeof(const ipr::Expr& e, Optional<ipr::Type> t)
       {
