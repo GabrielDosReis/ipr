@@ -12,6 +12,7 @@ on:
 
 env:
   build: '${{ github.workspace }}/build'
+  config: 'Debug'
 
 jobs:
   build:
@@ -22,13 +23,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Configure CMake
-        run: cmake -B ${{ env.build }}
+        run: cmake -B ${{ env.build }} -DCMAKE_BUILD_TYPE=${{ env.config }}
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.0
         with:
           cmakeBuildDirectory: ${{ env.build }}
+          buildConfiguration: ${{ env.config }}
           ignoredTargetPaths: ${{ github.workspace }}/tests
           ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
