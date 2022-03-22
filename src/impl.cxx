@@ -189,23 +189,6 @@ namespace ipr::impl {
          return components;
       }
 
-      struct scope_datum::comp {
-         int operator()(const scope_datum& lhs, const scope_datum& rhs) const
-         {
-            return compare(lhs.scope_pos, rhs.scope_pos);
-         }
-
-         int operator()(Decl_position pos, const scope_datum& s) const
-         {
-            return compare(pos, s.scope_pos);
-         }
-
-         int operator()(const scope_datum& s, Decl_position pos) const
-         {
-            return compare(s.scope_pos, pos);
-         }
-      };
-
       // -- impl::Symbol --
       Symbol::Symbol(const ipr::Name& n)
          : Unary_expr<ipr::Symbol>{ n }
@@ -234,25 +217,6 @@ namespace ipr::impl {
               primary(0),home(0),
               overload(ovl)
       { }
-
-      // -------------------------
-      // -- impl::decl_sequence --
-      // -------------------------
-
-      decl_sequence::Index decl_sequence::size() const {
-         return decls.size();
-      }
-
-      const ipr::Decl&
-      decl_sequence::get(Index i) const {
-         scope_datum* result = decls.find(Decl_position{ i }, scope_datum::comp());
-         return *util::check(result)->decl;
-      }
-
-      void
-      decl_sequence::insert(scope_datum* s) {
-         decls.insert(s, scope_datum::comp());
-      }
 
       // --------------------
       // -- impl::Overload --
@@ -1089,9 +1053,9 @@ namespace ipr::impl {
 
       template<class T>
       inline void
-      Scope::add_member(T* decl) {
-         decl->decl_data.scope_pos = Decl_position{ decls.seq.size() };
-         decls.seq.insert(&decl->decl_data);
+      Scope::add_member(T* decl)
+      {
+         decls.seq.push_back(decl);
       }
 
       impl::Alias*
