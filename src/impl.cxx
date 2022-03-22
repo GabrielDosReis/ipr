@@ -189,23 +189,6 @@ namespace ipr::impl {
          return components;
       }
 
-      struct scope_datum::comp {
-         int operator()(const scope_datum& lhs, const scope_datum& rhs) const
-         {
-            return compare(lhs.scope_pos, rhs.scope_pos);
-         }
-
-         int operator()(Decl_position pos, const scope_datum& s) const
-         {
-            return compare(pos, s.scope_pos);
-         }
-
-         int operator()(const scope_datum& s, Decl_position pos) const
-         {
-            return compare(s.scope_pos, pos);
-         }
-      };
-
       // -- impl::Symbol --
       Symbol::Symbol(const ipr::Name& n)
          : Unary_expr<ipr::Symbol>{ n }
@@ -234,46 +217,20 @@ namespace ipr::impl {
               primary{}, home{}, overload{ovl}
       { }
 
-      // -------------------------
-      // -- impl::decl_sequence --
-      // -------------------------
-
-      decl_sequence::Index decl_sequence::size() const {
-         return decls.size();
-      }
-
-      const ipr::Decl&
-      decl_sequence::get(Index i) const {
-         scope_datum* result = decls.find(Decl_position{ i }, scope_datum::comp());
-         return *util::check(result)->decl;
-      }
-
-      void
-      decl_sequence::insert(scope_datum* s) {
-         decls.insert(s, scope_datum::comp());
-      }
-
       // --------------------
       // -- impl::Overload --
       // --------------------
 
       Overload::Overload(const ipr::Name& n)
-            : name{n}, where{}
+            : name{n}
       { }
 
-      Overload::Index Overload::size() const {
-         return entries.size();
-      }
-
-      const ipr::Decl&
-      Overload::get(Index i) const {
-         return *masters.at(i)->decl;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      Overload::operator[](const ipr::Type& t) const {
-         overload_entry* master = lookup(t);
-         return util::check(master)->declset;
+      Optional<ipr::Decl>
+      Overload::operator[](const ipr::Type& t) const
+      {
+         if (auto entry = lookup(t))
+            return { &entry->declset.get(0) };                    // Note: first decl is canonical
+         return { };
       }
 
       impl::overload_entry*
@@ -301,23 +258,12 @@ namespace ipr::impl {
          return seq.datum.type();
       }
 
-      singleton_overload::Index
-      singleton_overload::size() const {
-         return 1;
-      }
-
-      const ipr::Decl&
-      singleton_overload::get(Index i) const {
-         if (i != 1)
-            throw std::domain_error("singleton_overload::get: out-of-range ");
-         return seq.datum;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      singleton_overload::operator[](const ipr::Type& t) const {
+      Optional<ipr::Decl>
+      singleton_overload::operator[](const ipr::Type& t) const
+      {
          if (&t != &seq.datum.type())
-            throw std::domain_error("invalid type subscription");
-         return seq;
+            return { };
+         return { &seq.datum };
       }
 
       // --------------------------
@@ -329,18 +275,10 @@ namespace ipr::impl {
          throw std::domain_error("empty_overload::type");
       }
 
-      empty_overload::Index empty_overload::size() const {
-         return 0;
-      }
-
-      const ipr::Decl&
-      empty_overload::get(Index) const {
-         throw std::domain_error("impl::empty_overload::get");
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      empty_overload::operator[](const ipr::Type&) const {
-         throw std::domain_error("impl::empty_overload::operator[]");
+      Optional<ipr::Decl>
+      empty_overload::operator[](const ipr::Type&) const
+      {
+         return { };
       }
 
       // -----------------
@@ -353,6 +291,19 @@ namespace ipr::impl {
       Rname::type() const {
          return rep.first;
       }
+
+      // -- Directives --
+      Asm::Asm(const ipr::String& s) : txt{s} { }
+
+      Static_assert::Static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+         : cond{e}, txt{s}
+      { }
+
+      single_using_declaration::single_using_declaration(const ipr::Scope_ref& s, Designator::Mode m)
+         : what{s, m}
+      { }
+
+      Using_directive::Using_directive(const ipr::Scope& s) : scope{s} { }
 
       namespace {
          // Helper function for building expression nodes with type assignment.
@@ -532,6 +483,33 @@ namespace ipr::impl {
       // --------------------
 
       Continue::Continue() : stmt{} { }
+
+      // -- impl::dir_factory --
+      impl::Asm* dir_factory::make_asm(const ipr::String& s, const ipr::Type& t)
+      {
+         return make(asms, s).with_type(t);
+      }
+
+      impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+      {
+         return asserts.make(e, s);
+      }
+
+      impl::single_using_declaration*
+      dir_factory::make_using_declaration(const ipr::Scope_ref& s, ipr::Using_declaration::Designator::Mode m)
+      {
+         return singles.make(s, m);
+      }
+
+      impl::Using_declaration* dir_factory::make_using_declaration()
+      {
+         return usings.make();
+      }
+
+      impl::Using_directive* dir_factory::make_using_directive(const ipr::Scope& s, const ipr::Type& t)
+      {
+         return make(dirs, s).with_type(t);
+      }
 
       // ------------------------
       // -- impl::stmt_factory --
@@ -909,6 +887,13 @@ namespace ipr::impl {
          }
       };
 
+      impl::Tor*
+      type_factory::make_tor(const ipr::Product& s, const ipr::Sum& e, const ipr::Linkage& l)
+      {
+         using rep = impl::Tor::Rep;
+         return tors.insert(rep{ s, e, l }, ternary_compare());
+      }
+
       impl::Function*
       type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
                                   const ipr::Sum& e, const ipr::Linkage& l)
@@ -1067,9 +1052,9 @@ namespace ipr::impl {
 
       template<class T>
       inline void
-      Scope::add_member(T* decl) {
-         decl->decl_data.scope_pos = Decl_position{ decls.seq.size() };
-         decls.seq.insert(&decl->decl_data);
+      Scope::add_member(T* decl)
+      {
+         decls.seq.push_back(decl);
       }
 
       impl::Alias*
@@ -1230,6 +1215,7 @@ namespace ipr::impl {
          return subregions.make(this);
       }
 
+      Where::Where(const ipr::Region& parent) : region{&parent} { }
 
       // ------------------------
       // -- impl::expr_factory --
@@ -1453,6 +1439,11 @@ namespace ipr::impl {
          return type_ids.insert(t, unary_compare());
       }
 
+      impl::Alignof* expr_factory::make_alignof(const ipr::Expr& e, Optional<ipr::Type> t)
+      {
+         return make(alignofs, e).with_type(t);
+      }
+
       impl::Sizeof*
       expr_factory::make_sizeof(const ipr::Expr& e, Optional<ipr::Type> t)
       {
@@ -1499,6 +1490,11 @@ namespace ipr::impl {
       expr_factory::make_noexcept(const ipr::Expr& e, Optional<ipr::Type> t)
       {
          return make(noexcepts, e).with_type(t);
+      }
+
+      impl::Rewrite* expr_factory::make_rewrite(const ipr::Expr& s, const ipr::Expr& t)
+      {
+         return rewrites.make(s, t);
       }
 
       impl::And*
@@ -1805,6 +1801,18 @@ namespace ipr::impl {
       expr_factory::make_binary_fold(Category_code op, const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t)
       {
          return make(folds, op, l, r).with_type(t);
+      }
+
+      impl::Where*
+      expr_factory::make_where(const ipr::Region& parent)
+      {
+         return wheres.make(parent);
+      }
+
+      impl::Where_no_decl*
+      expr_factory::make_where(const ipr::Expr& main, const ipr::Expr& attendant)
+      {
+         return where_nodecls.make(main, attendant);
       }
 
       impl::New*

@@ -11,55 +11,49 @@ on:
     branches: [ master ]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    name: ubuntu-latest - ${{ matrix.compiler }}
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [g++-10, clang++-12]
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install GCC, CMake
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential cmake
-
-    - name: Configure & Build
-      uses: lukka/run-cmake@v3
-      with:
-        buildDirectory: build
-        buildWithCMakeArgs: --parallel
-        cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-        cmakeGenerator: UnixMakefiles
-        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-
-    - name: Run Tests
-      run: ctest build
-
-  build-other:
+  build-and-test:
+    name: ${{ matrix.os }} -x- ${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-latest
-            generator: UnixMakefiles
+        os: [ubuntu-latest, windows-latest]
+        compiler: [g++-10, clang++-12, MSVC]
+        exclude:
+          - os: ubuntu-latest
+            compiler: MSVC
+          - os: ubuntu-latest
+            compiler: MSVC
           - os: windows-latest
-            generator: VS16Win64
-
+            compiler: g++-10
+          - os: windows-latest
+            compiler: clang++-12
+            
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Configure & Build
-      uses: lukka/run-cmake@v3
-      with:
-        buildDirectory: build
-        buildWithCMakeArgs: --parallel
-        cmakeGenerator: ${{ matrix.generator }}
+      - name: Install C++ compilers, and CMake
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential cmake
 
-    - name: Run Tests
-      run: ctest build
+      - name: Configure and build
+        uses: lukka/run-cmake@v3
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          buildDirectory: build
+          buildWithCMakeArgs: --parallel
+          cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+      - name: Configure and build
+        uses: lukka/run-cmake@v3
+        if: matrix.os == 'windows-latest'
+        with:
+          buildDirectory: build
+          buildWithCMakeArgs: --parallel
+          cmakeGenerator: Ninja
+
+      - name: Run Tests
+        run: ctest build

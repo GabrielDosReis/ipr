@@ -191,6 +191,11 @@ ipr::Visitor::visit(const As_type& t)
    visit(as<Type>(t));
 }
 
+void ipr::Visitor::visit(const Tor& t)
+{
+   visit(as<Type>(t));
+}
+
 void
 ipr::Visitor::visit(const Function& t)
 {
@@ -352,6 +357,11 @@ ipr::Visitor::visit(const Enclosure& e)
    visit(as<Expr>(e));
 }
 
+void ipr::Visitor::visit(const Alignof& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Sizeof& e)
 {
@@ -456,6 +466,11 @@ ipr::Visitor::visit(const Expansion& e)
 
 void
 ipr::Visitor::visit(const Noexcept& e)
+{
+   visit(as<Expr>(e));
+}
+
+void ipr::Visitor::visit(const Rewrite& e)
 {
    visit(as<Expr>(e));
 }
@@ -765,6 +780,11 @@ void ipr::Visitor::visit(const Binary_fold& e)
    visit(as<Classic>(e));
 }
 
+void ipr::Visitor::visit(const Where& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Conditional& e)
 {
@@ -781,6 +801,31 @@ void
 ipr::Visitor::visit(const Mapping& s)
 {
    visit(as<Expr>(s));
+}
+
+// -- Directives visiting hooks --
+
+void
+ipr::Visitor::visit(const Asm& d)
+{
+   visit(as<Directive>(d));
+}
+
+void
+ipr::Visitor::visit(const Static_assert& d)
+{
+   visit(as<Directive>(d));
+}
+
+void ipr::Visitor::visit(const Using_declaration& d)
+{
+   visit(as<Directive>(d));
+}
+
+void
+ipr::Visitor::visit(const Using_directive& d)
+{
+   visit(as<Directive>(d));
 }
 
 // -- Statements visiting hooks --
@@ -881,12 +926,6 @@ ipr::Visitor::visit(const Handler& s)
 
 void
 ipr::Visitor::visit(const Alias& d)
-{
-   visit(as<Decl>(d));
-}
-
-void
-ipr::Visitor::visit(const Asm& d)
 {
    visit(as<Decl>(d));
 }

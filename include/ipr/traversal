@@ -50,6 +50,7 @@ namespace ipr {
       void visit(const Name& n) override { (*this)(n); }
       void visit(const Expr& n) override { (*this)(n); }
       void visit(const Type& n) override { (*this)(n); }
+      void visit(const Directive& n) override { (*this)(n); }
       void visit(const Stmt& n) override { (*this)(n); }
       void visit(const Decl& n) override { (*this)(n); }
    };

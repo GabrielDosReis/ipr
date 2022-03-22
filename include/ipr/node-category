@@ -25,6 +25,7 @@ Class,                              // ipr::Class
 Decltype,                           // ipr::Decltype
 As_type,                            // ipr::As_type
 Enum,                               // ipr::Enum
+Tor,                                // ipr::Tor
 Function,                           // ipr::Function
 Namespace,                          // ipr::Namespace
 Pointer,                            // ipr::Pointer
@@ -63,6 +64,7 @@ Delete,                             // ipr::Delete
 Demotion,                           // ipr::Demotion
 Deref,                              // ipr::Deref
 Expr_list,                          // ipr::Expr_list
+Alignof,                            // ipr::Alignof
 Sizeof,                             // ipr::Sizeof
 Typeid,                             // ipr::Typeid
 Id_expr,                            // ipr::Id_expr
@@ -83,6 +85,7 @@ Expansion,                          // ipr::Expansion
 Noexcept,                           // ipr::Noexcept
 Args_cardinality,                   // ipr::Args_cardinality
 
+Rewrite,                            // ipr::Rewrite
 Scope_ref,                          // ipr::Scope_ref
 Plus,                               // ipr::Plus
 Plus_assign,                        // ipr::Plus_assign
@@ -135,10 +138,17 @@ Widen,                              // ipr::Widen
 Minus,                              // ipr::Minus
 Minus_assign,                       // ipr::Minus_assign
 Binary_fold,                        // ipr::Binary_fold
+Where,                              // ipr::Where
 
 New,                                // ipr::New
 Conditional,                        // ipr::Conditional
 Scope,                              // ipr::Scope
+
+Asm,                                // ipr::Asm
+Deduction_guide,                    // ipr::Deduction_guide
+Static_assert,                      // ipr::Static_assert
+Using_declaration,                  // ipr::Using_declaration
+Using_directive,                    // ipr::Using_directive
 
 Block,                              // ipr::Block
 Break,                              // ipr::Break
@@ -157,7 +167,6 @@ Switch,                             // ipr::Switch
 While,                              // ipr::While
 
 Alias,                              // ipr::Alias
-Asm,                                // ipr::Asm
 Base_type,                          // ipr::Base_type
 Enumerator,                         // ipr::Enumerator
 Field,                              // ipr::Field
@@ -167,7 +176,6 @@ Template,                           // ipr::Template
 Parameter,                          // ipr::Parameter
 Typedecl,                           // ipr::Typedecl
 Var,                                // ipr::Var
-Using_directive,                    // ipr::Using_directive
 
 Unit,                               // ipr::Unit
 

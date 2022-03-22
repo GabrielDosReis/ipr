@@ -78,6 +78,7 @@ namespace ipr {
    struct Expr;                  // general expressions
    struct Name;                  // general names
    struct Type;                  // general types
+   struct Directive;             // general directives
    struct Stmt;                  // general statements
    struct Decl;                  // general declarations
 
@@ -93,6 +94,7 @@ namespace ipr {
    struct Class;                 // user-defined type - declared as "class" or "struct"
    struct Decltype;              // strict type of a declaration/expression
    struct Enum;                  // user-defined type - declared as "enum" or "class enum"
+   struct Tor;                   // types of constructors and destructors - not ISO C++ types
    struct Function;              // function type
    struct Namespace;             // user-defined type - declared as "namespace"
    struct Pointer;               // pointer type
@@ -143,6 +145,7 @@ namespace ipr {
                                  // promotion -- implicit conversion
    struct Deref;                 // dereference expression              *p
    struct Expr_list;             // comma-separated expression list  x, y, z
+   struct Alignof;               // alignment query                  alignof(T)
    struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
    struct Typeid;                // typeid expression, like sizeof expression
    struct Id_expr;               // use of a name as an expression
@@ -220,6 +223,8 @@ namespace ipr {
    struct Binary_fold;           // Primary expression of the form (a op ... op b)
 
    struct Mapping;               // function
+   struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
+   struct Where;                 // expression with local bindings or restrictions
 
    // --------------------------------------------------------
    // -- result of trinary expression constructor constants --
@@ -247,11 +252,19 @@ namespace ipr {
    struct Switch;                // switch-statement
    struct While;                 // while-statement
 
+   // -----------------------------------------------
+   // -- result of directive constructor constants --
+   // -----------------------------------------------
+   struct Asm;                   // asm-declaration
+   struct Deduction_guide;       // deduction-guide declaration
+   struct Static_assert;         // static-assert declaration
+   struct Using_declaration;     // using-declaration
+   struct Using_directive;       // using-directive
+ 
    // -------------------------------------------------
    // -- result of declaration constructor constants --
    // -------------------------------------------------
    struct Alias;                 // alias-declaration
-   struct Asm;                   // asm-declaration
    struct Base_type;             // base-class in class inheritance
    struct Enumerator;            // enumerator in enumeration-declaration
    struct Field;                 // field in union or class declaration
@@ -261,7 +274,6 @@ namespace ipr {
    struct Parameter;             // function or template parameter
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
-   struct Using_directive;       // using-directive
 
    // ------------------------
    // -- distinguished node --
@@ -278,6 +290,28 @@ namespace ipr {
    // -- built-ins, but not constants --
    // ----------------------------------
    struct Global_scope;          // global namespace -- "::"
+
+   // ---------------------------
+   // -- Phases of translation --
+   // ---------------------------
+   // A bitmask type for the various phases of C++ program translation.
+   enum class Phases {
+      Unknown              = 0x0000,   // Unknown translation phase
+      Reading              = 0x0001,   // Opening and reading an input source
+      Lexing               = 0x0002,   // Lexical decomposition of input source
+      Preprocessing        = 0x0004,   // Macro expansion and friends
+      Parsing              = 0x0008,   // Grammatical decomposition of the input source
+      Name_resolution      = 0x0010,   // Name lookup
+      Typing               = 0x0020,   // Type assignment of expressions
+      Evaluation           = 0x0040,   // Compile-time evaluation
+      Instantiation        = 0x0080,   // Template instantiation phase
+      Code_generation      = 0x0100,   // Code generation phase
+      Linking              = 0x0200,   // Linking phase
+      Loading              = 0x0400,   // Program loading phase
+      Execution            = 0x0800,   // Runtime execution
+
+      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation
+   };
 
 
                                 // -- Category_node --
@@ -969,10 +1003,10 @@ namespace ipr {
                                 // -- Overload --
    // An overload-set is an expression whose value is the set of all
    // declarations for a name in a given scope.  An overload-set supports
-   // look-up by type.  The result of such lookup is the sequence of
-   // declarations of that name with that type.
-   struct Overload : Sequence<Decl>, Category<Category_code::Overload> {
-      virtual const Sequence<Decl>& operator[](const Type&) const = 0;
+   // look-up by type.  The result of such lookup is the canonical declaration
+   // of all declarations with that given type, in that scope.
+   struct Overload : Category<Category_code::Overload> {
+      virtual Optional<Decl> operator[](const Type&) const = 0;
    };
 
                                 // -- Scope --
@@ -1105,6 +1139,24 @@ namespace ipr {
    // of an expression.
    struct Decltype : Unary<Category<Category_code::Decltype, Type>, const Expr&> {
       Arg_type expr() const { return operand(); }
+   };
+
+                                // -- Tor --
+   // A node of this class represents a Type for either a constructor or a destructor.
+   // Formally, ISO C++ does not assign types to those special functions; however, a
+   // type-based representation of C++ semantics must assign types to such declarations.
+   // Although a low-level (e.g. ABI-level) representation of a contructor and a destructor
+   // may look at them as just some regular function, and assign them a Function type,
+   // the higher level semantics of C++ is best served by a dedicated type to abstract
+   // over ABI interpretation.
+   struct Tor : Ternary<Category<Category_code::Tor, Type>,
+                        const Expr&, const Type&, const Linkage&> {
+      // The parameter-list to a tor type.  Always empty for a Standard C++ destructor.
+      Arg1_type source() const { return first(); }
+      // The exception-specification for this tor type.
+      Arg2_type throws() const { return second(); }
+      // The language linkage for this to type.  Default is "C++".
+      Arg3_type lang_linkage() const { return third(); }
    };
 
                                 // -- Function --
@@ -1452,6 +1504,10 @@ namespace ipr {
       auto size() const { return elements().size(); }
    };
 
+                                // -- Alignof --
+   //  Alignment query of a type, or any expression.
+   struct Alignof : Unary<Category<Category_code::Alignof>> { };
+
                                 // -- Sizeof --
    // sizeof-expression -- "sizeof expr" or "sizeof (int)"
    struct Sizeof : Unary<Category<Category_code::Sizeof>> { };
@@ -1554,6 +1610,17 @@ namespace ipr {
    // or a type.  Standard C++ does not permit overloading of expansion
    // operator, but the general IPR model here allows it.
    struct Expansion : Unary<Category<Category_code::Expansion, Classic>> { };
+
+                                // -- Rewrite --
+   // Various ISO C++ syntactic constructs are defined - unwwisely -
+   // via translation to more elaborate sequences of tokens or parse trees.
+   // The `source()` is the construct as written in the input source code, and the
+   // `target()` is the internal expression giving meaning to the source.
+   struct Rewrite : Binary<Category<Category_code::Rewrite>> {
+      const Expr& source() const { return first(); }
+      const Expr& target() const { return second(); }
+      const Type& type() const final { return second().type(); }
+   };
 
                                 // -- Member_selection<> --
    // This class factorizes the commonalities of various object member
@@ -1841,6 +1908,21 @@ namespace ipr {
       Arg2_type base() const { return second(); }
    };
 
+                                // -- Where --
+   // An expression referencing declarations or restrictions, local to that expression.
+   // The expressions or declarations in `attendant()` are evaluated first, and then
+   // `main()` is evaluated in the dynamic evaluation cone established by `attendant()`.
+   // As usual, variables declared by bindings in `attendant()` are destructed in reverse 
+   // order of declarations at the end of their scopes, which occur after the complete
+   // evaluation of `main()`.
+   // Note: An `attendant()` of type `Scope` indicates that the where-expression introduces
+   //       local bindings.
+   struct Where : Binary<Category<Category_code::Where>> {
+      const Expr& main() const { return first(); }
+      const Expr& attendant() const { return second(); }
+      const Type& type() const final { return main().type(); }
+   };
+
                                 // -- New --
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
@@ -1884,6 +1966,76 @@ namespace ipr {
       auto size() const { return elements().size(); }
    };
 
+                                // -- Directive --
+   // Standard C++ has grammar hacks where certain constructs are
+   // classified as declarations, by they don't actually declare any name.
+   // Rather, the modify the behavior of the implementation in certain ways.
+   // For example, a using-declaration does not declare a name: it changes
+   // the usual name lookup rules to consider new scopes.  A static-assert
+   // does not declare anything: it halts translation when a certain condition
+   // does not hold; otherwise a no-op.
+   // These constructs are generally known as directives.  They were made
+   // declarations in Standard C++, so that they could appear at non-local 
+   // scopes -- where general declarations live. 
+   struct Directive : Expr {
+      virtual Phases phases() const = 0;
+   protected:
+      constexpr Directive(Category_code c) : Expr{ c } { }
+   };
+
+                                // -- Asm --
+   // An asm-declaration, a directive in IPR.
+   // This directive affects only code generation, where it might inject
+   // executable instructions or affect the linker behavior.
+   // Its type should be set to "void".
+   struct Asm : Category<Category_code::Asm, Directive> {
+      virtual const String& text() const = 0;
+   };
+
+                                // -- Static_assert --
+   // A static assertion: a directive that halts the elaboration phase.
+   // No runtime code is ever generated.
+   // Its type should be set to "bool". 
+   struct Static_assert : Category<Category_code::Static_assert, Directive> {
+      virtual const Expr& condition() const = 0;
+      virtual Optional<String> message() const = 0;
+   };
+
+
+                                // -- Using_declaration --
+   // A using-declaration is directive that instructs the C++ translator to look up
+   // a set of names ('designator'), and for each declaration in the qualified lookup 
+   // result of a designator create a synonymous declaration, subject to constraints.
+   struct Using_declaration : Category<Category_code::Using_declaration, Directive> {
+      struct Designator;
+      virtual const Sequence<Designator>& designators() const = 0;
+   };
+
+   // A using-declarator: a qualified name, along with a denomination mode.
+   struct Using_declaration::Designator {
+      enum class Mode {
+         Normal      = 0x00,              // Normal interpretation of qualified name lookup
+         Type        = 0x01,              // The qualified name is assumed to name a type
+         Expansion   = 0x02,              // The designator needs expansion
+      };
+
+      Designator(const Scope_ref& p, Mode m) : sr{&p}, md{m} { }
+      const Scope_ref& path() const { return *sr; }
+      Mode mode() const { return md; }
+   private:
+      const Scope_ref* sr;
+      Mode md;
+   };
+
+                                // -- Using_directive --
+   // A standard C++ using-directive or a using-enum-declaration 
+   // (nominating additional scopes) for elaboration purposes.
+   // Its type should be "namespace" if it nominates a namespace,
+   // or "enum" or "enum class" if it nominates an enumeration.
+   struct Using_directive : Category<Category_code::Using_directive, Directive> {
+      virtual const Scope& nominated_scope() const = 0;
+   };
+
                                 // -- Stmt --
    // The view that a statement is kind of expression does not follow from
    // Standard C++ specification.  It is a design choice we made based on
@@ -1912,6 +2064,8 @@ namespace ipr {
    //              ,----> D.S. <----,
    //              |                |
    //         Declaration       Statement
+   //
+   //    3. In general, IPR is an expression-based language.
    //
    //
    // When combined, the two diagrams yield
@@ -1965,10 +2119,10 @@ namespace ipr {
    };
 
                                 // -- Block --
-   // A Block is any sequence of statements bracketed by curly braces.
+   // A Block is any sequence of general expressions bracketed by curly braces.
    struct Block : Category<Category_code::Block, Stmt> {
       virtual const Scope& elements() const = 0;
-      virtual const Sequence<Stmt>& body() const = 0;
+      virtual const Sequence<Expr>& body() const = 0;
       virtual const Sequence<Handler>& handlers() const = 0;
    };
 
@@ -2117,8 +2271,6 @@ namespace ipr {
 
       virtual Optional<Expr> initializer() const = 0;
 
-      virtual Decl_position position() const = 0;
-
       // This is the first seen declaration for name() in a given
       // translation unit.  The master declaration is therefore the
       // first element of the declaration-set.
@@ -2152,15 +2304,7 @@ namespace ipr {
                                 // -- Enumerator --
    // This represents a classic enumerator.
    struct Enumerator : Category<Category_code::Enumerator, Decl> {
-   };
-
-                                // -- Asm --
-   // An asm-declaration.  While this sort of declaration does not
-   // actually introduce any name, it was made a declaration in C++,
-   // so that it could appear at non-local scopes -- where general
-   // declarations live.  Its name is "asm" and its type is "void".
-   struct Asm : Category<Category_code::Asm, Decl> {
-      virtual const String& text() const = 0;
+      virtual Decl_position position() const = 0;
    };
 
                                 // - Alias --
@@ -2185,12 +2329,14 @@ namespace ipr {
       // is convenient to refer to it by the name of the corresponding
       // type -- in C++ tradition.
       const Name& name() const override { return type().name(); }
+      virtual Decl_position position() const = 0;
    };
 
                                 // -- Parameter --
    // A parameter is uniquely characterized by its position in
    // a parameter list.
    struct Parameter : Category<Category_code::Parameter, Decl> {
+      virtual Decl_position position() const = 0;
       const Region& lexical_region() const final { return home_region(); }
       Optional<Expr> default_value() const { return initializer(); }
    };
@@ -2338,6 +2484,7 @@ namespace ipr {
       virtual void visit(const Decltype&);
       virtual void visit(const Enum&);
       virtual void visit(const As_type&);
+      virtual void visit(const Tor&);
       virtual void visit(const Function&);
       virtual void visit(const Namespace&);
       virtual void visit(const Pointer&);
@@ -2367,6 +2514,7 @@ namespace ipr {
       virtual void visit(const Demotion&);
       virtual void visit(const Deref&);
       virtual void visit(const Enclosure&);
+      virtual void visit(const Alignof&);
       virtual void visit(const Sizeof&);
       virtual void visit(const Args_cardinality&);
       virtual void visit(const Expr_stmt&);
@@ -2387,6 +2535,7 @@ namespace ipr {
       virtual void visit(const Expansion&);
       virtual void visit(const Noexcept&);
 
+      virtual void visit(const Rewrite&);
       virtual void visit(const Scope_ref&);
       virtual void visit(const And&);
       virtual void visit(const Array_ref&);
@@ -2438,10 +2587,17 @@ namespace ipr {
       virtual void visit(const Static_cast&);
       virtual void visit(const Widen&);
       virtual void visit(const Binary_fold&);
+      virtual void visit(const Where&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);
       virtual void visit(const Mapping&);
+
+      virtual void visit(const Directive&) = 0;
+      virtual void visit(const Asm&);
+      virtual void visit(const Static_assert&);
+      virtual void visit(const Using_declaration&);
+      virtual void visit(const Using_directive&);
 
       virtual void visit(const Stmt&) = 0;
       virtual void visit(const Labeled_stmt&);
@@ -2471,7 +2627,6 @@ namespace ipr {
       virtual void visit(const Parameter_list&);
       virtual void visit(const Typedecl&);
       virtual void visit(const Var&);
-      virtual void visit(const Asm&);
 
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);
