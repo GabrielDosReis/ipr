@@ -259,7 +259,7 @@ namespace ipr::impl {
       // --------------------
 
       Overload::Overload(const ipr::Name& n)
-            : name(n), where(0)
+            : name(n)
       { }
 
       Overload::Index Overload::size() const {

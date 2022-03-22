@@ -778,11 +778,6 @@ namespace ipr {
          // The name of this overload set.
          const ipr::Name& name;
 
-         // All declarations happen in some region.  This is the region
-         // that contains the declarations in this overload set.  It shall
-         // be set at the overload set is actually created.
-         const ipr::Region* where;
-
          // All entries in this overload set, chained together in a
          // red-back tree to permit fast retrieval based on type (as key).
          // They are all master declarations.
