@@ -11,7 +11,6 @@
 #include <memory>
 #include <list>
 #include <vector>
-#include <deque>
 #include <map>
 #include <forward_list>
 #include <variant>
@@ -128,9 +127,9 @@ namespace ipr {
       // In general, it can be used to implement the notion of sub-sequence.
 
       template<typename T>
-      struct ref_sequence : ipr::Sequence<T>, private std::deque<const void*> {
+      struct ref_sequence : ipr::Sequence<T>, private std::vector<const void*> {
          using Seq = Sequence<T>;
-         using Rep = std::deque<const void*>;
+         using Rep = std::vector<const void*>;
          using pointer = const T*;
          using Iterator = typename Seq::Iterator;
          using Index = typename Seq::Index;
@@ -145,8 +144,6 @@ namespace ipr {
          //using Rep::reserve;
          using Rep::resize;
          using Rep::push_back;
-         using Rep::push_front;
-
          const T& get(Index p) const final { return *pointer(this->at(p)); }
       };
 
@@ -636,34 +633,18 @@ namespace ipr {
 
       using util::rb_tree::link;
       struct scope_datum : link<scope_datum> {
-         // The position of this Decl in its scope.  It shall be set
-         // at the actual declaration creation by the creating scope.
-         Decl_position scope_pos = { };
-
          // The specifiers for this declaration.  S
          ipr::DeclSpecifiers spec = { };
 
          // Back-pointer to this declaration.  It shall be set at
          // the declaration creation.
          const ipr::Decl* decl = { };
-
-         // A comparator object type, implements ordering on declaration
-         // position chaining declarations together, in scopes.
-         struct comp;
       };
 
                                 // -- impl::decl_sequence --
       // The chain of declarations in a scope.
 
-      struct decl_sequence : ipr::Sequence<ipr::Decl> {
-         Index size() const final;
-         const ipr::Decl& get(Index) const final;
-         // Inserts a declaration in this sequence.
-         void insert(scope_datum*);
-
-      private:
-         util::rb_tree::chain<scope_datum> decls;
-      };
+      struct decl_sequence : ref_sequence<ipr::Decl> { };
 
                                 // -- impl::singleton_declset --
       // A singleton_declset is a specialization of decl_sequence
@@ -1268,10 +1249,6 @@ namespace ipr {
          const ipr::Sequence<ipr::Expr>& operand() const final;
 
          void push_back(const ipr::Expr* e) { seq.seq.push_back(e); }
-		 // >>>> Yuriy Solodkyy: 2007/02/02
-		 // Front insertable sequence is more suitable for bottom-up parsing
-		 void push_front(const ipr::Expr* e) { seq.seq.push_front(e); }
-		 // <<<< Yuriy Solodkyy: 2007/02/02
       };
 
       using Alignof = Unary_expr<ipr::Alignof>;

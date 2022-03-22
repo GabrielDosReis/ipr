@@ -2270,8 +2270,6 @@ namespace ipr {
 
       virtual Optional<Expr> initializer() const = 0;
 
-      virtual Decl_position position() const = 0;
-
       // This is the first seen declaration for name() in a given
       // translation unit.  The master declaration is therefore the
       // first element of the declaration-set.
@@ -2305,6 +2303,7 @@ namespace ipr {
                                 // -- Enumerator --
    // This represents a classic enumerator.
    struct Enumerator : Category<Category_code::Enumerator, Decl> {
+      virtual Decl_position position() const = 0;
    };
 
                                 // - Alias --
@@ -2329,12 +2328,14 @@ namespace ipr {
       // is convenient to refer to it by the name of the corresponding
       // type -- in C++ tradition.
       const Name& name() const { return type().name(); }
+      virtual Decl_position position() const = 0;
    };
 
                                 // -- Parameter --
    // A parameter is uniquely characterized by its position in
    // a parameter list.
    struct Parameter : Category<Category_code::Parameter, Decl> {
+      virtual Decl_position position() const = 0;
       const Region& lexical_region() const final { return home_region(); }
       Optional<Expr> default_value() const { return initializer(); }
    };
