@@ -788,10 +788,7 @@ namespace ipr {
          std::vector<scope_datum*> masters;
 
          explicit Overload(const ipr::Name&);
-
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
-         Index size() const final;
-         const ipr::Decl& get(Index) const final;
+         Optional<ipr::Decl> operator[](const ipr::Type&) const final;
          overload_entry* lookup(const ipr::Type&) const;
 
          template<class T>
@@ -812,9 +809,7 @@ namespace ipr {
          explicit singleton_overload(const ipr::Decl&);
 
          const ipr::Type& type() const final;
-         Index size() const final;
-         const ipr::Decl& get(Index) const final;
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
+         Optional<ipr::Decl> operator[](const ipr::Type&) const final;
       };
 
 
@@ -826,9 +821,7 @@ namespace ipr {
 
       struct empty_overload : impl::Node<ipr::Overload> {
          const ipr::Type& type() const final;
-         Index size() const final;
-         const ipr::Decl& get(Index) const final;
-         const ipr::Sequence<ipr::Decl>& operator[](const ipr::Type&) const final;
+         Optional<ipr::Decl> operator[](const ipr::Type&) const final;
       };
 
       struct node_compare {
