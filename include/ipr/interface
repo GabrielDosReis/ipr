@@ -1003,10 +1003,10 @@ namespace ipr {
                                 // -- Overload --
    // An overload-set is an expression whose value is the set of all
    // declarations for a name in a given scope.  An overload-set supports
-   // look-up by type.  The result of such lookup is the sequence of
-   // declarations of that name with that type.
-   struct Overload : Sequence<Decl>, Category<Category_code::Overload> {
-      virtual const Sequence<Decl>& operator[](const Type&) const = 0;
+   // look-up by type.  The result of such lookup is the canonical declaration
+   // of all declarations with that given type, in that scope.
+   struct Overload : Category<Category_code::Overload> {
+      virtual Optional<Decl> operator[](const Type&) const = 0;
    };
 
                                 // -- Scope --

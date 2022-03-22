@@ -262,19 +262,12 @@ namespace ipr::impl {
             : name(n)
       { }
 
-      Overload::Index Overload::size() const {
-         return entries.size();
-      }
-
-      const ipr::Decl&
-      Overload::get(Index i) const {
-         return *masters.at(i)->decl;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      Overload::operator[](const ipr::Type& t) const {
-         overload_entry* master = lookup(t);
-         return util::check(master)->declset;
+      Optional<ipr::Decl>
+      Overload::operator[](const ipr::Type& t) const
+      {
+         if (auto entry = lookup(t))
+            return { &entry->declset.get(0) };                    // Note: first decl is canonical
+         return { };
       }
 
       impl::overload_entry*
@@ -302,23 +295,12 @@ namespace ipr::impl {
          return seq.datum.type();
       }
 
-      singleton_overload::Index
-      singleton_overload::size() const {
-         return 1;
-      }
-
-      const ipr::Decl&
-      singleton_overload::get(Index i) const {
-         if (i != 1)
-            throw std::domain_error("singleton_overload::get: out-of-range ");
-         return seq.datum;
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      singleton_overload::operator[](const ipr::Type& t) const {
+      Optional<ipr::Decl>
+      singleton_overload::operator[](const ipr::Type& t) const
+      {
          if (&t != &seq.datum.type())
-            throw std::domain_error("invalid type subscription");
-         return seq;
+            return { };
+         return { &seq.datum };
       }
 
       // --------------------------
@@ -330,18 +312,10 @@ namespace ipr::impl {
          throw std::domain_error("empty_overload::type");
       }
 
-      empty_overload::Index empty_overload::size() const {
-         return 0;
-      }
-
-      const ipr::Decl&
-      empty_overload::get(Index) const {
-         throw std::domain_error("impl::empty_overload::get");
-      }
-
-      const ipr::Sequence<ipr::Decl>&
-      empty_overload::operator[](const ipr::Type&) const {
-         throw std::domain_error("impl::empty_overload::operator[]");
+      Optional<ipr::Decl>
+      empty_overload::operator[](const ipr::Type&) const
+      {
+         return { };
       }
 
       // -----------------
