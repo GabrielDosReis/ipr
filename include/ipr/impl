@@ -1148,7 +1148,7 @@ namespace ipr {
             return this->decl_data.master_data->overload->where;
          }
 
-         Decl_position position() const final
+         Decl_position position() const
          {
             return this->decl_data.scope_pos;
          }
