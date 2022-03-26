@@ -631,8 +631,7 @@ namespace ipr {
       // organized as a red-back tree where the position is used as key.
       // And alternative is a hash table, when we get there.
 
-      using util::rb_tree::link;
-      struct scope_datum : link<scope_datum> {
+      struct scope_datum : util::rb_tree::link<scope_datum> {
          // The specifiers for this declaration.  S
          ipr::DeclSpecifiers spec = { };
 
@@ -690,7 +689,7 @@ namespace ipr {
       // register themselves before the master declaration, at
       // the creation time.
 
-      struct overload_entry : link<overload_entry> {
+      struct overload_entry : util::rb_tree::link<overload_entry> {
          const ipr::Type& type;
          ref_sequence<ipr::Decl> declset;
          explicit overload_entry(const ipr::Type& t) : type(t) { }
@@ -789,18 +788,6 @@ namespace ipr {
 
          explicit singleton_overload(const ipr::Decl&);
 
-         const ipr::Type& type() const final;
-         Optional<ipr::Decl> operator[](const ipr::Type&) const final;
-      };
-
-
-      // When a name is not declared in a scope, then an empty overload
-      // set is returned.  This class empty_overload implements that notion.
-      // Alternatively, we could have thrown an exception to indicate
-      // that failure; however, the resulting programming style might
-      // be cluttered by try-blocks.
-
-      struct empty_overload : impl::Node<ipr::Overload> {
          const ipr::Type& type() const final;
          Optional<ipr::Decl> operator[](const ipr::Type&) const final;
       };
@@ -1051,7 +1038,6 @@ namespace ipr {
                                  std::allocator<void> {
          using Index = typename ipr::Sequence<ipr::Decl>::Index;
          typed_sequence<val_sequence<Member>> decls;
-         empty_overload missing;
 
          Index size() const final { return decls.size(); }
          const Member& get(Index i) const final { return decls.seq.get(i); }
@@ -1060,7 +1046,7 @@ namespace ipr {
 
          const ipr::Sequence<ipr::Decl>& elements() const final { return *this; }
 
-         const ipr::Overload& operator[](const Name&) const final;
+         Optional<ipr::Overload> operator[](const Name&) const final;
 
          template<typename... Args>
          Member* push_back(const Args&... args)
@@ -1071,17 +1057,17 @@ namespace ipr {
 
       // FIXME: Remove this linear search.
       template<class Member>
-      const ipr::Overload&
+      Optional<ipr::Overload>
       homogeneous_scope<Member>::operator[](const ipr::Name& n) const
       {
          const auto s = decls.size();
          for (Index i = 0; i < s; ++i) {
             const auto& decl = decls.seq.get(i);
             if (&decl.name() == &n)
-               return decl.overload;
+               return { &decl.overload };
          }
 
-         return missing;
+         return { };
       }
 
       template<class Member,
@@ -1490,7 +1476,7 @@ namespace ipr {
          Scope();
          const ipr::Type& type() const final { return decls; }
          const ipr::Sequence<ipr::Decl>& elements() const final { return decls.seq; }
-         const ipr::Overload& operator[](const ipr::Name&) const final;
+         Optional<ipr::Overload> operator[](const ipr::Name&) const final;
 
          impl::Alias* make_alias(const ipr::Name&, const ipr::Expr&);
          impl::Var* make_var(const ipr::Name&, const ipr::Type&);
@@ -1504,8 +1490,6 @@ namespace ipr {
       private:
          util::rb_tree::container<impl::Overload> overloads;
          typed_sequence<decl_sequence> decls;
-         empty_overload missing;
-
          decl_factory<impl::Alias> aliases;
          decl_factory<impl::Var> vars;
          decl_factory<impl::Field> fields;
