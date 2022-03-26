@@ -267,21 +267,6 @@ namespace ipr::impl {
          return { &seq.datum };
       }
 
-      // --------------------------
-      // -- impl::empty_overload --
-      // --------------------------
-
-      const ipr::Type&
-      empty_overload::type() const {
-         throw std::domain_error("empty_overload::type");
-      }
-
-      Optional<ipr::Decl>
-      empty_overload::operator[](const ipr::Type&) const
-      {
-         return { };
-      }
-
       // -----------------
       // -- impl::Rname --
       // -----------------
@@ -1044,11 +1029,11 @@ namespace ipr::impl {
       // -------------------------------
       Scope::Scope() { }
 
-      const ipr::Overload&
-      Scope::operator[](const ipr::Name& n) const {
+      Optional<ipr::Overload> Scope::operator[](const ipr::Name& n) const
+      {
          if (impl::Overload* ovl = overloads.find(n, node_compare()))
-            return *ovl;
-         return missing;
+            return { ovl };
+         return { };
       }
 
       template<class T>

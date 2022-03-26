@@ -1026,7 +1026,7 @@ namespace ipr {
 
       // Look-up by name returns the overload-set of all declarations,
       // for the subscripting name, contained in this scope.
-      virtual const Overload& operator[](const Name&) const = 0;
+      virtual Optional<Overload> operator[](const Name&) const = 0;
 
       // How may declarations are there in this Scope.
       auto size() const { return elements().size(); }
