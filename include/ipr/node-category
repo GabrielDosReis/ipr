@@ -149,6 +149,7 @@ Deduction_guide,                    // ipr::Deduction_guide
 Static_assert,                      // ipr::Static_assert
 Using_declaration,                  // ipr::Using_declaration
 Using_directive,                    // ipr::Using_directive
+Pragma,                             // ipr::Pragma
 
 Block,                              // ipr::Block
 Break,                              // ipr::Break

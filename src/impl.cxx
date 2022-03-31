@@ -497,6 +497,11 @@ namespace ipr::impl {
          return make(dirs, s).with_type(t);
       }
 
+      impl::Pragma* dir_factory::make_pragma()
+      {
+         return pragmas.make();
+      }
+
       // ------------------------
       // -- impl::stmt_factory --
       // ------------------------

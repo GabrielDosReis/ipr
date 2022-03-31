@@ -260,6 +260,7 @@ namespace ipr {
    struct Static_assert;         // static-assert declaration
    struct Using_declaration;     // using-declaration
    struct Using_directive;       // using-directive
+   struct Pragma;                // language-level pragma directive
  
    // -------------------------------------------------
    // -- result of declaration constructor constants --
@@ -310,7 +311,8 @@ namespace ipr {
       Loading              = 0x0400,   // Program loading phase
       Execution            = 0x0800,   // Runtime execution
 
-      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation
+      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation,
+      All                  = ~0x0,
    };
 
 
@@ -2035,6 +2037,12 @@ namespace ipr {
       virtual const Scope& nominated_scope() const = 0;
    };
 
+
+                                // -- Pragma --
+   struct Pragma : Unary<Category<Category_code::Pragma, Directive>, const Sequence<Token>&> {
+      const Sequence<Token>& incantation() const { return operand(); }
+   };
+
                                 // -- Stmt --
    // The view that a statement is kind of expression does not follow from
    // Standard C++ specification.  It is a design choice we made based on
@@ -2597,6 +2605,7 @@ namespace ipr {
       virtual void visit(const Static_assert&);
       virtual void visit(const Using_declaration&);
       virtual void visit(const Using_directive&);
+      virtual void visit(const Pragma&);
 
       virtual void visit(const Stmt&) = 0;
       virtual void visit(const Labeled_stmt&);
