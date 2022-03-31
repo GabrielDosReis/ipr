@@ -249,6 +249,7 @@ namespace ipr {
 
                                 // -- impl::Token --
       struct Token : ipr::Lexeme, ipr::Token {
+         using Interface = ipr::Token;
          Token(const ipr::String&, const Source_location&, TokenValue, TokenCategory);
          const ipr::String& spelling() const final { return text; }
          const Source_location& locus() const final { return location; }
@@ -1769,6 +1770,11 @@ namespace ipr {
          const ipr::Scope& scope;
       };
 
+      struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
+         val_sequence<impl::Token> tokens;
+         const ipr::Sequence<ipr::Token>& operand() const final { return tokens; }
+      };
+
       // ----------------------------------
       // -- Implementation of statements --
       // ----------------------------------
@@ -2150,12 +2156,14 @@ namespace ipr {
                                                                 ipr::Using_declaration::Designator::Mode);
          impl::Using_declaration* make_using_declaration();
          impl::Using_directive* make_using_directive(const ipr::Scope&, const ipr::Type&);
+         impl::Pragma* make_pragma();
       private:
          stable_farm<impl::Asm> asms;
          stable_farm<impl::Static_assert> asserts;
          stable_farm<impl::single_using_declaration> singles;
          stable_farm<impl::Using_declaration> usings;
          stable_farm<impl::Using_directive> dirs;
+         stable_farm<impl::Pragma> pragmas;
       };
 
       // This factory class takes on the implementation burden of

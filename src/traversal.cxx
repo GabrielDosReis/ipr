@@ -828,6 +828,11 @@ ipr::Visitor::visit(const Using_directive& d)
    visit(as<Directive>(d));
 }
 
+void ipr::Visitor::visit(const Pragma& d)
+{
+   visit(as<Directive>(d));
+}
+
 // -- Statements visiting hooks --
 
 void
