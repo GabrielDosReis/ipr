@@ -822,19 +822,22 @@ namespace ipr {
    };
 
                                 // -- Region --
-   // A Region node represents a region of program text.  It is mostly
-   // useful for capturing the notion of scope (in Standard C++ sense).
+   // A Region node represents a region of program text processed into a sequence
+   // of expressions or directives.  It is mostly useful for capturing the notion 
+   // declarative region, and of scope (in Standard C++ sense).
    // In IPR, we're using a generalized notion of Scope (a sequence of
    // declarations).  The  notion of Region helps make precise when
    // some implicit actions like cleanup-ups happen, or nesting of scopes.
-   // The sequence of declarations appearing in a Region makes up the
-   // Scope of that region.
+   // The sequence of (generalized) expressions appearing in a Region makes up the
+   // (compile-time) body of that region.  Evaluating that body usually produces the
+   // bindings of that Region.
    struct Region : Category<Category_code::Region, Node> {
       using Location_span = std::pair<Unit_location, Unit_location>;
       virtual const Location_span& span() const = 0;
       virtual const Region& enclosing() const = 0;
-      virtual const Scope& bindings() const = 0;
       virtual const Expr& owner() const = 0;
+      virtual const Sequence<Expr>& body() const = 0;
+      virtual const Scope& bindings() const = 0;
       virtual bool global() const = 0;                   // is this region the global region?
    };
 
@@ -2128,8 +2131,8 @@ namespace ipr {
                                 // -- Block --
    // A Block is any sequence of general expressions bracketed by curly braces.
    struct Block : Category<Category_code::Block, Stmt> {
-      virtual const Scope& elements() const = 0;
-      virtual const Sequence<Expr>& body() const = 0;
+      virtual const Region& region() const = 0;
+      const Sequence<Expr>& body() const { return region().body(); }
       virtual const Sequence<Handler>& handlers() const = 0;
    };
 
