@@ -440,9 +440,9 @@ namespace ipr::impl {
       // -----------------
 
       Block::Block(const ipr::Region& pr)
-            : region(&pr)
+            : lexical_region(&pr)
       {
-         region.owned_by = this;
+         lexical_region.owned_by = this;
       }
 
       // ---------------

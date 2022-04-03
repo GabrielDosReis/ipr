@@ -1036,7 +1036,7 @@ namespace ipr {
       template<class Member>
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
-                                 std::allocator<void> {
+                                 ipr::Sequence<ipr::Expr> {
          using Index = typename ipr::Sequence<ipr::Decl>::Index;
          typed_sequence<val_sequence<Member>> decls;
 
@@ -1082,6 +1082,7 @@ namespace ipr {
          homogeneous_scope<Member> scope;
 
          const ipr::Region& enclosing() const final { return parent; }
+         const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
          const ipr::Scope& bindings() const final { return scope; }
          const location_span& span() const final { return extent; }
          const ipr::Expr& owner() const final { return owned_by.get(); }
@@ -1513,8 +1514,10 @@ namespace ipr {
          location_span extent;
          util::ref<const ipr::Expr> owned_by;
          impl::Scope scope;
+         impl::ref_sequence<ipr::Expr> expr_seq;         // all the expressions making up the body.
 
          const ipr::Region& enclosing() const final { return parent.get(); }
+         const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
          const ipr::Scope& bindings() const final { return scope; }
          const location_span& span() const final { return extent; }
          const ipr::Expr& owner() const final { return owned_by.get(); }
@@ -1796,21 +1799,19 @@ namespace ipr {
       // block.  It also holds a sequence of handlers, when the
       // block actually represents a C++ try-block.
       struct Block : impl::Stmt<Expr<ipr::Block>> {
-         impl::Region region;
-         impl::ref_sequence<ipr::Expr> stmt_seq;
+         impl::Region lexical_region;
          impl::ref_sequence<ipr::Handler> handler_seq;
 
          explicit Block(const ipr::Region&);
-         const ipr::Scope& elements() const final { return region.scope; }
-         const ipr::Sequence<ipr::Expr>& body() const final { return stmt_seq; }
+         const ipr::Region& region() const final { return lexical_region; }
          const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 
          // The scope of declarations in this block
-         impl::Scope* scope() { return &region.scope; }
+         impl::Scope* scope() { return &lexical_region.scope; }
 
          void add_stmt(const ipr::Expr& s)
          {
-            stmt_seq.push_back(&s);
+            lexical_region.expr_seq.push_back(&s);
          }
 
          void add_handler(const ipr::Handler& h)
