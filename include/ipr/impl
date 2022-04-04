@@ -360,12 +360,12 @@ namespace ipr {
       // -- implementation for ipr::Capture
       struct Capture : ipr::Capture {
          using Interface = ipr::Capture;
-         Capture(const ipr::Decl& d, ipr::Capture_mode m) : decl{d}, md{m} { }
-         ipr::Capture_mode mode() const final { return md; }
+         Capture(const ipr::Decl& d, ipr::Binding_mode m) : decl{d}, md{m} { }
+         ipr::Binding_mode mode() const final { return md; }
          const ipr::Decl& entity() const final { return decl; }
       private:
          const ipr::Decl& decl;
-         const ipr::Capture_mode md;
+         const ipr::Binding_mode md;
       };
 
       // -- Generic implementation of ipr::Capture_specification
@@ -376,41 +376,41 @@ namespace ipr {
 
       // -- implementation of ipr::Capture_specification::Default
       struct Default_capture_specification : Capture_specification<ipr::Capture_specification::Default> {
-         explicit Default_capture_specification(Capture_mode m) : md{m} { }
-         Capture_mode mode() const final { return md; }
+         explicit Default_capture_specification(Binding_mode m) : md{m} { }
+         Binding_mode mode() const final { return md; }
       private:
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Implicit_object
       struct Implicit_object_capture_specification : Capture_specification<ipr::Capture_specification::Implicit_object> {
-         explicit Implicit_object_capture_specification(Capture_mode m) : md{m} { }
-         Capture_mode how() const final { return md; }
+         explicit Implicit_object_capture_specification(Binding_mode m) : md{m} { }
+         Binding_mode how() const final { return md; }
       private:
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Enclosing_local
       struct Enclosing_local_capture_specification : Capture_specification<ipr::Capture_specification::Enclosing_local> {
-         Enclosing_local_capture_specification(const ipr::Decl& x, Capture_mode m) : decl{x}, md{m} { }
-         Capture_mode mode() const final { return md; }
+         Enclosing_local_capture_specification(const ipr::Decl& x, Binding_mode m) : decl{x}, md{m} { }
+         Binding_mode mode() const final { return md; }
          const ipr::Identifier& name() const final;
          const ipr::Decl& declaration() const final { return decl; }
       private:
          const ipr::Decl& decl;
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_capture::Binding
       struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
-         Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Capture_mode m) : id{n}, init{x}, md{m} { }
-         Capture_mode mode() const final { return md; }
+         Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m) : id{n}, init{x}, md{m} { }
+         Binding_mode mode() const final { return md; }
          const ipr::Identifier& name() const { return id; }
          const ipr::Expr& initializer() const { return init; }
       private:
          const ipr::Identifier& id;
          const ipr::Expr& init;
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Expansion.
@@ -423,10 +423,10 @@ namespace ipr {
 
       // -- capture specification factory
       struct capture_spec_factory {
-         const ipr::Capture_specification::Default& default_capture(ipr::Capture_mode);
-         const ipr::Capture_specification::Implicit_object& implicit_object_capture(ipr::Capture_mode);
-         const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, ipr::Capture_mode);
-         const ipr::Capture_specification::Binding& binding_capture(const ipr::Identifier&, const ipr::Expr&, ipr::Capture_mode);
+         const ipr::Capture_specification::Default& default_capture(Binding_mode);
+         const ipr::Capture_specification::Implicit_object& implicit_object_capture(Binding_mode);
+         const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, Binding_mode);
+         const ipr::Capture_specification::Binding& binding_capture(const ipr::Identifier&, const ipr::Expr&, Binding_mode);
          const ipr::Capture_specification::Expansion& expansion_capture(const ipr::Capture_specification::Named&);
       private:
          stable_farm<impl::Default_capture_specification> defaults;
@@ -1752,6 +1752,22 @@ namespace ipr {
          Optional<ipr::String> txt;
       };
 
+      struct Structured_binding : impl::Directive<ipr::Structured_binding, Phases::Elaboration> {
+         impl::ref_sequence<ipr::Identifier> ids;           // names in this structured binding
+         util::ref<const ipr::Expr> init;                   // initializer of this structured binding
+         impl::ref_sequence<ipr::Decl> decl_seq;            // declarations resulting from this structured binding
+         ipr::DeclSpecifiers specs;                         // the non-type part of decl-specifier-seq in 
+                                                            // this structured binding.  Note: `type()` contains the
+                                                            // the type part of the decl-specifier-seq
+         ipr::Binding_mode binding_mode;                    // the binding mode of this structured binding
+
+         ipr::DeclSpecifiers specifiers() const final { return specs; }
+         ipr::Binding_mode mode() const final { return binding_mode; }
+         const ipr::Sequence<ipr::Identifier>& names() const final { return ids; }
+         const ipr::Expr& initializer() const final { return init.get(); }
+         const ipr::Sequence<ipr::Decl>& bindings() const final { return decl_seq; }
+      };
+
       // Implementation of ipr::Using_declaration in case where using-declarator-list is a singleton.
       struct single_using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
          single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
@@ -2153,6 +2169,7 @@ namespace ipr {
       struct dir_factory {
          impl::Asm* make_asm(const ipr::String&, const ipr::Type&);
          impl::Static_assert* make_static_assert(const ipr::Expr&, Optional<ipr::String> = { });
+         impl::Structured_binding* make_structured_binding();
          impl::single_using_declaration* make_using_declaration(const ipr::Scope_ref&,
                                                                 ipr::Using_declaration::Designator::Mode);
          impl::Using_declaration* make_using_declaration();
@@ -2161,6 +2178,7 @@ namespace ipr {
       private:
          stable_farm<impl::Asm> asms;
          stable_farm<impl::Static_assert> asserts;
+         stable_farm<impl::Structured_binding> bindings;
          stable_farm<impl::single_using_declaration> singles;
          stable_farm<impl::Using_declaration> usings;
          stable_farm<impl::Using_directive> dirs;
