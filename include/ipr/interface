@@ -258,6 +258,7 @@ namespace ipr {
    struct Asm;                   // asm-declaration
    struct Deduction_guide;       // deduction-guide declaration
    struct Static_assert;         // static-assert declaration
+   struct Structured_binding;    // structured-binding declaration
    struct Using_declaration;     // using-declaration
    struct Using_directive;       // using-directive
    struct Pragma;                // language-level pragma directive
@@ -499,6 +500,16 @@ namespace ipr {
 
    // Position of a declaration in its declarative region
    enum class Decl_position : std::size_t { };
+
+
+                                // -- Binding_move --
+   // Mode of binding of a object value to a name (parameter, variable, alias, etc).
+   enum class Binding_mode : std::uint8_t {
+      Copy,                         // by copy operation; default binding mode of C and C++
+      Reference,                    // by ref; the parameter or varable has an lvalue reference type
+      Move,                         // by move operation; transfer of ownership
+      Default = Copy,
+   };
 
                                 // -- Optional<> --
    // Occasionally, a node has an optional property (e.g. a variable
@@ -743,12 +754,6 @@ namespace ipr {
       Mutable    = 1 << 0,
       Constexpr  = 1 << 1,
       Consteval  = 1 << 2,
-   };
-
-   // The available modes of lambda captures
-   enum class Capture_mode {
-      Value,                                    // Default capture by value ("=" squiggle)
-      Reference,                                // Default capture by reference ("&" squiggle)
    };
 
                                 // -- Module_name --
@@ -1326,14 +1331,14 @@ namespace ipr {
 
 
    // A capture is a description of how a local entity is referenced in a lambda expression.
-   // It is essentially a pair (Capture_mode, Decl) where the first component tells how the 
+   // It is essentially a pair (Binding_mode, Decl) where the first component tells how the 
    // entity is referenced (by value or by reference), and a declaration that specifies the 
    // declarative semantic properties of the captured entity.
    // Note: A Capture should not be confused with a Capture_specification: the specification
    //       is a prescription of how an entity should be captured (either explicitly or implicitly) 
    //       in a lambda, whereas a capture is a result of executing that prescription.
    struct Capture {
-      virtual Capture_mode mode() const = 0;
+      virtual Binding_mode mode() const = 0;
       virtual const Decl& entity() const = 0;
    };
 
@@ -1404,24 +1409,25 @@ namespace ipr {
 
    // Default lambda capture specification
    struct Capture_specification::Default : Capture_specification {
-      virtual Capture_mode mode() const = 0;
+      virtual Binding_mode mode() const = 0;
    };
 
    // Lambda capture specification of the implicit object in a non-static member context.
    // The designation of the capture is defined by how(), where:
-   //   - Capture_mode::Reference means 'this'
-   //   - Capture_mode::Value means '*this'
+   //   - Binding_mode::Reference means 'this'
+   //   - Binding_mode::Copy means '*this'
+   //   - anything else is invalid at this point.
    // Note: an alternative design is to introduced a distinct enum for representing the
    //       designation of the implicit object (say 'This' and 'Self), but that would
    //       have just obscured the fundamental semantics correspondence.
    struct Capture_specification::Implicit_object : Capture_specification {
-      virtual Capture_mode how() const = 0;
+      virtual Binding_mode how() const = 0;
    };
 
    // Base of lambda captures designated by an given name.
    struct Capture_specification::Named : Capture_specification {
       virtual const Identifier& name() const = 0;
-      virtual Capture_mode mode() const = 0;
+      virtual Binding_mode mode() const = 0;
    };
 
    // Lambda capture referencing a local entity from the enclosing context.
@@ -2005,6 +2011,17 @@ namespace ipr {
       virtual Optional<String> message() const = 0;
    };
 
+                                // -- Structured_binding --
+   // A structured binding is a directive to the compiler to introduce a set of names
+   // (either an Alias or a Var) in the current binding environment by taking apart
+   // the object value designated by the initializer.
+   struct Structured_binding : Category<Category_code::Structured_binding, Directive> {
+      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Binding_mode mode() const = 0;
+      virtual const Sequence<Identifier>& names() const = 0;
+      virtual const Expr& initializer() const = 0;
+      virtual const Sequence<Decl>& bindings() const = 0;
+   };
 
                                 // -- Using_declaration --
    // A using-declaration is directive that instructs the C++ translator to look up
@@ -2319,7 +2336,7 @@ namespace ipr {
 
                                 // - Alias --
    // This represent a alias declaration (e.g. typedef, namespace-alias,
-   // template alias, ...).
+   // template alias, a binding in a structured binding, etc).
    // An alias is always initialized -- with what it is an alias for.
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<Category_code::Alias, Decl> {
@@ -2606,6 +2623,7 @@ namespace ipr {
       virtual void visit(const Directive&) = 0;
       virtual void visit(const Asm&);
       virtual void visit(const Static_assert&);
+      virtual void visit(const Structured_binding&);
       virtual void visit(const Using_declaration&);
       virtual void visit(const Using_directive&);
       virtual void visit(const Pragma&);

@@ -156,25 +156,25 @@ namespace ipr::impl {
 
       // -- impl::capture_spec_factory --
       const ipr::Capture_specification::Default&
-      capture_spec_factory::default_capture(ipr::Capture_mode m)
+      capture_spec_factory::default_capture(Binding_mode m)
       {
          return *defaults.make(m);
       }
 
       const ipr::Capture_specification::Implicit_object&
-      capture_spec_factory::implicit_object_capture(ipr::Capture_mode m)
+      capture_spec_factory::implicit_object_capture(Binding_mode m)
       {
          return *implicits.make(m);
       }
 
       const ipr::Capture_specification::Enclosing_local&
-      capture_spec_factory::enclosing_local_capture(const ipr::Decl& d, ipr::Capture_mode m)
+      capture_spec_factory::enclosing_local_capture(const ipr::Decl& d, Binding_mode m)
       {
          return *enclosings.make(d, m);
       }
 
       const ipr::Capture_specification::Binding&
-      capture_spec_factory::binding_capture(const ipr::Identifier& n, const ipr::Expr& x, ipr::Capture_mode m)
+      capture_spec_factory::binding_capture(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m)
       {
          return *bindings.make(n, x, m);
       }
@@ -479,6 +479,12 @@ namespace ipr::impl {
       impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
       {
          return asserts.make(e, s);
+      }
+
+      impl::Structured_binding*
+      dir_factory::make_structured_binding()
+      {
+         return bindings.make();
       }
 
       impl::single_using_declaration*
