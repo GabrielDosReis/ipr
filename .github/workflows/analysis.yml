@@ -12,7 +12,7 @@ on:
 
 env:
   build: '${{ github.workspace }}/build'
-  config: 'Debug'
+  config: 'Release'
 
 jobs:
   build:

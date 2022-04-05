@@ -26,7 +26,7 @@ namespace ipr {
    template<typename F, typename T>
    static Printer& comma_separated(Printer& pp, const Sequence<T>& s)
    {
-      const auto worker = [&pp, first = true](auto& x) mutable {
+      auto worker = [&pp, first = true](auto& x) mutable {
          if (not first)
             pp << ", ";
          pp << F(x);
@@ -38,14 +38,14 @@ namespace ipr {
 
    Printer& operator<<(Printer& p, Mapping_level x)
    {
-      const auto n = static_cast<std::size_t>(x);
+      auto n = static_cast<std::size_t>(x);
       p.channel() << n;
       return p;
    }
 
    Printer& operator<<(Printer& p, Decl_position x)
    {
-      const auto n = static_cast<std::size_t>(x);
+      auto n = static_cast<std::size_t>(x);
       p.channel() << n;
       return p;
    }
@@ -653,7 +653,7 @@ namespace ipr {
          void visit(const New& e) final
          {
             pp << xpr_identifier("new") << token(' ');
-            if (const auto p = e.placement())
+            if (auto p = e.placement())
                pp << token('(') << p.get() << token(") ");
             // Note: The following does not exactly conform to the ISO C++ grammar (because of ambiguity).
             pp << xpr_expr(e.initializer());

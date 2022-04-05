@@ -5,7 +5,6 @@
   <!-- Enforcement of the C++ Core Guidelines -->
   <Include Path="CppCoreCheckRules.ruleset" Action="Default" />
 
-  <!-- TODO: remove -->
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
     <!-- Excluded warnings -->
     <Rule Id="C26440" Action="None" /> <!-- Declare noexcept -->
@@ -14,6 +13,12 @@
     <Rule Id="C26481" Action="None" /> <!-- No pointer arithmetic -->
     <Rule Id="C26485" Action="None" /> <!-- No pointer decay -->
     <Rule Id="C26445" Action="None" /> <!-- No reference for views -->
+    <!-- Const -->
+    <Rule Id="C26496" Action="None" /> <!-- Mark var const -->
+    <Rule Id="C26462" Action="None" /> <!-- Mark pointer var const -->
+    <Rule Id="C26463" Action="None" /> <!-- Mark array const -->
+    <Rule Id="C26464" Action="None" /> <!-- Mark array of pointers const -->
+    <Rule Id="C26814" Action="None" /> <!-- Mark var constexpr -->
     <!-- Memory management -->
     <Rule Id="C26409" Action="None" /> <!-- No new/delete -->
     <Rule Id="C26401" Action="None" /> <!-- Do not delete non-owner pointer -->

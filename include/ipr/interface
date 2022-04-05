@@ -2328,7 +2328,7 @@ namespace ipr {
       // A base-object is, by definition, unnamed.  However, it
       // is convenient to refer to it by the name of the corresponding
       // type -- in C++ tradition.
-      const Name& name() const override { return type().name(); }
+      const Name& name() const final { return type().name(); }
       virtual Decl_position position() const = 0;
    };
 

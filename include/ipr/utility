@@ -213,7 +213,7 @@ namespace ipr {
             bool found = false;
             Node* result = this->root;
             while (result != nullptr and not found) {
-               const auto ordering = comp(*result, key) ;
+               auto ordering = comp(*result, key) ;
                if (ordering < 0)
                   result = result->left();
                else if (ordering > 0)
@@ -235,7 +235,7 @@ namespace ipr {
 
             bool found = false;
             while (not found and *slot != nullptr) {
-               const auto ordering = comp(**slot, *z);
+               auto ordering = comp(**slot, *z);
                if (ordering < 0) {
                   up = *slot;
                   slot = &up->left();
@@ -308,7 +308,7 @@ namespace ipr {
          container<T>::find(const Key& key, Comp comp) const
          {
             for (node<T>* x = this->root; x != nullptr; ) {
-               const auto ordering = comp(x->data, key);
+               auto ordering = comp(x->data, key);
                if (ordering < 0)
                   x = x->left();
                else if (ordering > 0)
@@ -339,7 +339,7 @@ namespace ipr {
             bool found = false;
 
             for (where = this->root; where != nullptr and not found; where = *slot) {
-               const auto ordering = comp(where->data, key);
+               auto ordering = comp(where->data, key);
                if (ordering < 0) {
                   parent = where;
                   slot = &where->left();
@@ -426,7 +426,7 @@ namespace ipr {
                         Compare compare) const
          {
             for (; first1 != last1 and first2 != last2; ++first1, ++first2)
-               if (const auto cmp = compare(*first1, *first2))
+               if (auto cmp = compare(*first1, *first2))
                   return cmp;
 
             return first1 == last1 ? (first2 == last2 ? 0 : -1) : 1;

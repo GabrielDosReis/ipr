@@ -626,7 +626,7 @@ namespace ipr::impl {
 
       impl::Enumerator*
       Enum::add_member(const ipr::Name& n) {
-         const Decl_position pos { members().size() };
+         Decl_position pos { members().size() };
          impl::Enumerator* e = body.scope.push_back(n, *this, pos);
          e->where = &body;
          return e;
@@ -649,7 +649,7 @@ namespace ipr::impl {
 
       impl::Base_type*
       Class::declare_base(const ipr::Type& t) {
-         const Decl_position pos { bases().size() };
+         Decl_position pos { bases().size() };
          return base_subobjects.scope.push_back(t, base_subobjects, pos);
       }
 
@@ -762,7 +762,7 @@ namespace ipr::impl {
          int operator()(const Binary<T>& lhs,
                         const typename Binary<T>::Rep& rhs) const
          {
-            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
 
             return compare(lhs.rep.second, rhs.second);
          }
@@ -846,8 +846,8 @@ namespace ipr::impl {
          int operator()(const Ternary<T>& lhs,
                         const typename Ternary<T>::Rep& rhs) const
          {
-            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (const auto cmp = compare(lhs.rep.second, rhs.second)) return cmp;
+            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
 
             return compare(lhs.rep.third, rhs.third);
          }
@@ -856,8 +856,8 @@ namespace ipr::impl {
          int operator()(const typename Ternary<T>::Rep& lhs,
                         const Ternary<T>& rhs) const
          {
-            if (const auto cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (const auto cmp = compare(lhs.second, rhs.rep.second)) return cmp;
+            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
+            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
 
             return compare(lhs.third, rhs.rep.third);
          }
@@ -868,9 +868,9 @@ namespace ipr::impl {
          int operator()(const Quaternary<T>& lhs,
                         const typename Quaternary<T>::Rep& rhs) const
          {
-            if (const auto cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (const auto cmp = compare(lhs.rep.second, rhs.second)) return cmp;
-            if (const auto cmp = compare(lhs.rep.third, rhs.third)) return cmp;
+            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
+            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
+            if (int cmp = compare(lhs.rep.third, rhs.third)) return cmp;
 
             return compare(lhs.rep.fourth, rhs.fourth);
          }
@@ -879,9 +879,9 @@ namespace ipr::impl {
          int operator()(const typename Quaternary<T>::Rep& lhs,
                         const Quaternary<T>& rhs) const
          {
-            if (const auto cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (const auto cmp = compare(lhs.second, rhs.rep.second)) return cmp;
-            if (const auto cmp = compare(lhs.third, rhs.rep.third)) return cmp;
+            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
+            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
+            if (int cmp = compare(lhs.third, rhs.rep.third)) return cmp;
 
             return compare(lhs.fourth, rhs.rep.fourth);
          }
@@ -1045,7 +1045,7 @@ namespace ipr::impl {
 
       const ipr::Overload&
       Scope::operator[](const ipr::Name& n) const {
-         if (const impl::Overload* ovl = overloads.find(n, node_compare()))
+         if (impl::Overload* ovl = overloads.find(n, node_compare()))
             return *ovl;
          return missing;
       }
@@ -1240,7 +1240,7 @@ namespace ipr::impl {
       expr_factory::get_symbol(const ipr::Name& n, const ipr::Type& t)
       {
          const auto comparator = [&t](auto& x, auto& y) {
-            if (const auto cmp = compare(x.name(), y))
+            if (auto cmp = compare(x.name(), y))
                return cmp;
             return compare(x.type(), t);
          };
@@ -1832,8 +1832,8 @@ namespace ipr::impl {
       expr_factory::rname_for_next_param(const impl::Mapping& map,
                                          const ipr::Type& t) {
          using Rep = impl::Rname::Rep;
-         const Decl_position pos { map.parms.size() };
-         const auto lvl = map.parameters().level();
+         Decl_position pos { map.parms.size() };
+         auto lvl = map.parameters().level();
          return rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
       }
 
