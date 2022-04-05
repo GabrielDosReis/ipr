@@ -1,0 +1,241 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+
+#ifndef IPR_SYNOPSIS_INCLUDED
+#define IPR_SYNOPSIS_INCLUDED
+
+namespace ipr {
+   struct Node;                  // universal base class for all IPR nodes
+
+   struct Visitor;               // base class for all IPR visitor classes
+
+   struct Annotation;            // node annotations
+   struct Region;                // declarative region
+   struct Comment;               // C-style and BCPL-style comments
+   struct String;                // literal string
+
+   struct Linkage;               // general language linkage
+   struct Expr;                  // general expressions
+   struct Name;                  // general names
+   struct Type;                  // general types
+   struct Directive;             // general directives
+   struct Stmt;                  // general statements
+   struct Decl;                  // general declarations
+
+   struct Scope;                 // declarations in a region
+   struct Overload;              // overload set
+   struct Parameter_list;        // function/template parameter list
+
+   // -------------------------------------------
+   // -- results of type constructor constants --
+   // -------------------------------------------
+   struct Array;                 // array type
+   struct As_type;               // use-expression as type
+   struct Class;                 // user-defined type - declared as "class" or "struct"
+   struct Decltype;              // strict type of a declaration/expression
+   struct Enum;                  // user-defined type - declared as "enum" or "class enum"
+   struct Tor;                   // types of constructors and destructors - not ISO C++ types
+   struct Function;              // function type
+   struct Namespace;             // user-defined type - declared as "namespace"
+   struct Pointer;               // pointer type
+   struct Ptr_to_member;         // pointer-to-member type
+   struct Product;               // product type - not ISO C++ type
+   struct Qualified;             // cv-qualified types
+   struct Reference;             // reference type
+   struct Rvalue_reference;      // rvalue-reference type
+   struct Sum;                   // sum type - not ISO C++ type
+   struct Forall;                // universally quantified type - Not ISO C++ type
+   struct Union;                 // user-defined type - declared as "union"
+   struct Auto;                  // "auto" -- each occurrence is generative
+   struct Closure;               // closure type -- type of lambda expression, with capture data
+
+   // ------------------------------------------
+   // -- results of name constructor constants --
+   // ------------------------------------------
+   struct Identifier;            // identifier                          foo
+   struct Suffix;                // Literal operator suffix       "Plato"sv
+   struct Operator;              // C++ operator name             operator+
+   struct Conversion;            // conversion function name   operator int
+   struct Template_id;           // C++ template-id                  S<int>
+   struct Type_id;               // C++ type-id                  const int*
+   struct Ctor_name;             // constructor name                   T::T
+   struct Dtor_name;             // destructor name                   T::~T
+   struct Guide_name;            // deduction guide name 
+   struct Rname;                 // de Bruijn (index, position),
+                                 // find better name
+
+   // --------------------------------------------------------
+   // -- results of nullar expression constructor constants --
+   // --------------------------------------------------------
+   struct Phantom;               // placeholder for arrays of unknown bounds,
+                                 // rethrow, empty parts of a For, etc...
+   struct Eclipsis;              // the `...' in a unary fold
+   struct This;                  // the special `this' reserved word for the address on the implicit object 
+   struct Lambda;                // Lambda expression, packing an environment and a code pointer
+
+   // -------------------------------------------------------
+   // -- results of unary expression constructor constants --
+   // -------------------------------------------------------
+   struct Symbol;                // self-evaluating symbolic values: 'int' or 'nullptr'
+   struct Address;               // address-of                          &a
+   struct Array_delete;          // array delete-expression     delete[] p
+   struct Complement;            // bitwise complement                  ~m
+   struct Delete;                // delete-expression             delete p
+   struct Demotion;              // inverse of an integral or floating-point
+                                 // promotion -- implicit conversion
+   struct Deref;                 // dereference expression              *p
+   struct Expr_list;             // comma-separated expression list  x, y, z
+   struct Alignof;               // alignment query                  alignof(T)
+   struct Sizeof;                // sizeof expression: sizeof *p or sizeof(int)
+   struct Typeid;                // typeid expression, like sizeof expression
+   struct Id_expr;               // use of a name as an expression
+   struct Label;                 // a label - target of a goto-statement
+                                 //         or entry of a switch-statement
+   struct Materialization;       // temporary materialization
+   struct Not;                   // logical negation                 !cond
+   struct Enclosure;             // expression in enclosed in paired delimiters, e.g. (a) or {x, y, y}
+   struct Post_decrement;        // post-increment                     p++
+   struct Post_increment;        // post-decrement                     p--
+   struct Pre_decrement;         // pre-increment                      ++p
+   struct Pre_increment;         // pre-decrement                      --p
+   struct Promotion;             // integral or floating-point promotion -- implicit conversion
+   struct Read;                  // lvalue to rvalue conversion  -- implicit conversion
+   struct Throw;                 // throw expression               throw a
+   struct Unary_minus;           // unary minus                         -a
+   struct Unary_plus;            // unary plus                          +a
+   struct Expansion;             // pack expansion                    t...
+   struct Noexcept;              // noexcept expression        noexcept(e)
+   struct Args_cardinality;      // arguments count in a parameter pack: sizeof...(args)
+
+   // --------------------------------------------------------
+   // -- results of binary expression constructor constants --
+   // --------------------------------------------------------
+   struct Plus;                  // addition                       a + b
+   struct Plus_assign;           // in-place addition              a += b
+   struct And;                   // logical and                    a && b
+   struct Array_ref;             // array member selection         a[i]
+   struct Arrow;                 // indirect member selection      p->m
+   struct Arrow_star;            // indirect member indirection    p->*m
+   struct Assign;                // assignment                     a = b
+   struct Bitand;                // bitwise and                    a & b
+   struct Bitand_assign;         // in-place bitwise and           a &= b
+   struct Bitor;                 // bitwise or                     a | b
+   struct Bitor_assign;          // in-place bitwise or            a |= b
+   struct Bitxor;                // bitwise exclusive or           a ^ b
+   struct Bitxor_assign;         // in-place bitwise exclusive or  a ^= b
+   struct Call;                  // function call                  f(u, v)
+   struct Cast;                  // C-style class                  (T) e
+   struct Coercion;              // generalized type conversion -- implicit conversion
+   struct Comma;                 // comma-operator                 a, b
+   struct Const_cast;            // const-cast             const_cast<T&>(v)
+   struct Construction;          // object construction            T(v)
+   struct Div;                   // division                       a / b
+   struct Div_assign;            // in-place division              a /= b
+   struct Dot;                   // direct member selection        x.m
+   struct Dot_star;              // direct member indirection      x.*pm
+   struct Dynamic_cast;          // dynamic-cast         dynamic_cast<T&>(v)
+   struct Equal;                 // equality comparison            a == b
+   struct Greater;               // greater comparison             a > b
+   struct Greater_equal;         // greater-or-equal comparison    a >= b
+   struct Less;                  // less comparison                a < b
+   struct Less_equal;            // less-equal comparison          a <= b
+   struct Literal;               // literal expressions            3.14
+   struct Lshift;                // left shift                     a << b
+   struct Lshift_assign;         // in-place left shift            a <<= b
+   struct Member_init;           // member initialization          : m(v)
+   struct Minus;                 // subtraction                    a - b
+   struct Minus_assign;          // in-place subtraction           a -= b
+   struct Modulo;                // modulo arithmetic              a % b
+   struct Modulo_assign;         // in=place modulo arithmetic     a %= b
+   struct Mul;                   // multiplication                 a * b
+   struct Mul_assign;            // in-place multiplication        a *= b
+   struct Narrow;                // checked base to derived class conversion
+   struct Not_equal;             // not-equality comparison        a != b
+   struct Or;                    // logical or                     a || b
+   struct Pretend;               // generalization of bitcast and reinterpret cast
+   struct Qualification;         // cv-qualification conversion
+   struct Reinterpret_cast;      // reinterpret-cast  reinterpret_cast<T>(v)
+   struct Rshift;                // right shift                    a >> b
+   struct Rshift_assign;         // in-place right shift           a >>= b
+   struct Static_cast;           // static-cast            static_cast<T>(v)
+   struct Widen;                 // derived to base class conversion
+
+   struct Binary_fold;           // Primary expression of the form (a op ... op b)
+
+   struct Mapping;               // function
+   struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
+   struct Where;                 // expression with local bindings or restrictions
+
+   // --------------------------------------------------------
+   // -- result of trinary expression constructor constants --
+   // --------------------------------------------------------
+   struct New;                   // new-expression              new (p) T(v)
+   struct Conditional;           // conditional                   p ? a : b
+
+   // -----------------------------------------------
+   // -- result of statement constructor constants --
+   // -----------------------------------------------
+   struct Block;                 // brace-enclosed statement sequence
+   struct Break;                 // break-statement
+   struct Continue;              // continue-statement
+   struct Ctor_body;             // constructor-body
+   struct Do;                    // do-statement
+   struct Expr_stmt;             // expression-statement
+   struct Empty_stmt;            // empty statement -- particular Expr_stmt
+   struct For;                   // for-statement
+   struct For_in;                // structured for-statement
+   struct Goto;                  // goto-statement
+   struct Handler;               // exception handler statement
+   struct If;                    // if-statement
+   struct Labeled_stmt;          // labeled-statement
+   struct Return;                // return-statement
+   struct Switch;                // switch-statement
+   struct While;                 // while-statement
+
+   // -----------------------------------------------
+   // -- result of directive constructor constants --
+   // -----------------------------------------------
+   struct Asm;                   // asm-declaration
+   struct Deduction_guide;       // deduction-guide declaration
+   struct Static_assert;         // static-assert declaration
+   struct Structured_binding;    // structured-binding declaration
+   struct Using_declaration;     // using-declaration
+   struct Using_directive;       // using-directive
+   struct Pragma;                // language-level pragma directive
+ 
+   // -------------------------------------------------
+   // -- result of declaration constructor constants --
+   // -------------------------------------------------
+   struct Alias;                 // alias-declaration
+   struct Base_type;             // base-class in class inheritance
+   struct Enumerator;            // enumerator in enumeration-declaration
+   struct Field;                 // field in union or class declaration
+   struct Bitfield;              // bitfield
+   struct Fundecl;               // function-declaration
+   struct Template;              // template-declaration
+   struct Parameter;             // function or template parameter
+   struct Typedecl;              // declaration for a type
+   struct Var;                   // variable declaration
+
+   // ------------------------
+   // -- distinguished node --
+   // ------------------------
+   struct Translation_unit;     // Translation unit
+   struct Module_unit;          // Module unit
+   struct Interface_unit;       // Module interface unit
+   struct Module;               // module.
+
+   struct Lexicon;              // Interpretation context
+
+
+   // ----------------------------------
+   // -- built-ins, but not constants --
+   // ----------------------------------
+   struct Global_scope;          // global namespace -- "::"
+}
+
+#endif // IPR_SYNOPSIS_INCLUDED
