@@ -249,6 +249,7 @@ namespace ipr {
 
                                 // -- impl::Token --
       struct Token : ipr::Lexeme, ipr::Token {
+         using Interface = ipr::Token;
          Token(const ipr::String&, const Source_location&, TokenValue, TokenCategory);
          const ipr::String& spelling() const final { return text; }
          const Source_location& locus() const final { return location; }
@@ -359,12 +360,12 @@ namespace ipr {
       // -- implementation for ipr::Capture
       struct Capture : ipr::Capture {
          using Interface = ipr::Capture;
-         Capture(const ipr::Decl& d, ipr::Capture_mode m) : decl{d}, md{m} { }
-         ipr::Capture_mode mode() const final { return md; }
+         Capture(const ipr::Decl& d, ipr::Binding_mode m) : decl{d}, md{m} { }
+         ipr::Binding_mode mode() const final { return md; }
          const ipr::Decl& entity() const final { return decl; }
       private:
          const ipr::Decl& decl;
-         const ipr::Capture_mode md;
+         const ipr::Binding_mode md;
       };
 
       // -- Generic implementation of ipr::Capture_specification
@@ -375,41 +376,41 @@ namespace ipr {
 
       // -- implementation of ipr::Capture_specification::Default
       struct Default_capture_specification : Capture_specification<ipr::Capture_specification::Default> {
-         explicit Default_capture_specification(Capture_mode m) : md{m} { }
-         Capture_mode mode() const final { return md; }
+         explicit Default_capture_specification(Binding_mode m) : md{m} { }
+         Binding_mode mode() const final { return md; }
       private:
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Implicit_object
       struct Implicit_object_capture_specification : Capture_specification<ipr::Capture_specification::Implicit_object> {
-         explicit Implicit_object_capture_specification(Capture_mode m) : md{m} { }
-         Capture_mode how() const final { return md; }
+         explicit Implicit_object_capture_specification(Binding_mode m) : md{m} { }
+         Binding_mode how() const final { return md; }
       private:
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Enclosing_local
       struct Enclosing_local_capture_specification : Capture_specification<ipr::Capture_specification::Enclosing_local> {
-         Enclosing_local_capture_specification(const ipr::Decl& x, Capture_mode m) : decl{x}, md{m} { }
-         Capture_mode mode() const final { return md; }
+         Enclosing_local_capture_specification(const ipr::Decl& x, Binding_mode m) : decl{x}, md{m} { }
+         Binding_mode mode() const final { return md; }
          const ipr::Identifier& name() const final;
          const ipr::Decl& declaration() const final { return decl; }
       private:
          const ipr::Decl& decl;
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_capture::Binding
       struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
-         Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Capture_mode m) : id{n}, init{x}, md{m} { }
-         Capture_mode mode() const final { return md; }
+         Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m) : id{n}, init{x}, md{m} { }
+         Binding_mode mode() const final { return md; }
          const ipr::Identifier& name() const final { return id; }
          const ipr::Expr& initializer() const final { return init; }
       private:
          const ipr::Identifier& id;
          const ipr::Expr& init;
-         const Capture_mode md;
+         const Binding_mode md;
       };
 
       // -- implementation of ipr::Capture_specification::Expansion.
@@ -422,10 +423,10 @@ namespace ipr {
 
       // -- capture specification factory
       struct capture_spec_factory {
-         const ipr::Capture_specification::Default& default_capture(ipr::Capture_mode);
-         const ipr::Capture_specification::Implicit_object& implicit_object_capture(ipr::Capture_mode);
-         const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, ipr::Capture_mode);
-         const ipr::Capture_specification::Binding& binding_capture(const ipr::Identifier&, const ipr::Expr&, ipr::Capture_mode);
+         const ipr::Capture_specification::Default& default_capture(Binding_mode);
+         const ipr::Capture_specification::Implicit_object& implicit_object_capture(Binding_mode);
+         const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, Binding_mode);
+         const ipr::Capture_specification::Binding& binding_capture(const ipr::Identifier&, const ipr::Expr&, Binding_mode);
          const ipr::Capture_specification::Expansion& expansion_capture(const ipr::Capture_specification::Named&);
       private:
          stable_farm<impl::Default_capture_specification> defaults;
@@ -631,8 +632,7 @@ namespace ipr {
       // organized as a red-back tree where the position is used as key.
       // And alternative is a hash table, when we get there.
 
-      using util::rb_tree::link;
-      struct scope_datum : link<scope_datum> {
+      struct scope_datum : util::rb_tree::link<scope_datum> {
          // The specifiers for this declaration.  S
          ipr::DeclSpecifiers spec = { };
 
@@ -690,7 +690,7 @@ namespace ipr {
       // register themselves before the master declaration, at
       // the creation time.
 
-      struct overload_entry : link<overload_entry> {
+      struct overload_entry : util::rb_tree::link<overload_entry> {
          const ipr::Type& type;
          ref_sequence<ipr::Decl> declset;
          explicit overload_entry(const ipr::Type& t) : type(t) { }
@@ -789,18 +789,6 @@ namespace ipr {
 
          explicit singleton_overload(const ipr::Decl&);
 
-         const ipr::Type& type() const final;
-         Optional<ipr::Decl> operator[](const ipr::Type&) const final;
-      };
-
-
-      // When a name is not declared in a scope, then an empty overload
-      // set is returned.  This class empty_overload implements that notion.
-      // Alternatively, we could have thrown an exception to indicate
-      // that failure; however, the resulting programming style might
-      // be cluttered by try-blocks.
-
-      struct empty_overload : impl::Node<ipr::Overload> {
          const ipr::Type& type() const final;
          Optional<ipr::Decl> operator[](const ipr::Type&) const final;
       };
@@ -1048,10 +1036,9 @@ namespace ipr {
       template<class Member>
       struct homogeneous_scope : impl::Node<ipr::Scope>,
                                  ipr::Sequence<ipr::Decl>,
-                                 std::allocator<void> {
+                                 ipr::Sequence<ipr::Expr> {
          using Index = typename ipr::Sequence<ipr::Decl>::Index;
          typed_sequence<val_sequence<Member>> decls;
-         empty_overload missing;
 
          Index size() const final { return decls.size(); }
          const Member& get(Index i) const final { return decls.seq.get(i); }
@@ -1060,7 +1047,7 @@ namespace ipr {
 
          const ipr::Sequence<ipr::Decl>& elements() const final { return *this; }
 
-         const ipr::Overload& operator[](const Name&) const final;
+         Optional<ipr::Overload> operator[](const Name&) const final;
 
          template<typename... Args>
          Member* push_back(const Args&... args)
@@ -1071,17 +1058,17 @@ namespace ipr {
 
       // FIXME: Remove this linear search.
       template<class Member>
-      const ipr::Overload&
+      Optional<ipr::Overload>
       homogeneous_scope<Member>::operator[](const ipr::Name& n) const
       {
          const auto s = decls.size();
          for (Index i = 0; i < s; ++i) {
             const auto& decl = decls.seq.get(i);
             if (&decl.name() == &n)
-               return decl.overload;
+               return { &decl.overload };
          }
 
-         return missing;
+         return { };
       }
 
       template<class Member,
@@ -1095,6 +1082,7 @@ namespace ipr {
          homogeneous_scope<Member> scope;
 
          const ipr::Region& enclosing() const final { return parent; }
+         const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
          const ipr::Scope& bindings() const final { return scope; }
          const location_span& span() const final { return extent; }
          const ipr::Expr& owner() const final { return owned_by.get(); }
@@ -1490,7 +1478,7 @@ namespace ipr {
          Scope();
          const ipr::Type& type() const final { return decls; }
          const ipr::Sequence<ipr::Decl>& elements() const final { return decls.seq; }
-         const ipr::Overload& operator[](const ipr::Name&) const final;
+         Optional<ipr::Overload> operator[](const ipr::Name&) const final;
 
          impl::Alias* make_alias(const ipr::Name&, const ipr::Expr&);
          impl::Var* make_var(const ipr::Name&, const ipr::Type&);
@@ -1504,8 +1492,6 @@ namespace ipr {
       private:
          util::rb_tree::container<impl::Overload> overloads;
          typed_sequence<decl_sequence> decls;
-         empty_overload missing;
-
          decl_factory<impl::Alias> aliases;
          decl_factory<impl::Var> vars;
          decl_factory<impl::Field> fields;
@@ -1528,8 +1514,10 @@ namespace ipr {
          location_span extent;
          util::ref<const ipr::Expr> owned_by;
          impl::Scope scope;
+         impl::ref_sequence<ipr::Expr> expr_seq;         // all the expressions making up the body.
 
          const ipr::Region& enclosing() const final { return parent.get(); }
+         const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
          const ipr::Scope& bindings() const final { return scope; }
          const location_span& span() const final { return extent; }
          const ipr::Expr& owner() const final { return owned_by.get(); }
@@ -1764,6 +1752,22 @@ namespace ipr {
          Optional<ipr::String> txt;
       };
 
+      struct Structured_binding : impl::Directive<ipr::Structured_binding, Phases::Elaboration> {
+         impl::ref_sequence<ipr::Identifier> ids;           // names in this structured binding
+         util::ref<const ipr::Expr> init;                   // initializer of this structured binding
+         impl::ref_sequence<ipr::Decl> decl_seq;            // declarations resulting from this structured binding
+         ipr::DeclSpecifiers specs;                         // the non-type part of decl-specifier-seq in 
+                                                            // this structured binding.  Note: `type()` contains the
+                                                            // the type part of the decl-specifier-seq
+         ipr::Binding_mode binding_mode;                    // the binding mode of this structured binding
+
+         ipr::DeclSpecifiers specifiers() const final { return specs; }
+         ipr::Binding_mode mode() const final { return binding_mode; }
+         const ipr::Sequence<ipr::Identifier>& names() const final { return ids; }
+         const ipr::Expr& initializer() const final { return init.get(); }
+         const ipr::Sequence<ipr::Decl>& bindings() const final { return decl_seq; }
+      };
+
       // Implementation of ipr::Using_declaration in case where using-declarator-list is a singleton.
       struct single_using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
          single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
@@ -1783,6 +1787,11 @@ namespace ipr {
          const ipr::Scope& nominated_scope() const final { return scope; }
       private:
          const ipr::Scope& scope;
+      };
+
+      struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
+         val_sequence<impl::Token> tokens;
+         const ipr::Sequence<ipr::Token>& operand() const final { return tokens; }
       };
 
       // ----------------------------------
@@ -1806,21 +1815,19 @@ namespace ipr {
       // block.  It also holds a sequence of handlers, when the
       // block actually represents a C++ try-block.
       struct Block : impl::Stmt<Expr<ipr::Block>> {
-         impl::Region region;
-         impl::ref_sequence<ipr::Expr> stmt_seq;
+         impl::Region lexical_region;
          impl::ref_sequence<ipr::Handler> handler_seq;
 
          explicit Block(const ipr::Region&);
-         const ipr::Scope& elements() const final { return region.scope; }
-         const ipr::Sequence<ipr::Expr>& body() const final { return stmt_seq; }
+         const ipr::Region& region() const final { return lexical_region; }
          const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 
          // The scope of declarations in this block
-         impl::Scope* scope() { return &region.scope; }
+         impl::Scope* scope() { return &lexical_region.scope; }
 
          void add_stmt(const ipr::Expr& s)
          {
-            stmt_seq.push_back(&s);
+            lexical_region.expr_seq.push_back(&s);
          }
 
          void add_handler(const ipr::Handler& h)
@@ -2162,16 +2169,20 @@ namespace ipr {
       struct dir_factory {
          impl::Asm* make_asm(const ipr::String&, const ipr::Type&);
          impl::Static_assert* make_static_assert(const ipr::Expr&, Optional<ipr::String> = { });
+         impl::Structured_binding* make_structured_binding();
          impl::single_using_declaration* make_using_declaration(const ipr::Scope_ref&,
                                                                 ipr::Using_declaration::Designator::Mode);
          impl::Using_declaration* make_using_declaration();
          impl::Using_directive* make_using_directive(const ipr::Scope&, const ipr::Type&);
+         impl::Pragma* make_pragma();
       private:
          stable_farm<impl::Asm> asms;
          stable_farm<impl::Static_assert> asserts;
+         stable_farm<impl::Structured_binding> bindings;
          stable_farm<impl::single_using_declaration> singles;
          stable_farm<impl::Using_declaration> usings;
          stable_farm<impl::Using_directive> dirs;
+         stable_farm<impl::Pragma> pragmas;
       };
 
       // This factory class takes on the implementation burden of

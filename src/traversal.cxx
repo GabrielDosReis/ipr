@@ -817,6 +817,11 @@ ipr::Visitor::visit(const Static_assert& d)
    visit(as<Directive>(d));
 }
 
+void ipr::Visitor::visit(const Structured_binding& d)
+{
+   visit(as<Directive>(d));
+}
+
 void ipr::Visitor::visit(const Using_declaration& d)
 {
    visit(as<Directive>(d));
@@ -824,6 +829,11 @@ void ipr::Visitor::visit(const Using_declaration& d)
 
 void
 ipr::Visitor::visit(const Using_directive& d)
+{
+   visit(as<Directive>(d));
+}
+
+void ipr::Visitor::visit(const Pragma& d)
 {
    visit(as<Directive>(d));
 }

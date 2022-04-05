@@ -156,25 +156,25 @@ namespace ipr::impl {
 
       // -- impl::capture_spec_factory --
       const ipr::Capture_specification::Default&
-      capture_spec_factory::default_capture(ipr::Capture_mode m)
+      capture_spec_factory::default_capture(Binding_mode m)
       {
          return *defaults.make(m);
       }
 
       const ipr::Capture_specification::Implicit_object&
-      capture_spec_factory::implicit_object_capture(ipr::Capture_mode m)
+      capture_spec_factory::implicit_object_capture(Binding_mode m)
       {
          return *implicits.make(m);
       }
 
       const ipr::Capture_specification::Enclosing_local&
-      capture_spec_factory::enclosing_local_capture(const ipr::Decl& d, ipr::Capture_mode m)
+      capture_spec_factory::enclosing_local_capture(const ipr::Decl& d, Binding_mode m)
       {
          return *enclosings.make(d, m);
       }
 
       const ipr::Capture_specification::Binding&
-      capture_spec_factory::binding_capture(const ipr::Identifier& n, const ipr::Expr& x, ipr::Capture_mode m)
+      capture_spec_factory::binding_capture(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m)
       {
          return *bindings.make(n, x, m);
       }
@@ -264,21 +264,6 @@ namespace ipr::impl {
          if (&t != &seq.datum.type())
             return { };
          return { &seq.datum };
-      }
-
-      // --------------------------
-      // -- impl::empty_overload --
-      // --------------------------
-
-      const ipr::Type&
-      empty_overload::type() const {
-         throw std::domain_error("empty_overload::type");
-      }
-
-      Optional<ipr::Decl>
-      empty_overload::operator[](const ipr::Type&) const
-      {
-         return { };
       }
 
       // -----------------
@@ -454,9 +439,9 @@ namespace ipr::impl {
       // -----------------
 
       Block::Block(const ipr::Region& pr)
-            : region(&pr)
+            : lexical_region(&pr)
       {
-         region.owned_by = this;
+         lexical_region.owned_by = this;
       }
 
       // ---------------
@@ -495,6 +480,12 @@ namespace ipr::impl {
          return asserts.make(e, s);
       }
 
+      impl::Structured_binding*
+      dir_factory::make_structured_binding()
+      {
+         return bindings.make();
+      }
+
       impl::single_using_declaration*
       dir_factory::make_using_declaration(const ipr::Scope_ref& s, ipr::Using_declaration::Designator::Mode m)
       {
@@ -509,6 +500,11 @@ namespace ipr::impl {
       impl::Using_directive* dir_factory::make_using_directive(const ipr::Scope& s, const ipr::Type& t)
       {
          return make(dirs, s).with_type(t);
+      }
+
+      impl::Pragma* dir_factory::make_pragma()
+      {
+         return pragmas.make();
       }
 
       // ------------------------
@@ -1043,11 +1039,11 @@ namespace ipr::impl {
       // -------------------------------
       Scope::Scope() { }
 
-      const ipr::Overload&
-      Scope::operator[](const ipr::Name& n) const {
+      Optional<ipr::Overload> Scope::operator[](const ipr::Name& n) const
+      {
          if (impl::Overload* ovl = overloads.find(n, node_compare()))
-            return *ovl;
-         return missing;
+            return { ovl };
+         return { };
       }
 
       template<class T>

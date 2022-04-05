@@ -147,8 +147,10 @@ Scope,                              // ipr::Scope
 Asm,                                // ipr::Asm
 Deduction_guide,                    // ipr::Deduction_guide
 Static_assert,                      // ipr::Static_assert
+Structured_binding,                 // ipr::Structured_binding
 Using_declaration,                  // ipr::Using_declaration
 Using_directive,                    // ipr::Using_directive
+Pragma,                             // ipr::Pragma
 
 Block,                              // ipr::Block
 Break,                              // ipr::Break
