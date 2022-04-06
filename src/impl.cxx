@@ -20,9 +20,9 @@ namespace ipr {
    const String& String::empty_string()
    {
       struct Empty_string final : impl::Node<String> {
-         Index size() const { return 0; }
-         iterator begin() const { return ""; }
-         iterator end() const { return begin(); }
+         Index size() const final { return 0; }
+         iterator begin() const final { return ""; }
+         iterator end() const final { return begin(); }
       };
 
       static constexpr Empty_string empty { };
@@ -213,9 +213,8 @@ namespace ipr::impl {
 
       master_decl_data<ipr::Template>::
       master_decl_data(impl::Overload* ovl, const ipr::Type& t)
-            : Base(this), overload_entry(t),
-              primary(0),home(0),
-              overload(ovl)
+            : Base{this}, overload_entry{t},
+              primary{}, home{}, overload{ovl}
       { }
 
       // --------------------
@@ -223,7 +222,7 @@ namespace ipr::impl {
       // --------------------
 
       Overload::Overload(const ipr::Name& n)
-            : name(n)
+            : name{n}
       { }
 
       Optional<ipr::Decl>
@@ -351,7 +350,7 @@ namespace ipr::impl {
       // ----------------------
 
       Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, Decl_position p)
-            : id(n), constraint(t), scope_pos(p), where(0), init(0)
+            : id{n}, constraint{t}, scope_pos{p}, where{}, init{}
       { }
 
       // -----------------
@@ -1032,7 +1031,7 @@ namespace ipr::impl {
       }
 
       // -- impl::Lambda
-      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}
+      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}, lam_spec{}
       { }
 
       // -------------------------------
@@ -1059,7 +1058,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(i.type());
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Alias* decl = aliases.declare(ovl, i.type());
             decl->aliasee = &i;
             add_member(decl);
@@ -1078,7 +1077,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Var* var = vars.declare(ovl, t);
             add_member(var);
             return var;
@@ -1095,7 +1094,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Field* field = fields.declare(ovl, t);
             add_member(field);
             return field;
@@ -1112,7 +1111,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Bitfield* field = bitfields.declare(ovl, t);
             add_member(field);
             return field;
@@ -1133,11 +1132,9 @@ namespace ipr::impl {
 
          // Does the overload-set already contain a decl with that type?
          overload_entry* master = ovl->lookup(t);
-         impl::Typedecl* decl;
-         if (master == 0)       // no, this is the first declaration
-             decl = typedecls.declare(ovl, t);
-         else                   // just re-declare.
-            decl = typedecls.redeclare(master);
+         impl::Typedecl* decl = master == nullptr ?
+            typedecls.declare(ovl, t) : // no, this is the first declaration
+            typedecls.redeclare(master); // just re-declare.
          add_member(decl);      // remember we saw a declaration.
          return decl;
       }
@@ -1148,7 +1145,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Fundecl* decl = fundecls.declare(ovl, t);
             add_member(decl);
             return decl;
@@ -1166,7 +1163,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Template* decl = primary_maps.declare(ovl, t);
             decl->decl_data.master_data->primary = decl;
             add_member(decl);
@@ -1186,7 +1183,7 @@ namespace ipr::impl {
          impl::Overload* ovl = overloads.insert(n, node_compare());
          overload_entry* master = ovl->lookup(t);
 
-         if (master == 0) {
+         if (master == nullptr) {
             impl::Template* decl = secondary_maps.declare(ovl, t);
             // FXIME: record this a secondary map and set its primary.
             add_member(decl);
