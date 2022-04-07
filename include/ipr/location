@@ -1,0 +1,54 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+
+#ifndef IPR_LOCATION_INCLUDED
+#define IPR_LOCATION_INCLUDED
+
+#include <cstdint>
+
+namespace ipr {
+
+                                // -- Various Location Types --
+   // C++ constructs span locations.  There are at least four flavours of
+   // locations:
+   //       (a) physical source location;
+   //       (b) logical source location;
+   //       (c) physical unit location; and
+   //       (d) logical unit location.
+   // Physical and logical source locations are locations as witnessed
+   // at translation phase 2 (see ISO C++, §2.1/1).
+   // Physical and logical unit locations are locations as manifest when
+   // looking at a translation unit, at translation phase 4.
+   //
+   // Many IPR nodes will have a source and unit locations.  Instead of
+   // storing a source file and unit name as a string in every
+   // location data type, we save space by mapping file-names and
+   // unit-names to IDs (integers).  That mapping is managed by the Unit
+   // instance.
+
+   enum class Line_number : std::uint32_t { };
+   enum class Column_number : std::uint32_t { };
+
+   struct Basic_location {
+      Line_number line = { };
+      Column_number column = { };
+   };
+
+   enum class File_index : std::uint32_t { };
+
+   struct Source_location : Basic_location {
+      File_index file = { };    // ID of the file
+   };
+
+   enum class Unit_index : std::uint32_t { };
+
+   struct Unit_location : Basic_location {
+      Unit_index unit = { };    // ID of the unit
+   };
+}
+
+#endif // IPR_LOCATION_INCLUDED

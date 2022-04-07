@@ -1,0 +1,235 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+
+#ifndef IPR_ANCILLARY_INCLUDED
+#define IPR_ANCILLARY_INCLUDED
+
+#include <cstdint>
+#include <ipr/utility>
+
+namespace ipr {
+   // ---------------------------
+   // -- Phases of translation --
+   // ---------------------------
+   // A bitmask type for the various phases of C++ program translation.
+   enum class Phases {
+      Unknown              = 0x0000,   // Unknown translation phase
+      Reading              = 0x0001,   // Opening and reading an input source
+      Lexing               = 0x0002,   // Lexical decomposition of input source
+      Preprocessing        = 0x0004,   // Macro expansion and friends
+      Parsing              = 0x0008,   // Grammatical decomposition of the input source
+      Name_resolution      = 0x0010,   // Name lookup
+      Typing               = 0x0020,   // Type assignment of expressions
+      Evaluation           = 0x0040,   // Compile-time evaluation
+      Instantiation        = 0x0080,   // Template instantiation phase
+      Code_generation      = 0x0100,   // Code generation phase
+      Linking              = 0x0200,   // Linking phase
+      Loading              = 0x0400,   // Program loading phase
+      Execution            = 0x0800,   // Runtime execution
+
+      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation,
+      All                  = ~0x0,
+   };
+
+                                // -- Type_qualifier --
+   // cv-qualifiers are actually type operators.  Much of these operators
+   // currently make sense only for classic type -- although it might
+   // be interesting to explore the notion of pointer to overload-set
+   // or reference to such an expression.
+   enum class Type_qualifiers : std::uint8_t {
+      None             = 0,
+      Const            = 1 << 0,
+      Volatile         = 1 << 1,
+      Restrict         = 1 << 2        // not standard C++
+   };
+
+   constexpr Type_qualifiers operator|(Type_qualifiers a, Type_qualifiers b)
+   {
+      return Type_qualifiers(uint8_t(a) | uint8_t(b));
+   }
+
+   constexpr Type_qualifiers& operator|=(Type_qualifiers& a, Type_qualifiers b)
+   {
+      return a = a | b;
+   }
+
+   constexpr Type_qualifiers operator&(Type_qualifiers a, Type_qualifiers b)
+   {
+      return Type_qualifiers(uint8_t(a) & uint8_t(b));
+   }
+
+   constexpr Type_qualifiers& operator&=(Type_qualifiers& a, Type_qualifiers b)
+   {
+      return a = a & b;
+   }
+
+   constexpr Type_qualifiers operator^(Type_qualifiers a, Type_qualifiers b)
+   {
+      return Type_qualifiers(uint8_t(a) ^ uint8_t(b));
+   }
+
+   constexpr Type_qualifiers& operator^=(Type_qualifiers& a, Type_qualifiers b)
+   {
+      return a = a ^ b;
+   }
+
+   constexpr bool implies(Type_qualifiers a, Type_qualifiers b)
+   {
+      return (a & b) == b;
+   }
+
+                                // -- Binding_mode --
+   // Mode of binding of a object value to a name (parameter, variable, alias, etc).
+   enum class Binding_mode : std::uint8_t {
+      Copy,                         // by copy operation; default binding mode of C and C++
+      Reference,                    // by ref; the parameter or varable has an lvalue reference type
+      Move,                         // by move operation; transfer of ownership
+      Default = Copy,
+   };
+
+                                 // -- Delimiter --
+   // Enclosure delimiters of expressions
+   enum class Delimiter {
+      Nothing,                   // no delimiter
+      Paren,                     // "()"
+      Brace,                     // "{}"
+      Bracket,                   // "[]"
+      Angle,                     // "<>"
+   };
+
+                                // -- Sequence<> --
+   // Often, we use a notion of sequence to represent intermediate
+   // abstractions like base-classes, enumerators, catch-clauses,
+   // parameter-type-list, etc.  A "Sequence" is a collection abstractly
+   // described by its "begin()" and "end()" iterators.  It is made
+   // abstract because it may admit different implementations depending
+   // on concrete constraints.  For example, a scope (a sequence of
+   // declarations, that additionally supports look-up by name) may
+   // implement this interface either as a associative-array that maps
+   // Names to Declarations (with no particular order) or as
+   // vector<Declaration*> (in order of their appearance in programs), or
+   // as a much more elaborated data structure.
+   template<class T>
+   struct Sequence  {
+      struct Iterator;          // An iterator is a pair of (sequence,
+                                // position).  The position indicates
+                                // the particular value referenced in
+                                // the sequence.
+
+      // Provide STL-style interface, for use with some STL algorithm
+      // helper classes.  Sequence<> is an immutable sequence.
+      using value_type = T;
+      using reference = const T&;
+      using pointer = const T*;
+      using Index = std::size_t;
+      using iterator = Iterator;
+
+      virtual Index size() const = 0;
+      bool empty() const { return not (size() > 0); }
+      Iterator begin() const;
+      Iterator end() const;
+      Iterator position(Index) const;
+
+   protected:
+      virtual const T& get(Index) const = 0;
+   };
+
+                                // -- Sequence<>::Iterator --
+   // This iterator class is as abstract as it could be, for useful
+   // purposes.  It forwards most operations to the "Sequence" class
+   // it provides a view for.
+   template<class T>
+   struct Sequence<T>::Iterator {
+      using self_type = Sequence<T>::Iterator;
+      using value_type = const T;
+      using reference = const T&;
+      using pointer = const T*;
+      using difference_type = ptrdiff_t;
+      using Index = typename Sequence<T>::Index;
+      using iterator_category = std::bidirectional_iterator_tag;
+
+      Iterator() {}
+      Iterator(const Sequence* s, Index i) : seq{ s }, index{ i } { }
+
+      const T& operator*() const
+      { return seq->get(index); }
+
+      const T* operator->() const
+      { return &seq->get(index); }
+
+      Iterator& operator++()
+      {
+         ++index;
+         return *this;
+      }
+
+      Iterator& operator--()
+      {
+        --index;
+        return *this;
+      }
+
+      Iterator operator++(int)
+      {
+         Iterator tmp = *this;
+         ++index;
+         return tmp;
+      }
+
+      Iterator operator--(int)
+      {
+        Iterator tmp = *this;
+        --index;
+        return tmp;
+      }
+
+      bool operator==(Iterator other) const
+      { return seq == other.seq and index == other.index; }
+
+      bool operator!=(Iterator other) const
+      { return not(*this == other); }
+
+   private:
+      const Sequence* seq { };
+      Index index { };
+   };
+
+   template<class T>
+   inline typename Sequence<T>::Iterator
+   Sequence<T>::position(Index i) const
+   { return { this, i }; }
+
+   template<class T>
+   inline typename Sequence<T>::Iterator
+   Sequence<T>::begin() const
+   { return { this, 0 }; }
+
+   template<class T>
+   inline typename Sequence<T>::Iterator
+   Sequence<T>::end() const
+   { return { this, size() }; }
+
+                                // -- Optional<> --
+   // Occasionally, a node has an optional property (e.g. a variable
+   // has an optional initializer).  This class template captures
+   // that commonality and provides a checked access.
+   template<typename T>
+   struct Optional {
+      Optional(const T* p = nullptr) : ptr { p } { }
+      const T& get() const { return *util::check(ptr); }
+      bool is_valid() const { return ptr != nullptr; }
+      explicit operator bool() const { return is_valid(); }
+      template<typename U, bool = std::is_base_of_v<T, U>>
+      operator Optional<U>() const { return { ptr }; }
+   private:
+      const T* ptr;
+   };
+
+}
+
+
+#endif // IPR_ANCILLARY_INCLUDED
