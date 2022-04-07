@@ -228,7 +228,7 @@ namespace ipr::impl {
       Symbol::Symbol(const ipr::Name& n, const ipr::Type& t)
          : Unary_expr<ipr::Symbol>{ n }
       {
-         constraint = &t;
+         typing = &t;
       }
 
       // -- impl::New --
@@ -331,13 +331,13 @@ namespace ipr::impl {
 
                T* with_type(const ipr::Type& t) 
                {
-                  impl->constraint = &t;
+                  impl->typing = &t;
                   return impl;
                }
 
                T* with_type(Optional<ipr::Type> t) 
                {
-                  impl->constraint = t;
+                  impl->typing = t;
                   return impl;
                }
 
@@ -381,7 +381,7 @@ namespace ipr::impl {
       // ----------------------
 
       Enumerator::Enumerator(const ipr::Name& n, const ipr::Enum& t, Decl_position p)
-            : id{n}, constraint{t}, scope_pos{p}, where{}, init{}
+            : id{n}, typing{t}, scope_pos{p}, where{}, init{}
       { }
 
       // -----------------
@@ -1278,7 +1278,7 @@ namespace ipr::impl {
          };
 
          auto sym = symbols.insert(n, comparator);
-         sym->constraint = &t;
+         sym->typing = &t;
          return *sym;
       }
 
@@ -2050,8 +2050,8 @@ namespace ipr::impl {
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
-         if (not t->constraint.is_valid())
-            t->constraint = &anytype;
+         if (not t->typing.is_valid())
+            t->typing = &anytype;
 
          if (not t->id.is_valid())
             t->id = make_type_id(*t);
@@ -2185,7 +2185,7 @@ namespace ipr::impl {
       impl::Enum*
       Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
          auto t = types.make_enum(pr, k);
-         t->constraint = &enumtype;
+         t->typing = &enumtype;
          return t;
       }
 
@@ -2203,7 +2203,7 @@ namespace ipr::impl {
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
          auto x = expr_factory::make_mapping(r, l);
          // Note: the parameters form a Product type needing its type set
-         x->parms.parms.scope.decls.constraint = &anytype;
+         x->parms.parms.scope.decls.typing = &anytype;
          return x;
       }
 

@@ -327,10 +327,10 @@ namespace ipr::impl {
    // -- impl::Expr
    template<class Interface>
    struct Expr : impl::Node<Interface> {
-      Optional<ipr::Type> constraint;
+      Optional<ipr::Type> typing;
 
-      Expr(Optional<ipr::Type> t = { }) : constraint{ t } { }
-      const ipr::Type& type() const final { return constraint.get(); }
+      Expr(Optional<ipr::Type> t = { }) : typing{ t } { }
+      const ipr::Type& type() const final { return typing.get(); }
    };
 
    // -- impl::Unary_expr: Short hand for the implementation of generic unary expression nodes.
@@ -1145,14 +1145,14 @@ namespace ipr::impl {
 
    struct Enumerator final : unique_decl<ipr::Enumerator> {
       const ipr::Name& id;
-      const ipr::Enum& constraint;
+      const ipr::Enum& typing;
       const Decl_position scope_pos;
       util::ref<const ipr::Region> where;
       Optional<ipr::Expr> init;
 
       Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
       const ipr::Name& name() const final { return id; }
-      const ipr::Type& type() const final { return constraint; }
+      const ipr::Type& type() const final { return typing; }
       const ipr::Region& lexical_region() const final { return where.get(); }
       const ipr::Region& home_region() const final { return where.get(); }
       Decl_position position() const final { return scope_pos; }
@@ -1250,7 +1250,7 @@ namespace ipr::impl {
    };
 
    struct Lambda : impl::Node<ipr::Lambda> {
-      util::ref<const ipr::Closure> constraint;
+      util::ref<const ipr::Closure> typing;
       Optional<ipr::Type> value_type;
       impl::Parameter_list parms;
       util::ref<const ipr::Expr> body;
@@ -1261,7 +1261,7 @@ namespace ipr::impl {
       Lambda_specifiers lam_spec;
 
       Lambda(const ipr::Region&, Mapping_level);
-      const ipr::Closure& type() const final { return constraint.get(); }
+      const ipr::Closure& type() const final { return typing.get(); }
       Optional<ipr::Type> target() const final { return value_type; }
       const ipr::Parameter_list& parameters() const final { return parms; }
       Optional<ipr::Expr> requirement() const final { return decl_constraint; }
@@ -1636,7 +1636,7 @@ namespace ipr::impl {
       Region body;
       Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr)
       {
-         this->constraint = &t;
+         this->typing = &t;
          body.owned_by = this;
       }
 
