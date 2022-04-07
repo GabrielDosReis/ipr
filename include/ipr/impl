@@ -880,8 +880,8 @@ namespace ipr::impl {
    struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
       Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m) : id{n}, init{x}, md{m} { }
       Binding_mode mode() const final { return md; }
-      const ipr::Identifier& name() const { return id; }
-      const ipr::Expr& initializer() const { return init; }
+      const ipr::Identifier& name() const final { return id; }
+      const ipr::Expr& initializer() const final { return init; }
    private:
       const ipr::Identifier& id;
       const ipr::Expr& init;
@@ -952,8 +952,7 @@ namespace ipr::impl {
    struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
       using Base = impl::Classic<Binary_node<Interface>>;
       using Base::Base;
-
-      const ipr::Type& type() const { return this->rep.first; }
+      const ipr::Type& type() const final { return this->rep.first; }
    };
 
                               // -- Linkage --
@@ -1016,9 +1015,10 @@ namespace ipr::impl {
       impl::Overload* overload;
       const ipr::Region* home;
       master_decl_data(impl::Overload* ovl, const ipr::Type& t)
-            : basic_decl_data<Interface>(this),
-               overload_entry(t),
-               overload(ovl),home(0)
+            : basic_decl_data<Interface>{this},
+               overload_entry{t},
+               overload{ovl},
+               home{nullptr}
       { }
    };
 
@@ -1199,7 +1199,7 @@ namespace ipr::impl {
          return *util::check(this->decl_data.master_data->decl);
       }
 
-      const ipr::Sequence<ipr::Decl>& decl_set() const
+      const ipr::Sequence<ipr::Decl>& decl_set() const final
       {
          return this->decl_data.master_data->declset;
       }

@@ -20,12 +20,12 @@ ipr::util::string::arena::arena()
       : mem(static_cast<pool*>(operator new(poolsz))),
         next_header(mem->storage)
 {
-   mem->previous = 0;
+   mem->previous = nullptr;
 }
 
 ipr::util::string::arena::~arena()
 {
-   while (mem != 0) {
+   while (mem != nullptr) {
       pool* cur = mem;
       mem = mem->previous;
       operator delete (cur);
@@ -38,7 +38,7 @@ ipr::util::string*
 ipr::util::string::arena::allocate(int n)
 {
    const int m = (n - string::padding_count + headersz - 1) / headersz + 1;
-   string* header;
+   string* header{};
 
    // If we have enough space left, juts grab it.
    if (m <= remaining_header_count()) {

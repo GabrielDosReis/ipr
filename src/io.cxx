@@ -61,7 +61,7 @@ namespace ipr {
    };
 
    Printer::Printer(std::ostream& os)
-         : stream(os), pad(None), emit_newline(false),
+         : stream(os), pad(Padding::None), emit_newline(false),
            pending_indentation(0) { }
 
    Printer&
@@ -94,13 +94,13 @@ namespace ipr {
    inline Printer&
    operator<<(Printer& printer, Token_helper<T> t)
    {
-      return printer << t.value << Printer::None;
+      return printer << t.value << Printer::Padding::None;
    }
 
    inline Printer&
    insert_xtoken(Printer& printer, const char* s)
    {
-      return printer << s << Printer::None;
+      return printer << s << Printer::Padding::None;
    }
 
    struct needs_newline { };
@@ -220,11 +220,11 @@ namespace ipr {
    static inline Printer&
    operator<<(Printer& printer, xpr_identifier id)
    {
-      if (printer.padding() == Printer::Before)
+      if (printer.padding() == Printer::Padding::Before)
          printer << ' ';
       printer.write(id.begin, id.last);
 
-      return printer <<  Printer::Before;
+      return printer <<  Printer::Padding::Before;
    }
 
    Printer&
@@ -277,7 +277,7 @@ namespace ipr {
             if (not std::isalpha(*s.begin()))
                {
                   pp.write(s.begin(), s.end());
-                  pp << Printer::None;
+                  pp << Printer::Padding::None;
                }
             else
                pp << xpr_identifier(s);
@@ -470,7 +470,7 @@ namespace ipr {
                case '\1':
                case '\2':
                case '\3':
-                  pp << "\\0" << std::oct << int(*cur);
+                  pp << "\\0" << std::oct << static_cast<int>(*cur);
                   break;
                }
       }
@@ -1717,9 +1717,10 @@ namespace ipr {
             auto& locus = stmt.source_location();
             if (locus.file != File_index{})
             {
-               *pp << token("F") << (int)locus.file << token(':') << (int)locus.line;
+               *pp << token("F") << static_cast<int>(locus.file) << token(':')
+                   << static_cast<int>(locus.line);
                if (locus.column != Column_number{})
-                  *pp << token(':') << (int)locus.column;
+                  *pp << token(':') << static_cast<int>(locus.column);
                *pp << token(' ');
             }
          }

@@ -1779,7 +1779,7 @@ namespace ipr {
    // An alias is always initialized -- with what it is an alias for.
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<Category_code::Alias, Decl> {
-      const Type& type() const { return initializer().get().type(); }
+      const Type& type() const override { return initializer().get().type(); }
       const Region& lexical_region() const final { return home_region(); }
    };
 
@@ -1794,7 +1794,7 @@ namespace ipr {
       // A base-object is, by definition, unnamed.  However, it
       // is convenient to refer to it by the name of the corresponding
       // type -- in C++ tradition.
-      const Name& name() const { return type().name(); }
+      const Name& name() const final { return type().name(); }
       virtual Decl_position position() const = 0;
    };
 
