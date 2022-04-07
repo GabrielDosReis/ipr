@@ -100,6 +100,37 @@ namespace ipr::util {
     }
 }
 
+namespace ipr::cxx_form::impl {
+   Callable_species::Callable_species(const ipr::Region& parent, Mapping_level level)
+      : inputs{ parent, level }
+   { }
+
+   Simple_indirector* form_factory::make_simple_indirector()
+   {
+      return simple_indirectors.make();
+   }
+
+   Member_indirector* form_factory::make_member_indirector()
+   {
+      return member_indirectors.make();
+   }
+
+   Id_species* form_factory::make_id_species()
+   {
+      return id_species.make();
+   }
+
+   Array_species* form_factory::make_array_species()
+   {
+      return array_species.make();
+   }
+
+   Parenthesized_species* form_factory::make_parenthesized_species()
+   {
+      return paren_species.make();
+   }
+}
+
 namespace ipr::impl {
       Token::Token(const ipr::String& s, const Source_location& l,
                    TokenValue v, TokenCategory c)
@@ -476,6 +507,11 @@ namespace ipr::impl {
          return make(asms, s).with_type(t);
       }
 
+      impl::Specifiers_spread* dir_factory::make_specifiers_spread()
+      {
+         return spreads.make();
+      }
+
       impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
       {
          return asserts.make(e, s);
@@ -812,11 +848,11 @@ namespace ipr::impl {
       }
 
       impl::Qualified*
-      type_factory::make_qualified(ipr::Type_qualifier cv, const ipr::Type& t)
+      type_factory::make_qualified(ipr::Type_qualifiers cv, const ipr::Type& t)
       {
          // It is an error to call this function if there is no real
          // qualified.
-         if (cv == ipr::Type_qualifier::None)
+         if (cv == ipr::Type_qualifiers::None)
             throw std::domain_error
                ("type_factoy::make_qualified: no qualifier");
 
@@ -1750,7 +1786,7 @@ namespace ipr::impl {
       }
 
       impl::Qualification*
-      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifier q, const ipr::Type& t)
+      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifiers q, const ipr::Type& t)
       {
          return make(qualifications, e, q).with_type(t);
       }
@@ -2118,8 +2154,8 @@ namespace ipr::impl {
       }
 
       const ipr::Qualified&
-      Lexicon::get_qualified(ipr::Type_qualifier cv, const ipr::Type& t) {
-         assert (cv != ipr::Type_qualifier::None);
+      Lexicon::get_qualified(ipr::Type_qualifiers cv, const ipr::Type& t) {
+         assert (cv != ipr::Type_qualifiers::None);
          return *finish_type(types.make_qualified(cv, t));
       }
 
@@ -2237,7 +2273,7 @@ int main()
    // Build the variable's name,
    const Name* name = lexicon.make_identifier("bufsz");
    // then its type,
-   auto& type = lexicon.get_qualified(Type_qualifier::Const, lexicon.int_type());
+   auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
    // and the actual impl::Var node,
    impl::Var* var = global_scope->make_var(*name, type);
    // set its initializer,

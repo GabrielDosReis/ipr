@@ -1,0 +1,189 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+
+#ifndef IPR_FORM_INCLUDED
+#define IPR_FORM_INCLUDED
+
+#include <ipr/synopsis>
+#include <ipr/ancillary>
+
+// -- The IPR focuses primarily on capturing the semantics of C++, not mimic - with 
+// -- high fidelity - the ISO C++ source-level syntax minutiae, grammars, and other obscurities.
+// -- The IPR model of declaration reflects that semantics-oriented view.  Occasionally, it 
+// -- is necessary to bridge the gap between the generalized semantics model and the
+// -- irregularities and other grammatical hacks via IPR directives.  Some of those
+// -- directives need to refer to some form of input source level constructs, especially in 
+// -- cases of templated declarations involving non-ground types.
+// -- This file defines interfaces for some syntactic forms, i.e. abstractions of syntactic
+// -- input, to aid complete embedding of the ISO C++ specification.
+// -- Note: There is no effort in this file to reify the parse trees of the ISO C++ grammar.
+
+namespace ipr::cxx_form {
+    // -- Abstraction of ISO C++ Declarators:
+    // -- The C and C++ languages have tortuous grammars for declarations, whereby
+    // -- declarations are structured to mimic use (operator precedence).  A declaration
+    // -- is made of two essential pieces (decl-specifiers-seq and declarator), with an
+    // -- an optional component representing the initializer.  The decl-specifier-seq
+    // -- is a soup made of decl-specifier such as `static`, `extern`, etc. and simple-type
+    // -- names such as `int`, and type qualifiers.  Compound types are made with
+    // -- type-constructors such as `*` (pointer) or `&` (reference), etc.  
+    // -- The type-constructors (which really imply some form of data indirection) are specified
+    // -- along with the name being introduced, making up the declarator.
+    // -- Pointer-style type-constructors are modeled by `Indirector`.
+    // -- Mapping-style type constructors (functions, arrays) are modeled by `Species_declarator`.
+
+    struct Indirector_visitor;      // Base class of visitors for traversing `Indirector`s.
+
+    // Base class for objects representing ptr-operator (C++ grammar).
+    // While the source-level grammar of ISO C++ does not allow attributes on
+    // reference-style ptr-operator, the representation make room for that possibility.
+    // Hence all `Indirector` objects have an `attributes()` operation.
+    // At the input source level, `Indirector`s precede the name being declared in the declarator.
+    struct Indirector {
+        enum class Mode {
+            Deref,                  // "*" as ptr-operator in a declarator
+            Bind,                   // "&" as ptr-operator in a declarator
+            Move                    // "&&" as ptr-operator in a declarator
+        };
+        struct Simple;
+        struct Member;
+        virtual const Sequence<Attribute>& attributes() const = 0;
+        virtual void accept(Indirector_visitor&) const = 0;
+    };
+
+    // A simple `Indirector` object is a ptr-operator that specifies a simple indirection:
+    //     pointer, lvalue reference, or an rvalue reference
+    struct Indirector::Simple : Indirector {
+        virtual Mode mode() const = 0;
+    };
+
+    // A member `Indirector` object represents a ptr-operator that specifies a pointer to member.
+    struct Indirector::Member : Indirector {
+        virtual const Scope_ref& scope() const = 0;
+        virtual Type_qualifiers qualifiers() const = 0;
+    };
+
+    // Traversal of Indirector objects is facilitated by visitor classes deriving
+    // from this interface.
+    struct Indirector_visitor {
+        virtual void visit(const Indirector::Simple&) = 0;
+        virtual void visit(const Indirector::Member&) = 0;
+    };
+
+    // A species declarator indicates the typical usage of a named being declared.
+    //   - Id: an id-expression
+    //   - Callable: a callable expression
+    //   - Array: a table expression
+    //   - Parenthesized: requires parenthesis to obey operator precedence rules
+
+    struct Species_visitor;
+
+    struct Species_declarator {
+        struct Id;
+        struct Callable;
+        struct Array;
+        struct Parenthesized;
+        virtual void accept(Species_visitor&) const = 0;
+    };
+
+    // -- A declarator is either a term, or a species with a target type.
+    // -- A term is a sequence of indirectors followed by a species.
+    // -- A species indicates the typical usage syntactic structure of the named being declared.
+
+    struct Declarator_visitor;
+
+    // Almost all ISO C++ declarators have an optional attribute-specifier-seq.
+    // The modeling here allows (trailing) attribute sequence on all declarators,
+    // given by the `attributes()` operation.
+    struct Declarator {
+        struct Term;
+        struct Targeted;
+        virtual const Sequence<Attribute>& attributes() const = 0;
+        virtual void accept(Declarator_visitor&) const = 0;
+    };
+
+    // A term declarator is a sequence of `Indirector`s followed by a species declarator.
+    struct Declarator::Term : Declarator {
+        virtual const Sequence<Indirector>& indirectors() const = 0;
+        virtual const Species_declarator& species() const = 0;
+    };
+
+    // A targeted declarator is a species declarator with a trailing return type,
+    // given by the `target()` operation.
+    struct Declarator::Targeted : Declarator {
+        virtual const Species_declarator::Callable& species() const = 0;
+        virtual const Type& target() const = 0;
+    };
+
+    // Traversal of declarator objects is facilitated by visitor classes deriving
+    // from this interface.
+    struct Declarator_visitor {
+        virtual void visit(const Declarator::Term&) = 0;
+        virtual void visit(const Declarator::Targeted&) = 0;
+    };
+
+    // An id-expression in the species declarator.  That name may be further subject to pack expansion
+    struct Species_declarator::Id : Species_declarator {
+        virtual const Expr& name() const = 0;
+    };
+
+    // A species declarator indicating something that can be called.  That something
+    // is described by the species in the `prefix()` sequence of species.
+    struct Species_declarator::Callable : Species_declarator {
+        virtual const Sequence<Species_declarator>& prefix() const = 0;
+        virtual const Parameter_list& parameters() const = 0;
+        virtual Type_qualifiers qualifiers() const = 0;
+        virtual Binding_mode binding_mode() const = 0;
+        virtual Optional<Expr> throws() const = 0;
+    };
+
+    // A species declarator indicating something that can be indexed.  That something
+    // is described by the species in the `prefix()` sequence of species.
+    struct Species_declarator::Array : Species_declarator {
+        virtual const Sequence<Species_declarator>& prefix() const = 0;
+        virtual Optional<Expr> bound() const = 0;
+    };
+
+    // A term declarator requiring parenthesis to obey operator precedence rules.
+    struct Species_declarator::Parenthesized : Species_declarator {
+        virtual const Declarator::Term& term() const = 0;
+    };
+
+    // Traversal of species objects is facilitated by visitor classes deriving
+    // from this interface.
+    struct Species_visitor {
+        virtual void visit(const Species_declarator::Id&) = 0;
+        virtual void visit(const Species_declarator::Callable&) = 0;
+        virtual void visit(const Species_declarator::Array&) = 0;
+        virtual void visit(const Species_declarator::Parenthesized&) = 0;
+    };
+
+    struct Proclamator_visitor;
+
+    struct Proclamator {
+        struct Initialized;
+        struct Constrained;
+        virtual const Declarator& declarator() const = 0;
+        virtual Decl& result() const = 0;
+        virtual void accept(Proclamator_visitor&) const = 0;
+    };
+
+    struct Proclamator::Initialized : Proclamator {
+        virtual Optional<Expr> initializer() const = 0;
+    };
+
+    struct Proclamator::Constrained : Proclamator {
+        virtual const Expr& constraint() const = 0;
+    };
+
+    struct Proclamator_visitor {
+        virtual void visit(const Proclamator::Initialized&) = 0;
+        virtual void visit(const Proclamator::Constrained&) = 0;
+    };
+}
+
+#endif // IPR_FORM_INCLUDED

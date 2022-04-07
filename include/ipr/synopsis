@@ -8,6 +8,8 @@
 #ifndef IPR_SYNOPSIS_INCLUDED
 #define IPR_SYNOPSIS_INCLUDED
 
+#include <ipr/ancillary>
+
 namespace ipr {
    struct Node;                  // universal base class for all IPR nodes
 
@@ -161,6 +163,7 @@ namespace ipr {
    struct Reinterpret_cast;      // reinterpret-cast  reinterpret_cast<T>(v)
    struct Rshift;                // right shift                    a >> b
    struct Rshift_assign;         // in-place right shift           a >>= b
+   struct Scope_ref;             // qualified name                N::f
    struct Static_cast;           // static-cast            static_cast<T>(v)
    struct Widen;                 // derived to base class conversion
 
@@ -201,6 +204,7 @@ namespace ipr {
    // -----------------------------------------------
    struct Asm;                   // asm-declaration
    struct Deduction_guide;       // deduction-guide declaration
+   struct Specifiers_spread;     // spread of decls-sequence-seq over a sequence of declarators
    struct Static_assert;         // static-assert declaration
    struct Structured_binding;    // structured-binding declaration
    struct Using_declaration;     // using-declaration
@@ -236,6 +240,9 @@ namespace ipr {
    // -- built-ins, but not constants --
    // ----------------------------------
    struct Global_scope;          // global namespace -- "::"
+
+   // -- Ancillary classes --
+   template<typename> struct Sequence;    // sequence of items
 }
 
 #endif // IPR_SYNOPSIS_INCLUDED

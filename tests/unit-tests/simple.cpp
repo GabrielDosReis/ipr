@@ -13,7 +13,7 @@ TEST_CASE("global constant variable can be printed") {
   impl::Scope* global_scope = unit.global_scope();
 
   const Name* name = lexicon.make_identifier("bufsz");
-  auto& type = lexicon.get_qualified(Type_qualifier::Const, lexicon.int_type());
+  auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
   impl::Var* var = global_scope->make_var(*name, type);
   var->init = lexicon.make_literal(lexicon.int_type(), "1024");
 
@@ -33,7 +33,7 @@ TEST_CASE("Can create and print line numbers")
   impl::Scope* global_scope = unit.global_scope();
 
   const Name* name = lexicon.make_identifier("bufsz");
-  auto& type = lexicon.get_qualified(Type_qualifier::Const, lexicon.int_type());
+  auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
   impl::Var* var = global_scope->make_var(*name, type);
   var->init = lexicon.make_literal(lexicon.int_type(), "1024");
 

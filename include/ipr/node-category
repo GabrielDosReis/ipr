@@ -146,6 +146,7 @@ Scope,                              // ipr::Scope
 
 Asm,                                // ipr::Asm
 Deduction_guide,                    // ipr::Deduction_guide
+Specifiers_spread,                  // ipr::Specifiers_spread
 Static_assert,                      // ipr::Static_assert
 Structured_binding,                 // ipr::Structured_binding
 Using_declaration,                  // ipr::Using_declaration

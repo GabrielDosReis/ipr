@@ -8,13 +8,17 @@
 #ifndef IPR_INTERFACE_INCLUDED
 #define IPR_INTERFACE_INCLUDED
 
-#include <stdint.h>
+#include <cstdint>
 #include <utility>
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
 #include <ipr/utility>
 #include <ipr/synopsis>
+#include <ipr/ancillary>
+#include <ipr/location>
+#include <ipr/attribute>
+#include <ipr/cxx-form>
 
 namespace ipr {
    // IPR is designed to be regular, fully general enough to
@@ -66,30 +70,6 @@ namespace ipr {
    // Warning:  If you add any new "leaf" node type, you need to update
    //           "ipr/node-category.def" for the numerical mapping.
 
-   // ---------------------------
-   // -- Phases of translation --
-   // ---------------------------
-   // A bitmask type for the various phases of C++ program translation.
-   enum class Phases {
-      Unknown              = 0x0000,   // Unknown translation phase
-      Reading              = 0x0001,   // Opening and reading an input source
-      Lexing               = 0x0002,   // Lexical decomposition of input source
-      Preprocessing        = 0x0004,   // Macro expansion and friends
-      Parsing              = 0x0008,   // Grammatical decomposition of the input source
-      Name_resolution      = 0x0010,   // Name lookup
-      Typing               = 0x0020,   // Type assignment of expressions
-      Evaluation           = 0x0040,   // Compile-time evaluation
-      Instantiation        = 0x0080,   // Template instantiation phase
-      Code_generation      = 0x0100,   // Code generation phase
-      Linking              = 0x0200,   // Linking phase
-      Loading              = 0x0400,   // Program loading phase
-      Execution            = 0x0800,   // Runtime execution
-
-      Elaboration          = Name_resolution | Typing | Evaluation | Instantiation,
-      All                  = ~0x0,
-   };
-
-
                                 // -- Category_node --
    // A list of numerical codes in one-to-one correspondence with
    // IPR node "interface types".  In a sufficiently expressive and
@@ -100,44 +80,6 @@ namespace ipr {
 #include <ipr/node-category>
    };
 
-                                // -- Various Location Types --
-   // C++ constructs span locations.  There are at least four flavours of
-   // locations:
-   //       (a) physical source location;
-   //       (b) logical source location;
-   //       (c) physical unit location; and
-   //       (d) logical unit location.
-   // Physical and logical source locations are locations as witnessed
-   // at translation phase 2 (see ISO C++, §2.1/1).
-   // Physical and logical unit locations are locations as manifest when
-   // looking at a translation unit, at translation phase 4.
-   //
-   // Many IPR nodes will have a source and unit locations.  Instead of
-   // storing a source file and unit name as a string in every
-   // location data type, we save space by mapping file-names and
-   // unit-names to IDs (integers).  That mapping is managed by the Unit
-   // instance.
-
-   enum class Line_number : uint32_t { };
-   enum class Column_number : uint32_t { };
-
-   struct Basic_location {
-      Line_number line = { };
-      Column_number column = { };
-   };
-
-   enum class File_index : uint32_t { };
-
-   struct Source_location : Basic_location {
-      File_index file = { };    // ID of the file
-   };
-
-   enum class Unit_index : uint32_t { };
-
-   struct Unit_location : Basic_location {
-      Unit_index unit = { };    // ID of the unit
-   };
-
    // -- General structural utility types.
 
    template<Category_code Cat, class T = Expr>
@@ -146,159 +88,11 @@ namespace ipr {
       constexpr Category() : T{ Cat } { }
    };
 
-                                // -- Sequence<> --
-   // Often, we use a notion of sequence to represent intermediate
-   // abstractions like base-classes, enumerators, catch-clauses,
-   // parameter-type-list, etc.  A "Sequence" is a collection abstractly
-   // described by its "begin()" and "end()" iterators.  It is made
-   // abstract because it may admit different implementations depending
-   // on concrete constraints.  For example, a scope (a sequence of
-   // declarations, that additionally supports look-up by name) may
-   // implement this interface either as a associative-array that maps
-   // Names to Declarations (with no particular order) or as
-   // vector<Declaration*> (in order of their appearance in programs), or
-   // as a much more elaborated data structure.
-   template<class T>
-   struct Sequence  {
-      struct Iterator;          // An iterator is a pair of (sequence,
-                                // position).  The position indicates
-                                // the particular value referenced in
-                                // the sequence.
-
-      // Provide STL-style interface, for use with some STL algorithm
-      // helper classes.  Sequence<> is an immutable sequence.
-      using value_type = T;
-      using reference = const T&;
-      using pointer = const T*;
-      using Index = std::size_t;
-      using iterator = Iterator;
-
-      virtual Index size() const = 0;
-      bool empty() const { return not (size() > 0); }
-      Iterator begin() const;
-      Iterator end() const;
-      Iterator position(Index) const;
-
-   protected:
-      virtual const T& get(Index) const = 0;
-   };
-
-                                // -- Sequence<>::Iterator --
-   // This iterator class is as abstract as it could be, for useful
-   // purposes.  It forwards most operations to the "Sequence" class
-   // it provides a view for.
-   template<class T>
-   struct Sequence<T>::Iterator {
-      using self_type = Sequence<T>::Iterator;
-      using value_type = const T;
-      using reference = const T&;
-      using pointer = const T*;
-      using difference_type = ptrdiff_t;
-      using Index = typename Sequence<T>::Index;
-      using iterator_category = std::bidirectional_iterator_tag;
-
-      Iterator() {}
-      Iterator(const Sequence* s, Index i) : seq{ s }, index{ i } { }
-
-      const T& operator*() const
-      { return seq->get(index); }
-
-      const T* operator->() const
-      { return &seq->get(index); }
-
-      Iterator& operator++()
-      {
-         ++index;
-         return *this;
-      }
-
-      Iterator& operator--()
-      {
-        --index;
-        return *this;
-      }
-
-      Iterator operator++(int)
-      {
-         Iterator tmp = *this;
-         ++index;
-         return tmp;
-      }
-
-      Iterator operator--(int)
-      {
-        Iterator tmp = *this;
-        --index;
-        return tmp;
-      }
-
-      bool operator==(Iterator other) const
-      { return seq == other.seq and index == other.index; }
-
-      bool operator!=(Iterator other) const
-      { return not(*this == other); }
-
-   private:
-      const Sequence* seq { };
-      Index index { };
-   };
-
-   template<class T>
-   inline typename Sequence<T>::Iterator
-   Sequence<T>::position(Index i) const
-   { return { this, i }; }
-
-   template<class T>
-   inline typename Sequence<T>::Iterator
-   Sequence<T>::begin() const
-   { return { this, 0 }; }
-
-   template<class T>
-   inline typename Sequence<T>::Iterator
-   Sequence<T>::end() const
-   { return { this, size() }; }
-
-                                 // -- Delimiter --
-   // Enclosure delimiters of expressions
-   enum class Delimiter {
-      Nothing,                   // no delimiter
-      Paren,                     // "()"
-      Brace,                     // "{}"
-      Bracket,                   // "[]"
-      Angle,                     // "<>"
-   };
-
    // Nesting level of a mapping
    enum class Mapping_level : std::size_t { };
 
    // Position of a declaration in its declarative region
    enum class Decl_position : std::size_t { };
-
-
-                                // -- Binding_move --
-   // Mode of binding of a object value to a name (parameter, variable, alias, etc).
-   enum class Binding_mode : std::uint8_t {
-      Copy,                         // by copy operation; default binding mode of C and C++
-      Reference,                    // by ref; the parameter or varable has an lvalue reference type
-      Move,                         // by move operation; transfer of ownership
-      Default = Copy,
-   };
-
-                                // -- Optional<> --
-   // Occasionally, a node has an optional property (e.g. a variable
-   // has an optional initializer).  This class template captures
-   // that commonality and provides a checked access.
-   template<typename T>
-   struct Optional {
-      Optional(const T* p = nullptr) : ptr { p } { }
-      const T& get() const { return *util::check(ptr); }
-      bool is_valid() const { return ptr != nullptr; }
-      explicit operator bool() const { return is_valid(); }
-      template<typename U, bool = std::is_base_of_v<T, U>>
-      operator Optional<U>() const { return { ptr }; }
-   private:
-      const T* ptr;
-   };
 
                                 // -- Unary<> --
    // A unary-expression is a specification of an operation that takes
@@ -315,7 +109,6 @@ namespace ipr {
       using Arg_type = Operand;
       virtual Operand operand() const = 0;
    };
-
 
                                 // -- Binary<> --
    // In full generality, a binary-expression is an expression that
@@ -370,93 +163,8 @@ namespace ipr {
       virtual Fourth fourth() const = 0;
    };
 
-
-   // -----------------------------------
-   // -- Basic syntactic units: Tokens --
-   // -----------------------------------
-   // The IPR focuses primarily on semantic aspects of C++ constructs.
-   // Certain constructs, such as uninstantiated template definitions,
-   // are primarily syntactic with minimal semantic processing.  IPR nodes
-   // can fully represent those structurally well-defined syntactic entities.
-   // However, C++11 added attributes which are essentially token soups.  These
-   // attributes make the IPR interface less abstract than wanted.
-
-   // General classification of tokens, e.g. identifier, number, space, comment, etc.
-   enum class TokenCategory : uint8_t { };
-
-   // A numerical value associated with each token.
-   enum class TokenValue : uint16_t { };
-
-   struct Lexeme {
-      virtual const String& spelling() const = 0;
-      virtual const Source_location& locus() const = 0;
-   };
-
-   struct Token {
-      virtual const Lexeme& lexeme() const = 0;
-      virtual TokenValue value() const = 0;
-      virtual TokenCategory category() const = 0;
-   };
-
-   struct Attribute {
-      struct Visitor;
-      virtual void accept(Visitor&) const = 0;
-   };
-
-   // A simple token used as attribute.
-   struct BasicAttribute : Attribute {
-      virtual const Token& token() const = 0;
-   };
-
-   // An attribute of the form `token1 :: token2'
-   struct ScopedAttribute : Attribute {
-      virtual const Token& scope() const = 0;
-      virtual const Token& member() const = 0;
-   };
-
-   // An attribute of the form `token : attribute'.
-   struct LabeledAttribute : Attribute {
-      virtual const Token& label() const = 0;
-      virtual const Attribute& attribute() const = 0;
-   };
-
-   // An attribute of the form `f(args)'.
-   struct CalledAttribute : Attribute {
-      virtual const Attribute& function() const = 0;
-      virtual const Sequence<Attribute>& arguments() const = 0;
-   };
-
-   // An attribute of the form `attribute...'
-   struct ExpandedAttribute : Attribute {
-      virtual const Token& expander() const = 0;
-      virtual const Attribute& operand() const = 0;
-   };
-
-   // An attribute of the form `[[using check: memory(3), type(2)]]'
-   struct FactoredAttribute : Attribute {
-      virtual const Token& factor() const = 0;
-      virtual const Sequence<Attribute>& terms() const = 0;
-   };
-
-   // An attribute of the form `[[ expr ]]', where `expr' is the elaboration result
-   // of parsing and semantics analysis of the enclosed token sequence.  This is a 
-   // common non-standard form of attribute.
-   struct ElaboratedAttribute : Attribute {
-      virtual const Expr& elaboration() const = 0;
-   };
-
-   struct Attribute::Visitor {
-      virtual void visit(const BasicAttribute&) = 0;
-      virtual void visit(const ScopedAttribute&) = 0;
-      virtual void visit(const LabeledAttribute&) = 0;
-      virtual void visit(const CalledAttribute&) = 0;
-      virtual void visit(const ExpandedAttribute&) = 0;
-      virtual void visit(const FactoredAttribute&) = 0;
-      virtual void visit(const ElaboratedAttribute&) = 0;
-   };
-
                                 // -- DeclSpecifiers --
-   enum class DeclSpecifiers : uint32_t {
+   enum class DeclSpecifiers : std::uint32_t {
       None       = 0,
       Register   = 1 << 0,   // Banned from C++17.
       Static     = 1 << 1,
@@ -487,7 +195,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) | uint32_t(b));
+      return DeclSpecifiers(std::uint32_t(a) | std::uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -497,7 +205,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) & uint32_t(b));
+      return DeclSpecifiers(std::uint32_t(a) & std::uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -507,7 +215,7 @@ namespace ipr {
 
    constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
    {
-      return DeclSpecifiers(uint32_t(a) ^ uint32_t(b));
+      return DeclSpecifiers(std::uint32_t(a) ^ std::uint32_t(b));
    }
 
    constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
@@ -522,7 +230,7 @@ namespace ipr {
 
                                  // -- Lambda_specifiers --
    // Declaration specifiers that can appear on a lambda expression.
-   enum class Lambda_specifiers : uint32_t {
+   enum class Lambda_specifiers : std::uint32_t {
       None = 0,
       Mutable    = 1 << 0,
       Constexpr  = 1 << 1,
@@ -833,58 +541,6 @@ namespace ipr {
       constexpr Type(Category_code c) : Expr{ c } { }
    };
 
-   // cv-qualifiers are actually type operators.  Much of these operators
-   // currently make sense only for classic type -- although it might
-   // be interesting to explore the notion of pointer to overload-set
-   // or reference to such an expression.
-   enum class Type_qualifier : uint8_t {
-      None             = 0,
-      Const            = 1 << 0,
-      Volatile         = 1 << 1,
-      Restrict         = 1 << 2        // not standard C++
-   };
-
-   constexpr Type_qualifier
-   operator|(Type_qualifier a, Type_qualifier b)
-   {
-      return Type_qualifier(uint8_t(a) | uint8_t(b));
-   }
-
-   inline Type_qualifier&
-   operator|=(Type_qualifier& a, Type_qualifier b)
-   {
-      return a = a | b;
-   }
-
-   constexpr Type_qualifier
-   operator&(Type_qualifier a, Type_qualifier b)
-   {
-      return Type_qualifier(uint8_t(a) & uint8_t(b));
-   }
-
-   inline Type_qualifier&
-   operator&=(Type_qualifier& a, Type_qualifier b)
-   {
-      return a = a & b;
-   }
-
-   constexpr Type_qualifier
-   operator^(Type_qualifier a, Type_qualifier b)
-   {
-      return Type_qualifier(uint8_t(a) ^ uint8_t(b));
-   }
-
-   inline Type_qualifier&
-   operator^=(Type_qualifier& a, Type_qualifier b)
-   {
-      return a = a ^ b;
-   }
-
-   constexpr bool implies(Type_qualifier a, Type_qualifier b)
-   {
-      return (a & b) == b;
-   }
-
                                 // -- Array --
    // An array-type describes object expressions that designate C-style
    // homogenous object containers that meet the random-access
@@ -1003,7 +659,7 @@ namespace ipr {
    // We also maintain the invariant that Qualified::qualifiers is never
    // Type::None, consequently it is an error to attempt to create such a node.
    struct Qualified : Binary<Category<Category_code::Qualified, Type>,
-                             ipr::Type_qualifier, const Type&> {
+                             ipr::Type_qualifiers, const Type&> {
       Arg1_type qualifiers() const { return first(); }
       Arg2_type main_variant() const { return second(); }
    };
@@ -1091,7 +747,7 @@ namespace ipr {
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
    struct Enum : Category<Category_code::Enum, Udt<Enumerator>> {
-      enum class Kind : uint8_t {     // The kind of enum.
+      enum class Kind : std::uint8_t {     // The kind of enum.
          Legacy,                      // traditional C-style enum
          Scoped                       // scoped enum (C++11)
       };
@@ -1655,9 +1311,9 @@ namespace ipr {
 
                                 // -- Qualification --
    // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifier> {
+   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifiers> {
       Arg1_type expr() const { return first(); }
-      Arg2_type qualifier() const { return second(); }
+      Arg2_type qualifiers() const { return second(); }
    };
 
                                 // -- Reinterpret_cast --
@@ -1773,6 +1429,16 @@ namespace ipr {
    // Its type should be set to "void".
    struct Asm : Category<Category_code::Asm, Directive> {
       virtual const String& text() const = 0;
+   };
+
+                                // -- Specifiers_spread --
+   // A directive to spread a decl-specifier-seq over a collection of init-declarators.
+   // - The init-declarators are given by the `targets()` operation.
+   // - The type component of the decl-specifier-seq is given by `type()`.
+   // - The non-type component of the decl-specifier-seq is given by `specifiers()`.
+   struct Specifiers_spread : Category<Category_code::Specifiers_spread, Directive> {
+      virtual DeclSpecifiers specifiers() const = 0;
+      virtual const Sequence<cxx_form::Proclamator>& targets() const = 0;
    };
 
                                 // -- Static_assert --
@@ -2395,6 +2061,7 @@ namespace ipr {
 
       virtual void visit(const Directive&) = 0;
       virtual void visit(const Asm&);
+      virtual void visit(const Specifiers_spread&);
       virtual void visit(const Static_assert&);
       virtual void visit(const Structured_binding&);
       virtual void visit(const Using_declaration&);
