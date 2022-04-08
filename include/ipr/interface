@@ -1779,7 +1779,6 @@ namespace ipr {
    // An alias is always initialized -- with what it is an alias for.
    // The type of an Alias expression is that of its initializer.
    struct Alias : Category<Category_code::Alias, Decl> {
-      const Type& type() const override { return initializer().get().type(); }
       const Region& lexical_region() const final { return home_region(); }
    };
 
