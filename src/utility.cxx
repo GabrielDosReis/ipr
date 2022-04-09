@@ -9,7 +9,7 @@
 #include <algorithm>
 
 char
-ipr::util::string::operator[](int i) const
+ipr::util::string::operator[](size_type i) const
 {
    if (i < 0 or i >= length)
       throw std::domain_error("invalid index for util::string::operator[]");
@@ -35,9 +35,9 @@ ipr::util::string::arena::~arena()
 // Allocate storage sufficient to hold an immutable string of length "n".
 
 ipr::util::string*
-ipr::util::string::arena::allocate(int n)
+ipr::util::string::arena::allocate(size_type n)
 {
-   const int m = (n - string::padding_count + headersz - 1) / headersz + 1;
+   const auto m = (n - string::padding_count + headersz - 1) / headersz + 1;
    string* header{};
 
    // If we have enough space left, juts grab it.
@@ -71,14 +71,10 @@ ipr::util::string::arena::allocate(int n)
 }
 
 const ipr::util::string*
-ipr::util::string::arena::make_string(const char* s, int n)
+ipr::util::string::arena::make_string(const char* s, size_type n)
 {
    string* header = allocate(n);
-
    header->length = n;
-   // >>>> Yuriy Solodkyy: 2007/05/29
-   // Put cast to avoid gettinch assert with safe STL in MSVC
-   std::copy(s, s + n, (char*)header->data);
-   // <<<< Yuriy Solodkyy: 2007/05/29
+   std::copy(s, s + n, &header->data[0]);
    return header;
 }

@@ -372,21 +372,19 @@ namespace ipr {
       struct string {
          struct arena;
 
-         using size_type = int; // integer type that string length
+         using size_type = std::ptrdiff_t; // integer type that string length
 
          // number of characters directly contained in this header
-         // of the string.  Takent to be the number of bytes in size_type.
-         enum {
-            padding_count = sizeof (size_type)
-         };
+         // of the string.  Taken to be the number of bytes in size_type.
+         static constexpr size_type padding_count = sizeof (size_type);
 
-         int size() const { return length; }
-         char operator[](int) const;
+         size_type size() const { return length; }
+         char operator[](size_type) const;
 
          const char* begin() const { return data; }
          const char* end() const { return begin() + length; }
 
-         int length;
+         size_type length;
          char data[padding_count];
       };
 
@@ -394,26 +392,26 @@ namespace ipr {
          arena();
          ~arena();
 
-         const string* make_string(const char*, int);
+         const string* make_string(const char*, size_type);
 
       private:
-         util::string* allocate(int);
-         int remaining_header_count() const
+         util::string* allocate(size_type);
+         auto remaining_header_count() const
          {
-            return static_cast<int>(next_header - &mem->storage[0]);
+            return next_header - &mem->storage[0];
          }
 
          struct pool;
 
-         enum { headersz = sizeof (util::string) };
-         enum { bufsz = headersz << (20 - sizeof (pool*)) };
+         static constexpr size_type headersz = sizeof (util::string);
+         static constexpr size_type bufsz = headersz << (20 - sizeof (pool*));
 
          struct pool {
             pool* previous;
             util::string storage[bufsz];
          };
 
-         enum { poolsz = sizeof (pool) };
+         static constexpr size_type poolsz = sizeof (pool);
 
          pool* mem;
          string* next_header;
