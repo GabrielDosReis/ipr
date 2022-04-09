@@ -587,14 +587,11 @@ namespace ipr {
    // may look at them as just some regular function, and assign them a Function type,
    // the higher level semantics of C++ is best served by a dedicated type to abstract
    // over ABI interpretation.
-   struct Tor : Ternary<Category<Category_code::Tor, Type>,
-                        const Expr&, const Type&, const Linkage&> {
+   struct Tor : Binary<Category<Category_code::Tor, Type>, const Expr&, const Type&> {
       // The parameter-list to a tor type.  Always empty for a Standard C++ destructor.
       Arg1_type source() const { return first(); }
       // The exception-specification for this tor type.
       Arg2_type throws() const { return second(); }
-      // The language linkage for this to type.  Default is "C++".
-      Arg3_type lang_linkage() const { return third(); }
    };
 
                                 // -- Function --

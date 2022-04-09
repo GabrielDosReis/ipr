@@ -1214,7 +1214,7 @@ namespace ipr::impl {
    using Array = Binary_type<ipr::Array>;
    using Decltype = Unary_type<ipr::Decltype>;
    using As_type = Binary_type<ipr::As_type>;
-   using Tor = Ternary_type<ipr::Tor>;
+   using Tor = Binary_type<ipr::Tor>;
    using Function = Quaternary<Type<ipr::Function>>;
    using Pointer = Unary_type<ipr::Pointer>;
    using Product = Unary_type<ipr::Product>;
@@ -1750,7 +1750,7 @@ namespace ipr::impl {
       impl::Qualified* make_qualified(ipr::Type_qualifiers,
                                        const ipr::Type&);
       impl::Decltype* make_decltype(const ipr::Expr&);
-      impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&, const ipr::Linkage&);
+      impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&);
       impl::Function* make_function(const ipr::Product&, const ipr::Type&,
                                     const ipr::Sum&, const ipr::Linkage&);
       impl::Pointer* make_pointer(const ipr::Type&);
