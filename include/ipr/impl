@@ -649,13 +649,13 @@ namespace ipr::cxx_form::impl {
    };
 
    struct Simple_indirector : impl::Indirector<cxx_form::Indirector::Simple> {
-      Mode indirection;
+      Mode indirection { };
       Mode mode() const final { return indirection; }
    };
 
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
       util::ref<const ipr::Scope_ref> whole;
-      ipr::Type_qualifiers cv_quals;
+      ipr::Type_qualifiers cv_quals { };
       const ipr::Scope_ref& scope() const final { return whole.get(); }
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
    };
@@ -674,8 +674,8 @@ namespace ipr::cxx_form::impl {
       ipr::impl::ref_sequence<cxx_form::Species_declarator> preceding_species;
       ipr::impl::Parameter_list inputs;
       Optional<ipr::Expr> eh_spec;
-      Type_qualifiers cv_quals;
-      Binding_mode ref_qual;
+      Type_qualifiers cv_quals { };
+      Binding_mode ref_qual { };
       Callable_species(const ipr::Region&, Mapping_level);
       const ipr::Sequence<cxx_form::Species_declarator>& prefix() const final { return preceding_species; }
       const ipr::Parameter_list& parameters() const final { return inputs; }
@@ -1194,7 +1194,7 @@ namespace ipr::impl {
          return this->decl_data.scope_pos;
       }
 
-      const ipr::Decl& master() const
+      const ipr::Decl& master() const final
       {
          return *util::check(this->decl_data.master_data->decl);
       }
@@ -1798,7 +1798,7 @@ namespace ipr::impl {
 
    struct Specifiers_spread : impl::Directive<ipr::Specifiers_spread, Phases::Elaboration> {
       impl::ref_sequence<cxx_form::Proclamator> proc_seq;
-      ipr::DeclSpecifiers specs;
+      ipr::DeclSpecifiers specs { };
 
       const ipr::Sequence<cxx_form::Proclamator>& targets() const final { return proc_seq; }
       ipr::DeclSpecifiers specifiers() const final { return specs; }
@@ -1817,10 +1817,10 @@ namespace ipr::impl {
       impl::ref_sequence<ipr::Identifier> ids;           // names in this structured binding
       util::ref<const ipr::Expr> init;                   // initializer of this structured binding
       impl::ref_sequence<ipr::Decl> decl_seq;            // declarations resulting from this structured binding
-      ipr::DeclSpecifiers specs;                         // the non-type part of decl-specifier-seq in 
+      ipr::DeclSpecifiers specs { };                     // the non-type part of decl-specifier-seq in 
                                                          // this structured binding.  Note: `type()` contains the
                                                          // the type part of the decl-specifier-seq
-      ipr::Binding_mode binding_mode;                    // the binding mode of this structured binding
+      ipr::Binding_mode binding_mode { };                // the binding mode of this structured binding
 
       ipr::DeclSpecifiers specifiers() const final { return specs; }
       ipr::Binding_mode mode() const final { return binding_mode; }
