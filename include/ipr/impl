@@ -43,7 +43,7 @@ namespace ipr::util {
    // This utility class captures the intent of disabling the automatic generation of the usual
    // copy/move operations.  The class definition is more verbose than the intent.
    struct immotile {
-      immotile() = default;
+      constexpr immotile() = default;
       immotile(immotile&&) = delete;
       immotile(const immotile&) = delete;
       immotile& operator=(immotile&&) = delete;
@@ -65,7 +65,7 @@ namespace ipr::impl {
       using typename Interface::Arg_type;
       Arg_type rep;
 
-      explicit Unary(Arg_type a) : rep{ a } { }
+      explicit constexpr Unary(Arg_type a) : rep{ a } { }
       Arg_type operand() const final { return rep; }
    };
 

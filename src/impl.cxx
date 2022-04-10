@@ -73,6 +73,23 @@ namespace ipr::impl {
 
         // Ensure the table of statically known words is lexicographically sorted.
         static_assert(std::is_sorted(std::begin(known_words), std::end(known_words), word_less));
+
+        // less-than comparator for known words (which are all constexpr data)
+        constexpr auto word_lt = [](auto& x, auto& y) { return x.text() < y; };
+
+        // Return the String representation for a known word.
+        // Raise an exception otherwise.
+        constexpr const String& known_word(const char* p)
+        {
+            auto place = std::lower_bound(std::begin(known_words), std::end(known_words), p, word_lt);
+            if (place >= std::end(known_words) or place->text() != p)
+               throw std::domain_error("unknown word");
+            return *place;
+        }
+
+        // Known language linkages to all C++ implementations.
+        constexpr Linkage c_linkage { known_word("C") };
+        constexpr Linkage cxx_linkage { known_word("C++") };
     }
 }
 
@@ -83,8 +100,7 @@ namespace ipr::util {
          return ipr::String::empty_string();
 
         // For statically known words, just return the statically allocated address.
-        constexpr auto lt = [](auto& x, auto& y) { return x.text() < y; };
-        if (const auto p = std::lower_bound(std::begin(impl::known_words), std::end(impl::known_words), w, lt);
+        if (const auto p = std::lower_bound(std::begin(impl::known_words), std::end(impl::known_words), w, impl::word_lt);
             p < std::end(impl::known_words) and p->text() == w)
             return *p;
 
@@ -1258,13 +1274,21 @@ namespace ipr::impl {
       }
 
       // -- Language linkage
-      const ipr::Linkage&
-      expr_factory::get_linkage(util::word_view w) {
+      const ipr::Linkage& expr_factory::get_linkage(util::word_view w)
+      {
+         if (w == "C")
+            return impl::c_linkage;
+         else if (w == "C++")
+            return impl::cxx_linkage;
          return get_linkage(get_string(w));
       }
 
-      const ipr::Linkage&
-      expr_factory::get_linkage(const ipr::String& lang) {
+      const ipr::Linkage& expr_factory::get_linkage(const ipr::String& lang)
+      {
+         if (&lang == &known_word("C"))
+            return impl::c_linkage;
+         else if (&lang == &known_word("C++"))
+            return impl::cxx_linkage;
          return *linkages.insert(lang, unary_compare());
       }
 
@@ -1882,13 +1906,8 @@ namespace ipr::impl {
 
       // -- impl::Lexicon --
 
-      const ipr::Linkage& Lexicon::cxx_linkage() const {
-         return const_cast<Lexicon*>(this)->get_linkage("C++");
-      }
-
-      const ipr::Linkage& Lexicon::c_linkage() const {
-         return const_cast<Lexicon*>(this)->get_linkage("C");
-      }
+      const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_linkage; }
+      const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_linkage; }
 
       void Lexicon::record_builtin_type(const ipr::As_type& t) {
          builtin_map.insert(t, unary_compare());
