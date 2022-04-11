@@ -404,7 +404,7 @@ namespace ipr {
          void visit(const Enclosure& e) final
          {
             static constexpr const char* syntax[] = { "\0\0", "()", "{}", "[]", "<>" };
-            const auto delimiters = syntax[static_cast<int>(e.delimiters())];
+            const auto delimiters = syntax[util::rep(e.delimiters())];
             pp << token(delimiters[0]) << xpr_expr(e.expr()) << token(delimiters[1]);
          }
          void visit(const Expr& e) override
@@ -1717,10 +1717,10 @@ namespace ipr {
             auto& locus = stmt.source_location();
             if (locus.file != File_index{})
             {
-               *pp << token("F") << static_cast<int>(locus.file) << token(':')
-                   << static_cast<int>(locus.line);
+               *pp << token("F") << util::rep(locus.file) << token(':')
+                   << util::rep(locus.line);
                if (locus.column != Column_number{})
-                  *pp << token(':') << static_cast<int>(locus.column);
+                  *pp << token(':') << util::rep(locus.column);
                *pp << token(' ');
             }
          }
