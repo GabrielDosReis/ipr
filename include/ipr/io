@@ -18,19 +18,20 @@
 namespace ipr
 {
    // FIXME: Remove these data structures.
-   /// A data structure used to map different uses of a name to the
-   /// corresponding declaration. It is used by XPR printer to print name
-   /// disambiguation information. A similar but a bit more elaborated structure
-   /// is used by XPR parser to relink uses of names to appropriate declarations.
-   /// The key of the map is the node_id of the name used, while the value
-   /// is the information about corresponding declaration.
+   // A data structure used to map different uses of a name to the
+   // corresponding declaration. It is used by XPR printer to print name
+   // disambiguation information. A similar but a bit more elaborated structure
+   // is used by XPR parser to relink uses of names to appropriate declarations.
+   // The key of the map is the node_id of the name used, while the value
+   // is the information about corresponding declaration.
    struct disambiguation_map_type : std::map<const ipr::Name*, std::vector<const ipr::Decl*>>
    {
       using declarations = std::vector<const ipr::Decl*>;
+      using size_type = std::ptrdiff_t;
 
-      /// Given a name and a declaration that corresponds to it, looks up
-      /// or allocates a disambiguation id for them.
-      int get_disambiguation(const ipr::Name& name, const ipr::Decl& declaration)
+      // Given a name and a declaration that corresponds to it, looks up
+      // or allocates a disambiguation id for them.
+      size_type get_disambiguation(const ipr::Name& name, const ipr::Decl& declaration)
       {
          declarations& decls = (*this)[&name];
          declarations::const_iterator p = std::find(decls.begin(), decls.end(), &declaration);
@@ -38,11 +39,11 @@ namespace ipr
          if (p == decls.end())
          {
             decls.push_back(&declaration);
-            return static_cast<int>(decls.size()); // Because disambiguations are 1-based
+            return decls.size();                         // Because disambiguations are 1-based
          }
-         return static_cast<int>(p - decls.begin()) + 1; // Because disambiguations are 1-based
+         return (p - decls.begin()) + 1;                 // Because disambiguations are 1-based
       }
-   }; // of struct disambiguation_map_type
+   };
 
    struct Printer {
       enum class Padding {
@@ -65,17 +66,8 @@ namespace ipr
       // take over all other good candidates when an implicit conversion
       // would be needed.
       Printer& operator<<(const char*);
-
-      Printer& operator<<(char c) { stream << c; return *this; }
-
-      Printer& operator<<(signed char c) { stream << c; return *this; }
-
-      Printer& operator<<(unsigned char c) { stream << c; return *this; }
-
-      Printer& operator<<(int i) { stream << i; return *this; }
-
-      template<class T>
-      Printer& operator<<(T& f(T&)) { stream << f; return *this; }
+      template<typename T> requires util::std_insertable<T>
+      Printer& operator<<(T t) { stream << t; return *this; }
 
       // Setting padding flags
       Printer& operator<<(Padding p) { pad = p; return *this; }
