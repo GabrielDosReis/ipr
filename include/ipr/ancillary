@@ -219,7 +219,8 @@ namespace ipr {
    // that commonality and provides a checked access.
    template<typename T>
    struct Optional {
-      Optional(const T* p = nullptr) : ptr { p } { }
+      constexpr Optional(const T* p = nullptr) : ptr{p} { }
+      constexpr Optional(const T& t) requires std::is_abstract_v<T> : ptr{&t} { }
       const T& get() const { return *util::check(ptr); }
       bool is_valid() const { return ptr != nullptr; }
       explicit operator bool() const { return is_valid(); }
