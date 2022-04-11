@@ -26,7 +26,7 @@ TEST_CASE("C++ Standard Conversions") {
   // Pointer Conversion            (Coercion)
   const auto& ptr_type = lexicon.get_qualified(
     Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
-  auto& ptr = *unit.global_region()->declare_var(*lexicon.make_identifier("ptr"), ptr_type);
+  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier("ptr"), ptr_type);
   ptr.init = lexicon.make_coercion(
     *lexicon.make_literal(lexicon.int_type(), "0"),
     ptr_type,
@@ -70,8 +70,8 @@ TEST_CASE("Class Conversions") {
   INFO("Derived* d;");
   auto& base_ptr = lexicon.get_pointer(base);
   auto& derived_ptr = lexicon.get_pointer(derived);
-  auto& b = *unit.global_region()->declare_var(*lexicon.make_identifier("b"), base_ptr);
-  auto& d = *unit.global_region()->declare_var(*lexicon.make_identifier("d"), derived_ptr);
+  auto& b = *unit.global_region()->declare_var(lexicon.get_identifier("b"), base_ptr);
+  auto& d = *unit.global_region()->declare_var(lexicon.get_identifier("d"), derived_ptr);
 
   // Derived-to-base conversion
   INFO("b = d;");
@@ -117,7 +117,7 @@ TEST_CASE("CV Conversions") {
   INFO("const int* ptr;");
   const auto& ptr_type = lexicon.get_qualified(
     Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
-  auto& ptr = *unit.global_region()->declare_var(*lexicon.make_identifier("ptr"), ptr_type);
+  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier("ptr"), ptr_type);
 
   // Removal of const is a non-implicit conversion
   INFO("const_cast<int* const>(ptr);");
@@ -129,7 +129,7 @@ TEST_CASE("CV Conversions") {
   INFO("int** ptr_ptr");
   const auto& ptr_ptr_type = lexicon.get_pointer(lexicon.get_pointer(lexicon.int_type()));
   auto& ptr_ptr = *unit.global_region()->declare_var(
-    *lexicon.make_identifier("ptr_ptr"), ptr_ptr_type);
+    lexicon.get_identifier("ptr_ptr"), ptr_ptr_type);
 
   INFO("(int**) -> (int* const* const)");
   lexicon.make_qualification(
@@ -145,7 +145,7 @@ TEST_CASE("CV Conversions") {
   );
 
   INFO("const int var = 0;");
-  auto& var = *unit.global_region()->declare_var(*lexicon.make_identifier("var"), 
+  auto& var = *unit.global_region()->declare_var(lexicon.get_identifier("var"), 
     lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type()));
 
   // Pretend can be used to explicitly reperesent automatic type adjustment as detailed

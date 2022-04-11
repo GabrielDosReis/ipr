@@ -12,3 +12,17 @@ Use:
   - `or` for logical disjunction
 
 
+## Factory function names
+
+Use:
+  - `get_xxx` for factory function names that return the same output for same inputs
+  - `make_xxx` for factory function names that always return fresh structures
+
+
+## Source file extensions
+
+Use
+  - `.cxx` for implementation source files
+
+
+

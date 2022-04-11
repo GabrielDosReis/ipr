@@ -520,7 +520,7 @@ namespace ipr::impl {
       for (Index i = 0; i < s; ++i) {
          const auto& decl = decls.seq.get(i);
          if (&decl.name() == &n)
-            return { &decl.overload };
+            return { decl.overload };
       }
 
       return { };
@@ -1370,7 +1370,7 @@ namespace ipr::impl {
       const ipr::Parameter_list& parameters() const final { return parms; }
       const ipr::Type& target() const final { return value_type.get(); }
       const ipr::Expr& result() const final { return body.get(); }
-      impl::Parameter* param(const ipr::Name&, const impl::Rname&);
+      impl::Parameter* param(const ipr::Name&, const ipr::Rname&);
    };
 
    using Member_init = Binary_expr<ipr::Member_init>;
@@ -1425,7 +1425,7 @@ namespace ipr::impl {
       // FIXME: The initializer should actually be the mapping, since a Template is a
       //        *named* mapping.  In Classic IPR, and in the current incarnation, the initializer 
       //        is the initializer of the current instantiation.
-      Optional<ipr::Expr> initializer() const final { return { &mapping().result() }; }
+      Optional<ipr::Expr> initializer() const final { return { mapping().result() }; }
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
 
@@ -1459,10 +1459,10 @@ namespace ipr::impl {
 
 
    struct Alias : impl::Decl<ipr::Alias> {
-      const ipr::Expr* aliasee;
+      util::ref<const ipr::Expr> aliasee;
 
       Alias();
-      Optional<ipr::Expr> initializer() const final { return aliasee; }
+      Optional<ipr::Expr> initializer() const final { return aliasee.get(); }
    };
 
    struct Var : impl::Decl<ipr::Var> {
@@ -1980,10 +1980,34 @@ namespace ipr::impl {
       const ipr::Scope& second() const final { return region.bindings(); }
    };
 
-   struct expr_factory {
-      // Returns an IPR node for unified string literals.
+   struct name_factory {
       const ipr::String& get_string(util::word_view);
+      const ipr::Identifier& get_identifier(const ipr::String&);
+      const ipr::Identifier& get_identifier(util::word_view);
+      const ipr::Suffix& get_suffix(const ipr::Identifier&);
+      const ipr::Operator& get_operator(const ipr::String&);
+      const ipr::Operator& get_operator(util::word_view);
+      const ipr::Type_id& get_type_id(const ipr::Type&);
+      const ipr::Conversion& get_conversion(const ipr::Type&);
+      const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
+      const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
+      const ipr::Guide_name& get_guide_name(const ipr::Template&);
+      const ipr::Rname& get_rname(Mapping_level, Decl_position, const ipr::Type&);
 
+   private:
+      util::string_pool strings;
+      util::rb_tree::container<impl::Identifier> ids;
+      util::rb_tree::container<impl::Suffix> suffixes;
+      util::rb_tree::container<impl::Conversion> convs;
+      util::rb_tree::container<impl::Ctor_name> ctors;
+      util::rb_tree::container<impl::Dtor_name> dtors;
+      util::rb_tree::container<impl::Operator> ops;
+      util::rb_tree::container<impl::Guide_name> guide_ids;
+      util::rb_tree::container<impl::Rname> rnames;
+      util::rb_tree::container<impl::Type_id> type_ids;
+   };
+
+   struct expr_factory : name_factory {
       // Returns an IPR node a language linkage.
       const ipr::Linkage& get_linkage(util::word_view);
       const ipr::Linkage& get_linkage(const ipr::String&);
@@ -2005,27 +2029,13 @@ namespace ipr::impl {
       Literal* make_literal(const ipr::Type&, const ipr::String&);
       Literal* make_literal(const ipr::Type&, util::word_view);
 
-      // Builds an IPR object for an identifier.
-      Identifier* make_identifier(const ipr::String&);
-      Identifier* make_identifier(util::word_view);
-
-      Suffix* make_suffix(const ipr::Identifier&);
-
-      // Builds an IPR object for an operator name.
-      Operator* make_operator(const ipr::String&);
-      Operator* make_operator(util::word_view);
-
-      Guide_name* make_guide_name(const ipr::Template&);
 
       Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
       Array_delete* make_array_delete(const ipr::Expr&);
       Complement* make_complement(const ipr::Expr&, Optional<ipr::Type> = {});
-      Conversion* make_conversion(const ipr::Type&);
-      Ctor_name* make_ctor_name(const ipr::Type&);
       Delete* make_delete(const ipr::Expr&);
       Demotion* make_demotion(const ipr::Expr&, const ipr::Type&);
       Deref* make_deref(const ipr::Expr&, Optional<ipr::Type> = {});
-      Dtor_name* make_dtor_name(const ipr::Type&);
       Expr_list* make_expr_list();
       Alignof* make_alignof(const ipr::Expr&, Optional<ipr::Type> = { });
       Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
@@ -2044,7 +2054,6 @@ namespace ipr::impl {
       Promotion* make_promotion(const ipr::Expr&, const ipr::Type&);
       Read* make_read(const ipr::Expr&, const ipr::Type&);
       Throw* make_throw(const ipr::Expr&, Optional<ipr::Type> = {});
-      Type_id* make_type_id(const ipr::Type&);
       Unary_minus* make_unary_minus(const ipr::Expr&, Optional<ipr::Type> = {});
       Unary_plus* make_unary_plus(const ipr::Expr&, Optional<ipr::Type> = {});
       Expansion* make_expansion(const ipr::Expr&, Optional<ipr::Type> = {});
@@ -2110,28 +2119,17 @@ namespace ipr::impl {
       Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                     const ipr::Expr&, Optional<ipr::Type> = {});
 
-      Rname* rname_for_next_param(const Mapping&, const ipr::Type&);
+      const ipr::Rname& rname_for_next_param(const Mapping&, const ipr::Type&);
 
       Mapping* make_mapping(const ipr::Region&, Mapping_level);
       Lambda* make_lambda(const ipr::Region&, Mapping_level);
 
    private:
-      util::string_pool strings;
-
       // Language linkage nodes.
       util::rb_tree::container<impl::Linkage> linkages;
 
-      util::rb_tree::container<impl::Conversion> convs;
-      util::rb_tree::container<impl::Ctor_name> ctors;
-      util::rb_tree::container<impl::Dtor_name> dtors;
-      util::rb_tree::container<impl::Identifier> ids;
-      util::rb_tree::container<impl::Suffix> suffixes;
       util::rb_tree::container<impl::Literal> lits;
-      util::rb_tree::container<impl::Operator> ops;
-      util::rb_tree::container<impl::Guide_name> guide_ids;
-      util::rb_tree::container<impl::Rname> rnames;
       util::rb_tree::container<impl::Template_id> template_ids;
-      util::rb_tree::container<impl::Type_id> type_ids;
 
       stable_farm<impl::Phantom> phantoms;
       stable_farm<impl::Eclipsis> eclipses;
@@ -2297,19 +2295,6 @@ namespace ipr::impl {
 
       const ipr::Linkage& cxx_linkage() const final;
       const ipr::Linkage& c_linkage() const final;
-
-      const ipr::Identifier& get_identifier(util::word_view);
-      const ipr::Identifier& get_identifier(const ipr::String&);
-
-      const ipr::Suffix& get_suffix(const ipr::Identifier&);
-
-      const ipr::Operator& get_operator(util::word_view);
-      const ipr::Operator& get_operator(const ipr::String&);
-
-      const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
-      const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
-
-      const ipr::Conversion& get_conversion(const ipr::Type&);
 
       const ipr::Template_id& get_template_id(const ipr::Name&,
                                                 const ipr::Expr_list&);

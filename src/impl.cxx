@@ -244,7 +244,7 @@ namespace ipr::impl {
       Symbol::Symbol(const ipr::Name& n, const ipr::Type& t)
          : Unary_expr<ipr::Symbol>{ n }
       {
-         typing = &t;
+         typing = t;
       }
 
       // -- impl::New --
@@ -276,7 +276,7 @@ namespace ipr::impl {
       Overload::operator[](const ipr::Type& t) const
       {
          if (auto entry = lookup(t))
-            return { &entry->declset.get(0) };                    // Note: first decl is canonical
+            return { entry->declset.get(0) };                     // Note: first decl is canonical
          return { };
       }
 
@@ -310,7 +310,7 @@ namespace ipr::impl {
       {
          if (&t != &seq.datum.type())
             return { };
-         return { &seq.datum };
+         return { seq.datum };
       }
 
       // -----------------
@@ -1078,8 +1078,9 @@ namespace ipr::impl {
       }
 
       impl::Parameter*
-      Mapping::param(const ipr::Name& n, const impl::Rname& rn) {
-         return parms.add_member(n, rn);
+      Mapping::param(const ipr::Name& n, const ipr::Rname& rn) {
+         using Rep = impl::Rname::Rep;
+         return parms.add_member(n, impl::Rname(Rep{ rn.first(), rn.second(), rn.third() }));
       }
 
       // -- impl::Lambda
@@ -1265,13 +1266,72 @@ namespace ipr::impl {
 
       Where::Where(const ipr::Region& parent) : region{&parent} { }
 
+      // -- impl::name_factory
+
+      const ipr::String& name_factory::get_string(util::word_view w)
+      {
+         return strings.intern(w);
+      }
+
+      const ipr::Identifier& name_factory::get_identifier(const ipr::String& s)
+      {
+         return *ids.insert(s, id_compare());
+      }
+
+      const ipr::Identifier& name_factory::get_identifier(util::word_view w)
+      {
+         return get_identifier(get_string(w));
+      }
+
+      const ipr::Suffix& name_factory::get_suffix(const ipr::Identifier& s)
+      {
+         return *suffixes.insert(s, unary_compare());
+      }
+
+      const ipr::Operator& name_factory::get_operator(const ipr::String& s)
+      {
+         return *ops.insert(s, unary_compare());
+      }
+
+      const ipr::Operator& name_factory::get_operator(util::word_view w)
+      {
+         return get_operator(get_string(w));
+      }
+
+      const ipr::Ctor_name& name_factory::get_ctor_name(const ipr::Type& t)
+      {
+         return *ctors.insert(t, unary_compare());
+      }
+
+      const ipr::Dtor_name& name_factory::get_dtor_name(const ipr::Type& t)
+      {
+         return *dtors.insert(t, unary_compare());
+      }
+
+      const ipr::Type_id& name_factory::get_type_id(const ipr::Type& t)
+      {
+         return *type_ids.insert(t, unary_compare());
+      }
+
+      const ipr::Conversion& name_factory::get_conversion(const ipr::Type& t)
+      {
+         return *convs.insert(t, unary_compare());
+      }
+
+      const ipr::Guide_name& name_factory::get_guide_name(const ipr::Template& m)
+      {
+         return *guide_ids.insert(m, unary_compare());
+      }
+
+      const ipr::Rname& name_factory::get_rname(Mapping_level lvl, Decl_position pos, const ipr::Type& t)
+      {
+         using Rep = impl::Rname::Rep;
+         return *rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
+      }
+
       // ------------------------
       // -- impl::expr_factory --
       // ------------------------
-      const ipr::String&
-      expr_factory::get_string(util::word_view w) {
-         return strings.intern(w);
-      }
 
       // -- Language linkage
       const ipr::Linkage& expr_factory::get_linkage(util::word_view w)
@@ -1343,16 +1403,6 @@ namespace ipr::impl {
          return make(complements, e).with_type(t);
       }
 
-      impl::Conversion*
-      expr_factory::make_conversion(const ipr::Type& t) {
-         return convs.insert(t, unary_compare());
-      }
-
-      impl::Ctor_name*
-      expr_factory::make_ctor_name(const ipr::Type& t) {
-         return ctors.insert(t, unary_compare());
-      }
-
       impl::Delete*
       expr_factory::make_delete(const ipr::Expr& e) {
          return deletes.make(e);
@@ -1370,34 +1420,9 @@ namespace ipr::impl {
          return make(derefs, e).with_type(t);
       }
 
-      impl::Dtor_name*
-      expr_factory::make_dtor_name(const ipr::Type& t) {
-         return dtors.insert(t, unary_compare());
-      }
-
       impl::Expr_list*
       expr_factory::make_expr_list() {
          return xlists.make();
-      }
-
-      impl::Identifier*
-      expr_factory::make_identifier(const ipr::String& s) {
-         return ids.insert(s, id_compare());
-      }
-
-      impl::Identifier*
-      expr_factory::make_identifier(util::word_view w) {
-         return make_identifier(get_string(w));
-      }
-
-      impl::Suffix*
-      expr_factory::make_suffix(const ipr::Identifier& s) {
-         return suffixes.insert(s, unary_compare());
-      }
-
-      impl::Guide_name*
-      expr_factory::make_guide_name(const ipr::Template& m) {
-         return guide_ids.insert(m, unary_compare());
       }
 
       impl::Id_expr*
@@ -1430,16 +1455,6 @@ namespace ipr::impl {
       expr_factory::make_not(const ipr::Expr& e, Optional<ipr::Type> t)
       {
          return make(nots, e).with_type(t);
-      }
-
-      impl::Operator*
-      expr_factory::make_operator(const ipr::String& s) {
-         return ops.insert(s, unary_compare());
-      }
-
-      impl::Operator*
-      expr_factory::make_operator(util::word_view w) {
-         return make_operator(get_string(w));
       }
 
       impl::Enclosure*
@@ -1488,11 +1503,6 @@ namespace ipr::impl {
       expr_factory::make_throw(const ipr::Expr& e, Optional<ipr::Type> t)
       {
          return make(throws, e).with_type(t);
-      }
-
-      impl::Type_id*
-      expr_factory::make_type_id(const ipr::Type& t) {
-         return type_ids.insert(t, unary_compare());
       }
 
       impl::Alignof* expr_factory::make_alignof(const ipr::Expr& e, Optional<ipr::Type> t)
@@ -1884,13 +1894,12 @@ namespace ipr::impl {
          return make(conds, expr, then, alt).with_type(t);
       }
 
-      impl::Rname*
-      expr_factory::rname_for_next_param(const impl::Mapping& map,
-                                         const ipr::Type& t) {
-         using Rep = impl::Rname::Rep;
+      const ipr::Rname&
+      expr_factory::rname_for_next_param(const impl::Mapping& map, const ipr::Type& t)
+      {
          Decl_position pos { map.parms.size() };
          auto lvl = map.parameters().level();
-         return rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
+         return get_rname(lvl, pos, t);
       }
 
       impl::Mapping*
@@ -1996,21 +2005,6 @@ namespace ipr::impl {
          return *make_literal(t, s);
       }
 
-      const ipr::Identifier&
-      Lexicon::get_identifier(util::word_view w) {
-         return get_identifier(get_string(w));
-      }
-
-      const ipr::Identifier&
-      Lexicon::get_identifier(const ipr::String& s) {
-         return *expr_factory::make_identifier(s);
-      }
-
-      const ipr::Suffix&
-      Lexicon::get_suffix(const ipr::Identifier& id) {
-         return *expr_factory::make_suffix(id);
-      }
-
       const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
 
       const ipr::Type& Lexicon::bool_type() const { return booltype; }
@@ -2073,34 +2067,9 @@ namespace ipr::impl {
             t->typing = &anytype;
 
          if (not t->id.is_valid())
-            t->id = make_type_id(*t);
+            t->id = get_type_id(*t);
 
          return t;
-      }
-
-      const ipr::Ctor_name&
-      Lexicon::get_ctor_name(const ipr::Type& t) {
-         return *expr_factory::make_ctor_name(t);
-      }
-
-      const ipr::Dtor_name&
-      Lexicon::get_dtor_name(const ipr::Type& t) {
-         return *expr_factory::make_dtor_name(t);
-      }
-
-      const ipr::Operator&
-      Lexicon::get_operator(util::word_view w) {
-         return get_operator(get_string(w));
-      }
-
-      const ipr::Operator&
-      Lexicon::get_operator(const ipr::String& s) {
-         return *expr_factory::make_operator(s);
-      }
-
-      const ipr::Conversion&
-      Lexicon::get_conversion(const ipr::Type& t) {
-         return *expr_factory::make_conversion(t);
       }
 
       const ipr::Template_id&
@@ -2229,7 +2198,7 @@ namespace ipr::impl {
       impl::Parameter*
       Lexicon::make_parameter(const ipr::Name& n, const ipr::Type& t,
                               impl::Mapping& m) {
-         return m.param(n, *rname_for_next_param(m, t));
+         return m.param(n, rname_for_next_param(m, t));
       }
 
       const ipr::Auto& Lexicon::get_auto()
@@ -2287,11 +2256,11 @@ int main()
    impl::Scope* global_scope = unit.global_scope();
 
    // Build the variable's name,
-   const Name* name = lexicon.make_identifier("bufsz");
+   auto& name = lexicon.get_identifier("bufsz");
    // then its type,
    auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
    // and the actual impl::Var node,
-   impl::Var* var = global_scope->make_var(*name, type);
+   impl::Var* var = global_scope->make_var(name, type);
    // set its initializer,
    var->init = lexicon.make_literal(lexicon.int_type(), "1024");
    // and inject it into its scope.
