@@ -1245,8 +1245,10 @@ namespace ipr::impl {
    };
 
    struct Symbol final : Unary_expr<ipr::Symbol> {
-      explicit Symbol(const ipr::Name&);
-      Symbol(const ipr::Name&, const ipr::Type&);
+      explicit constexpr Symbol(const ipr::Name& n) : Unary_expr<ipr::Symbol>{ n } { }
+      constexpr Symbol(const ipr::Name& n, const ipr::Type& t)
+          : Unary_expr<ipr::Symbol>{ n }
+      { typing = t; }
    };
 
    struct Lambda : impl::Node<ipr::Lambda> {
@@ -1948,26 +1950,6 @@ namespace ipr::impl {
       const ipr::Stmt& iteration() const final { return stmt.get(); }
    };
 
-   // This template will be instantiated to implementations
-   // of several builtin type singletons.  It does not reuse
-   // implementations of Type, and Binary, to save space since
-   // most data needed by those implementations are shared.
-   template<class T>
-   struct Builtin : impl::Expr<T> {
-      using Arg1_type = typename T::Arg1_type;
-      using Arg2_type = typename T::Arg2_type;
-      Builtin(const ipr::Name& n, Arg2_type l, const ipr::Type& t)
-            : impl::Expr<T>(&t), id(n), link(l) { }
-
-      const ipr::Name& name() const final { return id; }
-      Arg1_type first() const final { return *this; }
-      Arg2_type second() const final { return link; }
-
-   private:
-      const ipr::Name& id;
-      Arg2_type link;
-   };
-
    // Type of `Where`-nodes introducing declarations in their `attendant()` expressions.
    // Note: See impl::Where_no_decls for the degenerated case where the `attendant()`
    //       is just a classic expression, with no declaration introduced.
@@ -2401,33 +2383,6 @@ namespace ipr::impl {
       util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
       util::rb_tree::container<node_ref<ipr::As_type>> builtin_map;
       stable_farm<impl::Auto> autos;
-
-      const impl::Builtin<ipr::As_type> anytype;
-      const impl::Builtin<ipr::As_type> classtype;
-      const impl::Builtin<ipr::As_type> uniontype;
-      const impl::Builtin<ipr::As_type> enumtype;
-      const impl::Builtin<ipr::As_type> namespacetype;
-      const impl::Builtin<ipr::As_type> voidtype;
-      const impl::Builtin<ipr::As_type> booltype;
-      const impl::Builtin<ipr::As_type> chartype;
-      const impl::Builtin<ipr::As_type> schartype;
-      const impl::Builtin<ipr::As_type> uchartype;
-      const impl::Builtin<ipr::As_type> wchar_ttype;
-      const impl::Builtin<ipr::As_type> char8_ttype;
-      const impl::Builtin<ipr::As_type> char16_ttype;
-      const impl::Builtin<ipr::As_type> char32_ttype;
-      const impl::Builtin<ipr::As_type> shorttype;
-      const impl::Builtin<ipr::As_type> ushorttype;
-      const impl::Builtin<ipr::As_type> inttype;
-      const impl::Builtin<ipr::As_type> uinttype;
-      const impl::Builtin<ipr::As_type> longtype;
-      const impl::Builtin<ipr::As_type> ulongtype;
-      const impl::Builtin<ipr::As_type> longlongtype;
-      const impl::Builtin<ipr::As_type> ulonglongtype;
-      const impl::Builtin<ipr::As_type> floattype;
-      const impl::Builtin<ipr::As_type> doubletype;
-      const impl::Builtin<ipr::As_type> longdoubletype;
-      const impl::Builtin<ipr::As_type> ellipsistype;
 
       const impl::Symbol null;
 
