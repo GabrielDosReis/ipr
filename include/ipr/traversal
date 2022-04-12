@@ -11,10 +11,8 @@
 #include <ipr/interface>
 
 namespace ipr {
-   // Returns true if both operands share the same physical
-   // storage.
-   inline bool
-   physically_same(const Node& lhs, const Node& rhs)
+   // Returns true if both operands share the same physical storage.
+   constexpr bool physically_same(const Node& lhs, const Node& rhs)
    {
       return &lhs == &rhs;
    }

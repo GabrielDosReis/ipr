@@ -32,11 +32,22 @@ namespace ipr {
 
 namespace ipr::impl {
     namespace {
+       // Representation of standard names (mostly identifiers) used in
+       // in the internals of the IPR, with standard semantics.
+       struct std_identifier : impl::Node<ipr::Identifier> {
+          constexpr std_identifier(const char* p) : str{p} { }
+          constexpr const impl::String& operand() const final { return str; }
+          constexpr auto text() const { return str.text(); }
+       private:
+          impl::String str;
+       };
+
         // A table of statically known words used in the internal representation.
-        constexpr impl::String known_words[] {
+        constexpr std_identifier known_words[] {
            "...",
            "C",
            "C++",
+           "auto",
            "bool",
            "char",
            "char16_t",
@@ -66,7 +77,7 @@ namespace ipr::impl {
         };
 
         // Lexicographical less-than comparison between two known words.
-        constexpr bool word_less(const impl::String& x, const impl::String& y)
+        constexpr bool word_less(const std_identifier& x, const std_identifier& y)
         {
            return x.text() < y.text();
         }
@@ -79,7 +90,7 @@ namespace ipr::impl {
 
         // Return the String representation for a known word.
         // Raise an exception otherwise.
-        constexpr const String& known_word(const char* p)
+        constexpr const std_identifier& known_word(const char* p)
         {
             auto place = std::lower_bound(std::begin(known_words), std::end(known_words), p, word_lt);
             if (place >= std::end(known_words) or place->text() != p)
@@ -87,10 +98,68 @@ namespace ipr::impl {
             return *place;
         }
 
+        constexpr auto& internal_string(const char* p) { return known_word(p).operand(); }
+
         // Known language linkages to all C++ implementations.
-        constexpr Linkage c_linkage { known_word("C") };
-        constexpr Linkage cxx_linkage { known_word("C++") };
+        constexpr Linkage c_linkage { internal_string("C") };
+        constexpr Linkage cxx_linkage { internal_string("C++") };
     }
+}
+
+namespace ipr::impl {
+   namespace {
+      // Representation of the type of type, i.e. "typename" in Standard C++.
+      // In the IPR, "typename" is its own type, hence the specialized definition.
+      // Every other built-in type has type "typename".
+      struct Typename : impl::Node<ipr::As_type> {
+         const ipr::Name& name() const final { return known_word("typename"); }
+         const ipr::Type& type() const final { return *this; }
+         const ipr::Expr& first() const final { return *this; }
+         const ipr::Linkage& second() const { return cxx_linkage; }
+      };
+
+      constexpr Typename any_type { };
+
+      // Representation of generalized built-in types.  All built-in types have type
+      // "typename" and, of course, have C++ linkage.  Because they are known to all
+      // implementations as elementary, they can be directly represented as constants,
+      // therefore reducing initialization or startup time.
+      struct Builtin : impl::Node<ipr::As_type> {
+         explicit constexpr Builtin(const char* p) : id{known_word(p)} { }
+         const ipr::Name& name() const final { return id; }
+         const ipr::Type& type() const final { return impl::any_type; }
+         const ipr::Expr& first() const final { return *this; }
+         const ipr::Linkage& second() const final { return cxx_linkage; }
+      private:
+         const impl::std_identifier& id;
+      };
+
+      constexpr Builtin class_type { "class" };
+      constexpr Builtin union_type { "union" };
+      constexpr Builtin enum_type { "enum" };
+      constexpr Builtin namespace_type { "namespace" };
+      constexpr Builtin void_type { "void" };
+      constexpr Builtin bool_type { "bool" };
+      constexpr Builtin char_type { "char" };
+      constexpr Builtin schar_type { "signed char" };
+      constexpr Builtin uchar_type { "unsigned char" };
+      constexpr Builtin wchar_t_type { "wchar_t" };
+      constexpr Builtin char8_t_type { "char8_t" };
+      constexpr Builtin char16_t_type { "char16_t" };
+      constexpr Builtin char32_t_type { "char32_t" };
+      constexpr Builtin short_type { "short" };
+      constexpr Builtin ushort_type { "unsigned short" };
+      constexpr Builtin int_type { "int" };
+      constexpr Builtin uint_type { "unsigned int" };
+      constexpr Builtin long_type { "long" };
+      constexpr Builtin ulong_type { "unsigned long" };
+      constexpr Builtin longlong_type { "long long" };
+      constexpr Builtin ulonglong_type { "unsigned long long" };
+      constexpr Builtin float_type { "float" };
+      constexpr Builtin double_type { "double" };
+      constexpr Builtin longdouble_type { "long double" };
+      constexpr Builtin ellipsis_type { "..." };
+   }
 }
 
 namespace ipr::util {
@@ -102,7 +171,7 @@ namespace ipr::util {
         // For statically known words, just return the statically allocated address.
         if (const auto p = std::lower_bound(std::begin(impl::known_words), std::end(impl::known_words), w, impl::word_lt);
             p < std::end(impl::known_words) and p->text() == w)
-            return *p;
+            return p->string();
 
         // Dynamically allocated words are slotted by their hash codes into singly-linked lists.
         const hash_code h { std::hash<word_view>{ }(w) };
@@ -234,17 +303,6 @@ namespace ipr::impl {
 
       const ipr::Sequence<ipr::Identifier>& Module_name::stems() const {
          return components;
-      }
-
-      // -- impl::Symbol --
-      Symbol::Symbol(const ipr::Name& n)
-         : Unary_expr<ipr::Symbol>{ n }
-      { }
-
-      Symbol::Symbol(const ipr::Name& n, const ipr::Type& t)
-         : Unary_expr<ipr::Symbol>{ n }
-      {
-         typing = t;
       }
 
       // -- impl::New --
@@ -1345,9 +1403,9 @@ namespace ipr::impl {
 
       const ipr::Linkage& expr_factory::get_linkage(const ipr::String& lang)
       {
-         if (&lang == &known_word("C"))
+         if (physically_same(lang, internal_string("C")))
             return impl::c_linkage;
-         else if (&lang == &known_word("C++"))
+         else if (physically_same(lang, internal_string("C++")))
             return impl::cxx_linkage;
          return *linkages.insert(lang, unary_compare());
       }
@@ -1923,74 +1981,34 @@ namespace ipr::impl {
       }
 
       Lexicon::Lexicon()
-            : anytype(get_identifier("typename"), cxx_linkage(), anytype),
-              classtype(get_identifier("class"), cxx_linkage(), anytype),
-              uniontype(get_identifier("union"), cxx_linkage(), anytype),
-              enumtype(get_identifier("enum"), cxx_linkage(), anytype),
-              namespacetype(get_identifier("namespace"), cxx_linkage(), anytype),
-
-              voidtype(get_identifier("void"), cxx_linkage(), anytype),
-              booltype(get_identifier("bool"), cxx_linkage(), anytype),
-              chartype(get_identifier("char"), cxx_linkage(), anytype),
-              schartype(get_identifier("signed char"), cxx_linkage(), anytype),
-              uchartype(get_identifier("unsigned char"), cxx_linkage(), anytype),
-              wchar_ttype(get_identifier("wchar_t"), cxx_linkage(), anytype),
-              char8_ttype(get_identifier("char8_t"), cxx_linkage(), anytype),
-              char16_ttype(get_identifier("char16_t"), cxx_linkage(), anytype),
-              char32_ttype(get_identifier("char32_t"), cxx_linkage(), anytype),
-              shorttype(get_identifier("short"), cxx_linkage(), anytype),
-              ushorttype(get_identifier("unsigned short"),
-                         cxx_linkage(), anytype),
-              inttype(get_identifier("int"), cxx_linkage(), anytype),
-              uinttype(get_identifier("unsigned int"), cxx_linkage(), anytype),
-              longtype(get_identifier("long"), cxx_linkage(), anytype),
-              ulongtype(get_identifier("unsigned long"),
-                        cxx_linkage(), anytype),
-              longlongtype(get_identifier("long long"), cxx_linkage(), anytype),
-              ulonglongtype(get_identifier("unsigned long long"),
-                            cxx_linkage(), anytype),
-              floattype(get_identifier("float"), cxx_linkage(), anytype),
-              doubletype(get_identifier("double"), cxx_linkage(), anytype),
-              longdoubletype(get_identifier("long double"),
-                             cxx_linkage(), anytype),
-              ellipsistype(get_identifier("..."), cxx_linkage(), anytype),
-              null(get_identifier("nullptr"), get_decltype(null))
+            : null(get_identifier("nullptr"), get_decltype(null))
       {
-         record_builtin_type(anytype);
-         record_builtin_type(classtype);
-         record_builtin_type(uniontype);
-         record_builtin_type(enumtype);
-         record_builtin_type(namespacetype);
-
-         record_builtin_type(voidtype);
-
-         record_builtin_type(booltype);
-
-         record_builtin_type(chartype);
-         record_builtin_type(schartype);
-         record_builtin_type(uchartype);
-         record_builtin_type(wchar_ttype);
-         record_builtin_type(char8_ttype);
-         record_builtin_type(char16_ttype);
-         record_builtin_type(char32_ttype);
-
-         record_builtin_type(shorttype);
-         record_builtin_type(ushorttype);
-
-         record_builtin_type(inttype);
-         record_builtin_type(uinttype);
-
-         record_builtin_type(longtype);
-         record_builtin_type(ulongtype);
-
-         record_builtin_type(longlongtype);
-         record_builtin_type(ulonglongtype);
-
-         record_builtin_type(floattype);
-         record_builtin_type(doubletype);
-         record_builtin_type(longdoubletype);
-
-         record_builtin_type(ellipsistype);
+         record_builtin_type(impl::any_type);
+         record_builtin_type(impl::class_type);
+         record_builtin_type(impl::union_type);
+         record_builtin_type(impl::enum_type);
+         record_builtin_type(impl::namespace_type);
+         record_builtin_type(impl::void_type);
+         record_builtin_type(impl::bool_type);
+         record_builtin_type(impl::char_type);
+         record_builtin_type(impl::schar_type);
+         record_builtin_type(impl::uchar_type);
+         record_builtin_type(impl::wchar_t_type);
+         record_builtin_type(impl::char8_t_type);
+         record_builtin_type(impl::char16_t_type);
+         record_builtin_type(impl::char32_t_type);
+         record_builtin_type(impl::short_type);
+         record_builtin_type(impl::ushort_type);
+         record_builtin_type(impl::int_type);
+         record_builtin_type(impl::uint_type);
+         record_builtin_type(impl::long_type);
+         record_builtin_type(impl::ulong_type);
+         record_builtin_type(impl::longlong_type);
+         record_builtin_type(impl::ulonglong_type);
+         record_builtin_type(impl::float_type);
+         record_builtin_type(impl::double_type);
+         record_builtin_type(impl::longdouble_type);
+         record_builtin_type(impl::ellipsis_type);
       }
 
       Lexicon::~Lexicon() { }
@@ -2005,66 +2023,39 @@ namespace ipr::impl {
          return *make_literal(t, s);
       }
 
-      const ipr::Type& Lexicon::void_type() const {  return voidtype;  }
-
-      const ipr::Type& Lexicon::bool_type() const { return booltype; }
-
-      const ipr::Type& Lexicon::char_type() const { return chartype; }
-
-      const ipr::Type& Lexicon::schar_type() const { return schartype; }
-
-      const ipr::Type& Lexicon::uchar_type() const { return uchartype; }
-
-      const ipr::Type& Lexicon::wchar_t_type() const { return wchar_ttype; }
-
-      const ipr::Type& Lexicon::char8_t_type() const { return char8_ttype; }
-
-      const ipr::Type& Lexicon::char16_t_type() const { return char16_ttype; }
-
-      const ipr::Type& Lexicon::char32_t_type() const { return char32_ttype; }
-
-      const ipr::Type& Lexicon::short_type() const { return shorttype; }
-
-      const ipr::Type& Lexicon::ushort_type() const { return ushorttype; }
-
-      const ipr::Type& Lexicon::int_type() const { return inttype; }
-
-      const ipr::Type& Lexicon::uint_type() const { return uinttype; }
-
-      const ipr::Type& Lexicon::long_type() const { return longtype; }
-
-      const ipr::Type& Lexicon::ulong_type() const { return ulongtype; }
-
-      const ipr::Type& Lexicon::long_long_type() const { return longlongtype; }
-
-      const ipr::Type& Lexicon::ulong_long_type() const { return ulonglongtype; }
-
-      const ipr::Type& Lexicon::float_type() const { return floattype; }
-
-      const ipr::Type& Lexicon::double_type() const { return doubletype; }
-
-      const ipr::Type& Lexicon::long_double_type() const {
-         return longdoubletype;
-      }
-
-      const ipr::Type& Lexicon::ellipsis_type() const { return ellipsistype; }
-
-      const ipr::Type& Lexicon::typename_type() const { return anytype; }
-
-      const ipr::Type& Lexicon::class_type() const { return classtype; }
-
-      const ipr::Type& Lexicon::union_type() const { return uniontype; }
-
-      const ipr::Type& Lexicon::enum_type() const { return enumtype; }
-
-      const ipr::Type& Lexicon::namespace_type() const { return namespacetype; }
+      const ipr::Type& Lexicon::void_type() const {  return impl::void_type;  }
+      const ipr::Type& Lexicon::bool_type() const { return impl::bool_type; }
+      const ipr::Type& Lexicon::char_type() const { return impl::char_type; }
+      const ipr::Type& Lexicon::schar_type() const { return impl::schar_type; }
+      const ipr::Type& Lexicon::uchar_type() const { return impl::uchar_type; }
+      const ipr::Type& Lexicon::wchar_t_type() const { return impl::wchar_t_type; }
+      const ipr::Type& Lexicon::char8_t_type() const { return impl::char8_t_type; }
+      const ipr::Type& Lexicon::char16_t_type() const { return impl::char16_t_type; }
+      const ipr::Type& Lexicon::char32_t_type() const { return impl::char32_t_type; }
+      const ipr::Type& Lexicon::short_type() const { return impl::short_type; }
+      const ipr::Type& Lexicon::ushort_type() const { return impl::ushort_type; }
+      const ipr::Type& Lexicon::int_type() const { return impl::int_type; }
+      const ipr::Type& Lexicon::uint_type() const { return impl::uint_type; }
+      const ipr::Type& Lexicon::long_type() const { return impl::long_type; }
+      const ipr::Type& Lexicon::ulong_type() const { return impl::ulong_type; }
+      const ipr::Type& Lexicon::long_long_type() const { return impl::longlong_type; }
+      const ipr::Type& Lexicon::ulong_long_type() const { return impl::ulonglong_type; }
+      const ipr::Type& Lexicon::float_type() const { return impl::float_type; }
+      const ipr::Type& Lexicon::double_type() const { return impl::double_type; }
+      const ipr::Type& Lexicon::long_double_type() const { return impl::longdouble_type; }
+      const ipr::Type& Lexicon::ellipsis_type() const { return impl::ellipsis_type; }
+      const ipr::Type& Lexicon::typename_type() const { return impl::any_type; }
+      const ipr::Type& Lexicon::class_type() const { return impl::class_type; }
+      const ipr::Type& Lexicon::union_type() const { return impl::union_type; }
+      const ipr::Type& Lexicon::enum_type() const { return impl::enum_type; }
+      const ipr::Type& Lexicon::namespace_type() const { return impl::namespace_type; }
 
       const ipr::Expr& Lexicon::nullptr_value() const { return null; }
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
          if (not t->typing.is_valid())
-            t->typing = &anytype;
+            t->typing = impl::any_type;
 
          if (not t->id.is_valid())
             t->id = get_type_id(*t);
@@ -2113,7 +2104,7 @@ namespace ipr::impl {
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
                             const ipr::Linkage& l) {
          ref_sequence<ipr::Type> ex;
-         ex.push_back(&ellipsistype);
+         ex.push_back(&ellipsis_type());
          return get_function(p, t, get_sum(ex), l);
       }
 
@@ -2167,31 +2158,31 @@ namespace ipr::impl {
 
       impl::Class*
       Lexicon::make_class(const ipr::Region& pr) {
-         return types.make_class(pr, classtype);
+         return types.make_class(pr, class_type());
       }
 
       impl::Enum*
       Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
          auto t = types.make_enum(pr, k);
-         t->typing = &enumtype;
+         t->typing = enum_type();
          return t;
       }
 
       impl::Namespace*
       Lexicon::make_namespace(const ipr::Region& pr) {
-         return types.make_namespace(&pr, namespacetype);
+         return types.make_namespace(&pr, namespace_type());
       }
 
       impl::Union*
       Lexicon::make_union(const ipr::Region& pr) {
-         return types.make_union(pr, uniontype);
+         return types.make_union(pr, union_type());
       }
 
       impl::Mapping*
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
          auto x = expr_factory::make_mapping(r, l);
          // Note: the parameters form a Product type needing its type set
-         x->parms.parms.scope.decls.typing = &anytype;
+         x->parms.parms.scope.decls.typing = typename_type();
          return x;
       }
 
@@ -2203,7 +2194,7 @@ namespace ipr::impl {
 
       const ipr::Auto& Lexicon::get_auto()
       {
-         auto t = make(autos).with_type(anytype);
+         auto t = make(autos).with_type(typename_type());
          t->id = &get_identifier("auto");
          return *t;
       }
