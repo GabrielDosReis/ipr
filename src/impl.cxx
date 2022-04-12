@@ -115,7 +115,7 @@ namespace ipr::impl {
          const ipr::Name& name() const final { return known_word("typename"); }
          const ipr::Type& type() const final { return *this; }
          const ipr::Expr& first() const final { return *this; }
-         const ipr::Linkage& second() const { return cxx_linkage; }
+         const ipr::Linkage& second() const final { return cxx_linkage; }
       };
 
       constexpr Typename any_type { };
