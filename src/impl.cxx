@@ -159,6 +159,24 @@ namespace ipr::impl {
    const ipr::Type& typename_type() { return impl::any_type; }
 }
 
+namespace ipr::impl {
+   namespace {
+      // Representation of the `nullptr` symbolic constant.  It defines its own
+      // type as it is a singleton. The type of `nullptr` is defined as the irreducible
+      // type expression `decltype(nullptr)`.  Note that std::nullptr_t is just an
+      // alias for that type, i.e. `std::nullptr_t` is a Decl, not a type.
+      struct Nullptr : impl::Node<ipr::Symbol> {
+         constexpr Nullptr() : typing{*this} { }
+         const ipr::Name& operand() const final { return known_word("nullptr)"); }
+         const ipr::Decltype& type() const final { return typing; }
+      private:
+         impl::Decltype typing;
+      };
+
+      constexpr Nullptr nullptr_cst { }; 
+   }
+}
+
 namespace ipr::util {
     const ipr::String& string_pool::intern(word_view w)
     {
@@ -1973,41 +1991,7 @@ namespace ipr::impl {
       const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_linkage; }
       const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_linkage; }
 
-      void Lexicon::record_builtin_type(const ipr::As_type& t) {
-         builtin_map.insert(t, unary_compare());
-      }
-
-      Lexicon::Lexicon()
-            : null(get_identifier("nullptr"), get_decltype(null))
-      {
-         record_builtin_type(impl::any_type);
-         record_builtin_type(impl::class_type);
-         record_builtin_type(impl::union_type);
-         record_builtin_type(impl::enum_type);
-         record_builtin_type(impl::namespace_type);
-         record_builtin_type(impl::void_type);
-         record_builtin_type(impl::bool_type);
-         record_builtin_type(impl::char_type);
-         record_builtin_type(impl::schar_type);
-         record_builtin_type(impl::uchar_type);
-         record_builtin_type(impl::wchar_t_type);
-         record_builtin_type(impl::char8_t_type);
-         record_builtin_type(impl::char16_t_type);
-         record_builtin_type(impl::char32_t_type);
-         record_builtin_type(impl::short_type);
-         record_builtin_type(impl::ushort_type);
-         record_builtin_type(impl::int_type);
-         record_builtin_type(impl::uint_type);
-         record_builtin_type(impl::long_type);
-         record_builtin_type(impl::ulong_type);
-         record_builtin_type(impl::longlong_type);
-         record_builtin_type(impl::ulonglong_type);
-         record_builtin_type(impl::float_type);
-         record_builtin_type(impl::double_type);
-         record_builtin_type(impl::longdouble_type);
-         record_builtin_type(impl::ellipsis_type);
-      }
-
+      Lexicon::Lexicon() { }
       Lexicon::~Lexicon() { }
 
       const ipr::Literal&
@@ -2049,7 +2033,7 @@ namespace ipr::impl {
 
       const ipr::Symbol& Lexicon::false_value() const { return impl::false_cst; }
       const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
-      const ipr::Symbol& Lexicon::nullptr_value() const { return null; }
+      const ipr::Symbol& Lexicon::nullptr_value() const { return impl::nullptr_cst; }
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
@@ -2084,6 +2068,8 @@ namespace ipr::impl {
 
       const ipr::Decltype&
       Lexicon::get_decltype(const ipr::Expr& e) {
+         if (physically_same(e, impl::nullptr_cst))
+            return impl::nullptr_cst.type();
          return *finish_type(types.make_decltype(e));
       }
 

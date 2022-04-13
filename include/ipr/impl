@@ -2381,16 +2381,11 @@ namespace ipr::impl {
       const ipr::Auto& get_auto();
 
    private:
-      void record_builtin_type(const ipr::As_type&);
-
       stable_farm<impl::Token> tokens;
       type_factory types;
       util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
       util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
-      util::rb_tree::container<node_ref<ipr::As_type>> builtin_map;
       stable_farm<impl::Auto> autos;
-
-      const impl::Symbol null;
 
       template<class T> T* finish_type(T*);
    };

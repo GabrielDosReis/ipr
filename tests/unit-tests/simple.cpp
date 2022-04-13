@@ -2,6 +2,7 @@
 
 #include <ipr/impl>
 #include <ipr/io>
+#include <ipr/traversal>
 #include <sstream>
 
 TEST_CASE("global constant variable can be printed") {
@@ -58,5 +59,22 @@ TEST_CASE("linkages are deduplicated") {
   auto& l1 = lexicon.cxx_linkage();
   auto& l2 = lexicon.cxx_linkage();
   CHECK(&l1 == &l2);
+}
+
+TEST_CASE("nullptr defines its own type") {
+  using namespace ipr;
+  impl::Lexicon lexicon { };
+  auto& null = lexicon.nullptr_value();
+  auto& type = lexicon.get_decltype(null);
+  CHECK(physically_same(type, null.type()));
+}
+
+TEST_CASE("Truth values have type bool") {
+  using namespace ipr;
+  impl::Lexicon lexicon { };
+  auto& vrai = lexicon.true_value();
+  auto& faux = lexicon.false_value();
+  CHECK(physically_same(vrai.type(), lexicon.bool_type()));
+  CHECK(physically_same(faux.type(), lexicon.bool_type()));
 }
 
