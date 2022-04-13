@@ -329,7 +329,7 @@ namespace ipr::impl {
    struct Expr : impl::Node<Interface> {
       Optional<ipr::Type> typing;
 
-      Expr(Optional<ipr::Type> t = { }) : typing{ t } { }
+      constexpr Expr(Optional<ipr::Type> t = { }) : typing{ t } { }
       const ipr::Type& type() const final { return typing.get(); }
    };
 
@@ -2319,7 +2319,9 @@ namespace ipr::impl {
       const ipr::Type& enum_type() const final;
       const ipr::Type& namespace_type() const final;
 
-      const ipr::Expr& nullptr_value() const final;
+      const ipr::Symbol& false_value() const final;
+      const ipr::Symbol& true_value() const final;
+      const ipr::Symbol& nullptr_value() const final;
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 

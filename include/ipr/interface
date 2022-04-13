@@ -1899,7 +1899,10 @@ namespace ipr {
       virtual const Type& enum_type() const = 0;               // "enum" or "enum class"
       virtual const Type& namespace_type() const = 0;          // "namespace"
 
-      virtual const Expr& nullptr_value() const = 0;           // "nullptr"      -- technically not a parameter
+      virtual const Symbol& false_value() const = 0;           // Boolean symbolic constant 'false'
+      virtual const Symbol& true_value() const = 0;            // Boolean symbolic constant 'true'
+      
+      virtual const Symbol& nullptr_value() const = 0;         // "nullptr"      -- technically not a parameter
                                                                // to the C++ abstract machine, but provided as
                                                                // example of symbolic value representation.
 
