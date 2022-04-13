@@ -315,6 +315,10 @@ namespace ipr::impl {
 }
 
 namespace ipr::impl {
+   // The type of types, including itselt.
+   // Yes, we have a ``Type: Type'' problem.
+   const ipr::Type& typename_type();
+   
    // -- impl::Classic
    template<class Operation>
    struct Classic : Operation {
