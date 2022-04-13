@@ -1008,7 +1008,7 @@ namespace ipr::impl {
 
       impl::Function*
       type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
-                                  const ipr::Sum& e, const ipr::Linkage& l)
+                                  const ipr::Expr& e, const ipr::Linkage& l)
       {
          using rep = impl::Function::Rep;
          return functions.insert(rep{ s, t, e, l }, quaternary_compare());
@@ -2098,22 +2098,21 @@ namespace ipr::impl {
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
-                            const ipr::Sum& s, const ipr::Linkage& l) {
+                            const ipr::Expr& s, const ipr::Linkage& l) {
          return *finish_type(types.make_function(p, t, s, l));
       }
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
-                            const ipr::Sum& s) {
+                            const ipr::Expr& s) {
          return get_function(p, t, s, cxx_linkage());
       }
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
                             const ipr::Linkage& l) {
-         ref_sequence<ipr::Type> ex;
-         ex.push_back(&ellipsis_type());
-         return get_function(p, t, get_sum(ex), l);
+         // A function type without explicit exception specification is `noexcept(false)`.
+         return get_function(p, t, false_value(), l);
       }
 
       const ipr::Function&

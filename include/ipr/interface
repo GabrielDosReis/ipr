@@ -149,9 +149,9 @@ namespace ipr {
                                 // -- Quaternary --
    // Similar to Unary<>, Binary<> and Ternary<>.  Quaternary nodes are,
    // however rare in diversity.  Examples include function types.
-   template<class Cat, class First = const Product&,
-            class Second = const Type&, class Third = const Type&,
-            class Fourth = const Linkage&>
+   template<class Cat, class First = const Expr&,
+            class Second = const Expr&, class Third = const Expr&,
+            class Fourth = const Expr&>
    struct Quaternary : Cat {
       using Arg1_type = First;
       using Arg2_type = Second;
@@ -601,7 +601,8 @@ namespace ipr {
    // however, we've made a special node for template.  ISO C++ specifies
    // that function types have language linkages and two function types
    // with different language linkages are different.
-   struct Function : Quaternary<Category<Category_code::Function, Type>> {
+   struct Function : Quaternary<Category<Category_code::Function, Type>,
+                                const Product&, const Type&, const Expr&, const Linkage&> {
       // Parameter-type-list of a function of this type.  In full
       // generality, this also describes template signature.
       Arg1_type source() const { return first(); }
