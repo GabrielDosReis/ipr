@@ -1754,7 +1754,7 @@ namespace ipr::impl {
       impl::Decltype* make_decltype(const ipr::Expr&);
       impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&);
       impl::Function* make_function(const ipr::Product&, const ipr::Type&,
-                                    const ipr::Sum&, const ipr::Linkage&);
+                                    const ipr::Expr&, const ipr::Linkage&);
       impl::Pointer* make_pointer(const ipr::Type&);
       impl::Product* make_product(const ipr::Sequence<ipr::Type>&);
       impl::Ptr_to_member* make_ptr_to_member(const ipr::Type&,
@@ -2332,12 +2332,12 @@ namespace ipr::impl {
       const ipr::Decltype& get_decltype(const ipr::Expr&);
 
       const ipr::Function& get_function(const ipr::Product&,
-                                          const ipr::Type&, const ipr::Sum&);
+                                          const ipr::Type&, const ipr::Expr&);
       const ipr::Function& get_function(const ipr::Product&,
                                           const ipr::Type&);
       const ipr::Function& get_function(const ipr::Product&,
                                           const ipr::Type&,
-                                          const ipr::Sum&,
+                                          const ipr::Expr&,
                                           const ipr::Linkage&);
       const ipr::Function& get_function(const ipr::Product&,
                                           const ipr::Type&,

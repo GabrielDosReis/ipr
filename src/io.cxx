@@ -199,8 +199,7 @@ namespace ipr {
 
 
    struct xpr_exception_spec {
-      const Type& type;
-      explicit xpr_exception_spec(const Type& t) : type(t) { }
+      const Expr& spec;
    };
    static Printer& operator<<(Printer&, xpr_exception_spec);
 
@@ -1118,7 +1117,7 @@ namespace ipr {
          pp << token('(');
          pp << map.parameters();
          pp << token(')');
-         pp << xpr_exception_spec(t.throws());
+         pp << xpr_exception_spec{ t.throws() };
 
          pp << xpr_initializer(map.result());
       }
@@ -1280,8 +1279,26 @@ namespace ipr {
    static Printer&
    operator<<(Printer& printer, xpr_exception_spec x)
    {
-      return  printer << token(' ') << xpr_identifier("throw")
-                      << token('(') << xpr_type(x.type) << token(')');
+      struct Visitor : pp_base {
+         Visitor(Printer& p) : pp_base{ p } { }
+
+         void visit(const Type& t) final
+         {
+            pp << xpr_identifier("throw")
+               << token('(') << xpr_type(t) << token(')');
+         }
+
+         void visit(const Expr& e) final
+         {
+            pp << xpr_identifier("noexcept")
+               << token('(') << xpr_expr(e) << token(')');
+         }
+      };
+
+      printer << token(' ');
+      Visitor v { printer };
+      x.spec.accept(v);
+      return printer;
    }
 
    struct xpr_base_classes {
@@ -1374,7 +1391,7 @@ namespace ipr {
       void visit(const Function& f) final
       {
          pp << token('(') << f.source().operand() << token(')')
-            << xpr_exception_spec(f.throws())
+            << xpr_exception_spec{ f.throws() }
             << xpr_type(f.target());
       }
 
