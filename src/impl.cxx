@@ -56,6 +56,7 @@ namespace ipr::impl {
            "class",
            "double",
            "enum",
+           "false",
            "float",
            "int",
            "long",
@@ -65,6 +66,7 @@ namespace ipr::impl {
            "nullptr",
            "short",
            "signed char",
+           "true",
            "typename",
            "union",
            "unsigned char",
@@ -159,6 +161,10 @@ namespace ipr::impl {
       constexpr Builtin double_type { "double" };
       constexpr Builtin longdouble_type { "long double" };
       constexpr Builtin ellipsis_type { "..." };
+
+      // Truth value symbolic constants.
+      constexpr Symbol false_cst { known_word("false"), bool_type };
+      constexpr Symbol true_cst { known_word("true"), bool_type };
    }
 }
 
@@ -2050,7 +2056,9 @@ namespace ipr::impl {
       const ipr::Type& Lexicon::enum_type() const { return impl::enum_type; }
       const ipr::Type& Lexicon::namespace_type() const { return impl::namespace_type; }
 
-      const ipr::Expr& Lexicon::nullptr_value() const { return null; }
+      const ipr::Symbol& Lexicon::false_value() const { return impl::false_cst; }
+      const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
+      const ipr::Symbol& Lexicon::nullptr_value() const { return null; }
 
       template<class T>
       T* Lexicon::finish_type(T* t) {
