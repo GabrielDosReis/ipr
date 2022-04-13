@@ -110,18 +110,6 @@ namespace ipr::impl {
 
 namespace ipr::impl {
    namespace {
-      // Representation of the type of type, i.e. "typename" in Standard C++.
-      // In the IPR, "typename" is its own type, hence the specialized definition.
-      // Every other built-in type has type "typename".
-      struct Typename : impl::Node<ipr::As_type> {
-         const ipr::Name& name() const final { return known_word("typename"); }
-         const ipr::Type& type() const final { return *this; }
-         const ipr::Expr& first() const final { return *this; }
-         const ipr::Linkage& second() const final { return cxx_linkage; }
-      };
-
-      constexpr Typename any_type { };
-
       // Representation of generalized built-in types.  All built-in types have type
       // "typename" and, of course, have C++ linkage.  Because they are known to all
       // implementations as elementary, they can be directly represented as constants,
@@ -129,13 +117,14 @@ namespace ipr::impl {
       struct Builtin : impl::Node<ipr::As_type> {
          explicit constexpr Builtin(const char* p) : id{known_word(p)} { }
          const ipr::Name& name() const final { return id; }
-         const ipr::Type& type() const final { return impl::any_type; }
+         const ipr::Type& type() const final { return impl::typename_type(); }
          const ipr::Expr& first() const final { return *this; }
          const ipr::Linkage& second() const final { return cxx_linkage; }
       private:
          const impl::std_identifier& id;
       };
 
+      constexpr Builtin any_type { "typename" };
       constexpr Builtin class_type { "class" };
       constexpr Builtin union_type { "union" };
       constexpr Builtin enum_type { "enum" };
@@ -166,6 +155,8 @@ namespace ipr::impl {
       constexpr Symbol false_cst { known_word("false"), bool_type };
       constexpr Symbol true_cst { known_word("true"), bool_type };
    }
+
+   const ipr::Type& typename_type() { return impl::any_type; }
 }
 
 namespace ipr::util {
