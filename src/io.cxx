@@ -1117,7 +1117,7 @@ namespace ipr {
          pp << token('(');
          pp << map.parameters();
          pp << token(')');
-         pp << xpr_exception_spec(t.throws());
+         pp << xpr_exception_spec{ t.throws() };
 
          pp << xpr_initializer(map.result());
       }
@@ -1282,13 +1282,13 @@ namespace ipr {
       struct Visitor : pp_base {
          Visitor(Printer& p) : pp_base{ p } { }
 
-         void visit(const Type& t)
+         void visit(const Type& t) final
          {
             pp << xpr_identifier("throw")
                << token('(') << xpr_type(t) << token(')');
          }
 
-         void visit(const Expr& e)
+         void visit(const Expr& e) final
          {
             pp << xpr_identifier("noexcept")
                << token('(') << xpr_expr(e) << token(')');
@@ -1391,7 +1391,7 @@ namespace ipr {
       void visit(const Function& f) final
       {
          pp << token('(') << f.source().operand() << token(')')
-            << xpr_exception_spec(f.throws())
+            << xpr_exception_spec{ f.throws() }
             << xpr_type(f.target());
       }
 
