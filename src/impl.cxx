@@ -388,17 +388,6 @@ namespace ipr::impl {
          return { seq.datum };
       }
 
-      // -----------------
-      // -- impl::Rname --
-      // -----------------
-      Rname::Rname(Rep r)
-            : impl::Ternary<impl::Node<ipr::Rname>>(r) { }
-
-      const ipr::Type&
-      Rname::type() const {
-         return rep.first;
-      }
-
       // -- Directives --
       Asm::Asm(const ipr::String& s) : txt{s} { }
 
@@ -493,7 +482,7 @@ namespace ipr::impl {
       const ipr::Parameter_list& Fundecl::parameters() const {
          if (data.index() == 0)
             return *util::check(data.parameters());
-         return util::check(data.mapping())->parms;
+         return util::check(data.mapping())->parameters();
       }
 
       Optional<ipr::Mapping> Fundecl::mapping() const {
@@ -528,19 +517,9 @@ namespace ipr::impl {
       // -- impl::Parameter --
       // ---------------------
 
-      Parameter::Parameter(const ipr::Name& n, const impl::Rname& rn)
-            :id(n), abstract_name(rn),
-             where{}, init{}
+      Parameter::Parameter(const ipr::Name& n, const ipr::Type& t, Decl_position p)
+            :id{n}, typing{t}, pos{p}
       { }
-
-      const ipr::Type&
-      Parameter::type() const {
-         return abstract_name.rep.first;
-      }
-
-      Decl_position Parameter::position() const {
-         return abstract_name.rep.third;
-      }
 
       // --------------------
       // -- impl::Typedecl --
@@ -801,11 +780,11 @@ namespace ipr::impl {
       }
 
       impl::Parameter*
-      Parameter_list::add_member(const ipr::Name& n, const impl::Rname& rn)
+      Parameter_list::add_member(const ipr::Name& n, const ipr::Type& t)
       {
-         impl::Parameter* param = parms.scope.push_back(n, rn);
+         Decl_position pos { parms.scope.size() } ;
+         impl::Parameter* param = parms.scope.push_back(n, t, pos);
          param->where = this;
-
          return param;
       }
 
@@ -1170,16 +1149,8 @@ namespace ipr::impl {
       // -------------------
 
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
-            : parms{pr, d}, value_type{}, body{}
-      {
-        parms.parms.owned_by = this;
-      }
-
-      impl::Parameter*
-      Mapping::param(const ipr::Name& n, const ipr::Rname& rn) {
-         using Rep = impl::Rname::Rep;
-         return parms.add_member(n, impl::Rname(Rep{ rn.first(), rn.second(), rn.third() }));
-      }
+            : inputs{pr, d}, value_type{}, body{}
+      { }
 
       // -- impl::Lambda
       Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}, lam_spec{}
@@ -1414,12 +1385,6 @@ namespace ipr::impl {
       const ipr::Guide_name& name_factory::get_guide_name(const ipr::Template& m)
       {
          return *guide_ids.insert(m, unary_compare());
-      }
-
-      const ipr::Rname& name_factory::get_rname(Mapping_level lvl, Decl_position pos, const ipr::Type& t)
-      {
-         using Rep = impl::Rname::Rep;
-         return *rnames.insert(Rep{ t, lvl, pos }, ternary_compare());
       }
 
       // ------------------------
@@ -1987,14 +1952,6 @@ namespace ipr::impl {
          return make(conds, expr, then, alt).with_type(t);
       }
 
-      const ipr::Rname&
-      expr_factory::rname_for_next_param(const impl::Mapping& map, const ipr::Type& t)
-      {
-         Decl_position pos { map.parms.size() };
-         auto lvl = map.parameters().level();
-         return get_rname(lvl, pos, t);
-      }
-
       impl::Mapping*
       expr_factory::make_mapping(const ipr::Region& r, Mapping_level l) {
          return mappings.make(r, l);
@@ -2174,12 +2131,6 @@ namespace ipr::impl {
       impl::Mapping*
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
          return expr_factory::make_mapping(r, l);
-      }
-
-      impl::Parameter*
-      Lexicon::make_parameter(const ipr::Name& n, const ipr::Type& t,
-                              impl::Mapping& m) {
-         return m.param(n, rname_for_next_param(m, t));
       }
 
       const ipr::Auto& Lexicon::get_auto()

@@ -568,7 +568,6 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
-      const ipr::Expr& owner() const final { return owned_by.get(); }
       bool global() const final { return false; }
 
       explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
@@ -629,42 +628,37 @@ namespace ipr::impl {
 }
 
 namespace ipr::impl {
-                              // -- impl::Rname --
-   struct Rname : Ternary<Node<ipr::Rname>> {
-      explicit Rname(Rep);
-
-      // It was not strictly necessary to actually define this class
-      // and the function type().  See the comments in <ipr/interface>.
-      const ipr::Type& type() const;
-   };
+      struct Parameter_list;
 
                               // -- impl::Parameter --
    struct Parameter final : unique_decl<ipr::Parameter> {
-      const ipr::Name& id;
-      const impl::Rname& abstract_name;
-      util::ref<const ipr::Parameter_list> where;
       Optional<ipr::Expr> init;
-
-      Parameter(const ipr::Name&, const impl::Rname&);
+      Parameter(const ipr::Name&, const ipr::Type&, Decl_position);
       const ipr::Name& name() const final { return id; }
-      const ipr::Type& type() const final;
+      const ipr::Type& type() const final { return typing; }
       const ipr::Region& home_region() const final { return where.get().region(); }
-      Decl_position position() const final;
+      Mapping_level level() const final { return where.get().level(); }
+      Decl_position position() const final { return pos; }
       Optional<ipr::Expr> initializer() const final { return init; }
+   private:
+      const ipr::Name& id;
+      const ipr::Type& typing;
+      util::ref<const ipr::Parameter_list> where;
+      const Decl_position pos;
+      friend struct Parameter_list;
    };
 
                               // -- impl::Parameter_list --
    struct Parameter_list : impl::Node<ipr::Parameter_list> {
-      homogeneous_region<impl::Parameter> parms;
-      const Mapping_level nesting;
-
       Parameter_list(const ipr::Region&, Mapping_level);
       const ipr::Product& type() const final;
       const ipr::Region& region() const final;
       Mapping_level level() const final { return nesting; }
       const ipr::Sequence<ipr::Parameter>& elements() const final;
-
-      impl::Parameter* add_member(const ipr::Name&, const impl::Rname&);
+      impl::Parameter* add_member(const ipr::Name&, const ipr::Type&);
+   private:
+      homogeneous_region<impl::Parameter> parms;
+      const Mapping_level nesting;
    };
 }
 
@@ -1421,15 +1415,18 @@ namespace ipr::impl {
    using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
 
    struct Mapping : impl::Expr<ipr::Mapping> {
-      impl::Parameter_list parms;
+      impl::Parameter_list inputs;
       util::ref<const ipr::Type> value_type;
       util::ref<const ipr::Expr> body;
 
       Mapping(const ipr::Region&, Mapping_level);
-      const ipr::Parameter_list& parameters() const final { return parms; }
+      const ipr::Parameter_list& parameters() const final { return inputs; }
       const ipr::Type& target() const final { return value_type.get(); }
       const ipr::Expr& result() const final { return body.get(); }
-      impl::Parameter* param(const ipr::Name&, const ipr::Rname&);
+      impl::Parameter* param(const ipr::Name& n, const ipr::Type& t)
+      {
+          return inputs.add_member(n, t);
+      }
    };
 
    using Member_init = Binary_expr<ipr::Member_init>;
@@ -1632,7 +1629,6 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
-      const ipr::Expr& owner() const final { return owned_by.get(); }
       bool global() const final { return not parent.is_valid(); }
 
       impl::Region* make_subregion();
@@ -2039,8 +2035,6 @@ namespace ipr::impl {
       const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
       const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
       const ipr::Guide_name& get_guide_name(const ipr::Template&);
-      const ipr::Rname& get_rname(Mapping_level, Decl_position, const ipr::Type&);
-
    private:
       util::string_pool strings;
       util::rb_tree::container<impl::Identifier> ids;
@@ -2050,7 +2044,6 @@ namespace ipr::impl {
       util::rb_tree::container<impl::Dtor_name> dtors;
       util::rb_tree::container<impl::Operator> ops;
       util::rb_tree::container<impl::Guide_name> guide_ids;
-      util::rb_tree::container<impl::Rname> rnames;
    };
 
    struct expr_factory : name_factory {
@@ -2164,9 +2157,6 @@ namespace ipr::impl {
       New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
       Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                     const ipr::Expr&, Optional<ipr::Type> = {});
-
-      const ipr::Rname& rname_for_next_param(const Mapping&, const ipr::Type&);
-
       Mapping* make_mapping(const ipr::Region&, Mapping_level);
       Lambda* make_lambda(const ipr::Region&, Mapping_level);
 
@@ -2426,8 +2416,6 @@ namespace ipr::impl {
                                           const ipr::Type&);
 
       impl::Mapping* make_mapping(const ipr::Region&, Mapping_level = { });
-      impl::Parameter* make_parameter(const ipr::Name&, const ipr::Type&,
-                                       impl::Mapping&);
 
       impl::Class* make_class(const ipr::Region&);
       impl::Enum* make_enum(const ipr::Region&, Enum::Kind);

@@ -147,12 +147,6 @@ ipr::Visitor::visit(const Guide_name& n)
    visit(as<Name>(n));
 }
 
-void
-ipr::Visitor::visit(const Rname& n)
-{
-   visit(as<Name>(n));
-}
-
 // -- Types visiting hooks --
 
 void

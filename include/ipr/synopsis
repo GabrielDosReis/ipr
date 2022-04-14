@@ -67,8 +67,6 @@ namespace ipr {
    struct Ctor_name;             // constructor name                   T::T
    struct Dtor_name;             // destructor name                   T::~T
    struct Guide_name;            // deduction guide name 
-   struct Rname;                 // de Bruijn (index, position),
-                                 // find better name
 
    // --------------------------------------------------------
    // -- results of nullar expression constructor constants --
