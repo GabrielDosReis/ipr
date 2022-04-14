@@ -136,6 +136,17 @@ namespace ipr::impl {
       Arg3_type third() const final { return rep.third; }
       Arg4_type fourth() const final { return rep.fourth; }
    };
+
+   using Comment = Unary_node<Comment>;
+
+   using Identifier = Unary_node<ipr::Identifier>;
+   using Suffix = Unary_node<ipr::Suffix>;
+   using Operator = Unary_node<ipr::Operator>;
+   using Conversion = Unary_node<ipr::Conversion>;
+   using Ctor_name = Unary_node<ipr::Ctor_name>;
+   using Dtor_name = Unary_node<ipr::Dtor_name>;
+   using Guide_name = Unary_node<ipr::Guide_name>;
+   using Type_id = Unary_node<ipr::Type_id>;
 }
 
 namespace ipr::util {
@@ -366,17 +377,26 @@ namespace ipr::impl {
       const ipr::Name& name() const final { return id.get(); }
    };
 
+   template<typename T>
+   struct Composite : impl::Node<T> {
+      constexpr Composite() : id{*this} { }
+      const ipr::Type& type() const final { return impl::typename_type(); }
+      const ipr::Name& name() const final { return id; }
+   private:
+      impl::Type_id id;
+   };
+
    // -- impl::Unary_type
    template<typename T>
-   using Unary_type = Unary<Type<T>>;
+   using Unary_type = Unary<Composite<T>>;
 
    // -- impl::Binary_type
    template<typename T>
-   using Binary_type = Binary<Type<T>>;
+   using Binary_type = Binary<Composite<T>>;
 
    // -- impl::Ternary_type
    template<typename T>
-   using Ternary_type = Ternary<Type<T>>;
+   using Ternary_type = Ternary<Composite<T>>;
 }
 
 namespace ipr::impl{
@@ -471,7 +491,7 @@ namespace ipr::impl {
    // in "type envelop" and return the nth type as being the
    // type of the nth declaration in the sequence.
    template<class Seq>
-   struct typed_sequence : impl::Type<ipr::Product>,
+   struct typed_sequence : impl::Composite<ipr::Product>,
                            ipr::Sequence<ipr::Type> {
       using Index = typename Sequence<ipr::Type>::Index;
       Seq seq;
@@ -1214,12 +1234,11 @@ namespace ipr::impl {
       }
    };
 
-
    using Array = Binary_type<ipr::Array>;
    using Decltype = Unary_type<ipr::Decltype>;
    using As_type = Binary_type<ipr::As_type>;
    using Tor = Binary_type<ipr::Tor>;
-   using Function = Quaternary<Type<ipr::Function>>;
+   using Function = Quaternary<Composite<ipr::Function>>;
    using Pointer = Unary_type<ipr::Pointer>;
    using Product = Unary_type<ipr::Product>;
    using Ptr_to_member = Binary_type<ipr::Ptr_to_member>;
@@ -1228,17 +1247,6 @@ namespace ipr::impl {
    using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
    using Sum = Unary_type<ipr::Sum>;
    using Forall = Binary_type<ipr::Forall>;
-
-   using Comment = Unary_node<Comment>;
-
-   using Identifier = Unary_node<ipr::Identifier>;
-   using Suffix = Unary_node<ipr::Suffix>;
-   using Operator = Unary_node<ipr::Operator>;
-   using Conversion = Unary_node<ipr::Conversion>;
-   using Ctor_name = Unary_node<ipr::Ctor_name>;
-   using Dtor_name = Unary_node<ipr::Dtor_name>;
-   using Guide_name = Unary_node<ipr::Guide_name>;
-   using Type_id = Unary_node<ipr::Type_id>;
 
    using Phantom = Expr<ipr::Phantom>;
    using Eclipsis = Expr<ipr::Eclipsis>;
@@ -1730,7 +1738,7 @@ namespace ipr::impl {
 
    };
 
-   struct Auto : impl::Type<ipr::Auto> {
+   struct Auto : impl::Composite<ipr::Auto> {
    };
 
    struct Closure : impl::Udt<ipr::Closure> {
@@ -1973,7 +1981,6 @@ namespace ipr::impl {
       const ipr::Suffix& get_suffix(const ipr::Identifier&);
       const ipr::Operator& get_operator(const ipr::String&);
       const ipr::Operator& get_operator(util::word_view);
-      const ipr::Type_id& get_type_id(const ipr::Type&);
       const ipr::Conversion& get_conversion(const ipr::Type&);
       const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
       const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
@@ -1990,7 +1997,6 @@ namespace ipr::impl {
       util::rb_tree::container<impl::Operator> ops;
       util::rb_tree::container<impl::Guide_name> guide_ids;
       util::rb_tree::container<impl::Rname> rnames;
-      util::rb_tree::container<impl::Type_id> type_ids;
    };
 
    struct expr_factory : name_factory {
@@ -2386,8 +2392,6 @@ namespace ipr::impl {
       util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
       util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
       stable_farm<impl::Auto> autos;
-
-      template<class T> T* finish_type(T*);
    };
 
    template<typename T>

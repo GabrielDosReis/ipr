@@ -1381,11 +1381,6 @@ namespace ipr::impl {
          return *dtors.insert(t, unary_compare());
       }
 
-      const ipr::Type_id& name_factory::get_type_id(const ipr::Type& t)
-      {
-         return *type_ids.insert(t, unary_compare());
-      }
-
       const ipr::Conversion& name_factory::get_conversion(const ipr::Type& t)
       {
          return *convs.insert(t, unary_compare());
@@ -2035,17 +2030,6 @@ namespace ipr::impl {
       const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
       const ipr::Symbol& Lexicon::nullptr_value() const { return impl::nullptr_cst; }
 
-      template<class T>
-      T* Lexicon::finish_type(T* t) {
-         if (not t->typing.is_valid())
-            t->typing = impl::any_type;
-
-         if (not t->id.is_valid())
-            t->id = get_type_id(*t);
-
-         return t;
-      }
-
       const ipr::Template_id&
       Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
          return *expr_factory::make_template_id(t, a);
@@ -2053,7 +2037,7 @@ namespace ipr::impl {
 
       const ipr::Array&
       Lexicon::get_array(const ipr::Type& t, const ipr::Expr& b) {
-         return *finish_type(types.make_array(t, b));
+         return *types.make_array(t, b);
       }
 
       const ipr::As_type&
@@ -2063,20 +2047,20 @@ namespace ipr::impl {
 
       const ipr::As_type&
       Lexicon::get_as_type(const ipr::Expr& e, const ipr::Linkage& l) {
-         return *finish_type(types.make_as_type(e, l));
+         return *types.make_as_type(e, l);
       }
 
       const ipr::Decltype&
       Lexicon::get_decltype(const ipr::Expr& e) {
          if (physically_same(e, impl::nullptr_cst))
             return impl::nullptr_cst.type();
-         return *finish_type(types.make_decltype(e));
+         return *types.make_decltype(e);
       }
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
                             const ipr::Expr& s, const ipr::Linkage& l) {
-         return *finish_type(types.make_function(p, t, s, l));
+         return *types.make_function(p, t, s, l);
       }
 
       const ipr::Function&
@@ -2099,45 +2083,43 @@ namespace ipr::impl {
 
       const ipr::Pointer&
       Lexicon::get_pointer(const ipr::Type& t) {
-         return *finish_type(types.make_pointer(t));
+         return *types.make_pointer(t);
       }
 
       const ipr::Product&
       Lexicon::get_product(const ref_sequence<ipr::Type>& s) {
-         return *finish_type
-            (types.make_product(*type_seqs.insert(s, unary_lexicographic_compare())));
+         return *types.make_product(*type_seqs.insert(s, unary_lexicographic_compare()));
       }
 
       const ipr::Ptr_to_member&
       Lexicon::get_ptr_to_member(const ipr::Type& s, const ipr::Type& t) {
-         return *finish_type(types.make_ptr_to_member(s, t));
+         return *types.make_ptr_to_member(s, t);
       }
 
       const ipr::Qualified&
       Lexicon::get_qualified(ipr::Type_qualifiers cv, const ipr::Type& t) {
          assert (cv != ipr::Type_qualifiers::None);
-         return *finish_type(types.make_qualified(cv, t));
+         return *types.make_qualified(cv, t);
       }
 
       const ipr::Reference&
       Lexicon::get_reference(const ipr::Type& t) {
-         return *finish_type(types.make_reference(t));
+         return *types.make_reference(t);
       }
 
       const ipr::Rvalue_reference&
       Lexicon::get_rvalue_reference(const ipr::Type& t) {
-         return *finish_type(types.make_rvalue_reference(t));
+         return *types.make_rvalue_reference(t);
       }
 
       const ipr::Sum&
       Lexicon::get_sum(const ref_sequence<ipr::Type>& s) {
-         return *finish_type
-            (types.make_sum(*type_seqs.insert(s, unary_lexicographic_compare())));
+         return *types.make_sum(*type_seqs.insert(s, unary_lexicographic_compare()));
       }
 
       const ipr::Forall&
       Lexicon::get_forall(const ipr::Product& p, const ipr::Type& t) {
-         return *finish_type(types.make_forall(p, t));
+         return *types.make_forall(p, t);
       }
 
       impl::Class*
@@ -2164,10 +2146,7 @@ namespace ipr::impl {
 
       impl::Mapping*
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
-         auto x = expr_factory::make_mapping(r, l);
-         // Note: the parameters form a Product type needing its type set
-         x->parms.parms.scope.decls.typing = typename_type();
-         return x;
+         return expr_factory::make_mapping(r, l);
       }
 
       impl::Parameter*
@@ -2178,9 +2157,7 @@ namespace ipr::impl {
 
       const ipr::Auto& Lexicon::get_auto()
       {
-         auto t = make(autos).with_type(typename_type());
-         t->id = &get_identifier("auto");
-         return *t;
+         return *autos.make();
       }
 
       // -- impl::Interface_unit --
