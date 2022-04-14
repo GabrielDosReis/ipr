@@ -305,7 +305,6 @@ namespace ipr {
       using Location_span = std::pair<Unit_location, Unit_location>;
       virtual const Location_span& span() const = 0;
       virtual const Region& enclosing() const = 0;
-      virtual const Expr& owner() const = 0;
       virtual const Sequence<Expr>& body() const = 0;
       virtual const Scope& bindings() const = 0;
       virtual bool global() const = 0;                   // is this region the global region?
@@ -456,23 +455,6 @@ namespace ipr {
    // For example, "const T*" is a Type_id , so is "int (T&)".
    struct Type_id : Unary<Category<Category_code::Type_id, Name>, const Type&> {
       Arg_type type_expr() const { return operand(); }
-   };
-
-                                // -- Rname --
-   // This is the abstract, alpha-renaming independent, representation of
-   // a parameter (of either a function or a template) in its de Brujin
-   // level form.  Here we include type in the abstract-name.
-   // The "level" is the nesting-depth, starting from 1, of the parameter.
-   // the "position" is its position, starting from 0, in the
-   // parameter-list at a given level.
-   struct Rname : Ternary<Category<Category_code::Rname, Name>,
-                          const Type&, Mapping_level, Decl_position> {
-      // Although the type() of an Rname is its first operand, we don't define
-      // that function here, for it would involve a two indirections to
-      // to give the result.  Consequently we define it in the implementation
-      // part.
-      Arg2_type level() const { return second(); }
-      Arg3_type position() const { return third(); }
    };
 
                                 // -- Overload --
@@ -1780,6 +1762,7 @@ namespace ipr {
    // A parameter is uniquely characterized by its position in
    // a parameter list.
    struct Parameter : Category<Category_code::Parameter, Decl> {
+      virtual Mapping_level level() const = 0;
       virtual Decl_position position() const = 0;
       const Region& lexical_region() const final { return home_region(); }
       Optional<Expr> default_value() const { return initializer(); }
@@ -1922,7 +1905,6 @@ namespace ipr {
       virtual void visit(const Ctor_name&);
       virtual void visit(const Dtor_name&);
       virtual void visit(const Guide_name&);
-      virtual void visit(const Rname&);
 
       virtual void visit(const Type&) = 0;
       virtual void visit(const Array&);

@@ -341,24 +341,6 @@ namespace ipr {
          {
             pp << xpr_identifier("#dtor");
          }
-
-         // -- parameter-canonical-name
-         //    #(level, position)
-         // The (template) parameter is indicated in a generalized
-         // de Bruijn nottation, where "level" is the level of
-         // template-parameter list where the parameter was bound
-         // (starting with 0 for the outermost level, and increasing
-         // by one as the levels nest), and "position" is the position
-         // of the parameter in the parameter list where it was bound
-         // (starting 0 for the first parameter).
-         void visit(const Rname& rn) final
-         {
-            pp << xpr_identifier("#(")
-               << rn.level()
-               << token(", ")
-               << rn.position()
-               << token(')');
-         }
       };
    }
 
