@@ -103,9 +103,12 @@ namespace ipr::impl {
         constexpr auto& internal_string(const char* p) { return known_word(p).operand(); }
 
         // Known language linkages to all C++ implementations.
-        constexpr Linkage c_linkage { internal_string("C") };
-        constexpr Linkage cxx_linkage { internal_string("C++") };
+        constexpr Linkage c_link { internal_string("C") };
+        constexpr Linkage cxx_link { internal_string("C++") };
     }
+
+    const ipr::Linkage& c_linkage() { return impl::c_link; }
+    const ipr::Linkage& cxx_linkage() { return impl::cxx_link; }
 }
 
 namespace ipr::impl {
@@ -114,12 +117,11 @@ namespace ipr::impl {
       // "typename" and, of course, have C++ linkage.  Because they are known to all
       // implementations as elementary, they can be directly represented as constants,
       // therefore reducing initialization or startup time.
-      struct Builtin : impl::Node<ipr::As_type> {
+      struct Builtin : impl::Type<ipr::As_type> {
          explicit constexpr Builtin(const char* p) : id{known_word(p)} { }
          const ipr::Name& name() const final { return id; }
          const ipr::Type& type() const final { return impl::typename_type(); }
-         const ipr::Expr& first() const final { return *this; }
-         const ipr::Linkage& second() const final { return cxx_linkage; }
+         const ipr::Expr& operand() const final { return *this; }
       private:
          const impl::std_identifier& id;
       };
@@ -733,6 +735,8 @@ namespace ipr::impl {
          body.owned_by = this;
       }
 
+      const ipr::Type& Enum::type() const { return impl::enum_type; }
+
       const ipr::Region&
       Enum::region() const {
          return body;
@@ -955,11 +959,30 @@ namespace ipr::impl {
          return decltypes.make(e);
       }
 
-      impl::As_type*
+      impl::As_type* type_factory::make_as_type(const ipr::Expr& e)
+      {
+         return type_refs.insert(e, unary_compare());
+      }
+
+
+      impl::As_type_with_linkage*
       type_factory::make_as_type(const ipr::Expr& e, const ipr::Linkage& l)
       {
-         using Rep = impl::As_type::Rep;
-         return type_refs.insert(Rep{ e, l }, binary_compare());
+         using T = impl::As_type_with_linkage;
+         struct Comparator {
+            int operator()(const T& x, const T::Rep& y) const
+            {
+               if (auto cmp = compare(x.expr(), y.expr))
+                  return cmp;
+               return compare(x.linkage(), y.link);
+            }
+
+            int operator()(const T::Rep& x, const T& y) const
+            {
+               return -(*this)(y, x);
+            }
+         };
+         return type_links.insert(T::Rep{e, l}, Comparator{ });
       }
 
       struct ternary_compare {
@@ -984,30 +1007,6 @@ namespace ipr::impl {
          }
       };
 
-      struct quaternary_compare {
-         template<class T>
-         int operator()(const Quaternary<T>& lhs,
-                        const typename Quaternary<T>::Rep& rhs) const
-         {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
-            if (int cmp = compare(lhs.rep.third, rhs.third)) return cmp;
-
-            return compare(lhs.rep.fourth, rhs.fourth);
-         }
-
-         template<class T>
-         int operator()(const typename Quaternary<T>::Rep& lhs,
-                        const Quaternary<T>& rhs) const
-         {
-            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
-            if (int cmp = compare(lhs.third, rhs.rep.third)) return cmp;
-
-            return compare(lhs.fourth, rhs.rep.fourth);
-         }
-      };
-
       impl::Tor*
       type_factory::make_tor(const ipr::Product& s, const ipr::Sum& e)
       {
@@ -1017,10 +1016,36 @@ namespace ipr::impl {
 
       impl::Function*
       type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
-                                  const ipr::Expr& e, const ipr::Linkage& l)
+                                  const ipr::Expr& e)
       {
          using rep = impl::Function::Rep;
-         return functions.insert(rep{ s, t, e, l }, quaternary_compare());
+         return functions.insert(rep{ s, t, e }, ternary_compare());
+      }
+
+      impl::Function_with_linkage*
+      type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
+                                  const ipr::Expr& e, const ipr::Linkage& l)
+      {
+         using T = impl::Function_with_linkage;
+         struct Comparator {
+            int operator()(const T& x, const T::Rep& y) const
+            {
+               if (auto cmp = compare(x.source(), y.source))
+                  return cmp;
+               if (auto cmp = compare(x.target(), y.target))
+                  return cmp;
+               if (auto cmp = compare(x.throws(), y.throws))
+                  return cmp;
+               return compare(x.linkage(), y.link);
+            }
+
+            int operator()(const T::Rep& x, const T& y) const
+            {
+               return -(*this)(y, x);
+            }
+         };
+
+         return fun_links.insert(T::Rep{ s, t, e, l }, Comparator{ });
       }
 
       impl::Pointer*
@@ -1405,18 +1430,18 @@ namespace ipr::impl {
       const ipr::Linkage& expr_factory::get_linkage(util::word_view w)
       {
          if (w == "C")
-            return impl::c_linkage;
+            return impl::c_link;
          else if (w == "C++")
-            return impl::cxx_linkage;
+            return impl::cxx_link;
          return get_linkage(get_string(w));
       }
 
       const ipr::Linkage& expr_factory::get_linkage(const ipr::String& lang)
       {
          if (physically_same(lang, internal_string("C")))
-            return impl::c_linkage;
+            return impl::c_link;
          else if (physically_same(lang, internal_string("C++")))
-            return impl::cxx_linkage;
+            return impl::cxx_link;
          return *linkages.insert(lang, unary_compare());
       }
 
@@ -1983,8 +2008,8 @@ namespace ipr::impl {
 
       // -- impl::Lexicon --
 
-      const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_linkage; }
-      const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_linkage; }
+      const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_link; }
+      const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_link; }
 
       Lexicon::Lexicon() { }
       Lexicon::~Lexicon() { }
@@ -2042,11 +2067,13 @@ namespace ipr::impl {
 
       const ipr::As_type&
       Lexicon::get_as_type(const ipr::Expr& e) {
-         return get_as_type(e, cxx_linkage());
+         return *types.make_as_type(e);
       }
 
       const ipr::As_type&
       Lexicon::get_as_type(const ipr::Expr& e, const ipr::Linkage& l) {
+         if (physically_same(l, cxx_linkage()))
+            return get_as_type(e);
          return *types.make_as_type(e, l);
       }
 
@@ -2060,13 +2087,15 @@ namespace ipr::impl {
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
                             const ipr::Expr& s, const ipr::Linkage& l) {
+         if (physically_same(l, cxx_linkage()))
+            return get_function(p, t, s);
          return *types.make_function(p, t, s, l);
       }
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
                             const ipr::Expr& s) {
-         return get_function(p, t, s, cxx_linkage());
+         return *types.make_function(p, t, s);
       }
 
       const ipr::Function&
@@ -2078,7 +2107,7 @@ namespace ipr::impl {
 
       const ipr::Function&
       Lexicon::get_function(const ipr::Product& p, const ipr::Type& t) {
-         return get_function(p, t, cxx_linkage());
+         return get_function(p, t, false_value());
       }
 
       const ipr::Pointer&
@@ -2129,9 +2158,7 @@ namespace ipr::impl {
 
       impl::Enum*
       Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
-         auto t = types.make_enum(pr, k);
-         t->typing = enum_type();
-         return t;
+         return types.make_enum(pr, k);
       }
 
       impl::Namespace*

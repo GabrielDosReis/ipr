@@ -146,23 +146,6 @@ namespace ipr {
       virtual Third third() const = 0;
    };
 
-                                // -- Quaternary --
-   // Similar to Unary<>, Binary<> and Ternary<>.  Quaternary nodes are,
-   // however rare in diversity.  Examples include function types.
-   template<class Cat, class First = const Expr&,
-            class Second = const Expr&, class Third = const Expr&,
-            class Fourth = const Expr&>
-   struct Quaternary : Cat {
-      using Arg1_type = First;
-      using Arg2_type = Second;
-      using Arg3_type = Third;
-      using Arg4_type = Fourth;
-      virtual First first() const = 0;
-      virtual Second second() const = 0;
-      virtual Third third() const = 0;
-      virtual Fourth fourth() const = 0;
-   };
-
                                 // -- DeclSpecifiers --
    enum class DeclSpecifiers : std::uint32_t {
       None       = 0,
@@ -293,7 +276,8 @@ namespace ipr {
    // implementations do have support for things like "Java" language
    // linkage and whatnot.  Consequently, the most general representation
    // is adopted.  From ISO C++ point of view, language linkage applies
-   // only to function names, variable names, and function types.
+   // only to function names, variable names, and function types.  Furthermore,
+   // a language linkage applied to a function type is a calling convention.
    struct Linkage : Unary<Category<Category_code::Linkage, Node>, const String&> {
       Arg_type language() const { return operand(); }
    };
@@ -533,10 +517,16 @@ namespace ipr {
    // in IPR has a much broader significance than Standard C++ types 
    // (henceforth called "classic type").  In particular, in IPR, "namespace"
    // is a type. Similarly, an overload-set has a type.
+   // Some C++ implementations define "extended built-in" types with
+   // language linkage, e.g. `extern "Java"' or `extern "Fortran"', for
+   // interoperating with other languages.  The current representation
+   // includes language linkage as integral part of Type.
+   // Almost all types have "C++" language linkage.  The exceptions are: 
+   //   a. As_type built with explicit language specification
+   //   b. Function built with explicit language specification
    struct Type : Expr {
-      // All types have names.
       virtual const Name& name() const = 0;
-
+      virtual const Linkage& linkage() const = 0;
    protected:
       constexpr Type(Category_code c) : Expr{ c } { }
    };
@@ -562,14 +552,8 @@ namespace ipr {
    //    typedef int count;
    //    typename T::size_type s = 90;
    //    template<typename T, T t> ...
-   // Some C++ implementations define "extended built-in" types with
-   // language linkage, e.g. `extern "Java"' or `extern "Fortran"', for
-   // interoperating with other languages.  The current representation
-   // includes language linkage as integral part of As_type.
-   struct As_type : Binary<Category<Category_code::As_type, Type>,
-                           const Expr&, const Linkage& > {
-      Arg1_type expr() const { return first(); }
-      Arg2_type lang_linkage() const { return second(); }
+   struct As_type : Unary<Category<Category_code::As_type, Type>> {
+      Arg_type expr() const { return operand(); }
    };
 
                                 // -- Decltype --
@@ -601,8 +585,8 @@ namespace ipr {
    // however, we've made a special node for template.  ISO C++ specifies
    // that function types have language linkages and two function types
    // with different language linkages are different.
-   struct Function : Quaternary<Category<Category_code::Function, Type>,
-                                const Product&, const Type&, const Expr&, const Linkage&> {
+   struct Function : Ternary<Category<Category_code::Function, Type>,
+                              const Product&, const Type&, const Expr&> {
       // Parameter-type-list of a function of this type.  In full
       // generality, this also describes template signature.
       Arg1_type source() const { return first(); }
@@ -610,12 +594,9 @@ namespace ipr {
       // return-type
       Arg2_type target() const { return second(); }
 
-      // list of exception types a function of this type may throw
+      // Either a boolean expression indicating when values of this type can throw,
+      // or a list of exception types a function of this type may throw.
       Arg3_type throws() const { return third(); }
-
-      // The language linkage for this function type.  For most function
-      // types, it is C++ -- for it is the default.
-      Arg4_type lang_linkage() const { return fourth(); }
    };
 
                                 // -- Pointer --

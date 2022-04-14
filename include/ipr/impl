@@ -326,6 +326,10 @@ namespace ipr::impl {
 }
 
 namespace ipr::impl {
+   // The two language linkages required of all C++ implementations.
+   const ipr::Linkage& c_linkage();
+   const ipr::Linkage& cxx_linkage();
+
    // The type of types, including itselt.
    // Yes, we have a ``Type: Type'' problem.
    const ipr::Type& typename_type();
@@ -368,17 +372,17 @@ namespace ipr::impl {
    // -- Generalized types --
    // -----------------------
    // impl::Type<T> implements the common operations supported
-   // by all type node objects.  In particular, it implements only
-   // main-variant types; qualified types are handled elsewhere.
+   // by all type node objects.  Almost all C++ types have "C++" language linkage.
+   // The exceptions are handled elsewhere.
    template<class T>
-   struct Type : impl::Expr<T> {
-      Optional<ipr::Name> id { };
-
-      const ipr::Name& name() const final { return id.get(); }
+   struct Type : impl::Node<T> {
+      const ipr::Linkage& linkage() const final { return impl::cxx_linkage(); }
    };
 
+   // A composite type is one built from existing types and built-in type constructors.
+   // Their names are exactly the type-expressions referencing the types themselves.
    template<typename T>
-   struct Composite : impl::Node<T> {
+   struct Composite : impl::Type<T> {
       constexpr Composite() : id{*this} { }
       const ipr::Type& type() const final { return impl::typename_type(); }
       const ipr::Name& name() const final { return id; }
@@ -1236,9 +1240,9 @@ namespace ipr::impl {
 
    using Array = Binary_type<ipr::Array>;
    using Decltype = Unary_type<ipr::Decltype>;
-   using As_type = Binary_type<ipr::As_type>;
+   using As_type = Unary_type<ipr::As_type>;
    using Tor = Binary_type<ipr::Tor>;
-   using Function = Quaternary<Composite<ipr::Function>>;
+   using Function = Ternary_type<ipr::Function>;
    using Pointer = Unary_type<ipr::Pointer>;
    using Product = Unary_type<ipr::Product>;
    using Ptr_to_member = Binary_type<ipr::Ptr_to_member>;
@@ -1247,6 +1251,47 @@ namespace ipr::impl {
    using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
    using Sum = Unary_type<ipr::Sum>;
    using Forall = Binary_type<ipr::Forall>;
+
+   // A given core expression can be proclaimed to name a type with a specified
+   // language linkage.  That is useful for interoperating with code fragments
+   // written in other languages.
+   struct As_type_with_linkage : impl::Node<ipr::As_type> {
+      struct Rep {
+         const ipr::Expr& expr;
+         const ipr::Linkage& link;
+      };
+
+      explicit As_type_with_linkage(const Rep& r) : id{*this}, rep{r} { }
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return impl::typename_type(); }
+      const ipr::Expr& operand() const final { return rep.expr; }
+      const ipr::Linkage& linkage() const final { return rep.link; }
+   private:
+      Type_id id;
+      Rep rep;
+   };
+
+   // A function type with a specified language linkage (other than C++) or, for
+   // that matter a specified calling convention (which serves as language linkage).
+   struct Function_with_linkage : impl::Node<ipr::Function> {
+      struct Rep {
+         const ipr::Product& source;
+         const ipr::Type& target;
+         const ipr::Expr& throws;
+         const ipr::Linkage& link;
+      };
+
+      explicit Function_with_linkage(const Rep& r) : id{*this}, rep{r} { }
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return impl::typename_type(); }
+      const ipr::Linkage& linkage() const final { return rep.link; }
+      const ipr::Product& first() const final { return rep.source; }
+      const ipr::Type& second() const final { return rep.target; }
+      const ipr::Expr& third() const final { return rep.throws; }
+   private:
+      Type_id id;
+      Rep rep;
+   };
 
    using Phantom = Expr<ipr::Phantom>;
    using Eclipsis = Expr<ipr::Eclipsis>;
@@ -1648,12 +1693,16 @@ namespace ipr::impl {
    template<class Interface>
    struct Udt : impl::Type<Interface> {
       Region body;
+      Optional<ipr::Name> id;
+      util::ref<const ipr::Type> typing;
       Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr)
       {
          this->typing = &t;
          body.owned_by = this;
       }
 
+      const ipr::Name& name() const final { return id.get(); }
+      const ipr::Type& type() const final { return typing.get(); }
       const ipr::Region& region() const final { return body; }
 
       impl::Alias*
@@ -1715,14 +1764,16 @@ namespace ipr::impl {
 
    struct Enum : impl::Type<ipr::Enum> {
       homogeneous_region<impl::Enumerator> body;
+      Optional<ipr::Name> id;
       const Kind enum_kind;
 
+      Enum(const ipr::Region&, Kind);
+      const ipr::Name& name() const final { return id.get(); }
+      const ipr::Type& type() const final;
       const ipr::Region& region() const final;
       const Sequence<ipr::Enumerator>& members() const final;
       Kind kind() const final;
       impl::Enumerator* add_member(const ipr::Name&);
-
-      Enum(const ipr::Region&, Kind);
    };
 
    using Union = Udt<ipr::Union>;
@@ -1758,15 +1809,16 @@ namespace ipr::impl {
       // Build an IPR node for an expression that denotes a type.
       // The linkage, if not specified, is assumed to be C++.
       impl::As_type* make_as_type(const ipr::Expr&);
-      impl::As_type* make_as_type(const ipr::Expr&, const ipr::Linkage&);
+      impl::As_type_with_linkage* make_as_type(const ipr::Expr&, const ipr::Linkage&);
 
       impl::Array* make_array(const ipr::Type&, const ipr::Expr&);
       impl::Qualified* make_qualified(ipr::Type_qualifiers,
                                        const ipr::Type&);
       impl::Decltype* make_decltype(const ipr::Expr&);
       impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&);
-      impl::Function* make_function(const ipr::Product&, const ipr::Type&,
-                                    const ipr::Expr&, const ipr::Linkage&);
+      impl::Function* make_function(const ipr::Product&, const ipr::Type&, const ipr::Expr&);
+      impl::Function_with_linkage* make_function(const ipr::Product&, const ipr::Type&,
+                                                const ipr::Expr&, const ipr::Linkage&);
       impl::Pointer* make_pointer(const ipr::Type&);
       impl::Product* make_product(const ipr::Sequence<ipr::Type>&);
       impl::Ptr_to_member* make_ptr_to_member(const ipr::Type&,
@@ -1784,8 +1836,10 @@ namespace ipr::impl {
    private:
       util::rb_tree::container<impl::Array> arrays;
       util::rb_tree::container<impl::As_type> type_refs;
+      util::rb_tree::container<impl::As_type_with_linkage> type_links;
       util::rb_tree::container<impl::Tor> tors;
       util::rb_tree::container<impl::Function> functions;
+      util::rb_tree::container<impl::Function_with_linkage> fun_links;
       util::rb_tree::container<impl::Pointer> pointers;
       util::rb_tree::container<impl::Product> products;
       util::rb_tree::container<impl::Ptr_to_member> member_ptrs;
