@@ -1876,6 +1876,7 @@ namespace ipr {
                                                                // example of symbolic value representation.
       virtual const Symbol& default_value() const = 0;         // "default" - as initializer for defaulted definition
                                                                //             and as default value for case in labeled statements.
+      virtual const Symbol& delete_value() const = 0;          // "delete" - as initializer in deleted function definitions.
 
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'

@@ -2378,6 +2378,7 @@ namespace ipr::impl {
       const ipr::Symbol& true_value() const final;
       const ipr::Symbol& nullptr_value() const final;
       const ipr::Symbol& default_value() const final;
+      const ipr::Symbol& delete_value() const final;
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 

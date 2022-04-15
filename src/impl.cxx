@@ -55,6 +55,7 @@ namespace ipr::impl {
            "char8_t",
            "class",
            "default",
+           "delete",
            "double",
            "enum",
            "false",
@@ -161,6 +162,9 @@ namespace ipr::impl {
 
       // Universal defaulter constant.
       constexpr Symbol default_cst { known_word("default"), auto_type };
+
+      // Universal deleted constant.  Nothing ever comes out.  Void.
+      constexpr Symbol delete_cst { known_word("delete"), void_type };
    }
 
    const ipr::Type& typename_type() { return impl::any_type; }
@@ -2024,6 +2028,7 @@ namespace ipr::impl {
       const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
       const ipr::Symbol& Lexicon::nullptr_value() const { return impl::nullptr_cst; }
       const ipr::Symbol& Lexicon::default_value() const { return impl::default_cst; }
+      const ipr::Symbol& Lexicon::delete_value() const { return impl::delete_cst; }
 
       const ipr::Template_id&
       Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
