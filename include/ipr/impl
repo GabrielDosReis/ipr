@@ -2054,6 +2054,8 @@ namespace ipr::impl {
       // Return a symbol with a given name and type.
       const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
       const ipr::Symbol& get_label(const ipr::Identifier&);
+      // Return a symbolic value for `this` with a given type.
+      const ipr::Symbol& get_this(const ipr::Type&);
 
       Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
 

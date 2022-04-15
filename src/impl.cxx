@@ -68,6 +68,7 @@ namespace ipr::impl {
            "nullptr",
            "short",
            "signed char",
+           "this",
            "true",
            "typename",
            "union",
@@ -1438,6 +1439,11 @@ namespace ipr::impl {
          if (physically_same(n, known_word("default")))
             return impl::default_cst;
          return get_symbol(n, impl::void_type);
+      }
+
+      const ipr::Symbol& expr_factory::get_this(const ipr::Type& t)
+      {
+         return get_symbol(known_word("this"), t);
       }
 
       impl::Phantom*
