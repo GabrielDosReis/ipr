@@ -1533,12 +1533,16 @@ namespace ipr {
 
                                 // -- Labeled_stmt --
    // This node is for labeled-statement:
-   //   - identifier : statement
-   //   - case constant-expression : statement
-   //   - default : statement
-   // IPR represents that "label()" as an expressions so that it can
+   //   a. identifier : statement
+   //   b. case constant-expression : statement
+   //   c. default : statement
+   // IPR represents that `label() as an expression so that it can
    // handle "identifier", "case cst-expr" and "default", where cst-expr
    // is an arbitrary constant-expression.
+   // In scenario (a), the `label()` is a Symbol whose `name()` is the identifier.
+   // The Symbol's `type()` is `void`.
+   // In scenario (b), the `label()` is represented directly by the constant-expression.
+   // In scenario (c), the `label()` is should be `Lexicon::default_value()`. 
    struct Labeled_stmt : Binary<Category<Category_code::Labeled_stmt, Stmt>,
                                 const Expr&, const Stmt&> {
       const Expr& label() const { return first(); }
@@ -1870,6 +1874,8 @@ namespace ipr {
       virtual const Symbol& nullptr_value() const = 0;         // "nullptr"      -- technically not a parameter
                                                                // to the C++ abstract machine, but provided as
                                                                // example of symbolic value representation.
+      virtual const Symbol& default_value() const = 0;         // "default" - as initializer for defaulted definition
+                                                               //             and as default value for case in labeled statements.
 
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
