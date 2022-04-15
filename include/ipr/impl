@@ -2148,8 +2148,7 @@ namespace ipr::impl {
       Scope_ref* make_scope_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Rshift* make_rshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Rshift_assign* make_rshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
-      Template_id* make_template_id(const ipr::Name&,
-                                    const ipr::Expr_list&);
+      Template_id* make_template_id(const ipr::Expr&, const ipr::Expr_list&);
       Static_cast* make_static_cast(const ipr::Type&, const ipr::Expr&);
       Widen* make_widen(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
       Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -2333,7 +2332,7 @@ namespace ipr::impl {
       const ipr::Linkage& cxx_linkage() const final;
       const ipr::Linkage& c_linkage() const final;
 
-      const ipr::Template_id& get_template_id(const ipr::Name&,
+      const ipr::Template_id& get_template_id(const ipr::Expr&,
                                                 const ipr::Expr_list&);
 
       const ipr::Literal& get_literal(const ipr::Type&, util::word_view);

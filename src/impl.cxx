@@ -1921,8 +1921,7 @@ namespace ipr::impl {
       }
 
       impl::Template_id*
-      expr_factory::make_template_id(const ipr::Name& n,
-                                     const ipr::Expr_list& args) {
+      expr_factory::make_template_id(const ipr::Expr& n, const ipr::Expr_list& args) {
          using Rep = impl::Template_id::Rep;
          return template_ids.insert(Rep{ n, args }, binary_compare());
       }
@@ -2031,7 +2030,7 @@ namespace ipr::impl {
       const ipr::Symbol& Lexicon::delete_value() const { return impl::delete_cst; }
 
       const ipr::Template_id&
-      Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {
+      Lexicon::get_template_id(const ipr::Expr& t, const ipr::Expr_list& a) {
          return *expr_factory::make_template_id(t, a);
       }
 

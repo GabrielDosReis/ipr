@@ -412,7 +412,7 @@ namespace ipr {
    //    template-expr<template-argument-list>
    // which 'applies' a template to a template-argument list.
    struct Template_id : Binary<Category<Category_code::Template_id, Name>,
-                               const Name&, const Expr_list&> {
+                               const Expr&, const Expr_list&> {
       Arg1_type template_name() const { return first(); }
       Arg2_type args() const { return second(); }
    };
