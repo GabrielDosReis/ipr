@@ -54,6 +54,7 @@ namespace ipr::impl {
            "char32_t",
            "char8_t",
            "class",
+           "default",
            "double",
            "enum",
            "false",
@@ -131,6 +132,7 @@ namespace ipr::impl {
       constexpr Builtin union_type { "union" };
       constexpr Builtin enum_type { "enum" };
       constexpr Builtin namespace_type { "namespace" };
+      constexpr Builtin auto_type { "auto" };
       constexpr Builtin void_type { "void" };
       constexpr Builtin bool_type { "bool" };
       constexpr Builtin char_type { "char" };
@@ -156,6 +158,9 @@ namespace ipr::impl {
       // Truth value symbolic constants.
       constexpr Symbol false_cst { known_word("false"), bool_type };
       constexpr Symbol true_cst { known_word("true"), bool_type };
+
+      // Universal defaulter constant.
+      constexpr Symbol default_cst { known_word("default"), auto_type };
    }
 
    const ipr::Type& typename_type() { return impl::any_type; }
@@ -1424,6 +1429,13 @@ namespace ipr::impl {
          return *sym;
       }
 
+      const ipr::Symbol& expr_factory::get_label(const ipr::Identifier& n)
+      {
+         if (physically_same(n, known_word("default")))
+            return impl::default_cst;
+         return get_symbol(n, impl::void_type);
+      }
+
       impl::Phantom*
       expr_factory::make_phantom() {
          return phantoms.make();
@@ -2011,6 +2023,7 @@ namespace ipr::impl {
       const ipr::Symbol& Lexicon::false_value() const { return impl::false_cst; }
       const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
       const ipr::Symbol& Lexicon::nullptr_value() const { return impl::nullptr_cst; }
+      const ipr::Symbol& Lexicon::default_value() const { return impl::default_cst; }
 
       const ipr::Template_id&
       Lexicon::get_template_id(const ipr::Name& t, const ipr::Expr_list& a) {

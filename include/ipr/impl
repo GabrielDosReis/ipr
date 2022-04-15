@@ -2053,6 +2053,7 @@ namespace ipr::impl {
 
       // Return a symbol with a given name and type.
       const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
+      const ipr::Symbol& get_label(const ipr::Identifier&);
 
       Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
 
@@ -2376,6 +2377,7 @@ namespace ipr::impl {
       const ipr::Symbol& false_value() const final;
       const ipr::Symbol& true_value() const final;
       const ipr::Symbol& nullptr_value() const final;
+      const ipr::Symbol& default_value() const final;
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
 
