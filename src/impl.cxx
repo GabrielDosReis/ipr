@@ -458,7 +458,7 @@ namespace ipr::impl {
       // ---------------------
 
       Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, Decl_position p)
-            : base(t), where(r), scope_pos(p)
+            : base(t), where(r), scope_pos(p), spec{ }
       { }
 
       Optional<ipr::Expr>
