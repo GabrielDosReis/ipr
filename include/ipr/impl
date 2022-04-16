@@ -561,7 +561,6 @@ namespace ipr::impl {
       using Index = typename Sequence<Member>::Index;
       const ipr::Region& parent;
       location_span extent;
-      Optional<ipr::Expr> owned_by { };
       homogeneous_scope<Member> scope;
 
       const ipr::Region& enclosing() const final { return parent; }
@@ -1621,7 +1620,6 @@ namespace ipr::impl {
       using location_span = ipr::Region::Location_span;
       Optional<ipr::Region> parent;
       location_span extent;
-      util::ref<const ipr::Expr> owned_by;
       impl::Scope scope;
       impl::ref_sequence<ipr::Expr> expr_seq;         // all the expressions making up the body.
 
@@ -1694,7 +1692,6 @@ namespace ipr::impl {
       Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr)
       {
          this->typing = &t;
-         body.owned_by = this;
       }
 
       const ipr::Name& name() const final { return id.get(); }

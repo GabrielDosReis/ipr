@@ -551,9 +551,7 @@ namespace ipr::impl {
 
       Block::Block(const ipr::Region& pr)
             : lexical_region(&pr)
-      {
-         lexical_region.owned_by = this;
-      }
+      { }
 
       // ---------------
       // -- impl::For --
@@ -720,9 +718,7 @@ namespace ipr::impl {
 
       Enum::Enum(const ipr::Region& r, Kind k)
             : body(r), enum_kind(k)
-      {
-         body.owned_by = this;
-      }
+      { }
 
       const ipr::Type& Enum::type() const { return impl::enum_type; }
 
@@ -752,9 +748,8 @@ namespace ipr::impl {
 
       Class::Class(const ipr::Region& pr, const ipr::Type& t)
             : impl::Udt<ipr::Class>(&pr, t),
-              base_subobjects(pr) {
-         base_subobjects.owned_by = this;
-      }
+              base_subobjects(pr)
+      { }
 
       const ipr::Sequence<ipr::Base_type>&
       Class::bases() const {
@@ -1334,7 +1329,7 @@ namespace ipr::impl {
       // --------------------------------
 
       Region::Region(Optional<ipr::Region> pr)
-            : parent{pr}, owned_by{}
+            : parent{pr}
       { }
 
 
