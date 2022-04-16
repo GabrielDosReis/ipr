@@ -11,6 +11,7 @@
 #include <memory>
 #include <list>
 #include <vector>
+#include <deque>
 #include <map>
 #include <forward_list>
 #include <variant>
@@ -188,8 +189,9 @@ namespace ipr::impl {
    // The Sequence<> interface admits various implementations.
    // Here is the list of the implementations currently in use:
    //   (a) ref_sequence<>;
-   //   (b) val_sequence<>;
-   //   (c) empty_sequence<T>.
+   //   (b) obj_sequence<>
+   //   (c) obj_list<>;
+   //   (d) empty_sequence<T>.
    // Variants exist in form of
    //   (i) decl_sequence;
    //  (ii) singleton_ref<T>.
@@ -210,7 +212,7 @@ namespace ipr::impl {
    };
 
    template<typename T>
-   using interface = typename abstraction<T>::type;
+   using projection = typename abstraction<T>::type;
 
                           // -- impl::ref_sequence --
    // The class ref_sequence<T> implements Sequence<T> by storing
@@ -248,41 +250,78 @@ namespace ipr::impl {
       }
    };
 
-                             // -- impl::val_sequence --
-   // The class val_sequence<T> implements Sequence<T> by storing
-   // the actual values, instead of references to values (as is
-   // the case of ref_sequence<T>).
+                             // -- impl::obj_sequence --
+   // The class obj_sequence<T> implements the interface Sequence<T> by storing the 
+   // actual values as random access sequence of objects, instead of references to 
+   // values (as is the case of ref_sequence<T>).  This Sequence implementation 
+   // is useful for potentially large sequence of items (e.g. enumerator lists)
+   // and for which iteration is frequent.
    template<typename T>
-   struct val_sequence : ipr::Sequence<interface<T>>, private stable_farm<T> {
-      using Seq = ipr::Sequence<interface<T>>;
+   struct obj_sequence : ipr::Sequence<projection<T>>, private std::deque<T> {
+      using Seq = ipr::Sequence<projection<T>>;
+      using Impl = std::deque<T>;
+      using Iterator = typename Seq::Iterator;
+      using Index = typename Seq::Index;
+      using Seq::begin;
+      using Seq::end;
+
+      Index size() const final { return Impl::size(); }
+      const T& get(Index p) const final
+      {
+         if (p < 0 or p >= size())
+            throw std::domain_error("obj_sequence::get");
+         return backing_store()[p];
+      }
+
+      Impl& backing_store() { return *this; }
+      const Impl& backing_store() const { return *this; }
+
+      template<typename... Args>
+      T* push_back(Args&&... args)
+      {
+         return &Impl::emplace_back(std::forward<Args>(args)...);
+      }
+   };
+
+                             // -- impl::obj_list --
+   // The class obj_list<T> implements Sequence<T> by storing the actual 
+   // values in a singly-linked list, instead of references to values (as is
+   // the case of ref_sequence<T>).  This Sequence implementation can be used
+   // for typically small sequence of items (e.g. parameter lists, or direct
+   // base class lists)
+   template<typename T>
+   struct obj_list : ipr::Sequence<projection<T>>, private stable_farm<T> {
+      using Seq = ipr::Sequence<projection<T>>;
       using Impl = stable_farm<T>;
       using Iterator = typename Seq::Iterator;
       using Index = typename Seq::Index;
       using Seq::begin;
       using Seq::end;
 
-      val_sequence() : mark(this->before_begin()) { }
+      obj_list() : mark{this->before_begin()} { }
 
       Index size() const final
       {
          return std::distance(Impl::begin(), Impl::end());
       }
 
-      template<typename... Args>
-      T* push_back(Args&&... args)
-      {
-         mark = this->emplace_after(mark, std::forward<Args>(args)...);
-         return &*mark;
-      }
-
+      Impl& backing_store() { return *this; }
+      const Impl& backing_store() const { return *this; }
       const T& get(Index p) const final
       {
          if (p < 0 or p >= size())
-            throw std::domain_error("val_sequence::get");
+            throw std::domain_error("obj_list::get");
 
          auto b = Impl::begin();
          std::advance(b, p);
          return *b;
+      }
+
+      template<typename... Args>
+      T* push_back(Args&&... args)
+      {
+         mark = Impl::emplace_after(mark, std::forward<Args>(args)...);
+         return &*mark;
       }
    private:
       typename Impl::iterator mark;
@@ -291,7 +330,7 @@ namespace ipr::impl {
                               // -- impl::empty_sequence --
    // There are various situations where the general notion of
    // sequence leads to consider empty sequence in implementations.
-   // We could just use the generic ref_sequence<> or val_sequence<>;
+   // We could just use the generic ref_sequence<> or obj_list<>;
    // however, this specialization will help control data size
    // inflation, as the general sequences need at least two words
    // to keep track of their elements (even when they are empty).
@@ -514,12 +553,12 @@ namespace ipr::impl {
    // of the concrete implementations classes instead of pointers to the 
    // interface nodes.  This is the case, in particular, for enumerators of 
    // an enumeration or parameters in a parameter list.
-   template<typename Member>
+   template<typename Member, template<typename> class Seq = obj_list>
    struct homogeneous_scope : impl::Node<ipr::Scope>,
                               ipr::Sequence<ipr::Decl>,
                               ipr::Sequence<ipr::Expr> {
       using Index = typename ipr::Sequence<ipr::Decl>::Index;
-      typed_sequence<val_sequence<Member>> decls;
+      typed_sequence<Seq<Member>> decls;
 
       Index size() const final { return decls.size(); }
       const Member& get(Index i) const final { return decls.seq.get(i); }
@@ -534,36 +573,31 @@ namespace ipr::impl {
    };
 
    // FIXME: Remove this linear search.
-   template<class Member>
+   template<typename Member, template<typename> class Seq>
    Optional<ipr::Overload>
-   homogeneous_scope<Member>::operator[](const ipr::Name& n) const
+   homogeneous_scope<Member, Seq>::operator[](const ipr::Name& n) const
    {
-      const auto s = decls.size();
-      for (Index i = 0; i < s; ++i) {
-         const auto& decl = decls.seq.get(i);
+      for (auto& decl : decls.seq.backing_store()) {
          if (&decl.name() == &n)
             return { decl.overload };
       }
-
       return { };
    }
 
    // -- impl::homogeneous_region:
-   template<typename Member, typename RegionKind = Node<ipr::Region>>
-   struct homogeneous_region : RegionKind {
+   template<typename Member, template<typename> class Seq = obj_list>
+   struct homogeneous_region : impl::Node<ipr::Region> {
       using location_span = ipr::Region::Location_span;
-      using Index = typename Sequence<Member>::Index;
       const ipr::Region& parent;
       location_span extent;
-      homogeneous_scope<Member> scope;
+      homogeneous_scope<Member, Seq> scope;
 
+      explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
       const ipr::Region& enclosing() const final { return parent; }
       const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
       bool global() const final { return false; }
-
-      explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
    };
 }
 
@@ -1743,7 +1777,7 @@ namespace ipr::impl {
    };
 
    struct Enum : impl::Type<ipr::Enum> {
-      homogeneous_region<impl::Enumerator> body;
+      homogeneous_region<impl::Enumerator, obj_sequence> body;
       Optional<ipr::Name> id;
       const Kind enum_kind;
 
@@ -1773,7 +1807,7 @@ namespace ipr::impl {
    };
 
    struct Closure : impl::Udt<ipr::Closure> {
-      impl::val_sequence<impl::Capture> captures;
+      impl::obj_list<impl::Capture> captures;
 
       Closure(const ipr::Region&, const ipr::Type&);
       const ipr::Sequence<ipr::Capture>& members() const final { return captures; }
@@ -1886,7 +1920,7 @@ namespace ipr::impl {
    };
 
    struct Using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
-      impl::val_sequence<Designator> seq;
+      impl::obj_list<Designator> seq;
 
       const ipr::Sequence<Designator>& designators() const final { return seq; }
    };
@@ -1899,7 +1933,7 @@ namespace ipr::impl {
    };
 
    struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
-      val_sequence<impl::Token> tokens;
+      obj_list<impl::Token> tokens;
       const ipr::Sequence<ipr::Token>& operand() const final { return tokens; }
    };
 
@@ -2483,7 +2517,7 @@ namespace ipr::impl {
    };
 
    struct Module : ipr::Module {
-      using ImplUnits = impl::val_sequence<impl::Module_unit>;
+      using ImplUnits = impl::obj_list<impl::Module_unit>;
       impl::Lexicon& lexicon;
       impl::Module_name stems;
       impl::Interface_unit iface;
