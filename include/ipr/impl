@@ -192,7 +192,7 @@ namespace ipr::impl {
    //   (c) empty_sequence<T>.
    // Variants exist in form of
    //   (i) decl_sequence;
-   //  (ii) singleton_declset<T>.
+   //  (ii) singleton_ref<T>.
 
    // -- When a class implements an interface, return that interface;
    // -- otherwise, the type itself.
@@ -312,7 +312,6 @@ namespace ipr::impl {
 
       template<typename... Args>
       singleton(Args&&... args) : item{args...} { }
-
       Index size() const final { return 1; }
       const T& get(Index i) const final
       {
@@ -447,25 +446,22 @@ namespace ipr::impl{
                               // -- impl::decl_sequence --
    struct decl_sequence : ref_sequence<ipr::Decl> { };
 
-                              // -- impl::singleton_declset --
-   // A singleton_declset is a specialization of decl_sequence
-   // that contains only a single declaration.  It is mostly used
-   // to support the general interface of ipr::Scope as inherited
-   // in parameter-list or enumerator definitions.
-
-   template<class T>
-   struct singleton_declset : ipr::Sequence<ipr::Decl> {
-      using Index = typename Sequence<ipr::Decl>::Index;
+                              // -- impl::singleton_ref --
+   // A singleton_ref is a specialization of ref_sequence that contains 
+   // exactly a single reference.  It is mostly used to support the 
+   // general interface of singly-item as inherited in parameter-list or 
+   // enumerator definitions or EH regions.
+   template<typename T>
+   struct singleton_ref : ipr::Sequence<T> {
+      using Index = typename Sequence<T>::Index;
       const T& datum;
-
-      explicit singleton_declset(const T& t) : datum(t) { }
-
+      explicit singleton_ref(const T& t) : datum(t) { }
       Index size() const final { return 1; }
       const T& get(Index i) const final
       {
          if (i == 0)
             return datum;
-         throw std::domain_error("singleton_declset::get");
+         throw std::domain_error("singleton_ref::get");
       }
    };
 
@@ -477,10 +473,8 @@ namespace ipr::impl{
    // such a declaration defines an overload set with a single
    // member.  This class implements such a special overload set.
    struct singleton_overload : impl::Node<ipr::Overload> {
-      singleton_declset<ipr::Decl> seq;
-
+      singleton_ref<ipr::Decl> seq;
       explicit singleton_overload(const ipr::Decl&);
-
       const ipr::Type& type() const final;
       Optional<ipr::Decl> operator[](const ipr::Type&) const final;
    };
