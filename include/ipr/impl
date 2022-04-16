@@ -601,21 +601,12 @@ namespace ipr::impl {
    // machinery for them.  The class unique_decl<> implements the
    // specialization of Decl<> in those cases.
    template<class Interface>
-   struct unique_decl : impl::Stmt<Node<Interface>> {
-      ipr::DeclSpecifiers spec;
-      util::ref<const ipr::Linkage> langlinkage { };
+   struct unique_decl : impl::Stmt<impl::Node<Interface>> {
       singleton_overload overload;
-
-      unique_decl() : spec(ipr::DeclSpecifiers::None),
-                        overload(*this)
-      { }
-
-      ipr::DeclSpecifiers specifiers() const final { return spec; }
+      unique_decl() : overload{*this} { }
+      ipr::DeclSpecifiers specifiers() const override { return DeclSpecifiers::None; }
       const ipr::Decl& master() const final { return *this; }
-      const ipr::Linkage& lang_linkage() const final
-      {
-         return langlinkage.get();
-      }
+      const ipr::Linkage& linkage() const final { return impl::cxx_linkage(); }
       const ipr::Sequence<ipr::Decl>& decl_set() const final { return overload.seq; }
    };
 }
@@ -1125,7 +1116,7 @@ namespace ipr::impl {
 
       Decl() : decl_data{ nullptr } { }
 
-      const ipr::Linkage& lang_linkage() const final
+      const ipr::Linkage& linkage() const final
       {
          return util::check(decl_data.master_data)->langlinkage.get();
       }
@@ -1145,6 +1136,7 @@ namespace ipr::impl {
       const ipr::Type& base;
       const ipr::Region& where;
       const Decl_position scope_pos;
+      ipr::DeclSpecifiers spec;
 
       Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
       const ipr::Type& type() const final { return base; }
@@ -1156,6 +1148,7 @@ namespace ipr::impl {
       const ipr::Region& home_region() const final { return where; }
       Decl_position position() const final { return scope_pos; }
       Optional<ipr::Expr> initializer() const final;
+      DeclSpecifiers specifiers() const final { return spec; }
    };
 
    struct Enumerator final : unique_decl<ipr::Enumerator> {

@@ -1687,7 +1687,7 @@ namespace ipr {
    //     (b) a non-template declaration.
    struct Decl : Stmt {
       virtual DeclSpecifiers specifiers() const = 0;
-      virtual const Linkage& lang_linkage() const = 0;
+      virtual const Linkage& linkage() const = 0;
 
       virtual const Name& name() const = 0;
 
