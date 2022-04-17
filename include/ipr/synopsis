@@ -222,6 +222,7 @@ namespace ipr {
    struct Parameter;             // function or template parameter
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
+   struct EH_parameter;          // exception handler block parameter
 
    // ------------------------
    // -- distinguished node --
