@@ -1551,10 +1551,14 @@ namespace ipr {
 
                                 // -- Block --
    // A Block is any sequence of general expressions bracketed by curly braces.
+   // A block may additionally have exception handlers, in which case it corresponds
+   // to Standard C++ syntax heavy try-block.  Conventional, plain blocks carry
+   // no handlers.
    struct Block : Category<Category_code::Block, Stmt> {
       virtual const Region& region() const = 0;
       const Sequence<Expr>& body() const { return region().body(); }
       virtual const Sequence<Handler>& handlers() const = 0;
+      bool try_block() const { return handlers().size() == 0; }
    };
 
                                 // -- Ctor_body --
@@ -1643,10 +1647,9 @@ namespace ipr {
    // This represents a catch-clause.  Notice that there is no node
    // for "try" as every Block is implicitly a try-block.  Ideally, we
    // should have every expression as a "try-block".
-   struct Handler : Binary<Category<Category_code::Handler, Stmt>,
-                           const Decl&, const Block&> {
-      Arg1_type exception() const { return first(); }
-      Arg2_type body() const { return second(); }
+   struct Handler : Category<Category_code::Handler, Stmt> {
+      virtual const EH_parameter& exception() const = 0;
+      virtual const Block& body() const = 0;
    };
 
                                 // -- Substitution --
@@ -1770,6 +1773,15 @@ namespace ipr {
       virtual Decl_position position() const = 0;
       const Region& lexical_region() const final { return home_region(); }
       Optional<Expr> default_value() const { return initializer(); }
+   };
+
+                                // -- EH_parameter --
+   // Parameter to an exception handler block.  In many aspects, it functions
+   // like a function parameter, except its initialization is not lexical the
+   // way functional parameters are.  Futhermore, they cannot have default values,
+   // and there is exactly one parameter per handler (unlike functions).
+   struct EH_parameter : Category<Category_code::EH_parameter, Decl> {
+      Optional<Expr> initializer() const final { return { }; }
    };
 
                                 // -- Fundecl --
@@ -2066,6 +2078,7 @@ namespace ipr {
       virtual void visit(const Parameter_list&);
       virtual void visit(const Typedecl&);
       virtual void visit(const Var&);
+      virtual void visit(const EH_parameter&);
 
       virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);

@@ -189,13 +189,14 @@ namespace ipr::impl {
    // --------------------------------------
    // The Sequence<> interface admits various implementations.
    // Here is the list of the implementations currently in use:
-   //   (a) ref_sequence<>;
-   //   (b) obj_sequence<>
-   //   (c) obj_list<>;
-   //   (d) empty_sequence<T>.
+   //   (a) ref_sequence<T>
+   //   (b) obj_sequence<T>
+   //   (c) obj_list<T>
+   //   (d) empty_sequence<T>
    // Variants exist in form of
-   //   (i) decl_sequence;
-   //  (ii) singleton_ref<T>.
+   //    (i) decl_sequence<T>
+   //   (ii) singleton_ref<T>
+   //  (iii) singleton_obj<T>
 
    // -- When a class implements an interface, return that interface;
    // -- otherwise, the type itself.
@@ -341,30 +342,57 @@ namespace ipr::impl {
    // to keep track of their elements (even when they are empty).
    template<class T>
    struct empty_sequence : ipr::Sequence<T> {
-      int size() const final { return 0; }
+      using Index = typename Sequence<T>::Index;
+      Index size() const final { return 0; }
 
-      const T& get(int) const final
+      const T& get(Index) const final
       {
          throw std::domain_error("empty_sequence::get");
       }
    };
 
-   // A sequence implementation for the case of a collection consisting of exactly one element.  
+   // --impl::singleton
+   // A singleton container (in Standard C++ sense), providing the backing store for
+   // the implementation of a singleton sequence.  No allocator or other complications.
+   // Usual minimal requirements: begin(), end()
+   // Optionally: front().
+   // FIXME: It is a pity it takes this amount of code to provide that simple
+   //        interface, in C++20.
    template<typename T>
-   struct singleton : ipr::Sequence<T> {
-      using Index = typename Sequence<T>::Index;
-
+   struct singleton {
+      using iterator = T*;
+      using const_iterator = const T*;
       template<typename... Args>
-      singleton(Args&&... args) : item{args...} { }
-      Index size() const final { return 1; }
-      const T& get(Index i) const final
-      {
-         if (i == 0)
-            return item;
-         throw std::domain_error("singleton::get");
-      }
+      explicit singleton(Args&&... args) : item{std::forward<Args>(args)...} { }
+      iterator begin() { return &item; }
+      const_iterator begin() const { return &item; }
+      iterator end() { return begin() + 1; }
+      const_iterator end() const { return begin() + 1; }
+      T& front() { return item; }
+      const T& front() const { return item; }
    private:
       T item;
+   };
+
+   // A sequence implementation for the case of a collection consisting of exactly one element.  
+   template<typename T>
+   struct singleton_obj : ipr::Sequence<projection<T>> {
+      using Index = typename Sequence<projection<T>>::Index;
+
+      template<typename... Args>
+      singleton_obj(Args&&... args) : seq{std::forward<Args>(args)...} { }
+      Index size() const final { return 1; }
+      const projection<T>& get(Index i) const final
+      {
+         if (i == 0)
+            return seq.front();
+         throw std::domain_error("singleton::get");
+      }
+      const T& element() const { return seq.front(); }
+      singleton<T>& backing_store() { return seq; }
+      const singleton<T>& backing_store() const { return seq; }
+   private:
+      impl::singleton<T> seq;
    };
 }
 
@@ -550,10 +578,9 @@ namespace ipr::impl {
 
       typed_sequence() { }
       explicit typed_sequence(const Seq& s) : seq(s) { }
-      const ipr::Sequence<ipr::Type>& operand() const final
-      {
-         return *this;
-      }
+      template<typename... Args>
+      explicit typed_sequence(Args&&... args) : seq(std::forward<Args>(args)...) { }
+      const ipr::Sequence<ipr::Type>& operand() const final { return *this; }
       Index size() const final { return seq.size(); }
       const ipr::Type& get(Index i) const final
       {
@@ -575,7 +602,8 @@ namespace ipr::impl {
       using Index = typename ipr::Sequence<ipr::Decl>::Index;
       using Members = Seq<singleton_overload<Member>>;
       typed_sequence<Members> decls;
-
+      template<typename... Args>
+      homogeneous_scope(Args&&... args) : decls{std::forward<Args>(args)...} { }
       Index size() const final { return decls.size(); }
       const projection<Member>& get(Index i) const final { return decls.seq.get(i); }
       const ipr::Product& type() const final { return decls; }
@@ -609,6 +637,10 @@ namespace ipr::impl {
       homogeneous_scope<Member, Seq> scope;
 
       explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
+      template<typename... Args>
+      explicit homogeneous_region(const ipr::Region& r, Args&&... args)
+         : parent{r}, scope{r, std::forward<Args>(args)...}
+      { }
       const ipr::Region& enclosing() const final { return parent; }
       const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
       const ipr::Scope& bindings() const final { return scope; }
@@ -624,16 +656,12 @@ namespace ipr::impl {
       Phases phases() const final { return f; }
    };
 
-   // -- impl::Stmt implements the common operations of statements.
-   struct Stmt_common {
+   template<class S>
+   struct Stmt : S {
       ipr::Unit_location unit_locus;
       ipr::Source_location src_locus;
       ref_sequence<ipr::Annotation> notes;
       ref_sequence<ipr::Attribute> attrs;
-   };
-
-   template<class S>
-   struct Stmt : S, Stmt_common {
       const ipr::Unit_location& unit_location() const final { return unit_locus; }
       const ipr::Source_location& source_location() const final { return src_locus; }
       const ipr::Sequence<ipr::Annotation>& annotation() const final { return notes; }
@@ -1933,7 +1961,7 @@ namespace ipr::impl {
       single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
       const ipr::Sequence<Designator>& designators() const final { return what; }
    private:
-      singleton<Designator> what;
+      singleton_obj<Designator> what;
    };
 
    struct Using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
@@ -1963,12 +1991,66 @@ namespace ipr::impl {
    using Expr_stmt = type_from_operand<Stmt<ipr::Expr_stmt>>;
    using Empty_stmt = type_from_operand<Stmt<ipr::Empty_stmt>>;
    using Goto = type_from_operand<Stmt<ipr::Goto>>;
-   using Handler = type_from_second<Stmt<ipr::Handler>>;
    using If = Ternary<Stmt<Expr<ipr::If>>>;
    using Labeled_stmt = type_from_second<Stmt<ipr::Labeled_stmt>>;
    using Return = type_from_operand<Stmt<ipr::Return>>;
    using Switch = Controlled_stmt<ipr::Switch>;
    using While = Controlled_stmt<ipr::While>;
+
+   // -- impl::EH_parameter
+   struct EH_parameter : unique_decl<ipr::EH_parameter> {
+      EH_parameter(const ipr::Region&, const ipr::Name&, const ipr::Type&);
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return typing; }
+      const ipr::Region& home_region() const final { return home; }
+      const ipr::Region& lexical_region() const final { return home; }
+   private:
+      const ipr::Name& id;
+      const ipr::Type& typing;
+      const ipr::Region& home;
+   };
+
+   // -- impl::handler_block
+   // The block-statement body of a handler.  It has no associated EH handlers of its own.
+   struct handler_block : impl::Stmt<impl::Expr<ipr::Block>> {
+      impl::Region lexical_region;
+      handler_block(const ipr::Region&);
+      const ipr::Region& region() const final { return lexical_region; }
+      const ipr::Sequence<ipr::Handler>& handlers() const final { return none; }
+
+      // The scope of declarations in this block
+      impl::Scope* scope() { return &lexical_region.scope; }
+      void add_stmt(const ipr::Expr& s)
+      {
+         lexical_region.expr_seq.push_back(&s);
+      }
+   private:
+      impl::empty_sequence<ipr::Handler> none;
+   };
+
+   // -- impl::eh_region
+   // The region containing the declaration of the exception parameter of a Handler.
+   // Like for function parameter region, this region encloses the region of the
+   // ipr::Block (body) associated with the Handler.
+   // Note: the enclosing() region of this eh_region is the same as the enclosing
+   //       region() of the Block with which the Handler is associated.
+   struct eh_region : homogeneous_region<impl::EH_parameter, singleton_obj> {
+      using base = homogeneous_region<impl::EH_parameter, singleton_obj>;
+      using base::base;
+      const ipr::EH_parameter& parameter() const { return scope.decls.seq.element(); }
+    };
+
+   // -- impl::Handler
+   struct Handler : impl::Stmt<impl::Node<ipr::Handler>> {
+      Handler(const ipr::Region&, const ipr::Name&, const ipr::Type&);
+      const ipr::Type& type() const final { return block.type(); }
+      const ipr::EH_parameter& exception() const final { return eh.parameter(); }
+      const ipr::Block& body() const final { return block; }
+      impl::handler_block& body() { return block; }
+   private:
+      eh_region eh;
+      impl::handler_block block;
+   };
 
    // A Block holds a heterogeneous region, suitable for
    // recording the set of declarations appearing in that
@@ -1976,24 +2058,19 @@ namespace ipr::impl {
    // block actually represents a C++ try-block.
    struct Block : impl::Stmt<Expr<ipr::Block>> {
       impl::Region lexical_region;
-      impl::ref_sequence<ipr::Handler> handler_seq;
-
       explicit Block(const ipr::Region&);
       const ipr::Region& region() const final { return lexical_region; }
       const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
 
       // The scope of declarations in this block
       impl::Scope* scope() { return &lexical_region.scope; }
-
+      impl::Handler* new_handler(const ipr::Name&, const ipr::Type&);
       void add_stmt(const ipr::Expr& s)
       {
          lexical_region.expr_seq.push_back(&s);
       }
-
-      void add_handler(const ipr::Handler& h)
-      {
-         handler_seq.push_back(&h);
-      }
+   private:
+      impl::obj_list<impl::Handler> handler_seq;
    };
 
 
@@ -2335,7 +2412,6 @@ namespace ipr::impl {
       impl::If* make_if(const ipr::Expr&, const ipr::Stmt&);
       impl::If* make_if(const ipr::Expr&, const ipr::Stmt&, const ipr::Stmt&);
       impl::Switch* make_switch();
-      impl::Handler* make_handler(const ipr::Decl&, const ipr::Block&);
       impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&,
                                              const ipr::Stmt&);
       impl::While* make_while();

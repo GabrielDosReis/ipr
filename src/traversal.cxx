@@ -999,6 +999,11 @@ ipr::Visitor::visit(const Var& d)
    visit(as<Decl>(d));
 }
 
+void ipr::Visitor::visit(const EH_parameter& d)
+{
+   visit(as<Decl>(d));
+}
+
 //
 // Similarly, the global namespace constant is visited as-if Namespace.
 //

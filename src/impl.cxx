@@ -510,6 +510,19 @@ namespace ipr::impl {
             :id{n}, typing{t}, pos{p}
       { }
 
+      // -- impl::EH_parameter
+      EH_parameter::EH_parameter(const ipr::Region& r, const ipr::Name& n, const ipr::Type& t)
+         : id{n}, typing{t}, home{r}
+      { }
+
+      // -- impl::handler_block
+      handler_block::handler_block(const ipr::Region& r) : lexical_region{&r} { }
+
+      // -- impl::Handler
+      Handler::Handler(const ipr::Region& r, const ipr::Name& n, const ipr::Type& t)
+         : eh{r, n, t}, block{eh}
+      { }
+
       // --------------------
       // -- impl::Typedecl --
       // --------------------
@@ -531,6 +544,11 @@ namespace ipr::impl {
       Block::Block(const ipr::Region& pr)
             : lexical_region(&pr)
       { }
+
+      impl::Handler* Block::new_handler(const ipr::Name& n, const ipr::Type& t)
+      {
+         return handler_seq.push_back(lexical_region.enclosing(), n, t);
+      }
 
       // ---------------
       // -- impl::For --
@@ -663,11 +681,6 @@ namespace ipr::impl {
       impl::Switch* stmt_factory::make_switch()
       {
          return switches.make();
-      }
-
-      impl::Handler*
-      stmt_factory::make_handler(const ipr::Decl& d, const ipr::Block& b) {
-         return handlers.make(d, b);
       }
 
       impl::Labeled_stmt*

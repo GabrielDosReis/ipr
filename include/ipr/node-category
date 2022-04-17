@@ -179,6 +179,7 @@ Template,                           // ipr::Template
 Parameter,                          // ipr::Parameter
 Typedecl,                           // ipr::Typedecl
 Var,                                // ipr::Var
+EH_parameter,                       // ipr::EH_parameter
 
 Unit,                               // ipr::Unit
 
