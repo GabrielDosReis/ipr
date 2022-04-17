@@ -19,6 +19,7 @@
 #include <string_view>
 #include <ipr/interface>
 #include <ipr/utility>
+#include <ipr/traversal>
 
 // -----------------
 // -- Methodology --
@@ -206,10 +207,14 @@ namespace ipr::impl {
       using type = T;
    };
 
+   // Remove any wrapper or implementation class.
    template<Has_interface T>
    struct abstraction<T> {
       using type = typename T::Interface;
    };
+
+   template<typename T, template<typename...> class C>
+   struct abstraction<C<T>> : abstraction<T> { };
 
    template<typename T>
    using projection = typename abstraction<T>::type;
@@ -266,7 +271,7 @@ namespace ipr::impl {
       using Seq::end;
 
       Index size() const final { return Impl::size(); }
-      const T& get(Index p) const final
+      const projection<T>& get(Index p) const final
       {
          if (p < 0 or p >= size())
             throw std::domain_error("obj_sequence::get");
@@ -307,7 +312,7 @@ namespace ipr::impl {
 
       Impl& backing_store() { return *this; }
       const Impl& backing_store() const { return *this; }
-      const T& get(Index p) const final
+      const projection<T>& get(Index p) const final
       {
          if (p < 0 or p >= size())
             throw std::domain_error("obj_list::get");
@@ -356,7 +361,7 @@ namespace ipr::impl {
       {
          if (i == 0)
             return item;
-         throw std::domain_error("singleton_sequence::get");
+         throw std::domain_error("singleton::get");
       }
    private:
       T item;
@@ -511,11 +516,21 @@ namespace ipr::impl{
    // different type but same name.  Therefore the name for
    // such a declaration defines an overload set with a single
    // member.  This class implements such a special overload set.
+   template<typename T>
    struct singleton_overload : impl::Node<ipr::Overload> {
-      singleton_ref<ipr::Decl> seq;
-      explicit singleton_overload(const ipr::Decl&);
-      const ipr::Type& type() const final;
-      Optional<ipr::Decl> operator[](const ipr::Type&) const final;
+      T decl;                          // Really the declset, but it is a singleton.
+      template<typename... Args>
+      explicit singleton_overload(const Args&... args) : decl{args...} { }
+      const ipr::Name& name() const { return decl.name(); }
+      const ipr::Type& type() const final { return decl.type(); }
+      Optional<ipr::Decl> operator[](const ipr::Type& t) const final
+      {
+         if (physically_same(t, decl.type()))
+            return decl;
+         return { };
+      }
+      // Where needed, implicitly unwrap the singleton to reveal its content.
+      operator const T&() const { return decl; } 
    };
 }
 
@@ -558,17 +573,18 @@ namespace ipr::impl {
                               ipr::Sequence<ipr::Decl>,
                               ipr::Sequence<ipr::Expr> {
       using Index = typename ipr::Sequence<ipr::Decl>::Index;
-      typed_sequence<Seq<Member>> decls;
+      using Members = Seq<singleton_overload<Member>>;
+      typed_sequence<Members> decls;
 
       Index size() const final { return decls.size(); }
-      const Member& get(Index i) const final { return decls.seq.get(i); }
+      const projection<Member>& get(Index i) const final { return decls.seq.get(i); }
       const ipr::Product& type() const final { return decls; }
       const ipr::Sequence<ipr::Decl>& elements() const final { return *this; }
       Optional<ipr::Overload> operator[](const Name&) const final;
       template<typename... Args>
       Member* push_back(const Args&... args)
       {
-         return decls.seq.push_back(args...);
+         return &decls.seq.push_back(args...)->decl;
       }
    };
 
@@ -578,8 +594,8 @@ namespace ipr::impl {
    homogeneous_scope<Member, Seq>::operator[](const ipr::Name& n) const
    {
       for (auto& decl : decls.seq.backing_store()) {
-         if (&decl.name() == &n)
-            return { decl.overload };
+         if (physically_same(decl.name(), n))
+            return { decl };
       }
       return { };
    }
@@ -636,12 +652,13 @@ namespace ipr::impl {
    // specialization of Decl<> in those cases.
    template<class Interface>
    struct unique_decl : impl::Stmt<impl::Node<Interface>> {
-      singleton_overload overload;
-      unique_decl() : overload{*this} { }
+      unique_decl() : seq{*this} { }
       ipr::DeclSpecifiers specifiers() const override { return DeclSpecifiers::None; }
       const ipr::Decl& master() const final { return *this; }
       const ipr::Linkage& linkage() const final { return impl::cxx_linkage(); }
-      const ipr::Sequence<ipr::Decl>& decl_set() const final { return overload.seq; }
+      const ipr::Sequence<ipr::Decl>& decl_set() const final { return seq; }
+   private:
+      singleton_ref<ipr::Decl> seq;
    };
 }
 
