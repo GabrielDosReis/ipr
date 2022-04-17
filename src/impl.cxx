@@ -377,27 +377,6 @@ namespace ipr::impl {
          masters.push_back(data);
       }
 
-      // ------------------------
-      // -- singleton_overload --
-      // ------------------------
-
-      singleton_overload::singleton_overload(const ipr::Decl& d)
-            : seq(d)
-      { }
-
-      const ipr::Type&
-      singleton_overload::type() const {
-         return seq.datum.type();
-      }
-
-      Optional<ipr::Decl>
-      singleton_overload::operator[](const ipr::Type& t) const
-      {
-         if (&t != &seq.datum.type())
-            return { };
-         return { seq.datum };
-      }
-
       // -- Directives --
       Asm::Asm(const ipr::String& s) : txt{s} { }
 
