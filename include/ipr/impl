@@ -1867,31 +1867,32 @@ namespace ipr::impl {
    struct type_factory {
       // Build an IPR node for an expression that denotes a type.
       // The linkage, if not specified, is assumed to be C++.
-      impl::As_type* make_as_type(const ipr::Expr&);
-      impl::As_type_with_linkage* make_as_type(const ipr::Expr&, const ipr::Linkage&);
+      const ipr::As_type& get_as_type(const ipr::Expr&);
+      const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Linkage&);
 
-      impl::Array* make_array(const ipr::Type&, const ipr::Expr&);
-      impl::Qualified* make_qualified(ipr::Type_qualifiers,
-                                       const ipr::Type&);
-      impl::Decltype* make_decltype(const ipr::Expr&);
-      impl::Tor* make_tor(const ipr::Product&, const ipr::Sum&);
-      impl::Function* make_function(const ipr::Product&, const ipr::Type&, const ipr::Expr&);
-      impl::Function_with_linkage* make_function(const ipr::Product&, const ipr::Type&,
-                                                const ipr::Expr&, const ipr::Linkage&);
-      impl::Pointer* make_pointer(const ipr::Type&);
-      impl::Product* make_product(const ipr::Sequence<ipr::Type>&);
-      impl::Ptr_to_member* make_ptr_to_member(const ipr::Type&,
-                                                const ipr::Type&);
-      impl::Reference* make_reference(const ipr::Type&);
-      impl::Rvalue_reference* make_rvalue_reference(const ipr::Type&);
-      impl::Sum* make_sum(const ipr::Sequence<ipr::Type>&);
-      impl::Forall* make_forall(const ipr::Product&, const ipr::Type&);
+      const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
+      const ipr::Qualified& get_qualified(ipr::Type_qualifiers, const ipr::Type&);
+      const ipr::Decltype& get_decltype(const ipr::Expr&);
+      const ipr::Tor& get_tor(const ipr::Product&, const ipr::Sum&);
+      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&);
+      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&, const ipr::Linkage&);
+      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&, const ipr::Expr&);
+      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&,
+                                        const ipr::Expr&, const ipr::Linkage&);
+      const ipr::Pointer& get_pointer(const ipr::Type&);
+      const ipr::Product& get_product(const ipr::Sequence<ipr::Type>&);
+      const ipr::Ptr_to_member& get_ptr_to_member(const ipr::Type&, const ipr::Type&);
+      const ipr::Reference& get_reference(const ipr::Type&);
+      const ipr::Rvalue_reference& get_rvalue_reference(const ipr::Type&);
+      const ipr::Sum& get_sum(const ipr::Sequence<ipr::Type>&);
+      const ipr::Forall& get_forall(const ipr::Product&, const ipr::Type&);
+      const ipr::Auto& get_auto();
 
       impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
-      impl::Class* make_class(const ipr::Region&, const ipr::Type&);
-      impl::Union* make_union(const ipr::Region&, const ipr::Type&);
-      impl::Namespace* make_namespace(const ipr::Region*, const ipr::Type&);
-      impl::Closure* make_closure(const ipr::Region&, const ipr::Type&);
+      impl::Class* make_class(const ipr::Region&);
+      impl::Union* make_union(const ipr::Region&);
+      impl::Namespace* make_namespace(const ipr::Region*);
+      impl::Closure* make_closure(const ipr::Region&);
    private:
       util::rb_tree::container<impl::Array> arrays;
       util::rb_tree::container<impl::As_type> type_refs;
@@ -1913,6 +1914,7 @@ namespace ipr::impl {
       stable_farm<impl::Union> unions;
       stable_farm<impl::Namespace> namespaces;
       stable_farm<impl::Closure> closures;
+      stable_farm<impl::Auto> autos;
    };
 
    // -- Implementation of directives --
@@ -2438,7 +2440,7 @@ namespace ipr::impl {
    };
 
                               // -- impl::Lexicon --
-   struct Lexicon : ipr::Lexicon, stmt_factory {
+   struct Lexicon : ipr::Lexicon, type_factory, stmt_factory {
       Lexicon();
       ~Lexicon();
 
@@ -2492,63 +2494,14 @@ namespace ipr::impl {
       const ipr::Symbol& default_value() const final;
       const ipr::Symbol& delete_value() const final;
 
-      const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
-
-      const ipr::As_type& get_as_type(const ipr::Expr&);
-      const ipr::As_type& get_as_type(const ipr::Expr&,
-                                       const ipr::Linkage&);
-
-      const ipr::Decltype& get_decltype(const ipr::Expr&);
-
-      const ipr::Function& get_function(const ipr::Product&,
-                                          const ipr::Type&, const ipr::Expr&);
-      const ipr::Function& get_function(const ipr::Product&,
-                                          const ipr::Type&);
-      const ipr::Function& get_function(const ipr::Product&,
-                                          const ipr::Type&,
-                                          const ipr::Expr&,
-                                          const ipr::Linkage&);
-      const ipr::Function& get_function(const ipr::Product&,
-                                          const ipr::Type&,
-                                          const ipr::Linkage&);
-
-      const ipr::Pointer& get_pointer(const ipr::Type&);
-
-      const ipr::Product& get_product(const ref_sequence<ipr::Type>&);
-
-      const ipr::Ptr_to_member& get_ptr_to_member(const ipr::Type&,
-                                                   const ipr::Type&);
-
-      const ipr::Reference& get_reference(const ipr::Type&);
-      const ipr::Rvalue_reference& get_rvalue_reference(const ipr::Type&);
-
-      const ipr::Qualified& get_qualified(ipr::Type_qualifiers,
-                                          const ipr::Type&);
-
-      const ipr::Sum& get_sum(const ref_sequence<ipr::Type>&);
-
-      const ipr::Forall& get_forall(const ipr::Product&,
-                                          const ipr::Type&);
-
       impl::Mapping* make_mapping(const ipr::Region&, Mapping_level = { });
-
-      impl::Class* make_class(const ipr::Region&);
-      impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
-      impl::Namespace* make_namespace(const ipr::Region&);
-      impl::Union* make_union(const ipr::Region&);
 
       const impl::Token* make_token(const ipr::String&,
                                     const Source_location&,
                                     TokenValue, TokenCategory);
-
-      const ipr::Auto& get_auto();
-
    private:
       stable_farm<impl::Token> tokens;
-      type_factory types;
       util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
-      util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
-      stable_farm<impl::Auto> autos;
    };
 
    template<typename T>
