@@ -908,42 +908,43 @@ namespace ipr::impl {
       };
       // <<<< Yuriy Solodkyy: 2008/07/10
 
-      impl::Array*
-      type_factory::make_array(const ipr::Type& t, const ipr::Expr& b)
+      const ipr::Array& type_factory::get_array(const ipr::Type& t, const ipr::Expr& b)
       {
          using rep = impl::Array::Rep;
-         return arrays.insert(rep{ t, b }, binary_compare());
+         return *arrays.insert(rep{ t, b }, binary_compare());
       }
 
-      impl::Qualified*
-      type_factory::make_qualified(ipr::Type_qualifiers cv, const ipr::Type& t)
+      const ipr::Qualified&
+      type_factory::get_qualified(ipr::Type_qualifiers cv, const ipr::Type& t)
       {
          // It is an error to call this function if there is no real
          // qualified.
          if (cv == ipr::Type_qualifiers::None)
             throw std::domain_error
-               ("type_factoy::make_qualified: no qualifier");
+               ("type_factoy::get_qualified: no qualifier");
 
          using rep = impl::Qualified::Rep;
-         return qualifieds.insert(rep{ cv, t }, binary_compare());
+         return *qualifieds.insert(rep{ cv, t }, binary_compare());
       }
 
-
-      impl::Decltype*
-      type_factory::make_decltype(const ipr::Expr& e)
+      const ipr::Decltype& type_factory::get_decltype(const ipr::Expr& e)
       {
-         return decltypes.make(e);
+         if (physically_same(e, impl::nullptr_cst))
+            return impl::nullptr_cst.type();
+         return *decltypes.make(e);
       }
 
-      impl::As_type* type_factory::make_as_type(const ipr::Expr& e)
+      const ipr::As_type& type_factory::get_as_type(const ipr::Expr& e)
       {
-         return type_refs.insert(e, unary_compare());
+         return *type_refs.insert(e, unary_compare());
       }
 
-
-      impl::As_type_with_linkage*
-      type_factory::make_as_type(const ipr::Expr& e, const ipr::Linkage& l)
+      const ipr::As_type&
+      type_factory::get_as_type(const ipr::Expr& e, const ipr::Linkage& l)
       {
+         if (physically_same(l, impl::cxx_linkage()))
+            return get_as_type(e);
+         
          using T = impl::As_type_with_linkage;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
@@ -958,7 +959,7 @@ namespace ipr::impl {
                return -(*this)(y, x);
             }
          };
-         return type_links.insert(T::Rep{e, l}, Comparator{ });
+         return *type_links.insert(T::Rep{e, l}, Comparator{ });
       }
 
       struct ternary_compare {
@@ -983,25 +984,38 @@ namespace ipr::impl {
          }
       };
 
-      impl::Tor*
-      type_factory::make_tor(const ipr::Product& s, const ipr::Sum& e)
+      const ipr::Tor& type_factory::get_tor(const ipr::Product& s, const ipr::Sum& e)
       {
          using rep = impl::Tor::Rep;
-         return tors.insert(rep{ s, e }, binary_compare());
+         return *tors.insert(rep{ s, e }, binary_compare());
       }
 
-      impl::Function*
-      type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
-                                  const ipr::Expr& e)
+      const ipr::Function& type_factory::get_function(const ipr::Product& s, const ipr::Type& t)
+      {
+         return get_function(s, t, impl::false_cst);
+      }
+
+      const ipr::Function&
+      type_factory::get_function(const ipr::Product& s, const ipr::Type& t, const ipr::Linkage& l)
+      {
+         return get_function(s, t, impl::false_cst, l);
+      }
+
+      const ipr::Function&
+      type_factory::get_function(const ipr::Product& s, const ipr::Type& t,
+                                 const ipr::Expr& e)
       {
          using rep = impl::Function::Rep;
-         return functions.insert(rep{ s, t, e }, ternary_compare());
+         return *functions.insert(rep{ s, t, e }, ternary_compare());
       }
 
-      impl::Function_with_linkage*
-      type_factory::make_function(const ipr::Product& s, const ipr::Type& t,
-                                  const ipr::Expr& e, const ipr::Linkage& l)
+      const ipr::Function&
+      type_factory::get_function(const ipr::Product& s, const ipr::Type& t,
+                                 const ipr::Expr& e, const ipr::Linkage& l)
       {
+         if (physically_same(l, impl::cxx_linkage()))
+            return get_function(s, t, e);
+            
          using T = impl::Function_with_linkage;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
@@ -1021,75 +1035,78 @@ namespace ipr::impl {
             }
          };
 
-         return fun_links.insert(T::Rep{ s, t, e, l }, Comparator{ });
+         return *fun_links.insert(T::Rep{ s, t, e, l }, Comparator{ });
       }
 
-      impl::Pointer*
-      type_factory::make_pointer(const ipr::Type& t)
+      const ipr::Pointer& type_factory::get_pointer(const ipr::Type& t)
       {
          // >>>> Yuriy Solodkyy: 2008/07/10
          // Fixed pointer comparison for unification
-         return pointers.insert(t, unified_type_compare());
+         return *pointers.insert(t, unified_type_compare());
          // <<<< Yuriy Solodkyy: 2008/07/10
       }
 
-      impl::Product*
-      type_factory::make_product(const ipr::Sequence<ipr::Type>& seq) {
-         return products.insert(seq, unary_lexicographic_compare());
+      const ipr::Product& type_factory::get_product(const ipr::Sequence<ipr::Type>& seq)
+      {
+         return *products.insert(seq, unary_lexicographic_compare());
       }
 
-      impl::Ptr_to_member*
-      type_factory::make_ptr_to_member(const ipr::Type& c, const ipr::Type& t)
+      const ipr::Ptr_to_member&
+      type_factory::get_ptr_to_member(const ipr::Type& c, const ipr::Type& t)
       {
          using rep = impl::Ptr_to_member::Rep;
-         return member_ptrs.insert(rep{ c, t }, binary_compare());
+         return *member_ptrs.insert(rep{ c, t }, binary_compare());
       }
 
-      impl::Reference*
-      type_factory::make_reference(const ipr::Type& t) {
-         return references.insert(t, unified_type_compare());
+      const ipr::Reference& type_factory::get_reference(const ipr::Type& t)
+      {
+         return *references.insert(t, unified_type_compare());
       }
 
-      impl::Rvalue_reference*
-      type_factory::make_rvalue_reference(const ipr::Type& t) {
-         return refrefs.insert(t, unified_type_compare());
+      const ipr::Rvalue_reference& type_factory::get_rvalue_reference(const ipr::Type& t)
+      {
+         return *refrefs.insert(t, unified_type_compare());
       }
 
-      impl::Sum*
-      type_factory::make_sum(const ipr::Sequence<ipr::Type>& seq) {
-         return sums.insert(seq, unary_lexicographic_compare());
+      const ipr::Sum& type_factory::get_sum(const ipr::Sequence<ipr::Type>& seq)
+      {
+         return *sums.insert(seq, unary_lexicographic_compare());
       }
 
-      impl::Forall*
-      type_factory::make_forall(const ipr::Product& s, const ipr::Type& t) {
+      const ipr::Forall& type_factory::get_forall(const ipr::Product& s, const ipr::Type& t)
+      {
          using rep = impl::Forall::Rep;
-         return foralls.insert(rep{ s, t }, binary_compare());
+         return *foralls.insert(rep{ s, t }, binary_compare());
       }
 
-      impl::Enum*
-      type_factory::make_enum(const ipr::Region& pr, Enum::Kind k) {
+      const ipr::Auto& type_factory::get_auto()
+      {
+         return *autos.make();
+      }
+
+      impl::Enum* type_factory::make_enum(const ipr::Region& pr, Enum::Kind k)
+      {
          return enums.make(pr, k);
       }
 
-      impl::Class*
-      type_factory::make_class(const ipr::Region& pr, const ipr::Type& t) {
-         return classes.make(pr, t);
-      }
-
-      impl::Union*
-      type_factory::make_union(const ipr::Region& pr, const ipr::Type& t) {
-         return unions.make(&pr, t);
-      }
-
-      impl::Namespace*
-      type_factory::make_namespace(const ipr::Region* pr, const ipr::Type& t)
+      impl::Class* type_factory::make_class(const ipr::Region& pr)
       {
-         return namespaces.make(pr, t);
+         return classes.make(pr, impl::class_type);
       }
 
-      impl::Closure* type_factory::make_closure(const ipr::Region& r, const ipr::Type& t)
+      impl::Union* type_factory::make_union(const ipr::Region& pr)
       {
-         return closures.make(r, t);
+         return unions.make(&pr, impl::union_type);
+      }
+
+      impl::Namespace* type_factory::make_namespace(const ipr::Region* pr)
+      {
+         return namespaces.make(pr, impl::namespace_type);
+      }
+
+      impl::Closure* type_factory::make_closure(const ipr::Region& r)
+      {
+         return closures.make(r, impl::class_type);
       }
 
       // ---------------------
@@ -2027,125 +2044,9 @@ namespace ipr::impl {
          return *expr_factory::make_template_id(t, a);
       }
 
-      const ipr::Array&
-      Lexicon::get_array(const ipr::Type& t, const ipr::Expr& b) {
-         return *types.make_array(t, b);
-      }
-
-      const ipr::As_type&
-      Lexicon::get_as_type(const ipr::Expr& e) {
-         return *types.make_as_type(e);
-      }
-
-      const ipr::As_type&
-      Lexicon::get_as_type(const ipr::Expr& e, const ipr::Linkage& l) {
-         if (physically_same(l, cxx_linkage()))
-            return get_as_type(e);
-         return *types.make_as_type(e, l);
-      }
-
-      const ipr::Decltype&
-      Lexicon::get_decltype(const ipr::Expr& e) {
-         if (physically_same(e, impl::nullptr_cst))
-            return impl::nullptr_cst.type();
-         return *types.make_decltype(e);
-      }
-
-      const ipr::Function&
-      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
-                            const ipr::Expr& s, const ipr::Linkage& l) {
-         if (physically_same(l, cxx_linkage()))
-            return get_function(p, t, s);
-         return *types.make_function(p, t, s, l);
-      }
-
-      const ipr::Function&
-      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
-                            const ipr::Expr& s) {
-         return *types.make_function(p, t, s);
-      }
-
-      const ipr::Function&
-      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t,
-                            const ipr::Linkage& l) {
-         // A function type without explicit exception specification is `noexcept(false)`.
-         return get_function(p, t, false_value(), l);
-      }
-
-      const ipr::Function&
-      Lexicon::get_function(const ipr::Product& p, const ipr::Type& t) {
-         return get_function(p, t, false_value());
-      }
-
-      const ipr::Pointer&
-      Lexicon::get_pointer(const ipr::Type& t) {
-         return *types.make_pointer(t);
-      }
-
-      const ipr::Product&
-      Lexicon::get_product(const ref_sequence<ipr::Type>& s) {
-         return *types.make_product(*type_seqs.insert(s, unary_lexicographic_compare()));
-      }
-
-      const ipr::Ptr_to_member&
-      Lexicon::get_ptr_to_member(const ipr::Type& s, const ipr::Type& t) {
-         return *types.make_ptr_to_member(s, t);
-      }
-
-      const ipr::Qualified&
-      Lexicon::get_qualified(ipr::Type_qualifiers cv, const ipr::Type& t) {
-         assert (cv != ipr::Type_qualifiers::None);
-         return *types.make_qualified(cv, t);
-      }
-
-      const ipr::Reference&
-      Lexicon::get_reference(const ipr::Type& t) {
-         return *types.make_reference(t);
-      }
-
-      const ipr::Rvalue_reference&
-      Lexicon::get_rvalue_reference(const ipr::Type& t) {
-         return *types.make_rvalue_reference(t);
-      }
-
-      const ipr::Sum&
-      Lexicon::get_sum(const ref_sequence<ipr::Type>& s) {
-         return *types.make_sum(*type_seqs.insert(s, unary_lexicographic_compare()));
-      }
-
-      const ipr::Forall&
-      Lexicon::get_forall(const ipr::Product& p, const ipr::Type& t) {
-         return *types.make_forall(p, t);
-      }
-
-      impl::Class*
-      Lexicon::make_class(const ipr::Region& pr) {
-         return types.make_class(pr, class_type());
-      }
-
-      impl::Enum*
-      Lexicon::make_enum(const ipr::Region& pr, Enum::Kind k) {
-         return types.make_enum(pr, k);
-      }
-
-      impl::Namespace*
-      Lexicon::make_namespace(const ipr::Region& pr) {
-         return types.make_namespace(&pr, namespace_type());
-      }
-
-      impl::Union*
-      Lexicon::make_union(const ipr::Region& pr) {
-         return types.make_union(pr, union_type());
-      }
-
       impl::Mapping*
       Lexicon::make_mapping(const ipr::Region& r, Mapping_level l) {
          return expr_factory::make_mapping(r, l);
-      }
-
-      const ipr::Auto& Lexicon::get_auto()
-      {
-         return *autos.make();
       }
 
       // -- impl::Interface_unit --
