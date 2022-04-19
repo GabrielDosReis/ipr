@@ -381,7 +381,6 @@ namespace ipr {
                pp << xpr_primary_expr(t.expr());
          }
          void visit(const Phantom&) final { } // nothing to print
-         void visit(const This&) final { pp << xpr_identifier{"this"}; }
          void visit(const Enclosure& e) final
          {
             static constexpr const char* syntax[] = { "\0\0", "()", "{}", "[]", "<>" };

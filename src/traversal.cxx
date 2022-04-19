@@ -293,11 +293,6 @@ void ipr::Visitor::visit(const Eclipsis& e)
    visit(as<Expr>(e));
 }
 
-void ipr::Visitor::visit(const This& e)
-{
-   visit(as<Expr>(e));
-}
-
 void ipr::Visitor::visit(const Lambda& e)
 {
    visit(as<Expr>(e));
