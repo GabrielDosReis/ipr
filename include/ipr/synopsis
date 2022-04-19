@@ -74,7 +74,6 @@ namespace ipr {
    struct Phantom;               // placeholder for arrays of unknown bounds,
                                  // rethrow, empty parts of a For, etc...
    struct Eclipsis;              // the `...' in a unary fold
-   struct This;                  // the special `this' reserved word for the address on the implicit object 
    struct Lambda;                // Lambda expression, packing an environment and a code pointer
 
    // -------------------------------------------------------

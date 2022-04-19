@@ -1456,11 +1456,6 @@ namespace ipr::impl {
          return eclipses.make(&t);
       }
 
-      impl::This* expr_factory::make_this()
-      {
-         return these.make();
-      }
-
       impl::Address*
       expr_factory::make_address(const ipr::Expr& e, Optional<ipr::Type> t)
       {

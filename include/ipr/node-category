@@ -53,7 +53,6 @@ Rname,                              // ipr::Rname
 
 Phantom,                            // ipr::Phantom
 Eclipsis,                           // ipr::Eclipsis
-This,                               // ipr::This
 Lambda,                             // ipr::Lambda
 
 Symbol,                             // ipr::Symbol

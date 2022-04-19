@@ -754,20 +754,6 @@ namespace ipr {
    // was omitted, hence the name.
    struct Eclipsis : Category<Category_code::Eclipsis> { };
 
-                                 // -- This --
-   // Representation of the `this' implicit parameter for non-static member functions.
-   // An earlier design sought to treat `this' no different from any other function parameter declaration, in part
-   // to account for multimethods and uniform function call syntax in the same framework.  The current
-   // design makes `this' explicit in the semantics graph in part based on recent ISO C++ extensions.
-   // The `this' parameter used to make sense only in the context of non-static member functions, so its
-   // enclosing context was always a function declaration.  Recent versions of C++ introduced default initializers
-   // for non-static data members that can make use of `this', so the function declaration context has to be
-   // inferred based on the constructor that makes uses of the default initializer and is completely unknown at
-   // point of the specification of the default member initializer.
-   struct This : Category<Category_code::This> {
-      virtual Optional<Decl> context() const = 0;  // declaration of the enclosing member function, if any.
-    };
-
    // Semantic description of the variety of lambda capture specifications:
    //   - default captures: indicated by the squiggles "=" (by value), and "&" (by reference) at source level
    //   - implicit object: indicated by "this" (by reference), and "*this" (by value) at source level
@@ -1951,7 +1937,6 @@ namespace ipr {
       virtual void visit(const Scope&);
       virtual void visit(const Phantom&);
       virtual void visit(const Eclipsis&);
-      virtual void visit(const This&);
       virtual void visit(const Lambda&);
 
       virtual void visit(const Symbol&);
