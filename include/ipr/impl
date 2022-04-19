@@ -1297,6 +1297,21 @@ namespace ipr::impl {
       }
    };
 
+   // -- impl::symbolic_type
+   // Representation of generalized built-in type.
+   // All built-in types have type "typename" and, of course, have C++ linkage.
+   // The type-parameter to this template is the type of identifier naming the type.
+   template<std::derived_from<ipr::Identifier> T>
+   struct symbolic_type : impl::Type<ipr::As_type> {
+      constexpr explicit symbolic_type(const T& t) : id{t} { }
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return impl::typename_type(); }
+      const ipr::Expr& operand() const final { return *this; }
+   private:
+      const T& id;
+   };
+
+   using extended_type = symbolic_type<ipr::Identifier>;
    using Array = Binary_type<ipr::Array>;
    using Decltype = Unary_type<ipr::Decltype>;
    using As_type = Unary_type<ipr::As_type>;
@@ -1869,6 +1884,7 @@ namespace ipr::impl {
       // The linkage, if not specified, is assumed to be C++.
       const ipr::As_type& get_as_type(const ipr::Expr&);
       const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Linkage&);
+      const ipr::As_type& get_as_type(const ipr::Identifier&);
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
       const ipr::Qualified& get_qualified(ipr::Type_qualifiers, const ipr::Type&);
@@ -1894,6 +1910,7 @@ namespace ipr::impl {
       impl::Namespace* make_namespace(const ipr::Region*);
       impl::Closure* make_closure(const ipr::Region&);
    private:
+      util::rb_tree::container<impl::extended_type> extendeds;
       util::rb_tree::container<impl::Array> arrays;
       util::rb_tree::container<impl::As_type> type_refs;
       util::rb_tree::container<impl::As_type_with_linkage> type_links;

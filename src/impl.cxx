@@ -120,55 +120,37 @@ namespace ipr::impl {
       // "typename" and, of course, have C++ linkage.  Because they are known to all
       // implementations as elementary, they can be directly represented as constants,
       // therefore reducing initialization or startup time.
-      struct Builtin : impl::Type<ipr::As_type> {
-         explicit constexpr Builtin(const char* p) : id{known_word(p)} { }
-         const ipr::Name& name() const final { return id; }
-         const ipr::Type& type() const final { return impl::typename_type(); }
-         const ipr::Expr& operand() const final { return *this; }
-      private:
-         const impl::std_identifier& id;
+      using Builtin = symbolic_type<std_identifier>;
+
+      enum class Fundamental {
+#define BUILTIN_TYPE(S,N)  S,
+#include "builtin.def"
+#undef  BUILTIN_TYPE    
       };
 
-      constexpr Builtin any_type { "typename" };
-      constexpr Builtin class_type { "class" };
-      constexpr Builtin union_type { "union" };
-      constexpr Builtin enum_type { "enum" };
-      constexpr Builtin namespace_type { "namespace" };
-      constexpr Builtin auto_type { "auto" };
-      constexpr Builtin void_type { "void" };
-      constexpr Builtin bool_type { "bool" };
-      constexpr Builtin char_type { "char" };
-      constexpr Builtin schar_type { "signed char" };
-      constexpr Builtin uchar_type { "unsigned char" };
-      constexpr Builtin wchar_t_type { "wchar_t" };
-      constexpr Builtin char8_t_type { "char8_t" };
-      constexpr Builtin char16_t_type { "char16_t" };
-      constexpr Builtin char32_t_type { "char32_t" };
-      constexpr Builtin short_type { "short" };
-      constexpr Builtin ushort_type { "unsigned short" };
-      constexpr Builtin int_type { "int" };
-      constexpr Builtin uint_type { "unsigned int" };
-      constexpr Builtin long_type { "long" };
-      constexpr Builtin ulong_type { "unsigned long" };
-      constexpr Builtin longlong_type { "long long" };
-      constexpr Builtin ulonglong_type { "unsigned long long" };
-      constexpr Builtin float_type { "float" };
-      constexpr Builtin double_type { "double" };
-      constexpr Builtin longdouble_type { "long double" };
-      constexpr Builtin ellipsis_type { "..." };
+      constexpr Builtin builtins[] {
+#define BUILTIN_TYPE(S,N) Builtin{ known_word(N) },
+#include "builtin.def"
+#undef BUILTIN_TYPE
+      };
+
+      constexpr const Builtin& builtin(Fundamental t)
+      {
+         return builtins[static_cast<int>(t)];
+      }
 
       // Truth value symbolic constants.
-      constexpr Symbol false_cst { known_word("false"), bool_type };
-      constexpr Symbol true_cst { known_word("true"), bool_type };
+      constexpr Symbol false_cst { known_word("false"), builtin(Fundamental::Bool) };
+      constexpr Symbol true_cst { known_word("true"), builtin(Fundamental::Bool) };
 
       // Universal defaulter constant.
-      constexpr Symbol default_cst { known_word("default"), auto_type };
+      constexpr Symbol default_cst { known_word("default"), builtin(Fundamental::Auto) };
 
       // Universal deleted constant.  Nothing ever comes out.  Void.
-      constexpr Symbol delete_cst { known_word("delete"), void_type };
+      constexpr Symbol delete_cst { known_word("delete"), builtin(Fundamental::Void) };
    }
 
-   const ipr::Type& typename_type() { return impl::any_type; }
+   const ipr::Type& typename_type() { return builtin(Fundamental::Typename); }
 }
 
 namespace ipr::impl {
@@ -712,7 +694,7 @@ namespace ipr::impl {
             : body(r), enum_kind(k)
       { }
 
-      const ipr::Type& Enum::type() const { return impl::enum_type; }
+      const ipr::Type& Enum::type() const { return impl::builtin(Fundamental::Enum); }
 
       const ipr::Region&
       Enum::region() const {
@@ -934,6 +916,15 @@ namespace ipr::impl {
          return *decltypes.make(e);
       }
 
+      const ipr::As_type& type_factory::get_as_type(const ipr::Identifier& id)
+      {
+         for (auto& t : impl::builtins) {
+            if (physically_same(t.name(), id))
+               return t;
+         }
+         return *extendeds.insert(id, unary_compare());
+      }
+
       const ipr::As_type& type_factory::get_as_type(const ipr::Expr& e)
       {
          return *type_refs.insert(e, unary_compare());
@@ -1091,22 +1082,22 @@ namespace ipr::impl {
 
       impl::Class* type_factory::make_class(const ipr::Region& pr)
       {
-         return classes.make(pr, impl::class_type);
+         return classes.make(pr, impl::builtin(Fundamental::Class));
       }
 
       impl::Union* type_factory::make_union(const ipr::Region& pr)
       {
-         return unions.make(&pr, impl::union_type);
+         return unions.make(&pr, impl::builtin(Fundamental::Union));
       }
 
       impl::Namespace* type_factory::make_namespace(const ipr::Region* pr)
       {
-         return namespaces.make(pr, impl::namespace_type);
+         return namespaces.make(pr, impl::builtin(Fundamental::Namespace));
       }
 
       impl::Closure* type_factory::make_closure(const ipr::Region& r)
       {
-         return closures.make(r, impl::class_type);
+         return closures.make(r, impl::builtin(Fundamental::Class));
       }
 
       // ---------------------
@@ -1442,7 +1433,7 @@ namespace ipr::impl {
       {
          if (physically_same(n, known_word("default")))
             return impl::default_cst;
-         return get_symbol(n, impl::void_type);
+         return get_symbol(n, impl::builtin(Fundamental::Void));
       }
 
       const ipr::Symbol& expr_factory::get_this(const ipr::Type& t)
@@ -2006,32 +1997,32 @@ namespace ipr::impl {
          return *make_literal(t, s);
       }
 
-      const ipr::Type& Lexicon::void_type() const {  return impl::void_type;  }
-      const ipr::Type& Lexicon::bool_type() const { return impl::bool_type; }
-      const ipr::Type& Lexicon::char_type() const { return impl::char_type; }
-      const ipr::Type& Lexicon::schar_type() const { return impl::schar_type; }
-      const ipr::Type& Lexicon::uchar_type() const { return impl::uchar_type; }
-      const ipr::Type& Lexicon::wchar_t_type() const { return impl::wchar_t_type; }
-      const ipr::Type& Lexicon::char8_t_type() const { return impl::char8_t_type; }
-      const ipr::Type& Lexicon::char16_t_type() const { return impl::char16_t_type; }
-      const ipr::Type& Lexicon::char32_t_type() const { return impl::char32_t_type; }
-      const ipr::Type& Lexicon::short_type() const { return impl::short_type; }
-      const ipr::Type& Lexicon::ushort_type() const { return impl::ushort_type; }
-      const ipr::Type& Lexicon::int_type() const { return impl::int_type; }
-      const ipr::Type& Lexicon::uint_type() const { return impl::uint_type; }
-      const ipr::Type& Lexicon::long_type() const { return impl::long_type; }
-      const ipr::Type& Lexicon::ulong_type() const { return impl::ulong_type; }
-      const ipr::Type& Lexicon::long_long_type() const { return impl::longlong_type; }
-      const ipr::Type& Lexicon::ulong_long_type() const { return impl::ulonglong_type; }
-      const ipr::Type& Lexicon::float_type() const { return impl::float_type; }
-      const ipr::Type& Lexicon::double_type() const { return impl::double_type; }
-      const ipr::Type& Lexicon::long_double_type() const { return impl::longdouble_type; }
-      const ipr::Type& Lexicon::ellipsis_type() const { return impl::ellipsis_type; }
-      const ipr::Type& Lexicon::typename_type() const { return impl::any_type; }
-      const ipr::Type& Lexicon::class_type() const { return impl::class_type; }
-      const ipr::Type& Lexicon::union_type() const { return impl::union_type; }
-      const ipr::Type& Lexicon::enum_type() const { return impl::enum_type; }
-      const ipr::Type& Lexicon::namespace_type() const { return impl::namespace_type; }
+      const ipr::Type& Lexicon::void_type() const {  return impl::builtin(Fundamental::Void);  }
+      const ipr::Type& Lexicon::bool_type() const { return impl::builtin(Fundamental::Bool); }
+      const ipr::Type& Lexicon::char_type() const { return impl::builtin(Fundamental::Char); }
+      const ipr::Type& Lexicon::schar_type() const { return impl::builtin(Fundamental::Schar); }
+      const ipr::Type& Lexicon::uchar_type() const { return impl::builtin(Fundamental::Uchar); }
+      const ipr::Type& Lexicon::wchar_t_type() const { return impl::builtin(Fundamental::Wchar_t); }
+      const ipr::Type& Lexicon::char8_t_type() const { return impl::builtin(Fundamental::Char8_t); }
+      const ipr::Type& Lexicon::char16_t_type() const { return impl::builtin(Fundamental::Char16_t); }
+      const ipr::Type& Lexicon::char32_t_type() const { return impl::builtin(Fundamental::Char32_t); }
+      const ipr::Type& Lexicon::short_type() const { return impl::builtin(Fundamental::Short); }
+      const ipr::Type& Lexicon::ushort_type() const { return impl::builtin(Fundamental::Ushort); }
+      const ipr::Type& Lexicon::int_type() const { return impl::builtin(Fundamental::Int); }
+      const ipr::Type& Lexicon::uint_type() const { return impl::builtin(Fundamental::Uint); }
+      const ipr::Type& Lexicon::long_type() const { return impl::builtin(Fundamental::Long); }
+      const ipr::Type& Lexicon::ulong_type() const { return impl::builtin(Fundamental::Ulong); }
+      const ipr::Type& Lexicon::long_long_type() const { return impl::builtin(Fundamental::Long_long); }
+      const ipr::Type& Lexicon::ulong_long_type() const { return impl::builtin(Fundamental::Ulong_long); }
+      const ipr::Type& Lexicon::float_type() const { return impl::builtin(Fundamental::Float); }
+      const ipr::Type& Lexicon::double_type() const { return impl::builtin(Fundamental::Double); }
+      const ipr::Type& Lexicon::long_double_type() const { return impl::builtin(Fundamental::Long_double); }
+      const ipr::Type& Lexicon::ellipsis_type() const { return impl::builtin(Fundamental::Ellipsis); }
+      const ipr::Type& Lexicon::typename_type() const { return impl::builtin(Fundamental::Typename); }
+      const ipr::Type& Lexicon::class_type() const { return impl::builtin(Fundamental::Class); }
+      const ipr::Type& Lexicon::union_type() const { return impl::builtin(Fundamental::Union); }
+      const ipr::Type& Lexicon::enum_type() const { return impl::builtin(Fundamental::Enum); }
+      const ipr::Type& Lexicon::namespace_type() const { return impl::builtin(Fundamental::Namespace); }
 
       const ipr::Symbol& Lexicon::false_value() const { return impl::false_cst; }
       const ipr::Symbol& Lexicon::true_value() const { return impl::true_cst; }
