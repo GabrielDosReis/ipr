@@ -1,0 +1,33 @@
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copright and license notices.
+//
+
+BUILTIN_TYPE(Typename, "typename")
+BUILTIN_TYPE(Class, "class")
+BUILTIN_TYPE(Union, "union")
+BUILTIN_TYPE(Enum, "enum")
+BUILTIN_TYPE(Namespace, "namespace")
+BUILTIN_TYPE(Auto, "auto")
+BUILTIN_TYPE(Void, "void")
+BUILTIN_TYPE(Bool, "bool")
+BUILTIN_TYPE(Char, "char")
+BUILTIN_TYPE(Schar, "signed char")
+BUILTIN_TYPE(Uchar, "unsigned char")
+BUILTIN_TYPE(Wchar_t, "wchar_t")
+BUILTIN_TYPE(Char8_t, "char8_t")
+BUILTIN_TYPE(Char16_t, "char16_t")
+BUILTIN_TYPE(Char32_t, "char32_t")
+BUILTIN_TYPE(Short, "short")
+BUILTIN_TYPE(Ushort, "unsigned short")
+BUILTIN_TYPE(Int, "int")
+BUILTIN_TYPE(Uint, "unsigned int")
+BUILTIN_TYPE(Long, "long")
+BUILTIN_TYPE(Ulong, "unsigned long")
+BUILTIN_TYPE(Long_long, "long long")
+BUILTIN_TYPE(Ulong_long, "unsigned long long")
+BUILTIN_TYPE(Float, "float")
+BUILTIN_TYPE(Double, "double")
+BUILTIN_TYPE(Long_double, "long double")
+BUILTIN_TYPE(Ellipsis, "...")
