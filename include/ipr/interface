@@ -1544,9 +1544,9 @@ namespace ipr {
    // In scenario (b), the `label()` is represented directly by the constant-expression.
    // In scenario (c), the `label()` is should be `Lexicon::default_value()`. 
    struct Labeled_stmt : Binary<Category<Category_code::Labeled_stmt, Stmt>,
-                                const Expr&, const Stmt&> {
+                                const Expr&, const Expr&> {
       const Expr& label() const { return first(); }
-      const Stmt& stmt() const { return second(); }
+      const Expr& stmt() const { return second(); }
    };
 
                                 // -- Block --
@@ -1574,7 +1574,7 @@ namespace ipr {
                                 // -- If
    // A classic if-statement.
    struct If : Ternary<Category<Category_code::If, Stmt>,
-                       const Expr&, const Stmt&, Optional<Stmt>> {
+                       const Expr&, const Expr&, Optional<Expr>> {
       Arg1_type condition() const { return first(); }
       Arg2_type consequence() const { return second(); }
       Arg3_type alternative() const { return third(); }
@@ -1583,7 +1583,7 @@ namespace ipr {
                                 // -- Switch --
    // A classic switch-statement.
    struct Switch : Binary<Category<Category_code::Switch, Stmt>,
-                          const Expr&, const Stmt&> {
+                          const Expr&, const Expr&> {
       Arg1_type condition() const { return first(); }
       Arg2_type body() const { return second(); }
    };
@@ -1591,14 +1591,14 @@ namespace ipr {
                                 // -- While --
    // A classic while-statement
    struct While : Binary<Category<Category_code::While, Stmt>,
-                         const Expr&, const Stmt&> {
+                         const Expr&, const Expr&> {
       Arg1_type condition() const { return first(); }
       Arg2_type body() const { return second(); }
    };
 
                                 // -- Do --
    // A classic do-statement
-   struct Do : Binary<Category<Category_code::Do, Stmt>, const Expr&, const Stmt&> {
+   struct Do : Binary<Category<Category_code::Do, Stmt>, const Expr&, const Expr&> {
       Arg1_type condition() const { return first(); }
       Arg2_type body() const { return second(); }
    };
@@ -1609,14 +1609,14 @@ namespace ipr {
       virtual const Expr& initializer() const = 0;
       virtual const Expr& condition() const = 0;
       virtual const Expr& increment() const = 0;
-      virtual const Stmt& body() const = 0;
+      virtual const Expr& body() const = 0;
    };
 
                                 // -- For_in --
    struct For_in : Category<Category_code::For_in, Stmt> {
       virtual const Var& variable() const = 0;
       virtual const Expr& sequence() const = 0;
-      virtual const Stmt& body() const = 0;
+      virtual const Expr& body() const = 0;
    };
 
                                 // -- Break --
