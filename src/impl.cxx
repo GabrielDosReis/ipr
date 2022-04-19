@@ -650,13 +650,14 @@ namespace ipr::impl {
          return dos.make();
       }
 
-      impl::If*
-      stmt_factory::make_if(const ipr::Expr& c, const ipr::Stmt& s) {
+      impl::If* stmt_factory::make_if(const ipr::Expr& c, const ipr::Expr& s)
+      {
          return ifs.make(c, s, nullptr);
       }
 
       impl::If*
-      stmt_factory::make_if(const ipr::Expr& c, const ipr::Stmt& t, const ipr::Stmt& f) {
+      stmt_factory::make_if(const ipr::Expr& c, const ipr::Expr& t, const ipr::Expr& f)
+      {
          return ifs.make(c, t, &f);
       }
 
@@ -665,8 +666,7 @@ namespace ipr::impl {
          return switches.make();
       }
 
-      impl::Labeled_stmt*
-      stmt_factory::make_labeled_stmt(const ipr::Expr& l, const ipr::Stmt& s)
+      impl::Labeled_stmt* stmt_factory::make_labeled_stmt(const ipr::Expr& l, const ipr::Expr& s)
       {
          return labeled_stmts.make(l, s);
       }

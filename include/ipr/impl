@@ -2428,11 +2428,10 @@ namespace ipr::impl {
       impl::Goto* make_goto(const ipr::Expr&);
       impl::Return* make_return(const ipr::Expr&);
       impl::Do* make_do();
-      impl::If* make_if(const ipr::Expr&, const ipr::Stmt&);
-      impl::If* make_if(const ipr::Expr&, const ipr::Stmt&, const ipr::Stmt&);
+      impl::If* make_if(const ipr::Expr&, const ipr::Expr&);
+      impl::If* make_if(const ipr::Expr&, const ipr::Expr&, const ipr::Expr&);
       impl::Switch* make_switch();
-      impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&,
-                                             const ipr::Stmt&);
+      impl::Labeled_stmt* make_labeled_stmt(const ipr::Expr&, const ipr::Expr&);
       impl::While* make_while();
       impl::For* make_for();
       impl::For_in* make_for_in();
