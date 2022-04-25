@@ -1000,15 +1000,6 @@ void ipr::Visitor::visit(const EH_parameter& d)
 }
 
 //
-// Similarly, the global namespace constant is visited as-if Namespace.
-//
-void
-ipr::Visitor::visit(const Global_scope& s)
-{
-   visit(as<Namespace>(s));
-}
-
-//
 // Similar observation holds for the null-statement.
 //
 void

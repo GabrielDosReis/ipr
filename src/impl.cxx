@@ -716,14 +716,32 @@ namespace ipr::impl {
          return e;
       }
 
-      // -----------------
-      // -- impl::Class --
-      // -----------------
+      // -- impl::Union
+      Union::Union(const ipr::Region& r) : Udt<ipr::Union>{&r} { }
 
-      Class::Class(const ipr::Region& pr, const ipr::Type& t)
-            : impl::Udt<ipr::Class>(&pr, t),
+      const ipr::Type& Union::type() const
+      { 
+         return impl::builtin(Fundamental::Union); 
+      }
+
+      // -- impl::Namespace
+      Namespace::Namespace(const ipr::Region* r) : Udt<ipr::Namespace>{r} { }
+
+      const ipr::Type& Namespace::type() const 
+      { 
+         return impl::builtin(Fundamental::Namespace); 
+      }
+
+      // -- impl::Class --
+      Class::Class(const ipr::Region& pr)
+            : impl::Udt<ipr::Class>(&pr),
               base_subobjects(pr)
       { }
+
+      const ipr::Type& Class::type() const 
+      { 
+         return impl::builtin(Fundamental::Class); 
+      }
 
       const ipr::Sequence<ipr::Base_type>&
       Class::bases() const {
@@ -737,9 +755,14 @@ namespace ipr::impl {
       }
 
       // -- impl::Closure --
-      Closure::Closure(const ipr::Region& r, const ipr::Type& t)
-         : impl::Udt<ipr::Closure>(&r, t)
+      Closure::Closure(const ipr::Region& r)
+         : impl::Udt<ipr::Closure>(&r)
       { }
+
+      const ipr::Type& Closure::type() const
+      { 
+         return impl::builtin(Fundamental::Class); 
+      }
 
       // --------------------------
       // -- impl::Parameter_list --
@@ -1082,22 +1105,22 @@ namespace ipr::impl {
 
       impl::Class* type_factory::make_class(const ipr::Region& pr)
       {
-         return classes.make(pr, impl::builtin(Fundamental::Class));
+         return classes.make(pr);
       }
 
       impl::Union* type_factory::make_union(const ipr::Region& pr)
       {
-         return unions.make(&pr, impl::builtin(Fundamental::Union));
+         return unions.make(pr);
       }
 
-      impl::Namespace* type_factory::make_namespace(const ipr::Region* pr)
+      impl::Namespace* type_factory::make_namespace(const ipr::Region& pr)
       {
-         return namespaces.make(pr, impl::builtin(Fundamental::Namespace));
+         return namespaces.make(&pr);
       }
 
       impl::Closure* type_factory::make_closure(const ipr::Region& r)
       {
-         return closures.make(r, impl::builtin(Fundamental::Class));
+         return closures.make(r);
       }
 
       // ---------------------

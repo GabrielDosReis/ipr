@@ -1764,14 +1764,8 @@ namespace ipr::impl {
    struct Udt : impl::Type<Interface> {
       Region body;
       Optional<ipr::Name> id;
-      util::ref<const ipr::Type> typing;
-      Udt(const ipr::Region* pr, const ipr::Type& t) : body(pr)
-      {
-         this->typing = &t;
-      }
-
+      explicit Udt(const ipr::Region* pr) : body(pr) { }
       const ipr::Name& name() const final { return id.get(); }
-      const ipr::Type& type() const final { return typing.get(); }
       const ipr::Region& region() const final { return body; }
 
       impl::Alias*
@@ -1845,17 +1839,22 @@ namespace ipr::impl {
       impl::Enumerator* add_member(const ipr::Name&);
    };
 
-   using Union = Udt<ipr::Union>;
-   using Namespace = Udt<ipr::Namespace>;
+   struct Union : Udt<ipr::Union> {
+      explicit Union(const ipr::Region&);
+      const ipr::Type& type() const final;
+   };
+   
+   struct Namespace : Udt<ipr::Namespace> {
+      explicit Namespace(const ipr::Region*);
+      const ipr::Type& type() const final;
+   };
 
    struct Class : impl::Udt<ipr::Class> {
       homogeneous_region<impl::Base_type> base_subobjects;
-
-      Class(const ipr::Region&, const ipr::Type&);
-
+      explicit Class(const ipr::Region&);
+      const ipr::Type& type() const final;
       const ipr::Sequence<ipr::Base_type>& bases() const final;
       impl::Base_type* declare_base(const ipr::Type&);
-
    };
 
    struct Auto : impl::Composite<ipr::Auto> {
@@ -1863,8 +1862,8 @@ namespace ipr::impl {
 
    struct Closure : impl::Udt<ipr::Closure> {
       impl::obj_list<impl::Capture> captures;
-
-      Closure(const ipr::Region&, const ipr::Type&);
+      explicit Closure(const ipr::Region&);
+      const ipr::Type& type() const final;
       const ipr::Sequence<ipr::Capture>& members() const final { return captures; }
    };
 
@@ -1902,7 +1901,7 @@ namespace ipr::impl {
       impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
       impl::Class* make_class(const ipr::Region&);
       impl::Union* make_union(const ipr::Region&);
-      impl::Namespace* make_namespace(const ipr::Region*);
+      impl::Namespace* make_namespace(const ipr::Region&);
       impl::Closure* make_closure(const ipr::Region&);
    private:
       util::rb_tree::container<impl::extended_type> extendeds;
@@ -2518,7 +2517,7 @@ namespace ipr::impl {
       using Interface = T;
       unit_base(impl::Lexicon& l)
             : context{ l },
-               global_ns{ nullptr, context.namespace_type() }
+               global_ns{nullptr}
       {
          global_ns.id = &context.get_identifier("");
       }
@@ -2527,7 +2526,7 @@ namespace ipr::impl {
          v.visit(*this);
       }
 
-      const ipr::Global_scope& global_namespace() const final {
+      const ipr::Namespace& global_namespace() const final {
          return global_ns;
       }
 
@@ -2541,7 +2540,7 @@ namespace ipr::impl {
 
    private:
       impl::Lexicon& context;
-      impl::Udt<ipr::Global_scope> global_ns;
+      impl::Namespace global_ns;
       ref_sequence<ipr::Module> modules_imported;
    };
 
