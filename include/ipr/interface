@@ -1809,7 +1809,7 @@ namespace ipr {
    struct Translation_unit {
       struct Visitor;
       virtual void accept(Visitor&) const = 0;
-      virtual const ipr::Global_scope& global_namespace() const = 0;
+      virtual const ipr::Namespace& global_namespace() const = 0;
       virtual const Sequence<Module>& imported_modules() const = 0;
    };
 
@@ -1882,8 +1882,6 @@ namespace ipr {
                                 // -- Built-in type constants --
 
    struct Primitive : As_type { };
-
-   struct Global_scope : Namespace { };
 
    struct Empty_stmt : Expr_stmt { };
 
@@ -2065,7 +2063,6 @@ namespace ipr {
       virtual void visit(const Var&);
       virtual void visit(const EH_parameter&);
 
-      virtual void visit(const Global_scope&);
       virtual void visit(const Empty_stmt&);
    };
 

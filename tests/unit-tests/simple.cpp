@@ -78,3 +78,18 @@ TEST_CASE("Truth values have type bool") {
   CHECK(physically_same(faux.type(), lexicon.bool_type()));
 }
 
+TEST_CASE("User-defined types have defined types") {
+  using namespace ipr;
+  impl::Lexicon lexicon { };
+  impl::Translation_unit unit { lexicon };
+  auto& global = unit.global_namespace();
+  auto union_udt = lexicon.make_union(global.region());
+  CHECK(physically_same(union_udt->type(), lexicon.union_type()));
+  auto class_udt = lexicon.make_class(global.region());
+  CHECK(physically_same(class_udt->type(), lexicon.class_type()));
+  auto enum_udt = lexicon.make_enum(global.region(), Enum::Kind::Legacy);
+  CHECK(physically_same(enum_udt->type(), lexicon.enum_type()));
+  auto namespace_udt = lexicon.make_namespace(global.region());
+  CHECK(physically_same(namespace_udt->type(), lexicon.namespace_type()));
+}
+
