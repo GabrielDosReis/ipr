@@ -999,15 +999,6 @@ void ipr::Visitor::visit(const EH_parameter& d)
    visit(as<Decl>(d));
 }
 
-//
-// Similar observation holds for the null-statement.
-//
-void
-ipr::Visitor::visit(const Empty_stmt& s)
-{
-   visit(as<Expr_stmt>(s));
-}
-
 void
 ipr::Translation_unit::Visitor::visit(const Module_unit& u)
 {

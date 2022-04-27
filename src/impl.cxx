@@ -614,11 +614,6 @@ namespace ipr::impl {
          return make(continues).with_type(t);
       }
 
-      impl::Empty_stmt*
-      stmt_factory::make_empty_stmt(const ipr::Type& t) {
-         return empty_stmts.make(*make_phantom(t));
-      }
-
       impl::Block*
       stmt_factory::make_block(const ipr::Region& pr, Optional<ipr::Type> t) {
          return make(blocks, pr).with_type(t);
