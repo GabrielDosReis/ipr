@@ -1879,11 +1879,6 @@ namespace ipr {
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
    };
-                                // -- Built-in type constants --
-
-   struct Primitive : As_type { };
-
-   struct Empty_stmt : Expr_stmt { };
 
                                 // -- Visitor --
    struct Visitor {
@@ -2062,8 +2057,6 @@ namespace ipr {
       virtual void visit(const Typedecl&);
       virtual void visit(const Var&);
       virtual void visit(const EH_parameter&);
-
-      virtual void visit(const Empty_stmt&);
    };
 
                                 // -- Translation_unit::Visitor --

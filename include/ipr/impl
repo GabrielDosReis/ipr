@@ -2002,7 +2002,6 @@ namespace ipr::impl {
    using Ctor_body = Binary<Stmt<Expr<ipr::Ctor_body>>>;
    using Do = Controlled_stmt<ipr::Do>;
    using Expr_stmt = type_from_operand<Stmt<ipr::Expr_stmt>>;
-   using Empty_stmt = type_from_operand<Stmt<ipr::Empty_stmt>>;
    using Goto = type_from_operand<Stmt<ipr::Goto>>;
    using If = Ternary<Stmt<Expr<ipr::If>>>;
    using Labeled_stmt = type_from_second<Stmt<ipr::Labeled_stmt>>;
@@ -2412,7 +2411,6 @@ namespace ipr::impl {
    struct stmt_factory : expr_factory, dir_factory {
       impl::Break* make_break(const ipr::Type&);
       impl::Continue* make_continue(const ipr::Type&);
-      impl::Empty_stmt* make_empty_stmt(const ipr::Type&);
       impl::Block* make_block(const ipr::Region&, Optional<ipr::Type> = { });
       impl::Ctor_body* make_ctor_body(const ipr::Expr_list&,
                                        const ipr::Block&);
@@ -2431,7 +2429,6 @@ namespace ipr::impl {
    protected:
       stable_farm<impl::Break> breaks;
       stable_farm<impl::Continue> continues;
-      stable_farm<impl::Empty_stmt> empty_stmts;
       stable_farm<impl::Block> blocks;
       stable_farm<impl::Expr_stmt> expr_stmts;
       stable_farm<impl::Goto> gotos;
