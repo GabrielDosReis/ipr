@@ -40,8 +40,6 @@ target_sources(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/include/ipr/traversal
         ${PROJECT_SOURCE_DIR}/include/ipr/utility
         ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
-        ${PROJECT_SOURCE_DIR}/README.md
-        ${PROJECT_SOURCE_DIR}/STYLE.md
 )
 
 set_target_properties(${PROJECT_NAME}
