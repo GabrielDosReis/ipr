@@ -411,7 +411,7 @@ namespace ipr::util {
       util::string* allocate(size_type);
       auto remaining_header_count() const
       {
-         return next_header - &mem->storage[0];
+         return mem->storage + bufsz - next_header;
       }
 
       struct pool;
