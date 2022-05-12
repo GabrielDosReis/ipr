@@ -49,7 +49,6 @@ Type_id,                            // ipr::Type_id
 Ctor_name,                          // ipr::Ctor_name
 Dtor_name,                          // ipr::Dtor_name
 Guide_name,                         // ipr::Guide_name
-Rname,                              // ipr::Rname
 
 Phantom,                            // ipr::Phantom
 Eclipsis,                           // ipr::Eclipsis
