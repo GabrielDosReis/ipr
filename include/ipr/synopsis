@@ -233,12 +233,6 @@ namespace ipr {
 
    struct Lexicon;              // Interpretation context
 
-
-   // ----------------------------------
-   // -- built-ins, but not constants --
-   // ----------------------------------
-   struct Global_scope;          // global namespace -- "::"
-
    // -- Ancillary classes --
    template<typename> struct Sequence;    // sequence of items
 }
