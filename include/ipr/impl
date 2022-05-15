@@ -1578,7 +1578,6 @@ namespace ipr::impl {
    struct Template : impl::Decl<ipr::Template> {
       util::ref<impl::Mapping> init;
       util::ref<const ipr::Region> lexreg;
-      impl::Expr_list args;
 
       Template();
       const ipr::Template& primary_template() const final;
