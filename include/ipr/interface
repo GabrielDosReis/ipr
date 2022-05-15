@@ -707,12 +707,15 @@ namespace ipr {
    // An enumeration is an object-type whose members are named constants
    // the definitions of which as part of the definition of the enumeration
    // itself.  By historical accident, enumerators are not "properly scoped".
+   // The underlying type of the enumeration is given by `base()`, when explicitly
+   // specified or inferred from the enumerator list.
    struct Enum : Category<Category_code::Enum, Udt<Enumerator>> {
       enum class Kind : std::uint8_t {     // The kind of enum.
          Legacy,                      // traditional C-style enum
          Scoped                       // scoped enum (C++11)
       };
       virtual Kind kind() const = 0;
+      virtual Optional<Type> base() const = 0;
    };
 
                                 // -- Auto --
