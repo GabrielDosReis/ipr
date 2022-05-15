@@ -1167,6 +1167,20 @@ namespace ipr::impl {
 
       Category_code Binary_fold::operation() const { return fold_op; }
 
+      // -- impl::General_substitution
+      const ipr::Expr& General_substitution::operator[](const ipr::Parameter& p) const
+      {
+         if (auto where = mapping.find(&p); where != mapping.end())
+            return *where->second;
+         return p;
+      }
+
+      General_substitution& General_substitution::subst(const ipr::Parameter& p, const ipr::Expr& v)
+      {
+         mapping.insert_or_assign(&p, &v);
+         return *this;
+      }
+
       // -------------------
       // -- impl::Mapping --
       // -------------------
@@ -1968,6 +1982,12 @@ namespace ipr::impl {
          return where_nodecls.make(main, attendant);
       }
 
+      impl::Instantiation*
+      expr_factory::make_instantiation(const ipr::Expr& e, const ipr::Substitution& s)
+      {
+         return insts.make(e, s);
+      }
+
       impl::New*
       expr_factory::make_new(Optional<ipr::Expr_list> where, const ipr::Construction& expr, Optional<ipr::Type> t)
       {
@@ -1991,6 +2011,16 @@ namespace ipr::impl {
          return lambdas.make(r, l);
       }
 
+      impl::Elementary_substitution* 
+      expr_factory::make_elementary_substitution(const ipr::Parameter& p, const ipr::Expr& v)
+      {
+         return elem_substs.make(p, v);
+      }
+
+      impl::General_substitution* expr_factory::make_general_substitution()
+      {
+         return gen_substs.make();
+      }
 
       // -- impl::Lexicon --
 

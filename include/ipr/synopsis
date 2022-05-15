@@ -169,6 +169,7 @@ namespace ipr {
    struct Mapping;               // function
    struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
    struct Where;                 // expression with local bindings or restrictions
+   struct Instantiation;         // Substitution into a parameterized expression
 
    // --------------------------------------------------------
    // -- result of trinary expression constructor constants --
