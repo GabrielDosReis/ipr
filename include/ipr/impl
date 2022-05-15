@@ -1528,6 +1528,17 @@ namespace ipr::impl {
    // A Where node where the attendant() is not a scope.
    using Where_no_decl = Binary_node<ipr::Where>;
 
+   struct Instantiation : impl::Node<ipr::Instantiation> {
+      Optional<ipr::Expr> result;
+      Instantiation(const ipr::Expr& e, const ipr::Substitution& s) : expr{e}, subst{s} { }
+      const ipr::Expr& pattern() const final { return expr; }
+      const ipr::Substitution& substitution() const final { return subst; }
+      Optional<ipr::Expr> instance() const final { return result; }
+   private:
+      const ipr::Expr& expr;
+      const ipr::Substitution& subst;
+   };
+
    struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
       Category_code fold_op;
 
@@ -1543,6 +1554,26 @@ namespace ipr::impl {
    };
 
    using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
+
+   // An elementary substitution is a subsitution the domain of which is a singleton.
+   struct Elementary_substitution : ipr::Substitution {
+      Elementary_substitution(const ipr::Parameter& p, const ipr::Expr& v) : parm{p}, value{v} { }
+      const ipr::Expr& operator[](const ipr::Parameter& p) const final
+      {
+         return physically_same(p, parm) ? parm : value;
+      }
+   private:
+      const ipr::Parameter& parm;
+      const ipr::Expr& value;
+   };
+
+   // A general substitution is a substitution the domain of which has cardinality greater than one.
+   struct General_substitution : ipr::Substitution {
+      const ipr::Expr& operator[](const ipr::Parameter&) const final;
+      General_substitution& subst(const ipr::Parameter&, const ipr::Expr&);
+   private:
+      std::map<const ipr::Parameter*, const ipr::Expr*> mapping;
+   };
 
    struct Template : impl::Decl<ipr::Template> {
       util::ref<impl::Mapping> init;
@@ -2279,12 +2310,15 @@ namespace ipr::impl {
       Binary_fold* make_binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Where* make_where(const ipr::Region&);
       Where_no_decl* make_where(const ipr::Expr&, const ipr::Expr&);
+      impl::Instantiation* make_instantiation(const ipr::Expr&, const ipr::Substitution&);
       New* make_new(Optional<ipr::Expr_list>, const ipr::Construction&, Optional<ipr::Type> = {});
       Conditional* make_conditional(const ipr::Expr&, const ipr::Expr&,
                                     const ipr::Expr&, Optional<ipr::Type> = {});
       Mapping* make_mapping(const ipr::Region&, Mapping_level);
       Lambda* make_lambda(const ipr::Region&, Mapping_level);
 
+      Elementary_substitution* make_elementary_substitution(const ipr::Parameter&, const ipr::Expr&);
+      General_substitution* make_general_substitution();
    private:
       // Language linkage nodes.
       util::rb_tree::container<impl::Linkage> linkages;
@@ -2377,12 +2411,16 @@ namespace ipr::impl {
       stable_farm<impl::Binary_fold> folds;
       stable_farm<impl::Where_no_decl> where_nodecls;
       stable_farm<impl::Where> wheres;
+      stable_farm<impl::Instantiation> insts;
 
       stable_farm<impl::New> news;
       stable_farm<impl::Coercion> coercions;
       stable_farm<impl::Conditional> conds;
       stable_farm<impl::Mapping> mappings;
       stable_farm<impl::Lambda> lambdas;
+
+      stable_farm<impl::Elementary_substitution> elem_substs;
+      stable_farm<impl::General_substitution> gen_substs;
    };
 
    struct dir_factory {

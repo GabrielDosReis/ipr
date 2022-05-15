@@ -1309,6 +1309,27 @@ namespace ipr {
       const Type& type() const final { return main().type(); }
    };
 
+                                // -- Substitution --
+   // A "Substitution" is a mapping of a parameter to an expression (its value). 
+   struct Substitution {
+      virtual const Expr& operator[](const Parameter&) const = 0;
+   };
+
+                                // -- Instantiation --
+   // An instantiation is a computation that substitutes parameters into an expression.
+   // While an implicit specialization of a template is a notorious example of an instantiation,
+   // just about any expression can be instantiated.  For example, a hidden friend function 
+   // defined in a class template is typically instantiated, even though it is not itself a 
+   // function template; the branches of a `constexpr if` are instantiated.  Consequently,
+   // an Instantiarion is different from a Template_id (a Name).
+   // The result of an instantiation may be cached on the side, or directly stored in this node.
+   struct Instantiation : Category<Category_code::Instantiation> {
+      virtual const Expr& pattern() const = 0;
+      virtual const Substitution& substitution() const = 0;
+      virtual Optional<Expr> instance() const  = 0;
+      const Type& type() const final { return instance().get().type(); }
+   };
+
                                 // -- New --
    // This node represents a new-expression:
    //    ::_opt new new-placement_opt new-type-id new-initializer_opt
@@ -1637,23 +1658,6 @@ namespace ipr {
    struct Handler : Category<Category_code::Handler, Stmt> {
       virtual const EH_parameter& exception() const = 0;
       virtual const Block& body() const = 0;
-   };
-
-                                // -- Substitution --
-   // A "Substitution" is a mapping of a parameter to an expression
-   // (its value).  It is mainly convenient for representing individual
-   // template-argument used to instantiate a template.  Thus, a
-   // template-argument list is a sequence of Substitutions.
-   struct Substitution {
-      Substitution(const Parameter& p, const Expr& x)
-            : var(&p), expr(&x) { }
-
-      const Parameter& param() const { return *var; }
-      const Expr& value() const { return *expr; }
-
-   private:
-      const Parameter* var;
-      const Expr* expr;
    };
 
                                 // -- Decl --
@@ -2015,6 +2019,7 @@ namespace ipr {
       virtual void visit(const Widen&);
       virtual void visit(const Binary_fold&);
       virtual void visit(const Where&);
+      virtual void visit(const Instantiation&);
 
       virtual void visit(const Conditional&);
       virtual void visit(const New&);
