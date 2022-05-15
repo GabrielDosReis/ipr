@@ -25,13 +25,30 @@ target_include_directories(${PROJECT_NAME}
       ${PROJECT_SOURCE_DIR}/include
 )
 
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/include/ipr/ancillary
+        ${PROJECT_SOURCE_DIR}/include/ipr/attribute
+        ${PROJECT_SOURCE_DIR}/include/ipr/cxx-form
+        ${PROJECT_SOURCE_DIR}/include/ipr/impl
+        ${PROJECT_SOURCE_DIR}/include/ipr/interface
+        ${PROJECT_SOURCE_DIR}/include/ipr/io
+        ${PROJECT_SOURCE_DIR}/include/ipr/lexer
+        ${PROJECT_SOURCE_DIR}/include/ipr/location
+        ${PROJECT_SOURCE_DIR}/include/ipr/node-category
+        ${PROJECT_SOURCE_DIR}/include/ipr/synopsis
+        ${PROJECT_SOURCE_DIR}/include/ipr/traversal
+        ${PROJECT_SOURCE_DIR}/include/ipr/utility
+        ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
+)
+
 set_target_properties(${PROJECT_NAME}
    PROPERTIES
       CXX_STANDARD 20
       CXX_STANDARD_REQUIRED ON
 	   CXX_EXTENSIONS OFF
 )
-				
+
 target_compile_options(${PROJECT_NAME}
    PRIVATE
       $<$<CXX_COMPILER_ID:MSVC>:
