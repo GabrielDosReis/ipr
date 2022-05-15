@@ -1857,6 +1857,7 @@ namespace ipr::impl {
    };
 
    struct Enum : impl::Type<ipr::Enum> {
+      Optional<ipr::Type> underlying;
       homogeneous_region<impl::Enumerator, obj_sequence> body;
       Optional<ipr::Name> id;
       const Kind enum_kind;
@@ -1867,6 +1868,7 @@ namespace ipr::impl {
       const ipr::Region& region() const final;
       const Sequence<ipr::Enumerator>& members() const final;
       Kind kind() const final;
+      Optional<ipr::Type> base() const final { return underlying; }
       impl::Enumerator* add_member(const ipr::Name&);
    };
 
