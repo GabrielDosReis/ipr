@@ -1211,25 +1211,6 @@ namespace ipr::impl {
       }
    };
 
-   struct Base_type final : unique_decl<ipr::Base_type> {
-      const ipr::Type& base;
-      const ipr::Region& where;
-      const Decl_position scope_pos;
-      ipr::DeclSpecifiers spec;
-
-      Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
-      const ipr::Type& type() const final { return base; }
-      // FIXME: for a base-class subobject, the home region and lexical
-      //        region are slightly different.  The home region should be that
-      //        of the class this is a base class, whereas the lexical region
-      //        should be the actual lexical region where the base type was specified.
-      const ipr::Region& lexical_region() const final { return where; }
-      const ipr::Region& home_region() const final { return where; }
-      Decl_position position() const final { return scope_pos; }
-      Optional<ipr::Expr> initializer() const final;
-      DeclSpecifiers specifiers() const final { return spec; }
-   };
-
    struct Enumerator final : unique_decl<ipr::Enumerator> {
       const ipr::Name& id;
       const ipr::Enum& typing;
@@ -1881,12 +1862,31 @@ namespace ipr::impl {
       const ipr::Type& type() const final;
    };
 
+   // Non-virtual base class subobject
+   struct Exclusive_subobject : ipr::Base_subobject {
+      explicit Exclusive_subobject(const ipr::Type& t) : base{t} { }
+      const ipr::Type& type() const final { return base; }
+      Subobject_specifier specifier() const final { return Subobject_specifier::Exclusive; }
+   private:
+      const ipr::Type& base;
+   };
+
+   // Virtual base class subobject
+   struct Shared_subobject : ipr::Base_subobject {
+      explicit Shared_subobject(const ipr::Type& t) : base{t} { }
+      const ipr::Type& type() const final { return base; }
+      Subobject_specifier specifier() const final { return Subobject_specifier::Shared; }
+   private:
+      const ipr::Type& base;
+   };
+
    struct Class : impl::Udt<ipr::Class> {
-      homogeneous_region<impl::Base_type> base_subobjects;
       explicit Class(const ipr::Region&);
       const ipr::Type& type() const final;
-      const ipr::Sequence<ipr::Base_type>& bases() const final;
-      impl::Base_type* declare_base(const ipr::Type&);
+      const ipr::Sequence<ipr::Base_subobject>& bases() const final { return subobjects; }
+      Class& add_subobject(const ipr::Base_subobject&);
+   private:
+      impl::ref_sequence<ipr::Base_subobject> subobjects;
    };
 
    struct Auto : impl::Composite<ipr::Auto> {
@@ -1929,6 +1929,8 @@ namespace ipr::impl {
       const ipr::Sum& get_sum(const ipr::Sequence<ipr::Type>&);
       const ipr::Forall& get_forall(const ipr::Product&, const ipr::Type&);
       const ipr::Auto& get_auto();
+      const ipr::Base_subobject& get_exclusive_base(const ipr::Type&);
+      const ipr::Base_subobject& get_shared_base(const ipr::Type&);
 
       impl::Enum* make_enum(const ipr::Region&, Enum::Kind);
       impl::Class* make_class(const ipr::Region&);
@@ -1951,6 +1953,8 @@ namespace ipr::impl {
       util::rb_tree::container<impl::Rvalue_reference> refrefs;
       util::rb_tree::container<impl::Sum> sums;
       util::rb_tree::container<impl::Forall> foralls;
+      util::rb_tree::container<impl::Exclusive_subobject> exclusives;
+      util::rb_tree::container<impl::Shared_subobject> shareds;
       stable_farm<impl::Decltype> decltypes;
       stable_farm<impl::Enum> enums;
       stable_farm<impl::Class> classes;

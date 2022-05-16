@@ -29,7 +29,7 @@ namespace ipr {
       auto worker = [&pp, first = true](auto& x) mutable {
          if (not first)
             pp << ", ";
-         pp << F(x);
+         pp << F{x};
          first = false;
       };
       std::for_each(s.begin(), s.end(), worker);
@@ -1283,18 +1283,36 @@ namespace ipr {
    }
 
    struct xpr_base_classes {
-      const ipr::Sequence<ipr::Base_type>& bases;
-      explicit xpr_base_classes(const ipr::Sequence<ipr::Base_type>& b)
+      const ipr::Sequence<ipr::Base_subobject>& bases;
+      explicit xpr_base_classes(const ipr::Sequence<ipr::Base_subobject>& b)
             : bases(b) { }
    };
+
+   struct xpr_base {
+      const ipr::Base_subobject& base;
+   };
+
+   static Printer& operator<<(Printer& pp, xpr_base x)
+   {
+      switch (x.base.specifier()) {
+      case Subobject_specifier::Exclusive:
+         break;      // nothing
+      case Subobject_specifier::Shared:
+         pp << xpr_identifier("virtual");
+         break;
+      default:
+         pp << xpr_identifier("<???>");
+      }
+      return pp << xpr_type(x.base.type());
+   }
 
    static Printer&
    operator<<(Printer& pp, xpr_base_classes x)
    {
-      const Sequence<Base_type>& bases = x.bases;
+      auto& bases = x.bases;
       if (not bases.empty()) {
          pp << token('(');
-         comma_separated<xpr_decl>(pp, bases);
+         comma_separated<xpr_base>(pp, bases);
          pp << token(')');
       }
       return pp;
@@ -1833,11 +1851,6 @@ namespace ipr {
                << xpr_identifier("bitfield")
                << token('(') << xpr_expr(b.precision()) << token(')')
                << xpr_type(b.type());
-         }
-
-         void visit(const Base_type& b) final
-         {
-            pp << b.specifiers() << xpr_type(b.type());
          }
 
          void visit(const Fundecl& f) final
