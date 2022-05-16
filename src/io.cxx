@@ -29,7 +29,7 @@ namespace ipr {
       auto worker = [&pp, first = true](auto& x) mutable {
          if (not first)
             pp << ", ";
-         pp << F(x);
+         pp << F{x};
          first = false;
       };
       std::for_each(s.begin(), s.end(), worker);
