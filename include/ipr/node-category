@@ -169,7 +169,6 @@ Switch,                             // ipr::Switch
 While,                              // ipr::While
 
 Alias,                              // ipr::Alias
-Base_type,                          // ipr::Base_type
 Enumerator,                         // ipr::Enumerator
 Field,                              // ipr::Field
 Bitfield,                           // ipr::Bitfield

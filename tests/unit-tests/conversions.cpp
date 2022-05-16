@@ -64,7 +64,7 @@ TEST_CASE("Class Conversions") {
   INFO("struct Derived : Base {};");
   auto& base = *lexicon.make_class(*unit.global_region());
   auto& derived = *lexicon.make_class(*unit.global_region());
-  derived.declare_base(base);
+  derived.add_subobject(lexicon.get_exclusive_base(base));
 
   INFO("Base* b;");
   INFO("Derived* d;");
