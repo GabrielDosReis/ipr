@@ -940,6 +940,12 @@ ipr::Visitor::visit(const Alias& d)
 }
 
 void
+ipr::Visitor::visit(const Base_type& d)
+{
+   visit(as<Decl>(d));
+}
+
+void
 ipr::Visitor::visit(const Bitfield& d)
 {
    visit(as<Decl>(d));

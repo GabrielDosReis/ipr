@@ -414,6 +414,19 @@ namespace ipr::impl {
       Bitfield::Bitfield() : length{}, init{}
       { }
 
+      // ---------------------
+      // -- impl::Base_type --
+      // ---------------------
+
+      Base_type::Base_type(const ipr::Type& t, const ipr::Region& r, Decl_position p)
+            : base(t), where(r), scope_pos(p), spec{ }
+      { }
+
+      Optional<ipr::Expr>
+      Base_type::initializer() const {
+         throw std::domain_error("impl::Base_type::initializer");
+      }
+
       // ----------------------
       // -- impl::Enumerator --
       // ----------------------
@@ -716,7 +729,8 @@ namespace ipr::impl {
 
       // -- impl::Class --
       Class::Class(const ipr::Region& pr)
-            : impl::Udt<ipr::Class>(&pr)
+            : impl::Udt<ipr::Class>(&pr),
+              base_subobjects(pr)
       { }
 
       const ipr::Type& Class::type() const 
@@ -724,10 +738,15 @@ namespace ipr::impl {
          return impl::builtin(Fundamental::Class); 
       }
 
-      impl::Class& Class::add_subobject(const ipr::Base_subobject& t)
-      {
-         subobjects.push_back(&t);
-         return *this;
+      const ipr::Sequence<ipr::Base_type>&
+      Class::bases() const {
+         return base_subobjects.scope.decls.seq;
+      }
+
+      impl::Base_type*
+      Class::declare_base(const ipr::Type& t) {
+         Decl_position pos { bases().size() };
+         return base_subobjects.scope.push_back(t, base_subobjects, pos);
       }
 
       // -- impl::Closure --
@@ -1072,20 +1091,6 @@ namespace ipr::impl {
       const ipr::Auto& type_factory::get_auto()
       {
          return *autos.make();
-      }
-
-      constexpr auto subobject_compare = [](const ipr::Base_subobject& x, const ipr::Type& y) {
-         return compare(&x.type(), &y);
-      };
-
-      const ipr::Base_subobject& type_factory::get_exclusive_base(const ipr::Type& t)
-      {
-         return *exclusives.insert(t, subobject_compare);
-      }
-
-      const ipr::Base_subobject& type_factory::get_shared_base(const ipr::Type& t)
-      {
-         return *shareds.insert(t, subobject_compare);
       }
 
       impl::Enum* type_factory::make_enum(const ipr::Region& pr, Enum::Kind k)
