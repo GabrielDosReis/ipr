@@ -213,6 +213,7 @@ namespace ipr {
    // -- result of declaration constructor constants --
    // -------------------------------------------------
    struct Alias;                 // alias-declaration
+   struct Base_type;             // base-class in class inheritance
    struct Enumerator;            // enumerator in enumeration-declaration
    struct Field;                 // field in union or class declaration
    struct Bitfield;              // bitfield

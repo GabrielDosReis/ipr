@@ -692,23 +692,10 @@ namespace ipr {
       const Sequence<Decl>& members() const final { return scope().elements(); }
    };
 
-   // Specifier of semantics for base-class subobjects.
-   enum class Subobject_specifier : std::uint8_t {
-      Exclusive,                    // Each subobject is unshared, default in ISO C++
-      Shared,                       // "virtual" subobject shared along inheritance chain
-   };
-
-                                // -- Base_subobject --
-   // Each base-specifier in a base-clause morally declares an unnamed subobject.
-   struct Base_subobject {
-      virtual const Type& type() const = 0;
-      virtual Subobject_specifier specifier() const = 0;
-   };
-
                                 // -- Class --
    struct Class : Category<Category_code::Class, Udt<Decl>> {
       const Sequence<Decl>& members() const final { return scope().elements(); }
-      virtual const Sequence<Base_subobject>& bases() const = 0;
+      virtual const Sequence<Base_type>& bases() const = 0;
    };
 
                                 // -- Union --
@@ -1757,6 +1744,21 @@ namespace ipr {
       const Region& lexical_region() const final { return home_region(); }
    };
 
+                                // -- Base_type --
+   // Each base-specifier in a base-clause morally declares an unnamed
+   // subobject.  We represent that subobject declaration by a Base_type.
+   // For consistency with other non-static members, the name of that
+   // subobject is pretended to be the same as that of the base-class
+   // so that when it appears in a member-initializer list, it can
+   // conveniently be thought of as initialization of that subobject.
+   struct Base_type : Category<Category_code::Base_type, Decl> {
+      // A base-object is, by definition, unnamed.  However, it
+      // is convenient to refer to it by the name of the corresponding
+      // type -- in C++ tradition.
+      const Name& name() const final { return type().name(); }
+      virtual Decl_position position() const = 0;
+   };
+
                                 // -- Parameter --
    // A parameter is uniquely characterized by its position in
    // a parameter list.
@@ -2053,6 +2055,7 @@ namespace ipr {
 
       virtual void visit(const Decl&) = 0;
       virtual void visit(const Alias&);
+      virtual void visit(const Base_type&);
       virtual void visit(const Bitfield&);
       virtual void visit(const Enumerator&);
       virtual void visit(const Field&);
