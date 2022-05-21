@@ -634,6 +634,7 @@ namespace ipr::impl {
       using location_span = ipr::Region::Location_span;
       const ipr::Region& parent;
       location_span extent;
+      Optional<ipr::Expr> owned_by { };
       homogeneous_scope<Member, Seq> scope;
 
       explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
@@ -645,6 +646,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
+      const ipr::Expr& owner() const final { return owned_by.get(); }
       bool global() const final { return false; }
    };
 }
@@ -691,7 +693,7 @@ namespace ipr::impl {
 }
 
 namespace ipr::impl {
-      struct Parameter_list;
+   struct Parameter_list;
 
                               // -- impl::Parameter --
    struct Parameter final : unique_decl<ipr::Parameter> {
@@ -719,8 +721,10 @@ namespace ipr::impl {
       Mapping_level level() const final { return nesting; }
       const ipr::Sequence<ipr::Parameter>& elements() const final;
       impl::Parameter* add_member(const ipr::Name&, const ipr::Type&);
-   private:
+
+      // or friend Mapping and Lambda (and possibly, Callable_species, though it is not an expr)
       homogeneous_region<impl::Parameter> parms;
+   private:
       const Mapping_level nesting;
    };
 }
@@ -1726,6 +1730,7 @@ namespace ipr::impl {
       using location_span = ipr::Region::Location_span;
       Optional<ipr::Region> parent;
       location_span extent;
+      util::ref<const ipr::Expr> owned_by { };
       impl::Scope scope;
       impl::ref_sequence<ipr::Expr> expr_seq;         // all the expressions making up the body.
 
@@ -1733,6 +1738,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
+      const ipr::Expr& owner() const final { return owned_by.get(); }
       bool global() const final { return not parent.is_valid(); }
 
       impl::Region* make_subregion();
@@ -1794,7 +1800,10 @@ namespace ipr::impl {
    struct Udt : impl::Type<Interface> {
       Region body;
       Optional<ipr::Name> id;
-      explicit Udt(const ipr::Region* pr) : body(pr) { }
+      explicit Udt(const ipr::Region* pr) : body(pr)
+      { 
+         body.owned_by = this;
+      }
       const ipr::Name& name() const final { return id.get(); }
       const ipr::Region& region() const final { return body; }
 

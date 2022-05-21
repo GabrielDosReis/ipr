@@ -525,7 +525,9 @@ namespace ipr::impl {
 
       Block::Block(const ipr::Region& pr)
             : lexical_region(&pr)
-      { }
+      {
+         lexical_region.owned_by = this;
+      }
 
       impl::Handler* Block::new_handler(const ipr::Name& n, const ipr::Type& t)
       {
@@ -687,7 +689,9 @@ namespace ipr::impl {
 
       Enum::Enum(const ipr::Region& r, Kind k)
             : body(r), enum_kind(k)
-      { }
+      {
+         body.owned_by = this;
+      }
 
       const ipr::Type& Enum::type() const { return impl::builtin(Fundamental::Enum); }
 
@@ -731,7 +735,9 @@ namespace ipr::impl {
       Class::Class(const ipr::Region& pr)
             : impl::Udt<ipr::Class>(&pr),
               base_subobjects(pr)
-      { }
+      {
+         base_subobjects.owned_by = this;
+      }
 
       const ipr::Type& Class::type() const 
       { 
@@ -1187,11 +1193,15 @@ namespace ipr::impl {
 
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
             : inputs{pr, d}, value_type{}, body{}
-      { }
+      {
+         inputs.parms.owned_by = this;
+      }
 
       // -- impl::Lambda
       Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}, lam_spec{}
-      { }
+      {
+         parms.parms.owned_by = this;
+      }
 
       // -------------------------------
       // -- impl::Scope --
