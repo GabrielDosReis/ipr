@@ -34,7 +34,7 @@ TEST_CASE("Region-owner user") {
 
   auto& clazz = *lexicon.make_class(*unit.global_region());
   auto& r2 = nearest_namespace_or_block_region(clazz.region());
-  CHECK(&r1 == unit.global_region());
+  CHECK(&r2 == unit.global_region());
 }
 
 TEST_CASE("Callable species")
