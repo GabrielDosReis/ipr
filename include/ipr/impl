@@ -243,6 +243,24 @@ namespace ipr::impl {
       const T& get(Index p) const final { return *pointer(this->at(p)); }
    };
 
+                          // -- impl::Wharehouse --
+   // The class Wharehouse<T> is intended to be used by clients of the
+   // impl::Lexicon to temporarily accumulate a sequence of references to
+   // data of type T to assist in construction of ipr nodes such as product or sum.
+   template<typename T>
+   struct Wharehouse : private ref_sequence<T> {
+      using Rep = ref_sequence<T>;
+      explicit Wharehouse(std::size_t n = 0) : Rep(n) { }
+
+      Rep& rep() { return *this; }
+      const Rep& rep() const { return *this; }
+      using Rep::Seq::begin;
+      using Rep::Seq::end;
+      using Rep::size;
+      using Rep::resize;
+      void push_back(const T& item) { Rep::push_back(&item); }
+   };
+
    // -- stable_farm --
    // Backing store for stable reference-producing factories.
    template<typename T>
@@ -257,9 +275,9 @@ namespace ipr::impl {
    };
 
                              // -- impl::obj_sequence --
-   // The class obj_sequence<T> implements the interface Sequence<T> by storing the 
-   // actual values as random access sequence of objects, instead of references to 
-   // values (as is the case of ref_sequence<T>).  This Sequence implementation 
+   // The class obj_sequence<T> implements the interface Sequence<T> by storing the
+   // actual values as random access sequence of objects, instead of references to
+   // values (as is the case of ref_sequence<T>).  This Sequence implementation
    // is useful for potentially large sequence of items (e.g. enumerator lists)
    // and for which iteration is frequent.
    template<typename T>
@@ -290,7 +308,7 @@ namespace ipr::impl {
    };
 
                              // -- impl::obj_list --
-   // The class obj_list<T> implements Sequence<T> by storing the actual 
+   // The class obj_list<T> implements Sequence<T> by storing the actual
    // values in a singly-linked list, instead of references to values (as is
    // the case of ref_sequence<T>).  This Sequence implementation can be used
    // for typically small sequence of items (e.g. parameter lists, or direct
@@ -374,7 +392,7 @@ namespace ipr::impl {
       T item;
    };
 
-   // A sequence implementation for the case of a collection consisting of exactly one element.  
+   // A sequence implementation for the case of a collection consisting of exactly one element.
    template<typename T>
    struct singleton_obj : ipr::Sequence<projection<T>> {
       using Index = typename Sequence<projection<T>>::Index;
@@ -404,7 +422,7 @@ namespace ipr::impl {
    // The type of types, including itselt.
    // Yes, we have a ``Type: Type'' problem.
    const ipr::Type& typename_type();
-   
+
    // -- impl::Classic
    template<class Operation>
    struct Classic : Operation {
@@ -519,9 +537,9 @@ namespace ipr::impl{
    struct decl_sequence : ref_sequence<ipr::Decl> { };
 
                               // -- impl::singleton_ref --
-   // A singleton_ref is a specialization of ref_sequence that contains 
-   // exactly a single reference.  It is mostly used to support the 
-   // general interface of singly-item as inherited in parameter-list or 
+   // A singleton_ref is a specialization of ref_sequence that contains
+   // exactly a single reference.  It is mostly used to support the
+   // general interface of singly-item as inherited in parameter-list or
    // enumerator definitions or EH regions.
    template<typename T>
    struct singleton_ref : ipr::Sequence<T> {
@@ -558,7 +576,7 @@ namespace ipr::impl{
          return { };
       }
       // Where needed, implicitly unwrap the singleton to reveal its content.
-      operator const T&() const { return decl; } 
+      operator const T&() const { return decl; }
    };
 }
 
@@ -592,8 +610,8 @@ namespace ipr::impl {
 namespace ipr::impl {
    // -- homogeneous_scope
    // A sequence of homogenous node can be represented directly as a container
-   // of the concrete implementations classes instead of pointers to the 
-   // interface nodes.  This is the case, in particular, for enumerators of 
+   // of the concrete implementations classes instead of pointers to the
+   // interface nodes.  This is the case, in particular, for enumerators of
    // an enumeration or parameters in a parameter list.
    template<typename Member, template<typename> class Seq = obj_list>
    struct homogeneous_scope : impl::Node<ipr::Scope>,
@@ -1584,7 +1602,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Decl>& specializations() const final;
       const ipr::Mapping& mapping() const final { return init.get(); }
       // FIXME: The initializer should actually be the mapping, since a Template is a
-      //        *named* mapping.  In Classic IPR, and in the current incarnation, the initializer 
+      //        *named* mapping.  In Classic IPR, and in the current incarnation, the initializer
       //        is the initializer of the current instantiation.
       Optional<ipr::Expr> initializer() const final { return { mapping().result() }; }
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
@@ -1875,7 +1893,7 @@ namespace ipr::impl {
       explicit Union(const ipr::Region&);
       const ipr::Type& type() const final;
    };
-   
+
    struct Namespace : Udt<ipr::Namespace> {
       explicit Namespace(const ipr::Region*);
       const ipr::Type& type() const final;
@@ -1923,10 +1941,12 @@ namespace ipr::impl {
                                         const ipr::Expr&, const ipr::Linkage&);
       const ipr::Pointer& get_pointer(const ipr::Type&);
       const ipr::Product& get_product(const ipr::Sequence<ipr::Type>&);
+      const ipr::Product& get_product(const Wharehouse<ipr::Type>&);
       const ipr::Ptr_to_member& get_ptr_to_member(const ipr::Type&, const ipr::Type&);
       const ipr::Reference& get_reference(const ipr::Type&);
       const ipr::Rvalue_reference& get_rvalue_reference(const ipr::Type&);
       const ipr::Sum& get_sum(const ipr::Sequence<ipr::Type>&);
+      const ipr::Sum& get_sum(const Wharehouse<ipr::Type>&);
       const ipr::Forall& get_forall(const ipr::Product&, const ipr::Type&);
       const ipr::Auto& get_auto();
 
@@ -1951,6 +1971,7 @@ namespace ipr::impl {
       util::rb_tree::container<impl::Rvalue_reference> refrefs;
       util::rb_tree::container<impl::Sum> sums;
       util::rb_tree::container<impl::Forall> foralls;
+      util::rb_tree::container<ref_sequence<ipr::Type>> type_seqs;
       stable_farm<impl::Decltype> decltypes;
       stable_farm<impl::Enum> enums;
       stable_farm<impl::Class> classes;
@@ -1989,7 +2010,7 @@ namespace ipr::impl {
       impl::ref_sequence<ipr::Identifier> ids;           // names in this structured binding
       util::ref<const ipr::Expr> init;                   // initializer of this structured binding
       impl::ref_sequence<ipr::Decl> decl_seq;            // declarations resulting from this structured binding
-      ipr::DeclSpecifiers specs { };                     // the non-type part of decl-specifier-seq in 
+      ipr::DeclSpecifiers specs { };                     // the non-type part of decl-specifier-seq in
                                                          // this structured binding.  Note: `type()` contains the
                                                          // the type part of the decl-specifier-seq
       ipr::Binding_mode binding_mode { };                // the binding mode of this structured binding

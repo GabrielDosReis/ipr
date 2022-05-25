@@ -5,6 +5,7 @@ add_executable(${TEST_BINARY}
    conversions.cxx
    simple.cxx
    words.cxx
+   wharehouse.cxx
 )
 
 target_link_libraries(${TEST_BINARY}
