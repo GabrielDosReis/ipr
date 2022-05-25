@@ -10,7 +10,7 @@ const ipr::Region& nearest_namespace_or_block_region(const ipr::Region& current_
     auto* region = &current_region;
     for (;;)
     {
-        auto& owner = region->owner();
+        auto& owner = region->owner().get();
 
         if (auto* block = ipr::util::view<Block>(owner))
             return block->region();
