@@ -161,7 +161,7 @@ namespace ipr::impl {
       // alias for that type, i.e. `std::nullptr_t` is a Decl, not a type.
       struct Nullptr : impl::Node<ipr::Symbol> {
          constexpr Nullptr() : typing{*this} { }
-         const ipr::Name& operand() const final { return known_word("nullptr)"); }
+         const ipr::Name& operand() const final { return known_word("nullptr"); }
          const ipr::Decltype& type() const final { return typing; }
       private:
          impl::Decltype typing;
