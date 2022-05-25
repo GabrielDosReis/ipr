@@ -254,10 +254,9 @@ namespace ipr::impl {
 
       Rep& rep() { return *this; }
       const Rep& rep() const { return *this; }
-      using Rep::Seq::begin;
-      using Rep::Seq::end;
+      using Seq::begin;
+      using Seq::end;
       using Rep::size;
-      using Rep::resize;
       void push_back(const T& item) { Rep::push_back(&item); }
    };
 
