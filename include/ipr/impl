@@ -722,7 +722,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Parameter>& elements() const final;
       impl::Parameter* add_member(const ipr::Name&, const ipr::Type&);
 
-      // or friend Mapping and Lambda (and possibly, Callable_species, though it is not an expr)
+      // Need access by Mapping, Lambda and whomever creates Callable_species
       homogeneous_region<impl::Parameter> parms;
    private:
       const Mapping_level nesting;
@@ -789,7 +789,7 @@ namespace ipr::cxx_form::impl {
       Simple_indirector* make_simple_indirector();
       Member_indirector* make_member_indirector();
       Id_species* make_id_species();
-      Callable_species* make_callable_species();
+      Callable_species* make_callable_species(const ipr::Region& parent, Mapping_level level);
       Array_species* make_array_species();
       Parenthesized_species* make_parenthesized_species();
    private:

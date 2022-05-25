@@ -214,6 +214,11 @@ namespace ipr::cxx_form::impl {
       return id_species.make();
    }
 
+   Callable_species* form_factory::make_callable_species(const ipr::Region& parent, Mapping_level level)
+   {
+      return callable_species.make(parent, level);
+   }
+
    Array_species* form_factory::make_array_species()
    {
       return array_species.make();
