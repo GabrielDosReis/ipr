@@ -2,8 +2,7 @@
 
 #include <ipr/impl>
 
-void test_wharehouse()
-{
+TEST_CASE("warehouse") {
     ipr::impl::Lexicon lexicon{};
 
     union FragileWarehouse
@@ -31,12 +30,17 @@ void test_wharehouse()
         product = &lexicon.get_product(warehouse.types);
         sum = &lexicon.get_sum(warehouse.types);
 
-        (void)product->size();
-        (void)sum->size();
-        puts("first size ok");
+        CHECK(warehouse.types.size() == 2);
+        CHECK(product->size() == 2);
+        CHECK(sum->size() == 2);
+
+        // verify that begin / end works
+        size_t count = 0;
+        for (auto& type: warehouse.types)
+            ++count;
+        CHECK(count == 2);
     }
 
-    (void)product->size(); // BOOM if not copied into lexicon type_seq
-    (void)sum->size();  // BOOM if not copied into lexicon type_seq
-    puts("second size ok");
+    CHECK(product->size() == 2);  // BOOM if not copied into lexicon type_seq
+    CHECK(sum->size() == 2); // BOOM if not copied into lexicon type_seq
 }
