@@ -305,6 +305,7 @@ namespace ipr {
       using Location_span = std::pair<Unit_location, Unit_location>;
       virtual const Location_span& span() const = 0;
       virtual const Region& enclosing() const = 0;
+      virtual Optional<Expr> owner() const = 0;
       virtual const Sequence<Expr>& body() const = 0;
       virtual const Scope& bindings() const = 0;
       virtual bool global() const = 0;                   // is this region the global region?

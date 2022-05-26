@@ -5,6 +5,7 @@ add_executable(${TEST_BINARY}
    conversions.cxx
    simple.cxx
    words.cxx
+   region-owner.cxx
    warehouse.cxx
 )
 
