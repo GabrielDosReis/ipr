@@ -25,11 +25,11 @@ void test_wharehouse()
     const ipr::Sum* sum{ };
 
     {
-        FragileWarehouse x;
-        x.types.push_back(lexicon.int_type());
-        x.types.push_back(lexicon.char_type());
-        product = &lexicon.get_product(x.types);
-        sum = &lexicon.get_sum(x.types);
+        FragileWarehouse warehouse;
+        warehouse.types.push_back(lexicon.int_type());
+        warehouse.types.push_back(lexicon.char_type());
+        product = &lexicon.get_product(warehouse.types);
+        sum = &lexicon.get_sum(warehouse.types);
 
         (void)product->size();
         (void)sum->size();
