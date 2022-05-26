@@ -243,19 +243,19 @@ namespace ipr::impl {
       const T& get(Index p) const final { return *pointer(this->at(p)); }
    };
 
-                          // -- impl::Wharehouse --
-   // The class Wharehouse<T> is intended to be used by clients of the
+                          // -- impl::Warehouse --
+   // The class Warehouse<T> is intended to be used by clients of the
    // impl::Lexicon to temporarily accumulate a sequence of references to
    // data of type T to assist in construction of ipr nodes such as product or sum.
    template<typename T>
-   struct Wharehouse : private ref_sequence<T> {
+   struct Warehouse : private ref_sequence<T> {
       using Rep = ref_sequence<T>;
-      explicit Wharehouse(std::size_t n = 0) : Rep(n) { }
+      explicit Warehouse(std::size_t n = 0) : Rep(n) { }
 
       Rep& rep() { return *this; }
       const Rep& rep() const { return *this; }
-      using Seq::begin;
-      using Seq::end;
+      using Rep::Seq::begin;
+      using Rep::Seq::end;
       using Rep::size;
       void push_back(const T& item) { Rep::push_back(&item); }
    };
@@ -1940,12 +1940,12 @@ namespace ipr::impl {
                                         const ipr::Expr&, const ipr::Linkage&);
       const ipr::Pointer& get_pointer(const ipr::Type&);
       const ipr::Product& get_product(const ipr::Sequence<ipr::Type>&);
-      const ipr::Product& get_product(const Wharehouse<ipr::Type>&);
+      const ipr::Product& get_product(const Warehouse<ipr::Type>&);
       const ipr::Ptr_to_member& get_ptr_to_member(const ipr::Type&, const ipr::Type&);
       const ipr::Reference& get_reference(const ipr::Type&);
       const ipr::Rvalue_reference& get_rvalue_reference(const ipr::Type&);
       const ipr::Sum& get_sum(const ipr::Sequence<ipr::Type>&);
-      const ipr::Sum& get_sum(const Wharehouse<ipr::Type>&);
+      const ipr::Sum& get_sum(const Warehouse<ipr::Type>&);
       const ipr::Forall& get_forall(const ipr::Product&, const ipr::Type&);
       const ipr::Auto& get_auto();
 

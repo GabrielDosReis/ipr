@@ -1060,7 +1060,7 @@ namespace ipr::impl {
          return *products.insert(seq, unary_lexicographic_compare());
       }
 
-      const ipr::Product& type_factory::get_product(const Wharehouse<ipr::Type>& seq)
+      const ipr::Product& type_factory::get_product(const Warehouse<ipr::Type>& seq)
       {
          return get_product(*type_seqs.insert(seq.rep(), unary_lexicographic_compare()));
       }
@@ -1087,7 +1087,7 @@ namespace ipr::impl {
          return *sums.insert(seq, unary_lexicographic_compare());
       }
 
-      const ipr::Sum& type_factory::get_sum(const Wharehouse<ipr::Type>& seq)
+      const ipr::Sum& type_factory::get_sum(const Warehouse<ipr::Type>& seq)
       {
          return get_sum(*type_seqs.insert(seq.rep(), unary_lexicographic_compare()));
       }

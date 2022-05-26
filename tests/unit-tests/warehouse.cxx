@@ -6,16 +6,17 @@ void test_wharehouse()
 {
     ipr::impl::Lexicon lexicon{};
 
-    union X
+    union FragileWarehouse
     {
-        using Type_list = ipr::impl::Wharehouse<ipr::Type>;
+        using Type_list = ipr::impl::Warehouse<ipr::Type>;
         Type_list types;
         char mem[sizeof(types)];
-        X() : types() {}
-        ~X()
+        FragileWarehouse() : types() {}
+        ~FragileWarehouse()
         {
+            // destruct the Warehouse
             types.~Type_list();
-            // trash the memory
+            // wipe the memory
             std::fill(std::begin(mem), std::end(mem), 255);
         }
     };
@@ -24,7 +25,7 @@ void test_wharehouse()
     const ipr::Sum* sum{ };
 
     {
-        X x;
+        FragileWarehouse x;
         x.types.push_back(lexicon.int_type());
         x.types.push_back(lexicon.char_type());
         product = &lexicon.get_product(x.types);
@@ -35,7 +36,7 @@ void test_wharehouse()
         puts("first size ok");
     }
 
-    product->size(); // BOOM if not copied into lexicon type_seq
-    sum->size();  // BOOM if not copied into lexicon type_seq
+    (void)product->size(); // BOOM if not copied into lexicon type_seq
+    (void)sum->size();  // BOOM if not copied into lexicon type_seq
     puts("second size ok");
 }
