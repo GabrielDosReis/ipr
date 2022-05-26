@@ -125,7 +125,7 @@ namespace ipr::impl {
       enum class Fundamental {
 #define BUILTIN_TYPE(S,N)  S,
 #include "builtin.def"
-#undef  BUILTIN_TYPE    
+#undef  BUILTIN_TYPE
       };
 
       constexpr Builtin builtins[] {
@@ -167,7 +167,7 @@ namespace ipr::impl {
          impl::Decltype typing;
       };
 
-      constexpr Nullptr nullptr_cst { }; 
+      constexpr Nullptr nullptr_cst { };
    }
 }
 
@@ -385,13 +385,13 @@ namespace ipr::impl {
             struct Holder {
                explicit Holder(T* x) : impl{ x } { }
 
-               T* with_type(const ipr::Type& t) 
+               T* with_type(const ipr::Type& t)
                {
                   impl->typing = &t;
                   return impl;
                }
 
-               T* with_type(Optional<ipr::Type> t) 
+               T* with_type(Optional<ipr::Type> t)
                {
                   impl->typing = t;
                   return impl;
@@ -647,7 +647,7 @@ namespace ipr::impl {
          return returns.make(e);
       }
 
-      impl::Do* stmt_factory::make_do() 
+      impl::Do* stmt_factory::make_do()
       {
          return dos.make();
       }
@@ -724,16 +724,16 @@ namespace ipr::impl {
       Union::Union(const ipr::Region& r) : Udt<ipr::Union>{&r} { }
 
       const ipr::Type& Union::type() const
-      { 
-         return impl::builtin(Fundamental::Union); 
+      {
+         return impl::builtin(Fundamental::Union);
       }
 
       // -- impl::Namespace
       Namespace::Namespace(const ipr::Region* r) : Udt<ipr::Namespace>{r} { }
 
-      const ipr::Type& Namespace::type() const 
-      { 
-         return impl::builtin(Fundamental::Namespace); 
+      const ipr::Type& Namespace::type() const
+      {
+         return impl::builtin(Fundamental::Namespace);
       }
 
       // -- impl::Class --
@@ -744,9 +744,9 @@ namespace ipr::impl {
          base_subobjects.owned_by = this;
       }
 
-      const ipr::Type& Class::type() const 
-      { 
-         return impl::builtin(Fundamental::Class); 
+      const ipr::Type& Class::type() const
+      {
+         return impl::builtin(Fundamental::Class);
       }
 
       const ipr::Sequence<ipr::Base_type>&
@@ -766,8 +766,8 @@ namespace ipr::impl {
       { }
 
       const ipr::Type& Closure::type() const
-      { 
-         return impl::builtin(Fundamental::Class); 
+      {
+         return impl::builtin(Fundamental::Class);
       }
 
       // --------------------------
@@ -964,7 +964,7 @@ namespace ipr::impl {
       {
          if (physically_same(l, impl::cxx_linkage()))
             return get_as_type(e);
-         
+
          using T = impl::As_type_with_linkage;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
@@ -1035,7 +1035,7 @@ namespace ipr::impl {
       {
          if (physically_same(l, impl::cxx_linkage()))
             return get_function(s, t, e);
-            
+
          using T = impl::Function_with_linkage;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
@@ -1071,6 +1071,11 @@ namespace ipr::impl {
          return *products.insert(seq, unary_lexicographic_compare());
       }
 
+      const ipr::Product& type_factory::get_product(const Warehouse<ipr::Type>& seq)
+      {
+         return get_product(*type_seqs.insert(seq.rep(), unary_lexicographic_compare()));
+      }
+
       const ipr::Ptr_to_member&
       type_factory::get_ptr_to_member(const ipr::Type& c, const ipr::Type& t)
       {
@@ -1091,6 +1096,11 @@ namespace ipr::impl {
       const ipr::Sum& type_factory::get_sum(const ipr::Sequence<ipr::Type>& seq)
       {
          return *sums.insert(seq, unary_lexicographic_compare());
+      }
+
+      const ipr::Sum& type_factory::get_sum(const Warehouse<ipr::Type>& seq)
+      {
+         return get_sum(*type_seqs.insert(seq.rep(), unary_lexicographic_compare()));
       }
 
       const ipr::Forall& type_factory::get_forall(const ipr::Product& s, const ipr::Type& t)
@@ -1681,7 +1691,7 @@ namespace ipr::impl {
       }
 
       impl::And*
-      expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t) 
+      expr_factory::make_and(const ipr::Expr& l, const ipr::Expr& r, Optional<ipr::Type> t)
       {
          return make(ands, l, r).with_type(t);
       }
@@ -2026,7 +2036,7 @@ namespace ipr::impl {
          return lambdas.make(r, l);
       }
 
-      impl::Elementary_substitution* 
+      impl::Elementary_substitution*
       expr_factory::make_elementary_substitution(const ipr::Parameter& p, const ipr::Expr& v)
       {
          return elem_substs.make(p, v);

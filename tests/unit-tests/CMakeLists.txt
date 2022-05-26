@@ -6,6 +6,7 @@ add_executable(${TEST_BINARY}
    simple.cxx
    words.cxx
    region-owner.cxx
+   warehouse.cxx
 )
 
 target_link_libraries(${TEST_BINARY}
