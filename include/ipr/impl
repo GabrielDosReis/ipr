@@ -663,7 +663,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return scope; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
-      Optional<ipr::Expr> owner() const final { return owned_by.get(); }
+      Optional<ipr::Expr> owner() const final { return owned_by; }
       bool global() const final { return false; }
    };
 }
@@ -1755,7 +1755,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
       const ipr::Scope& bindings() const final { return scope; }
       const location_span& span() const final { return extent; }
-      Optional<ipr::Expr> owner() const final { return owned_by.get(); }
+      Optional<ipr::Expr> owner() const final { return owned_by; }
       bool global() const final { return not parent.is_valid(); }
 
       impl::Region* make_subregion();
