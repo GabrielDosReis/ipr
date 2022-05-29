@@ -293,8 +293,18 @@ namespace ipr {
 
                                 // -- Region --
    // A Region node represents a region of program text processed into a sequence
-   // of expressions or directives.  It is mostly useful for capturing the notion 
-   // declarative region, and of scope (in Standard C++ sense).
+   // of expressions or directives.  It is mostly useful for capturing the notion of
+   // declarative region, and of scope (in Standard C++ sense).  As such, a genrative
+   // entity that can contain declarations has a region: that region is said to be
+   // owned by that entity.  On the other hand, not all regions are associated with
+   // generative entities.  For example, in
+   //      int phi(int (*f)(double x));
+   // the declarative region of the parameter scope of the function `phi` is owned by 
+   // the Decl for `phi`.  However, the declarative region of the parameter scope of
+   // the function parameter (of type 'point to function') is not owned by any entity,
+   // not even the type `int (double)` since types are not generative (types are
+   // unified in the IPR semantics graph!).
+   //
    // In IPR, we're using a generalized notion of Scope (a sequence of
    // declarations).  The  notion of Region helps make precise when
    // some implicit actions like cleanup-ups happen, or nesting of scopes.

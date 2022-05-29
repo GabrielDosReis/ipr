@@ -36,7 +36,7 @@ TEST_CASE("warehouse") {
 
         // verify that begin / end works
         size_t count = 0;
-        for (auto& type: warehouse.types)
+        for ([[maybe_unused]] auto& type: warehouse.types)
             ++count;
         CHECK(count == 2);
     }
