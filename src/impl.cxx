@@ -365,12 +365,6 @@ namespace ipr::impl {
       }
 
       // -- Directives --
-      Asm::Asm(const ipr::String& s) : txt{s} { }
-
-      Static_assert::Static_assert(const ipr::Expr& e, Optional<ipr::String> s)
-         : cond{e}, txt{s}
-      { }
-
       single_using_declaration::single_using_declaration(const ipr::Scope_ref& s, Designator::Mode m)
          : what{s, m}
       { }
@@ -565,19 +559,9 @@ namespace ipr::impl {
       Continue::Continue() : stmt{} { }
 
       // -- impl::dir_factory --
-      impl::Asm* dir_factory::make_asm(const ipr::String& s, const ipr::Type& t)
-      {
-         return make(asms, s).with_type(t);
-      }
-
       impl::Specifiers_spread* dir_factory::make_specifiers_spread()
       {
          return spreads.make();
-      }
-
-      impl::Static_assert* dir_factory::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
-      {
-         return asserts.make(e, s);
       }
 
       impl::Structured_binding*
@@ -600,6 +584,11 @@ namespace ipr::impl {
       impl::Using_directive* dir_factory::make_using_directive(const ipr::Scope& s, const ipr::Type& t)
       {
          return make(dirs, s).with_type(t);
+      }
+
+      impl::Phased_evaluation* dir_factory::make_phased_evaluation(const ipr::Expr& e, Phases f)
+      {
+         return phaseds.make(e, f);
       }
 
       impl::Pragma* dir_factory::make_pragma()
@@ -1139,6 +1128,11 @@ namespace ipr::impl {
          return closures.make(r);
       }
 
+      // -- impl::Asm
+      Asm::Asm(const ipr::String& s) : impl::Unary_node<ipr::Asm>{s} { }
+
+      const ipr::Type& Asm::type() const { return impl::builtin(Fundamental::Void); }
+
       // ---------------------
       // -- impl::Expr_list --
       // ---------------------
@@ -1397,6 +1391,16 @@ namespace ipr::impl {
 
       Where::Where(const ipr::Region& parent) : region{&parent} { }
 
+      // -- impl::Static_assert
+      Static_assert::Static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+         : Binary_node<ipr::Static_assert>{e, s}
+      { }
+
+      const ipr::Type& Static_assert::type() const
+      {
+         return impl::builtin(Fundamental::Bool);
+      }
+
       // -- impl::name_factory
 
       const ipr::String& name_factory::get_string(util::word_view w)
@@ -1522,6 +1526,10 @@ namespace ipr::impl {
       impl::Array_delete*
       expr_factory::make_array_delete(const ipr::Expr& e) {
          return array_deletes.make(e);
+      }
+      impl::Asm* expr_factory::make_asm_expr(const ipr::String& s)
+      {
+         return asms.make(s);
       }
 
       impl::Complement*
@@ -2007,6 +2015,11 @@ namespace ipr::impl {
          return where_nodecls.make(main, attendant);
       }
 
+      impl::Static_assert* expr_factory::make_static_assert_expr(const ipr::Expr& e, Optional<ipr::String> s)
+      {
+         return asserts.make(e, s);
+      }
+
       impl::Instantiation*
       expr_factory::make_instantiation(const ipr::Expr& e, const ipr::Substitution& s)
       {
@@ -2101,6 +2114,16 @@ namespace ipr::impl {
       const ipr::Template_id&
       Lexicon::get_template_id(const ipr::Expr& t, const ipr::Expr_list& a) {
          return *expr_factory::make_template_id(t, a);
+      }
+
+      impl::Phased_evaluation* Lexicon::make_asm(const ipr::String& s)
+      {
+         return make_phased_evaluation(*make_asm_expr(s), Phases::Code_generation);
+      }
+
+      impl::Phased_evaluation* Lexicon::make_static_assert(const ipr::Expr& e, Optional<ipr::String> s)
+      {
+         return make_phased_evaluation(*make_static_assert_expr(e, s), Phases::Elaboration);
       }
 
       impl::Mapping*
