@@ -316,6 +316,11 @@ ipr::Visitor::visit(const Array_delete& e)
    visit(as<Classic>(e));
 }
 
+void ipr::Visitor::visit(const Asm& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Complement& e)
 {
@@ -774,6 +779,12 @@ void ipr::Visitor::visit(const Where& e)
    visit(as<Expr>(e));
 }
 
+void
+ipr::Visitor::visit(const Static_assert& e)
+{
+   visit(as<Expr>(e));
+}
+
 void ipr::Visitor::visit(const Instantiation& e)
 {
    visit(as<Expr>(e));
@@ -799,19 +810,7 @@ ipr::Visitor::visit(const Mapping& s)
 
 // -- Directives visiting hooks --
 
-void
-ipr::Visitor::visit(const Asm& d)
-{
-   visit(as<Directive>(d));
-}
-
 void ipr::Visitor::visit(const Specifiers_spread& d)
-{
-   visit(as<Directive>(d));
-}
-
-void
-ipr::Visitor::visit(const Static_assert& d)
 {
    visit(as<Directive>(d));
 }
@@ -828,6 +827,11 @@ void ipr::Visitor::visit(const Using_declaration& d)
 
 void
 ipr::Visitor::visit(const Using_directive& d)
+{
+   visit(as<Directive>(d));
+}
+
+void ipr::Visitor::visit(const Phased_evaluation& d)
 {
    visit(as<Directive>(d));
 }

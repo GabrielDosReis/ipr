@@ -1428,6 +1428,11 @@ namespace ipr::impl {
    using Demotion = Unary_expr<ipr::Demotion>;
    using Deref = Classic_unary_expr<ipr::Deref>;
 
+   struct Asm : impl::Unary_node<ipr::Asm> {
+      explicit Asm(const ipr::String&);
+      const ipr::Type& type() const final;
+   };
+
    struct Expr_list : impl::Node<ipr::Expr_list> {
       typed_sequence<ref_sequence<ipr::Expr>> seq;
 
@@ -1990,28 +1995,12 @@ namespace ipr::impl {
    };
 
    // -- Implementation of directives --
-   struct Asm : impl::Directive<ipr::Asm, Phases::Code_generation> {
-      explicit Asm(const ipr::String&);
-      const ipr::String& text() const final { return txt; }
-   private:
-      const ipr::String& txt;
-   };
-
    struct Specifiers_spread : impl::Directive<ipr::Specifiers_spread, Phases::Elaboration> {
       impl::ref_sequence<cxx_form::Proclamator> proc_seq;
       ipr::DeclSpecifiers specs { };
 
       const ipr::Sequence<cxx_form::Proclamator>& targets() const final { return proc_seq; }
       ipr::DeclSpecifiers specifiers() const final { return specs; }
-   };
-
-   struct Static_assert : impl::Directive<ipr::Static_assert, Phases::Elaboration> {
-      Static_assert(const ipr::Expr&, Optional<ipr::String>);
-      const ipr::Expr& condition() const final { return cond; }
-      Optional<ipr::String> message() const final { return txt; }
-   private:
-      const ipr::Expr& cond;
-      Optional<ipr::String> txt;
    };
 
    struct Structured_binding : impl::Directive<ipr::Structured_binding, Phases::Elaboration> {
@@ -2049,6 +2038,16 @@ namespace ipr::impl {
       const ipr::Scope& nominated_scope() const final { return scope; }
    private:
       const ipr::Scope& scope;
+   };
+
+   // -- impl::Phased_evaluation
+   struct Phased_evaluation : impl::Node<ipr::Phased_evaluation> {
+      Phased_evaluation(const ipr::Expr& x, Phases f) : expr{x}, ph{f} { }
+      Phases phases() const final { return ph; }
+      const ipr::Expr& expression() const final { return expr; }
+   private:
+      const ipr::Expr& expr;
+      Phases ph;
    };
 
    struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
@@ -2209,6 +2208,12 @@ namespace ipr::impl {
       const ipr::Scope& second() const final { return region.bindings(); }
    };
 
+   // -- impl::Static_assert
+   struct Static_assert : impl::Binary_node<ipr::Static_assert> {
+      Static_assert(const ipr::Expr&, Optional<ipr::String>);
+      const ipr::Type& type() const final;
+   };
+
    struct name_factory {
       const ipr::String& get_string(util::word_view);
       const ipr::Identifier& get_identifier(const ipr::String&);
@@ -2254,7 +2259,6 @@ namespace ipr::impl {
       // Returns an IPR node for a typed literal expression.
       Literal* make_literal(const ipr::Type&, const ipr::String&);
       Literal* make_literal(const ipr::Type&, util::word_view);
-
 
       Address* make_address(const ipr::Expr&, Optional<ipr::Type> = {});
       Array_delete* make_array_delete(const ipr::Expr&);
@@ -2349,6 +2353,12 @@ namespace ipr::impl {
 
       Elementary_substitution* make_elementary_substitution(const ipr::Parameter&, const ipr::Expr&);
       General_substitution* make_general_substitution();
+
+   protected:
+      // Note: These factory functions are not to be called directly.  See impl::Lexicon for their equivalent.
+      impl::Asm* make_asm_expr(const ipr::String&);
+      impl::Static_assert* make_static_assert_expr(const ipr::Expr&, Optional<ipr::String> = { });
+
    private:
       // Language linkage nodes.
       util::rb_tree::container<impl::Linkage> linkages;
@@ -2366,6 +2376,7 @@ namespace ipr::impl {
       stable_farm<impl::Address> addresses;
       stable_farm<impl::Annotation> annotations;
       stable_farm<impl::Array_delete> array_deletes;
+      stable_farm<impl::Asm> asms;
       stable_farm<impl::Complement> complements;
       stable_farm<impl::Delete> deletes;
       stable_farm<impl::Demotion> demotions;
@@ -2441,6 +2452,7 @@ namespace ipr::impl {
       stable_farm<impl::Binary_fold> folds;
       stable_farm<impl::Where_no_decl> where_nodecls;
       stable_farm<impl::Where> wheres;
+      stable_farm<impl::Static_assert> asserts;
       stable_farm<impl::Instantiation> insts;
 
       stable_farm<impl::New> news;
@@ -2454,23 +2466,21 @@ namespace ipr::impl {
    };
 
    struct dir_factory {
-      impl::Asm* make_asm(const ipr::String&, const ipr::Type&);
       impl::Specifiers_spread* make_specifiers_spread();
-      impl::Static_assert* make_static_assert(const ipr::Expr&, Optional<ipr::String> = { });
       impl::Structured_binding* make_structured_binding();
       impl::single_using_declaration* make_using_declaration(const ipr::Scope_ref&,
                                                                ipr::Using_declaration::Designator::Mode);
       impl::Using_declaration* make_using_declaration();
       impl::Using_directive* make_using_directive(const ipr::Scope&, const ipr::Type&);
+      impl::Phased_evaluation* make_phased_evaluation(const ipr::Expr&, Phases);
       impl::Pragma* make_pragma();
    private:
-      stable_farm<impl::Asm> asms;
       stable_farm<impl::Specifiers_spread> spreads;
-      stable_farm<impl::Static_assert> asserts;
       stable_farm<impl::Structured_binding> bindings;
       stable_farm<impl::single_using_declaration> singles;
       stable_farm<impl::Using_declaration> usings;
       stable_farm<impl::Using_directive> dirs;
+      stable_farm<impl::Phased_evaluation> phaseds;
       stable_farm<impl::Pragma> pragmas;
    };
 
@@ -2566,6 +2576,9 @@ namespace ipr::impl {
       const ipr::Symbol& nullptr_value() const final;
       const ipr::Symbol& default_value() const final;
       const ipr::Symbol& delete_value() const final;
+
+      impl::Phased_evaluation* make_asm(const ipr::String&);
+      impl::Phased_evaluation* make_static_assert(const ipr::Expr&, Optional<ipr::String>);
 
       impl::Mapping* make_mapping(const ipr::Region&, Mapping_level = { });
 

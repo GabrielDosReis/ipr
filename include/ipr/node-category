@@ -57,6 +57,7 @@ Lambda,                             // ipr::Lambda
 Symbol,                             // ipr::Symbol
 Address,                            // ipr::Address
 Array_delete,                       // ipr::Array_delete
+Asm,                                // ipr::Asm
 Complement,                         // ipr::Complement
 Delete,                             // ipr::Delete
 Demotion,                           // ipr::Demotion
@@ -137,19 +138,19 @@ Minus,                              // ipr::Minus
 Minus_assign,                       // ipr::Minus_assign
 Binary_fold,                        // ipr::Binary_fold
 Where,                              // ipr::Where
+Static_assert,                      // ipr::Static_assert
 Instantiation,                      // ipr::Instantiation
 
 New,                                // ipr::New
 Conditional,                        // ipr::Conditional
 Scope,                              // ipr::Scope
 
-Asm,                                // ipr::Asm
 Deduction_guide,                    // ipr::Deduction_guide
 Specifiers_spread,                  // ipr::Specifiers_spread
-Static_assert,                      // ipr::Static_assert
 Structured_binding,                 // ipr::Structured_binding
 Using_declaration,                  // ipr::Using_declaration
 Using_directive,                    // ipr::Using_directive
+Phased_evaluation,                  // ipr::Phased_evaluation
 Pragma,                             // ipr::Pragma
 
 Block,                              // ipr::Block

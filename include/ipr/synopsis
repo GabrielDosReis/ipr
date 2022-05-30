@@ -82,6 +82,7 @@ namespace ipr {
    struct Symbol;                // self-evaluating symbolic values: 'int' or 'nullptr'
    struct Address;               // address-of                          &a
    struct Array_delete;          // array delete-expression     delete[] p
+   struct Asm;                   // asm-declaration
    struct Complement;            // bitwise complement                  ~m
    struct Delete;                // delete-expression             delete p
    struct Demotion;              // inverse of an integral or floating-point
@@ -169,6 +170,7 @@ namespace ipr {
    struct Mapping;               // function
    struct Rewrite;               // Semantics by translation -- unwise, but the committee can't help it
    struct Where;                 // expression with local bindings or restrictions
+   struct Static_assert;         // static-assert declaration
    struct Instantiation;         // Substitution into a parameterized expression
 
    // --------------------------------------------------------
@@ -200,13 +202,12 @@ namespace ipr {
    // -----------------------------------------------
    // -- result of directive constructor constants --
    // -----------------------------------------------
-   struct Asm;                   // asm-declaration
    struct Deduction_guide;       // deduction-guide declaration
    struct Specifiers_spread;     // spread of decls-sequence-seq over a sequence of declarators
-   struct Static_assert;         // static-assert declaration
    struct Structured_binding;    // structured-binding declaration
    struct Using_declaration;     // using-declaration
    struct Using_directive;       // using-directive
+   struct Phased_evaluation;     // evaluation at designated phases of translation
    struct Pragma;                // language-level pragma directive
  
    // -------------------------------------------------

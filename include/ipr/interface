@@ -863,6 +863,15 @@ namespace ipr {
       const Expr& storage() const { return operand(); }
    };
 
+                                // -- Asm --
+   // An ISO C++ asm-declaration, an expression in IPR.
+   // When evaluated, this expression produces executable instructions or 
+   // affects linking behavior. Its type is `void`.
+   // Note: A node of this type is typically an operand of `Phased_evaluation`.
+   struct Asm : Unary<Category<Category_code::Asm>, const String&> {
+      const String& text() const { return operand(); }
+   };
+
                                 // -- Complement --
    // Complement-expression -- "~expr"
    struct Complement : Unary<Category<Category_code::Complement, Classic>> { };
@@ -1323,6 +1332,16 @@ namespace ipr {
       const Type& type() const final { return main().type(); }
    };
 
+                                // -- Static_assert --
+   // A static assertion: failure of the `condition()` halts the elaboration phase.
+   // No runtime code is ever generated.  Its type is `bool`.
+   // Note: A node of this type is typically an operand of `Phased_evaluation`.
+   struct Static_assert : Binary<Category<Category_code::Static_assert>,
+                                 const Expr&, Optional<String>> {
+      const Expr& condition() const { return first(); }
+      virtual Optional<String> message() const { return second(); }
+   };
+
                                 // -- Substitution --
    // A "Substitution" is a mapping of a parameter to an expression (its value). 
    struct Substitution {
@@ -1405,13 +1424,16 @@ namespace ipr {
       constexpr Directive(Category_code c) : Expr{ c } { }
    };
 
-                                // -- Asm --
-   // An asm-declaration, a directive in IPR.
-   // This directive affects only code generation, where it might inject
-   // executable instructions or affect the linker behavior.
-   // Its type should be set to "void".
-   struct Asm : Category<Category_code::Asm, Directive> {
-      virtual const String& text() const = 0;
+
+                                // -- Directive --
+   // Certain expressions are evaluated at designated phased of translation of a C++ program.
+   // For example, static_assert-declaration (a declaration in ISO C++, but an expression
+   // in IPR) is evaluated at compile-time.  On the other hand, an asm-declaration (again a
+   // declaration in ISO C++, but an expression in the IPR) is generally evaluated at 
+   // code-generation time.
+   struct Phased_evaluation : Category<Category_code::Phased_evaluation, Directive> {
+      const Type& type() const final { return expression().type(); }
+      virtual const Expr& expression() const = 0;
    };
 
                                 // -- Specifiers_spread --
@@ -1422,15 +1444,6 @@ namespace ipr {
    struct Specifiers_spread : Category<Category_code::Specifiers_spread, Directive> {
       virtual DeclSpecifiers specifiers() const = 0;
       virtual const Sequence<cxx_form::Proclamator>& targets() const = 0;
-   };
-
-                                // -- Static_assert --
-   // A static assertion: a directive that halts the elaboration phase.
-   // No runtime code is ever generated.
-   // Its type should be set to "bool". 
-   struct Static_assert : Category<Category_code::Static_assert, Directive> {
-      virtual const Expr& condition() const = 0;
-      virtual Optional<String> message() const = 0;
    };
 
                                 // -- Structured_binding --
@@ -1954,6 +1967,7 @@ namespace ipr {
       virtual void visit(const Symbol&);
       virtual void visit(const Address&);
       virtual void visit(const Array_delete&);
+      virtual void visit(const Asm&);
       virtual void visit(const Complement&);
       virtual void visit(const Delete&);
       virtual void visit(const Demotion&);
@@ -2033,6 +2047,7 @@ namespace ipr {
       virtual void visit(const Widen&);
       virtual void visit(const Binary_fold&);
       virtual void visit(const Where&);
+      virtual void visit(const Static_assert&);
       virtual void visit(const Instantiation&);
 
       virtual void visit(const Conditional&);
@@ -2040,12 +2055,11 @@ namespace ipr {
       virtual void visit(const Mapping&);
 
       virtual void visit(const Directive&) = 0;
-      virtual void visit(const Asm&);
       virtual void visit(const Specifiers_spread&);
-      virtual void visit(const Static_assert&);
       virtual void visit(const Structured_binding&);
       virtual void visit(const Using_declaration&);
       virtual void visit(const Using_directive&);
+      virtual void visit(const Phased_evaluation&);
       virtual void visit(const Pragma&);
 
       virtual void visit(const Stmt&) = 0;
