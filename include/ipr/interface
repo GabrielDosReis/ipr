@@ -94,6 +94,13 @@ namespace ipr {
    // Position of a declaration in its declarative region
    enum class Decl_position : std::size_t { };
 
+   // A parameterization is an abstraction over an entity, charted by a collection of parameters.
+   template<typename T>
+   struct Parameterization {
+      virtual const Parameter_list& parameters() const = 0;
+      virtual const T& result() const = 0;
+   };
+
                                 // -- Unary<> --
    // A unary-expression is a specification of an operation that takes
    // only one operand, an expression.  By extension, a unary-node is a
@@ -785,12 +792,10 @@ namespace ipr {
    };
 
                                 // -- Lambda --
-   struct Lambda : Category<Category_code::Lambda> {
+   struct Lambda : Category<Category_code::Lambda>, Parameterization<Expr> {
       virtual const Closure& type() const override = 0;           // a lambda is of a (unique) closure type
       virtual Optional<Type> target() const = 0;                  // return type, optionally specified at source level
-      virtual const Parameter_list& parameters() const = 0;
       virtual Optional<Expr> requirement() const = 0;             // declaration constraint possibly involving parameters
-      virtual const Expr& result() const = 0;                     // body of the lambda
       virtual const Sequence<Attribute>& attributes() const = 0;  // optional attribute-list applying to the lambda
       virtual Optional<Expr> eh_specification() const = 0;
       virtual Lambda_specifiers specifiers() const = 0;
@@ -1216,9 +1221,7 @@ namespace ipr {
    // This node represents a parameterized expression.
    // Its type is a Function in case of parameterized classic expression,
    // and Forall otherwise.
-   struct Mapping : Category<Category_code::Mapping> {
-      virtual const Parameter_list& parameters() const = 0;
-      virtual const Expr& result() const = 0;
+   struct Mapping : Category<Category_code::Mapping>, Parameterization<Expr> {
    };
 
                                 // -- Member_init --

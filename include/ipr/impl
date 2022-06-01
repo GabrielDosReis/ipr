@@ -744,6 +744,16 @@ namespace ipr::impl {
    private:
       const Mapping_level nesting;
    };
+
+   // -- impl::Parameterization
+   template<typename T, typename Base>
+   struct Parameterization : Base {
+      impl::Parameter_list inputs;
+      util::ref<const T> body;
+      Parameterization(const ipr::Region& r, Mapping_level l) : inputs{r, l} { }
+      const ipr::Parameter_list& parameters() const final { return inputs; }
+      const T& result() const final { return body.get(); }
+   };
 }
 
 namespace ipr::cxx_form::impl {
@@ -1398,11 +1408,9 @@ namespace ipr::impl {
       { typing = t; }
    };
 
-   struct Lambda : impl::Node<ipr::Lambda> {
+   struct Lambda : impl::Parameterization<ipr::Expr, impl::Node<ipr::Lambda>> {
       util::ref<const ipr::Closure> typing;
       Optional<ipr::Type> value_type;
-      impl::Parameter_list parms;
-      util::ref<const ipr::Expr> body;
       Optional<ipr::Expr> decl_constraint;
       impl::ref_sequence<ipr::Attribute> attrs;
       impl::ref_sequence<ipr::Capture_specification> env_spec;
@@ -1412,9 +1420,7 @@ namespace ipr::impl {
       Lambda(const ipr::Region&, Mapping_level);
       const ipr::Closure& type() const final { return typing.get(); }
       Optional<ipr::Type> target() const final { return value_type; }
-      const ipr::Parameter_list& parameters() const final { return parms; }
       Optional<ipr::Expr> requirement() const final { return decl_constraint; }
-      const ipr::Expr& result() const final { return body.get(); }
       const ipr::Sequence<ipr::Attribute>& attributes() const final { return attrs; }
       Optional<ipr::Expr> eh_specification() const final { return eh; }
       Lambda_specifiers specifiers() const final { return lam_spec; }
@@ -1515,12 +1521,8 @@ namespace ipr::impl {
    using Lshift = Classic_binary_expr<ipr::Lshift>;
    using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
 
-   struct Mapping : impl::Expr<ipr::Mapping> {
-      impl::Parameter_list inputs;
-      util::ref<const ipr::Expr> body;
+   struct Mapping : impl::Parameterization<ipr::Expr, impl::Expr<ipr::Mapping>> {
       Mapping(const ipr::Region&, Mapping_level);
-      const ipr::Parameter_list& parameters() const final { return inputs; }
-      const ipr::Expr& result() const final { return body.get(); }
       impl::Parameter* param(const ipr::Name& n, const ipr::Type& t)
       {
           return inputs.add_member(n, t);
