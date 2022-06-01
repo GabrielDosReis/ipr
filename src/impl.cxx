@@ -1198,15 +1198,16 @@ namespace ipr::impl {
 
       // -- impl::Mapping
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
-            : inputs{pr, d}, body{}
+            : impl::Parameterization<ipr::Expr, impl::Expr<ipr::Mapping>>{pr, d}
       {
          inputs.parms.owned_by = this;
       }
 
       // -- impl::Lambda
-      Lambda::Lambda(const ipr::Region& r, Mapping_level l) : parms{r, l}, lam_spec{}
+      Lambda::Lambda(const ipr::Region& r, Mapping_level l)
+         : impl::Parameterization<ipr::Expr, impl::Node<ipr::Lambda>>{r, l}, lam_spec{}
       {
-         parms.parms.owned_by = this;
+         inputs.parms.owned_by = this;
       }
 
       // -------------------------------
