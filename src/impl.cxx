@@ -1196,12 +1196,9 @@ namespace ipr::impl {
          return *this;
       }
 
-      // -------------------
-      // -- impl::Mapping --
-      // -------------------
-
+      // -- impl::Mapping
       Mapping::Mapping(const ipr::Region& pr, Mapping_level d)
-            : inputs{pr, d}, value_type{}, body{}
+            : inputs{pr, d}, body{}
       {
          inputs.parms.owned_by = this;
       }
