@@ -1218,7 +1218,6 @@ namespace ipr {
    // and Forall otherwise.
    struct Mapping : Category<Category_code::Mapping> {
       virtual const Parameter_list& parameters() const = 0;
-      virtual const Type& target() const = 0;
       virtual const Expr& result() const = 0;
    };
 

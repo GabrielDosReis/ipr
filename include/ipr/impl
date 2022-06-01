@@ -1517,12 +1517,9 @@ namespace ipr::impl {
 
    struct Mapping : impl::Expr<ipr::Mapping> {
       impl::Parameter_list inputs;
-      util::ref<const ipr::Type> value_type;
       util::ref<const ipr::Expr> body;
-
       Mapping(const ipr::Region&, Mapping_level);
       const ipr::Parameter_list& parameters() const final { return inputs; }
-      const ipr::Type& target() const final { return value_type.get(); }
       const ipr::Expr& result() const final { return body.get(); }
       impl::Parameter* param(const ipr::Name& n, const ipr::Type& t)
       {
