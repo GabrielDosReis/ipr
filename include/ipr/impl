@@ -56,10 +56,14 @@ namespace ipr::util {
 namespace ipr::impl {
                              // -- impl::Node --
    template<class T>
-   struct Node : T, util::immotile {
+   struct Node : T {
       using Interface = T;
       void accept(ipr::Visitor& v) const final { v.visit(*this); }
    };
+
+   // -- impl::immotile_node
+   template<typename T>
+   struct immotile_node : impl::Node<T>, util::immotile { };
 
                              // -- impl::Unary --
    template<class Interface>
@@ -73,7 +77,7 @@ namespace ipr::impl {
 
    // -- impl::Unary_node: Shorthand for the implementation of generic unary nodes.
    template<typename T>
-   using Unary_node = Unary<Node<T>>;
+   using Unary_node = Unary<immotile_node<T>>;
 
                              // -- impl::Binary --
    template<class Interface>
@@ -94,7 +98,7 @@ namespace ipr::impl {
 
    // -- impl::Binary_node: Short hand for implementation of generic binary nodes.
    template<typename T>
-   using Binary_node = Binary<Node<T>>;
+   using Binary_node = Binary<immotile_node<T>>;
 
                            // -- impl::Ternary --
    template<class Interface>
@@ -162,7 +166,7 @@ namespace ipr::util {
 
 namespace ipr::impl {
                              // -- impl::String --
-   struct String : impl::Node<ipr::String> {
+   struct String : immotile_node<ipr::String> {
       constexpr String(const char* s) : txt{ s } { }
       constexpr String(util::word_view w) : txt{ w } { }
       constexpr const auto& text() const { return txt; }
@@ -433,9 +437,8 @@ namespace ipr::impl {
 
    // -- impl::Expr
    template<class Interface>
-   struct Expr : impl::Node<Interface> {
+   struct Expr : immotile_node<Interface> {
       Optional<ipr::Type> typing;
-
       constexpr Expr(Optional<ipr::Type> t = { }) : typing{ t } { }
       const ipr::Type& type() const final { return typing.get(); }
    };
@@ -562,7 +565,7 @@ namespace ipr::impl{
    // such a declaration defines an overload set with a single
    // member.  This class implements such a special overload set.
    template<typename T>
-   struct singleton_overload : impl::Node<ipr::Overload> {
+   struct singleton_overload : immotile_node<ipr::Overload> {
       T decl;                          // Really the declset, but it is a singleton.
       template<typename... Args>
       explicit singleton_overload(const Args&... args) : decl{args...} { }
@@ -686,6 +689,9 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Annotation>& annotation() const final { return notes; }
       const ipr::Sequence<ipr::Attribute>& attributes() const final { return attrs; }
    };
+
+   template<typename S>
+   using immotile_stmt = Stmt<immotile_node<S>>;
 }
 
 namespace ipr::impl {
@@ -698,7 +704,7 @@ namespace ipr::impl {
    // machinery for them.  The class unique_decl<> implements the
    // specialization of Decl<> in those cases.
    template<class Interface>
-   struct unique_decl : impl::Stmt<impl::Node<Interface>> {
+   struct unique_decl : immotile_stmt<Interface> {
       unique_decl() : seq{*this} { }
       ipr::DeclSpecifiers specifiers() const override { return DeclSpecifiers::None; }
       const ipr::Decl& master() const final { return *this; }
@@ -1048,21 +1054,6 @@ namespace ipr::impl {
       return compare(&lhs, &rhs);
    }
 
-   template<class Base>
-   struct type_from_operand : Unary_node<Base> {
-      using typename Base::Arg_type;
-      explicit type_from_operand(Arg_type a) : Unary_node<Base>{a} { }
-      const ipr::Type& type() const final { return this->operand().type(); }
-   };
-
-   template<class Base>
-   struct type_from_second : Binary_node<Base> {
-      using typename Base::Arg1_type;
-      using typename Base::Arg2_type;
-      type_from_second(Arg1_type f, Arg2_type s) : Binary_node<Base>{ f, s } { }
-      const ipr::Type& type() const final { return this->second().type(); }
-   };
-
                               // -- Conversion_expr --
    template<class Interface>
    struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
@@ -1201,12 +1192,9 @@ namespace ipr::impl {
    };
 
    // Capture the commonality of controlled statements such as `do-statement',
-   // `while-statement', and `switch-statement'.  This special class is introduced
-   // instead of reusing `type_from_second' because otherwise the contruction of
-   // nodes of such classes would require constructing the control expression and
-   // the body statement first, which can be awkward.
+   // `while-statement', and `switch-statement'.
    template<typename Base>
-   struct Controlled_stmt : Stmt<Node<Base>> {
+   struct Controlled_stmt : immotile_stmt<Base> {
       using typename Base::Arg1_type;
       using typename Base::Arg2_type;
       util::ref<std::remove_reference_t<Arg1_type>> control;
@@ -1221,7 +1209,7 @@ namespace ipr::impl {
    // handled by the class template unique_decl<>.
 
    template<class D>
-   struct Decl : Stmt<Node<D>> {
+   struct Decl : immotile_stmt<D> {
       basic_decl_data<D> decl_data;
 
       Decl() : decl_data{ nullptr } { }
@@ -1360,7 +1348,7 @@ namespace ipr::impl {
    // A given core expression can be proclaimed to name a type with a specified
    // language linkage.  That is useful for interoperating with code fragments
    // written in other languages.
-   struct As_type_with_linkage : impl::Node<ipr::As_type> {
+   struct As_type_with_linkage : immotile_node<ipr::As_type> {
       struct Rep {
          const ipr::Expr& expr;
          const ipr::Linkage& link;
@@ -1378,7 +1366,7 @@ namespace ipr::impl {
 
    // A function type with a specified language linkage (other than C++) or, for
    // that matter a specified calling convention (which serves as language linkage).
-   struct Function_with_linkage : impl::Node<ipr::Function> {
+   struct Function_with_linkage : immotile_node<ipr::Function> {
       struct Rep {
          const ipr::Product& source;
          const ipr::Type& target;
@@ -1439,7 +1427,7 @@ namespace ipr::impl {
       const ipr::Type& type() const final;
    };
 
-   struct Expr_list : impl::Node<ipr::Expr_list> {
+   struct Expr_list : immotile_node<ipr::Expr_list> {
       typed_sequence<ref_sequence<ipr::Expr>> seq;
 
       Expr_list();
@@ -1553,7 +1541,7 @@ namespace ipr::impl {
    // A Where node where the attendant() is not a scope.
    using Where_no_decl = Binary_node<ipr::Where>;
 
-   struct Instantiation : impl::Node<ipr::Instantiation> {
+   struct Instantiation : immotile_node<ipr::Instantiation> {
       Optional<ipr::Expr> result;
       Instantiation(const ipr::Expr& e, const ipr::Substitution& s) : expr{e}, subst{s} { }
       const ipr::Expr& pattern() const final { return expr; }
@@ -1713,7 +1701,7 @@ namespace ipr::impl {
    // base-class subobjects and enumerators.   Those form
    // a homogeneous scope, implemented by homogeneous_scope.
 
-   struct Scope : impl::Node<ipr::Scope> {
+   struct Scope : immotile_node<ipr::Scope> {
       Scope();
       const ipr::Type& type() const final { return decls; }
       const ipr::Sequence<ipr::Decl>& elements() const final { return decls.seq; }
@@ -1747,7 +1735,7 @@ namespace ipr::impl {
    // A heterogeneous region is a region of program text that
    // contains heterogeneous scope (as defined above).
 
-   struct Region : impl::Node<ipr::Region>, cxx_form::impl::form_factory {
+   struct Region : immotile_node<ipr::Region>, cxx_form::impl::form_factory {
       using location_span = ipr::Region::Location_span;
       Optional<ipr::Region> parent;
       location_span extent;
@@ -2040,7 +2028,7 @@ namespace ipr::impl {
    };
 
    // -- impl::Phased_evaluation
-   struct Phased_evaluation : impl::Node<ipr::Phased_evaluation> {
+   struct Phased_evaluation : immotile_node<ipr::Phased_evaluation> {
       Phased_evaluation(const ipr::Expr& x, Phases f) : expr{x}, ph{f} { }
       Phases phases() const final { return ph; }
       const ipr::Expr& expression() const final { return expr; }
@@ -2060,11 +2048,11 @@ namespace ipr::impl {
 
    using Ctor_body = Binary<Stmt<Expr<ipr::Ctor_body>>>;
    using Do = Controlled_stmt<ipr::Do>;
-   using Expr_stmt = type_from_operand<Stmt<ipr::Expr_stmt>>;
-   using Goto = type_from_operand<Stmt<ipr::Goto>>;
+   using Expr_stmt = impl::Unary_node<impl::Stmt<ipr::Expr_stmt>>;
+   using Goto = impl::Unary_node<impl::Stmt<ipr::Goto>>;
    using If = Ternary<Stmt<Expr<ipr::If>>>;
-   using Labeled_stmt = type_from_second<Stmt<ipr::Labeled_stmt>>;
-   using Return = type_from_operand<Stmt<ipr::Return>>;
+   using Labeled_stmt = impl::Binary_node<impl::Stmt<ipr::Labeled_stmt>>;
+   using Return = impl::Unary<impl::Stmt<impl::Expr<ipr::Return>>>;
    using Switch = Controlled_stmt<ipr::Switch>;
    using While = Controlled_stmt<ipr::While>;
 
@@ -2112,7 +2100,7 @@ namespace ipr::impl {
     };
 
    // -- impl::Handler
-   struct Handler : impl::Stmt<impl::Node<ipr::Handler>> {
+   struct Handler : immotile_stmt<ipr::Handler> {
       Handler(const ipr::Region&, const ipr::Name&, const ipr::Type&);
       const ipr::Type& type() const final { return block.type(); }
       const ipr::EH_parameter& exception() const final { return eh.parameter(); }
@@ -2149,7 +2137,7 @@ namespace ipr::impl {
    // expresion; for flexibility, it is made in a way that
    // supports settings of its components after construction.
 
-   struct For : impl::Stmt<impl::Node<ipr::For>> {
+   struct For : immotile_stmt<ipr::For> {
       util::ref<const ipr::Expr> init;
       util::ref<const ipr::Expr> cond;
       util::ref<const ipr::Expr> inc;
@@ -2163,7 +2151,7 @@ namespace ipr::impl {
       const ipr::Stmt& body() const final { return stmt.get(); }
    };
 
-   struct For_in : impl::Stmt<impl::Node<ipr::For_in>> {
+   struct For_in : immotile_stmt<ipr::For_in> {
       util::ref<const ipr::Var> var;
       util::ref<const ipr::Expr> seq;
       util::ref<const ipr::Stmt> stmt;
@@ -2179,26 +2167,26 @@ namespace ipr::impl {
    // A Break node can record the selction- of iteration-statement it
    // transfers control out of.
 
-   struct Break : Stmt<Expr<ipr::Break>> {
+   struct Break : immotile_stmt<ipr::Break> {
       util::ref<const ipr::Stmt> stmt;
-
       Break();
+      const ipr::Type& type() const final;
       const ipr::Stmt& from() const final { return stmt.get(); }
    };
 
    // Like a Break, a Continue node can refer back to the
    // iteration-statement containing it.
-   struct Continue : Stmt<Expr<ipr::Continue>> {
+   struct Continue : immotile_stmt<ipr::Continue> {
       util::ref<const ipr::Stmt> stmt;
-
       Continue();
+      const ipr::Type& type() const final;
       const ipr::Stmt& iteration() const final { return stmt.get(); }
    };
 
    // Type of `Where`-nodes introducing declarations in their `attendant()` expressions.
    // Note: See impl::Where_no_decls for the degenerated case where the `attendant()`
    //       is just a classic expression, with no declaration introduced.
-   struct Where : impl::Node<ipr::Where> {
+   struct Where : immotile_node<ipr::Where> {
       impl::Region region;                            // hosts the declarations in the `attendant()`.
       util::ref<const ipr::Expr> result;              // the `main()` expression.
 
@@ -2486,11 +2474,10 @@ namespace ipr::impl {
    // This factory class takes on the implementation burden of
    // allocating storage for statement nodes and their constructions.
    struct stmt_factory : expr_factory, dir_factory {
-      impl::Break* make_break(const ipr::Type&);
-      impl::Continue* make_continue(const ipr::Type&);
+      impl::Break* make_break();
+      impl::Continue* make_continue();
       impl::Block* make_block(const ipr::Region&, Optional<ipr::Type> = { });
-      impl::Ctor_body* make_ctor_body(const ipr::Expr_list&,
-                                       const ipr::Block&);
+      impl::Ctor_body* make_ctor_body(const ipr::Expr_list&, const ipr::Block&);
       impl::Expr_stmt* make_expr_stmt(const ipr::Expr&);
       impl::Goto* make_goto(const ipr::Expr&);
       impl::Return* make_return(const ipr::Expr&);
