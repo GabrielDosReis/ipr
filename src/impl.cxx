@@ -546,17 +546,21 @@ namespace ipr::impl {
       For_in::For_in() : var{}, seq{}, stmt{}
       { }
 
-      // -----------------
-      // -- impl::Break --
-      // -----------------
-
+      // -- impl::Break
       Break::Break() : stmt{} { }
 
-      // --------------------
-      // -- impl::Continue --
-      // --------------------
+      const ipr::Type& Break::type() const
+      {
+         return impl::builtin(Fundamental::Void);
+      }
 
+      // -- impl::Continue
       Continue::Continue() : stmt{} { }
+
+      const ipr::Type& Continue::type() const
+      {
+         return impl::builtin(Fundamental::Void);
+      }
 
       // -- impl::dir_factory --
       impl::Specifiers_spread* dir_factory::make_specifiers_spread()
@@ -600,14 +604,14 @@ namespace ipr::impl {
       // -- impl::stmt_factory --
       // ------------------------
 
-      impl::Break* stmt_factory::make_break(const ipr::Type& t)
+      impl::Break* stmt_factory::make_break()
       {
-         return make(breaks).with_type(t);
+         return breaks.make();
       }
 
-      impl::Continue* stmt_factory::make_continue(const ipr::Type& t)
+      impl::Continue* stmt_factory::make_continue()
       {
-         return make(continues).with_type(t);
+         return continues.make();
       }
 
       impl::Block*

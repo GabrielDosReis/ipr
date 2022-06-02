@@ -1564,7 +1564,9 @@ namespace ipr {
    // This node class represents an expression statement, e.g.
    //    std::cout << "Hello World" << std::endl;
    // "expr()" is the Expression to evaluate.
+   // The type of the entire statement is the type of the expresion.
    struct Expr_stmt : Unary<Category<Category_code::Expr_stmt, Stmt>> {
+      const Type& type() const final { return expr().type(); }
       Arg_type expr() const { return operand(); }
    };
 
@@ -1582,6 +1584,7 @@ namespace ipr {
    // In scenario (c), the `label()` is should be `Lexicon::default_value()`. 
    struct Labeled_stmt : Binary<Category<Category_code::Labeled_stmt, Stmt>,
                                 const Expr&, const Expr&> {
+      const Type& type() const final { return stmt().type(); }
       const Expr& label() const { return first(); }
       const Expr& stmt() const { return second(); }
    };
@@ -1658,19 +1661,23 @@ namespace ipr {
 
                                 // -- Break --
    // A classic break-statement.
+   // It has type `void`.
    struct Break : Category<Category_code::Break, Stmt> {
       virtual const Stmt& from() const = 0;
    };
 
                                 // -- Continue --
    // A classic continue-statement.
+   // It has type `void`.
    struct Continue : Category<Category_code::Continue, Stmt> {
       virtual const Stmt& iteration() const = 0;
    };
 
                                 // -- Goto --
    // A classic goto-statement.
+   // The type of the entire statement is the `type()` of the operand.
    struct Goto : Unary<Category<Category_code::Goto, Stmt>> {
+      const Type& type() const final { return target().type(); }
       Arg_type target() const { return operand(); }
    };
 
