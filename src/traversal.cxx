@@ -51,8 +51,10 @@ ipr::Missing_overrider::operator()(const ipr::Node& n) const
 }
 
 // -- ipr::Visitor --
-void
-ipr::Visitor::visit(const Annotation&) { }
+void ipr::Visitor::visit(const Annotation& a)
+{
+   visit(as<Node>(a));
+}
 
 void
 ipr::Visitor::visit(const Region& r)
