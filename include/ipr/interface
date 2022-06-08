@@ -237,23 +237,19 @@ namespace ipr {
    // OO design sense.  Its primary purpose is to provide a hook
    // for the Visitor Design Pattern.
    struct Node {
-      // This class does not have a declared virtual destructor
-      // because we don't plan to have Nodes manage resources, and
-      // therefore no deletion through pointers to this base class.
-
-      const Category_code category; // the category the complete node object
-                                // belongs to.  In a sufficiently expressive
-                                // and efficient type system, we would not
-                                // need this member, for it could be read
-                                // directly from the type of the object.
-
-
+       // the category the complete node object belongs to. In a sufficiently
+       // expressive and efficient type system, we would not need this member,
+       // for it could be read directly from the type of the object.
+      const Category_code category;
       // Hook for visitor classes.
       virtual void accept(Visitor&) const = 0;
-
    protected:
       // It is an error to create a complete object of this type.
       constexpr Node(Category_code c) : category{ c } { }
+      // This class does not have a declared virtual destructor
+      // because we don't plan to have Nodes manage resources, and
+      // therefore no deletion through pointers to this base class.
+      ~Node() = default;
    };
 
                                 // -- String --
