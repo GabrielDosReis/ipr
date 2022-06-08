@@ -8,8 +8,6 @@
 #ifndef IPR_SYNOPSIS_INCLUDED
 #define IPR_SYNOPSIS_INCLUDED
 
-#include <ipr/ancillary>
-
 namespace ipr {
    struct Node;                  // universal base class for all IPR nodes
 
