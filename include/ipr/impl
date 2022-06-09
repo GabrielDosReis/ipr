@@ -869,71 +869,31 @@ namespace ipr::impl {
       void accept(typename T::Visitor& v) const final { v.visit(*this); }
    };
 
+   template<typename T>
+   using Unary_attribute = impl::Unary<impl::Attribute<T>>;
+   template<typename T>
+   using Binary_attribute = impl::Binary<impl::Attribute<T>>;
+
    // -- implementation of ipr::BasicAttribute
-   struct BasicAttribute : impl::Attribute<ipr::BasicAttribute> {
-      explicit BasicAttribute(const ipr::Token& t) : tok{ t } { }
-      const ipr::Token& token() const final { return tok; }
-   private:
-      const ipr::Token& tok;
-   };
+   using BasicAttribute = Unary_attribute<ipr::BasicAttribute>;
 
    // -- implementation of ipr::ScopedAttribute
-   struct ScopedAttribute : impl::Attribute<ipr::ScopedAttribute> {
-      ScopedAttribute(const ipr::Token& s, const ipr::Token& m) : first{ s }, second{ m } { }
-      const ipr::Token& scope() const final { return first; }
-      const ipr::Token& member() const final { return second; }
-   private:
-      const ipr::Token& first;
-      const ipr::Token& second;
-   };
+   using ScopedAttribute = Binary_attribute<ipr::ScopedAttribute>;
 
    // -- implementation of ipr::LabeledAttribute
-   struct LabeledAttribute : impl::Attribute<ipr::LabeledAttribute> {
-      LabeledAttribute(const ipr::Token& l, const ipr::Attribute& a) : lbl{ l }, attr{ a } { }
-      const ipr::Token& label() const final { return lbl; }
-      const ipr::Attribute& attribute() const final { return attr; }
-   private:
-      const ipr::Token& lbl;
-      const ipr::Attribute& attr;
-   };
+   using LabeledAttribute = Binary_attribute<ipr::LabeledAttribute>;
 
    // -- implementation of ipr::CalledAttribute
-   struct CalledAttribute : impl::Attribute<ipr::CalledAttribute> {
-      CalledAttribute(const ipr::Attribute& f, const ipr::Sequence<ipr::Attribute>& s) : fun{ f }, args{ s } { }
-      const ipr::Attribute& function() const final { return fun; }
-      const ipr::Sequence<ipr::Attribute>& arguments() const final { return args; }
-   private:
-      const ipr::Attribute& fun;
-      const ipr::Sequence<ipr::Attribute>& args;
-   };
+   using CalledAttribute = Binary_attribute<ipr::CalledAttribute>;
 
    // -- implementation of ipr::ExpandedAttribute
-   struct ExpandedAttribute : impl::Attribute<ipr::ExpandedAttribute> {
-      ExpandedAttribute(const ipr::Token& t, const ipr::Attribute& a) : tok{ t }, attr{ a } { }
-      const ipr::Token& expander() const final { return tok; }
-      const ipr::Attribute& operand() const final { return attr; }
-   private:
-      const ipr::Token& tok;
-      const ipr::Attribute& attr;
-   };
+   using ExpandedAttribute = Binary_attribute<ipr::ExpandedAttribute>;
 
    // -- implementation of ipr::FactoredAttribute
-   struct FactoredAttribute : impl::Attribute<ipr::FactoredAttribute> {
-      FactoredAttribute(const ipr::Token& t, const ipr::Sequence<ipr::Attribute>& s) : tok{ t }, seq{ s } { }
-      const ipr::Token& factor() const final { return tok; }
-      const ipr::Sequence<ipr::Attribute>& terms() const final { return seq; }
-   private:
-      const ipr::Token& tok;
-      const ipr::Sequence<ipr::Attribute>& seq;
-   };
+   using FactoredAttribute = Binary_attribute<ipr::FactoredAttribute>;
 
    // -- implementation of ipr::ElaboratedAttribute
-   struct ElaboratedAttribute : impl::Attribute<ipr::ElaboratedAttribute> {
-      explicit ElaboratedAttribute(const ipr::Expr& x) : expr{ x } { }
-      const ipr::Expr& elaboration() const final { return expr; }
-   private:
-      const ipr::Expr& expr;
-   };
+   using ElaboratedAttribute = Unary_attribute<ipr::ElaboratedAttribute>;
 
    // -- Attributes factory --
    struct attr_factory {

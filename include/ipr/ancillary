@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <ipr/utility>
+#include <ipr/synopsis>
 
 namespace ipr {
    // ---------------------------
@@ -99,6 +100,58 @@ namespace ipr {
       Brace,                     // "{}"
       Bracket,                   // "[]"
       Angle,                     // "<>"
+   };
+
+                                // -- Unary<> --
+   // A unary-expression is a specification of an operation that takes
+   // only one operand, an expression.  By extension, a unary-node is a
+   // node category that is essentially determined only by one node,
+   // its "operand".  Usually, such an operand node is a classic expression.
+   // Occasionally, it can be a type (e.g. sizeof (T)), we don't want to
+   // loose that information, therefore we add a template-parameter
+   // (the second) to indicate the precise type of the operand.  The first
+   // template-parameter designates the actual node subcategory this class
+   // provides an interface for.
+   template<class Cat, class Operand = const Expr&>
+   struct Unary : Cat {
+      using Arg_type = Operand;
+      virtual Operand operand() const = 0;
+   };
+
+                                // -- Binary<> --
+   // In full generality, a binary-expression is an expression that
+   // consists in (a) an operator, and (b) two operands.  In Standard
+   // C++, the two operands often are of the same type (and if they are not,
+   // they are implicitly converted).  In IPR, they need not be
+   // of the same type.  This generality allows representations of
+   // cast-expressions which are conceptually binary-expressions -- they
+   // take a type and an expression.  Also, a function call is
+   // conceptually a binary-expression that applies a function to
+   // a list of arguments.  By extension, a binary node is any node that
+   // is essentially dermined by two nodes, its "operands".
+   // As for Unary<> nodes, we indicate the operands' type information
+   // through the template-parameters First and Second.
+   template<class Cat, class First = const Expr&, class Second = const Expr&>
+   struct Binary : Cat {
+      using Arg1_type = First;
+      using Arg2_type = Second;
+      virtual First first() const = 0;
+      virtual Second second() const = 0;
+   };
+
+                                // -- Ternary<> --
+   // Similar to Unary<> and Binary<> categories.  This is for
+   // ternary-expressions, or more generally for ternary nodes.
+   // An example of a ternary node is a Conditional node.
+   template<class Cat, class First = const Expr&,
+            class Second = const Expr&, class Third = const Expr&>
+   struct Ternary : Cat {
+      using Arg1_type = First;
+      using Arg2_type = Second;
+      using Arg3_type = Third;
+      virtual First first() const = 0;
+      virtual Second second() const = 0;
+      virtual Third third() const = 0;
    };
 
                                 // -- Sequence<> --
