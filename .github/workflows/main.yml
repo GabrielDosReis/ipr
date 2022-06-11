@@ -23,8 +23,6 @@ jobs:
         exclude:
           - os: ubuntu-latest
             compiler: MSVC
-          - os: ubuntu-latest
-            compiler: MSVC
           - os: windows-latest
             compiler: g++-10
           - os: windows-latest
@@ -45,7 +43,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         with:
           buildDirectory: build
-          buildWithCMakeArgs: --parallel -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          cmakeBuildType: ${{ matrix.config }}
+          buildWithCMakeArgs: --parallel
           cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
       - name: Configure and build
