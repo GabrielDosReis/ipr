@@ -53,7 +53,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         with:
           buildDirectory: build
-          buildWithCMakeArgs: --parallel -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          buildWithCMakeArgs: --parallel --config ${{ matrix.config }}
           cmakeGenerator: Ninja
 
       - name: Run Tests
