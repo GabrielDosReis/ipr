@@ -1,6 +1,7 @@
 cmake_minimum_required(
-   VERSION 3.15
+   VERSION 3.16
 )
+include(CheckIPOSupported)
 
 option(BUILD_DOC
    "Build LaTeX documentation"
@@ -11,6 +12,14 @@ project(ipr
    VERSION 0.50
    LANGUAGES CXX
 )
+
+# Enable link-time optimization or close approximation
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_disbaled_msg)
+if (ipo_supported)
+   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+   message(WARNING "LTO disabled: ${ipo_disabled_msg}")
+endif()
 
 add_library(${PROJECT_NAME}
    src/interface.cxx
