@@ -12,11 +12,12 @@ on:
 
 jobs:
   build-and-test:
-    name: ${{ matrix.os }} -x- ${{ matrix.compiler }}
+    name: ${{ matrix.os }} -x- ${{ matrix.compiler }} -x- ${{ matrix.config }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        config: [Debug Release]
         os: [ubuntu-latest, windows-latest]
         compiler: [g++-10, clang++-12, MSVC]
         exclude:
@@ -36,7 +37,7 @@ jobs:
       - name: Install C++ compilers, and CMake
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update
+          sudo apt update && sudo apt upgrade
           sudo apt-get install build-essential cmake
 
       - name: Configure and build
@@ -44,7 +45,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         with:
           buildDirectory: build
-          buildWithCMakeArgs: --parallel
+          buildWithCMakeArgs: --parallel -DCMAKE_BUILD_TYPE=${{ matrix.config }}
           cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
       - name: Configure and build
@@ -52,7 +53,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         with:
           buildDirectory: build
-          buildWithCMakeArgs: --parallel
+          buildWithCMakeArgs: --parallel -DCMAKE_BUILD_TYPE=${{ matrix.config }}
           cmakeGenerator: Ninja
 
       - name: Run Tests
