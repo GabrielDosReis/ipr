@@ -5,12 +5,12 @@ on:
     paths:
       - 'doc/**'
       - '.github/workflows/docs.yaml'
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
     paths:
       - 'doc/**'
       - '.github/workflows/docs.yaml'
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:

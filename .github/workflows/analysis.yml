@@ -4,11 +4,11 @@ on:
   push:
     paths-ignore:
       - 'doc/**'
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
     paths-ignore:
       - 'doc/**'
-    branches: [ master ]
+    branches: [ main ]
 
 env:
   build: '${{ github.workspace }}/build'
