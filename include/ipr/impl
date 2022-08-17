@@ -158,21 +158,14 @@ namespace ipr::impl {
 namespace ipr::util {
    // Type for representing the hash of data (mostly character strings) used internally.
    enum class hash_code : std::size_t { };
-
-   // Type of view over words as stored internally.
-   // FIXME: The word view should base on UTF-8 encoding.
-   using word_view = std::string_view;
 }
 
 namespace ipr::impl {
                              // -- impl::String --
    struct String : immotile_node<ipr::String> {
-      constexpr String(const char* s) : txt{ s } { }
+      constexpr String(const char8_t* s) : txt{ s } { }
       constexpr String(util::word_view w) : txt{ w } { }
-      constexpr const auto& text() const { return txt; }
-      constexpr Index size() const final { return text().length(); }
-      constexpr const char* begin() const final { return text().data(); }
-      constexpr const char* end() const final { return begin() + text().length(); }
+      constexpr util::word_view characters() const final { return txt; }
    private:
       const util::word_view txt;
    };
@@ -2543,7 +2536,7 @@ namespace ipr::impl {
             : context{ l },
                global_ns{nullptr}
       {
-         global_ns.id = &context.get_identifier("");
+         global_ns.id = &context.get_identifier(u8"");
       }
 
       void accept(Translation_unit::Visitor& v) const override {

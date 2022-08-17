@@ -98,9 +98,9 @@ int main()
    impl::Unit unit;             // Current translation unit
 
    // Inspect the representations of some literals.
-   inspect(*unit.make_literal(unit.get_char(), "'c'"));
-   inspect(*unit.make_literal(unit.get_int(), "1024"));
-   inspect(*unit.make_literal(unit.get_double(), "3.141592653589793"));
+   inspect(*unit.make_literal(unit.get_char(), u8"'c'"));
+   inspect(*unit.make_literal(unit.get_int(), u8"1024"));
+   inspect(*unit.make_literal(unit.get_double(), u8"3.141592653589793"));
 
    // Inspect the representations of some C++ fundamental types.
    inspect(unit.get_char());
@@ -170,8 +170,8 @@ and, or interprets such nodes.
 %%   \{
 %%      using namespace ipr;
 %%      impl::Unit unit;
-%%      const Literal* four = unit.make_literal(unit.Int(), "4");
-%%      const Literal* c = unit.make_literal(unit.Char(), "'c'");
+%%      const Literal* four = unit.make_literal(unit.Int(), u8"4");
+%%      const Literal* c = unit.make_literal(unit.Char(), u8"'c'");
 
 %%      Printer pp(std::cout);
 %%      pp << xpr_expr(*four)
@@ -223,10 +223,10 @@ accounting for the variety of names in Standard C++.
 An \NodeClass{Identifier} node can be created out of a string that contains
 any character string:
 \begin{Program}
-  \expr{unit}.make_identifier(\expr{string})
+  \expr{unit}.get_identifier(\expr{string})
 \end{Program}
 where \expr{unit} is an instance of \code{impl::Unit} and \expr{string} is
-the string to make an identifier out of.  The returned value of the
+the UTF-8 encoded string to make an identifier out of.  The returned value of the
 function \code{make\_identifier} has type \code{const Identifier*}.
 
 \subsection{Operator function names}
@@ -410,7 +410,7 @@ string literal \code{"Hello World!"} is \code{const char[13]}, so its
 type will be represented in IPR with a node constructed as 
 \begin{Program}
   // Build a node for the integer literal value `13'
-  const Expr& sz = *unit.make_literal(unit.get_int(),unit.get_string("13"));
+  const Expr& sz = *unit.make_literal(unit.get_int(),unit.get_string(u8"13"));
   // create the actual node for `const int[13]'
   unit.make_array(*unit.make_cv_qualified(unit.get_char()), sz);
 \end{Program}
@@ -443,7 +443,7 @@ designates the built-in boolean type.  The way that is
 accomplished in IPR is to build an \NodeClass{As\_type} node out of the
 \NodeClass{Identifier} node created for \code{bool}:
 \begin{Program}
-  unit.make_as_type(*unit.make_identifier("bool"))
+  unit.make_as_type(unit.get_identifier(u8"bool"))
 \end{Program}
 All built-in C++ simple types are created that way.
 
@@ -456,7 +456,7 @@ a type (reflecting the assumption introduced by the C++ keyword
 \texttt{typename}):
 \begin{Program}
   unit.make_as_type(*unit.make_scope_ref
-                        (\expr{C}, *unit.make_identifier("value_type")))
+                        (\expr{C}, unit.get_identifier(u8"value_type")))
 \end{Program}
 
 
@@ -678,13 +678,13 @@ int main()
    impl::Unit unit;              // current translation unit
    
    // Build the variable's name and type
-   const Name* name = unit.make_identifier("bufsz");
+   const Name& name = unit.get_identifier(u8"bufsz");
    const Type* type = unit.make_cv_qualified(unit.get_int(), Type::Const);
 
    // and the actual impl::Var node at global scope and initialize it
-   impl::Var* var = unit.global_ns->declare_var(*name, *type);
+   impl::Var* var = unit.global_ns->declare_var(name, *type);
    var->decl_data.spec = ipr::Decl::Static;
-   var->init = unit.make_literal(unit.get_int(), "1024");
+   var->init = unit.make_literal(unit.get_int(), u8"1024");
    
    // Print out the whole translation unit
    Printer pp(std::cout);
@@ -733,12 +733,12 @@ int main()
 
    // First, build the node for the nifty_counter class
    impl::Class* nifty_type = unit.make_class(*unit.global_region());
-   nifty_type->id = unit.make_identifier("nifty_counter");
+   nifty_type->id = &unit.get_identifier(u8"nifty_counter");
    unit.global_ns->declare_type(*nifty_type->id, unit.Class())->init
       = nifty_type;
    
    // Then build the static data member
-   impl::Var* count = nifty_type->declare_var(*unit.make_identifier("count"),
+   impl::Var* count = nifty_type->declare_var(unit.get_identifier(u8"count"),
                                               unit.get_int());
    // "cout" is private 
    count->decl_data.spec = Decl::Static | Decl::Private;
@@ -786,15 +786,15 @@ int main()
 
    // Make the class node, and bind it to the name "point".
    impl::Class* point = unit.make_class(*unit.global_region());
-   point->id = unit.make_identifier("point");
+   point->id = &unit.get_identifier(u8"point");
    unit.global_ns->declare_type(*point->id, unit.Class())->init = point;
 
    // declare the public data member "x".
-   point->declare_field(*unit.make_identifier("x"), unit.get_int())
+   point->declare_field(unit.get_identifier(u8"x"), unit.get_int())
       ->decl_data.spec = Decl::Public;
 
    // Ditto for "y".
-   point->declare_field(*unit.make_identifier("y"), unit.get_int())
+   point->declare_field(unit.get_identifier(u8"y"), unit.get_int())
       ->decl_data.spec = Decl::Public;
 
    // Print the current unit.
@@ -942,7 +942,7 @@ impl::Mapping* mapping = unit.make_mapping(*unit.global_region());
 Parameters are specified with the \code{param()} member function
 of \NodeClass{impl::Mapping}.  
 \begin{Program}
-impl::Parameter* x = mapping->param(*unit.make_identifier("x"), unit.get_int());
+impl::Parameter* x = mapping->param(unit.get_identifier(u8"x"), unit.get_int());
 \end{Program}
 
 The data member \code{impl::Mapping::parameters}
@@ -971,7 +971,7 @@ initializer.  As explained above, the initializer for a function declaration
 is a mapping.
 \begin{Program}
 impl::Fundecl* f = unit.global_ns->declare_fun
-   (*unit.make_identifier("identity"), *ftype);
+   (unit.get_identifier(u8"identity"), *ftype);
 f->init = mapping;                        // the named mapping
 \end{Program}
 
@@ -1084,7 +1084,7 @@ the condition and the second being the selected statement.  Use
 \end{Program}
 may be translated as:
 \begin{Program}
-  Expr* return_value = unit.make_literal(unit.Bool(), "bool");
+  Expr* return_value = unit.make_literal(unit.Bool(), u8"bool");
   unit.make_if_then(*unit.make_less(\expr{lhs}, \expr{rhs}),
                     *unit.make_return(*return_value));
 \end{Program}
@@ -1121,7 +1121,7 @@ may be constructed with
   impl::Var* n = ...
   impl::Fundecl* processline = ...
   // ...
-  Expr* cond = unit.make_not_equal(n, *unit.make_literal(unit.get_int(), "0"));
+  Expr* cond = unit.make_not_equal(n, *unit.make_literal(unit.get_int(), u8"0"));
   impl::Expr_list* args = unit.make_expr_list(); // hold the arg-list.
   args->push_back(n);  
   Expr* call = unit.make_call(processline, *args);
@@ -1160,9 +1160,9 @@ and we use the scope of that sub-region as the first argument for
 
   // Build the declaration for "i".
   impl::Region* init_region = \expr{active_region}->make_subregion();
-  impl::Var* i = init_region->declare_var(unit.make_identifier("i"),
+  impl::Var* i = init_region->declare_var(unit.get_identifier(u8"i"),
                                           unit.get_int());
-  i->init = unit.make_literal(unit.get_int(), "0");
+  i->init = unit.make_literal(unit.get_int(), u8"0");
 
   // set the for-init
   for_stmt->init = &init_region.scope;
@@ -1190,9 +1190,9 @@ then we would not need to build a sub-scope for that variable.  Rather, we
 would just build the declaration in the current scope:
 \begin{Program}
 // Build a declaration for "i",
-Var* i = \textit{active_region}->declare_var(*unit.make_identifier("i"), unit.get_int());
+Var* i = \textit{active_region}->declare_var(unit.get_identifier(u8"i"), unit.get_int());
 impl::For* for_stmt = unit.make_for();
-for_stmt->init = unit.make_assign(*i, *unit.make_literal(unit.get_int(), "0"));
+for_stmt->init = unit.make_assign(*i, *unit.make_literal(unit.get_int(), u8"0"));
 // the condition,
 for_stmt->cond = unit.make_less(*i, \textit{N});
 // the incrementation,
@@ -1215,14 +1215,14 @@ may be translated by
   // Build the for-initialization part
   impl::Region* init_region = \expr{active_region}->make_subregion();
   for_stmt->init = &init_region->scope;
-  impl::Var* i = init_region->declare_var(*unit.make_identifier("i"),
+  impl::Var* i = init_region->declare_var(unit.get_identifier(u8"i"),
                                           unit.get_int());
-  i->init = unit.make_literal(unit.get_int(), "0");
+  i->init = unit.make_literal(unit.get_int(), u8"0");
 
   // The for-condition part
   impl::Region* cond_region = init_region->make_subregion();
   for_stmt->cond = &cond_region->scope;
-  impl::Var* j = cond_region->declare_var(*unit.make_identifier("j"),
+  impl::Var* j = cond_region->declare_var(unit.get_identifier(u8"j"),
                                           unit.get_int());
   j->init = unit.make_sub(\expr{N}, *i);
 
@@ -1260,11 +1260,11 @@ may be represented in IPR as:
   impl::Var cursor = ...;
   // ...
   impl::Minus* rhs = unit.make_minus(cursor, 
-                                     *unit.make_literal(unit.get_int(), "1")));
+                                     *unit.make_literal(unit.get_int(), u8"1")));
   impl::Assign* expr = unit.make_assign(*cursor, *rhs);
   impl::Expr_stmt* expr_stmt = unit.make_expr_stmt(*expr);
-  impl::Idenifier* lbl = unit.make_identifier("id");
-  impl::Labeled_stmt* labeled_stmt = unit.make_labeled_stmt(*lbl, *expr_stmt);
+  auto& lbl = unit.get_identifier(u8"id");
+  impl::Labeled_stmt* labeled_stmt = unit.make_labeled_stmt(lbl, *expr_stmt);
 \end{Program}
 Here a node created for the name \texttt{id} is used as the expression
 that labels the whole statement.
@@ -1285,13 +1285,13 @@ one might construct
   impl::Var* linecount = ...
   // ...
   // literal used to label the case-statement
-  impl::Literal* nl = unit.make_literal(unit.get_char(), "{\bslash\bslash}n");
+  impl::Literal* nl = unit.make_literal(unit.get_char(), u8"{\bslash\bslash}n");
   impl::Labeled_stmt* stmt = unit.make_labeled_stmt
      (*nl, *unit.make_expr_stmt(*unit.make_pre_increment(*linecount)));
 \end{Program}
 
 The \texttt{default} label is represented no different from ordinary labels.
-That is, one uses \verb=unit.make_identifier("default")= as the labeling
+That is, one uses \verb=unit.get_identifier(u8"default")= as the labeling
 expression. 
 
 
@@ -1334,13 +1334,13 @@ fragment
 Here is a corresponding IPR nodes construction:
 \begin{Program}
   // Build declaration for "c",
-  impl::Var* c = \expr{active_region}->declare_var(*unit.make_identifier("c"),
+  impl::Var* c = \expr{active_region}->declare_var(unit.get_identifier(u8"c"),
                                                    unit.get_char());
 
   // do the same for "line_count", 
   impl::Var* line_count = \expr{active_region}->declare_var
-     (*unit.make_identifier("line_count"), unit.get_int());
-  line_count->init = unit.make_literal(unit.get_int(), "0");
+     (unit.get_identifier(u8"line_count"), unit.get_int());
+  line_count->init = unit.make_literal(unit.get_int(), u8"0");
 
   // ...
   // Build the Block for the switch statement.
@@ -1350,7 +1350,7 @@ Here is a corresponding IPR nodes construction:
 
   // Fill in the switch body,
   Stmt* stmt = unit.make_expr_stmt(*unit.make_pre_increment(line_count));
-  Expr* lbl = unit.make_literal(unit.get_char(), "{\bslash}n");
+  Expr* lbl = unit.make_literal(unit.get_char(), u8"{\bslash}n");
   block->add_stmt(unit.make_labeled_stmt(lbl, stmt));
 
     // Build the break statement
@@ -1482,7 +1482,7 @@ int main()
    impl::Mapping* mapping = unit.make_mapping(*unit.global_region());
 
    // declare the template type-parameter "T".
-   impl::Parameter* T = mapping->param(*unit.make_identifier("T"),
+   impl::Parameter* T = mapping->param(unit.get_identifier(u8"T"),
                                        unit.Class());
 
    // set the type of the mapping.
@@ -1492,7 +1492,7 @@ int main()
 
    // build the decl for "Array", with same type.
    impl::Named_map* array = unit.global_ns->declare_primary_map
-      (*unit.make_identifier("Array"), *tt);
+      (unit.get_identifier(u8"Array"), *tt);
    array->init = mapping;
 
    // "Array" uses the argument list "<T>".

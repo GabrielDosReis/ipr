@@ -202,13 +202,13 @@ namespace ipr {
 
                                 // -- String --
    // Strings in IPR are immutable, and therefore unified.
-   // FIXME: Internal representation should default to UTF-8 encoding.
    struct String : Category<Category_code::String, Node> {
-      using iterator = const char*;
+      using iterator = util::word_view::const_iterator;
       using Index = std::size_t;
-      virtual Index size() const = 0;
-      virtual iterator begin() const = 0;
-      virtual iterator end() const  = 0;
+      virtual util::word_view characters() const = 0;
+      Index size() const { return characters().size(); }
+      iterator begin() const { return characters().begin(); }
+      iterator end() const { return characters().end(); }
       static const String& empty_string();            // dedicated node for an empty string
    };
 
