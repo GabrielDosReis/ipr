@@ -65,16 +65,18 @@ namespace ipr {
            pending_indentation(0) { }
 
    Printer&
-   Printer::operator<<(const char* s)
+   Printer::operator<<(const char8_t* s)
    {
-      this->stream << s;
+      write(s);
       return *this;
    }
 
    void
-   Printer::write(const char* begin, const char* last)
+   Printer::write(util::word_view w)
    {
-      std::copy(begin, last, std::ostream_iterator<char>(this->stream));
+      // FIXME: workaround lack of standard support for insertion of
+      // sequence of utf-8 code units.
+      std::copy(w.begin(), w.end(), std::ostream_iterator<char>(this->stream));
    }
 
    template<typename T>
@@ -205,15 +207,12 @@ namespace ipr {
 
    // Pretty-print identifiers.
    struct xpr_identifier {
-      const char* const begin;
-      const char* const last;
+      util::word_view txt;
 
-      explicit xpr_identifier(const ipr::String& s)
-            : begin(s.begin()), last(s.end()) { }
+      explicit xpr_identifier(const ipr::String& s) : txt{s.characters()} { }
 
       template<int N>
-      explicit xpr_identifier(const char (&s)[N])
-            : begin(s), last(s + N - 1) { }
+      explicit xpr_identifier(const char8_t (&s)[N]) : txt{s} { }
    };
 
    static inline Printer&
@@ -221,7 +220,7 @@ namespace ipr {
    {
       if (printer.padding() == Printer::Padding::Before)
          printer << ' ';
-      printer.write(id.begin, id.last);
+      printer.write(id.txt);
 
       return printer <<  Printer::Padding::Before;
    }
@@ -270,12 +269,12 @@ namespace ipr {
          //          >>=  >=  new  new[]   delete   delete[]
          void visit(const Operator& o) final
          {
-            pp << xpr_identifier("operator");
+            pp << xpr_identifier(u8"operator");
 
             const ipr::String& s = o.opname();
             if (not std::isalpha(*s.begin()))
                {
-                  pp.write(s.begin(), s.end());
+                  pp.write(s.characters());
                   pp << Printer::Padding::None;
                }
             else
@@ -290,8 +289,8 @@ namespace ipr {
          {
             // For now only regular cast, later we'll add support for overloading
             // dynamic_cast, reinterpret_cast, const_cast and static_cast
-            pp << xpr_identifier("operator")
-               << xpr_identifier("cast")
+            pp << xpr_identifier(u8"operator")
+               << xpr_identifier(u8"cast")
                << token("<|") << xpr_type(c.target()) << token("|>");
          }
 
@@ -299,7 +298,7 @@ namespace ipr {
          // We display it as operator "_km".
          void visit(const Suffix& s) final
          {
-             pp << xpr_identifier("operator")
+             pp << xpr_identifier(u8"operator")
                 << token('"')
                 << s.name()
                 << token('"');
@@ -332,14 +331,14 @@ namespace ipr {
          //        # ctor
          void visit(const Ctor_name&) final
          {
-            pp << xpr_identifier("#ctor");
+            pp << xpr_identifier(u8"#ctor");
          }
 
          // -- dtor-name
          //    # dtor
          void visit(const Dtor_name&) final
          {
-            pp << xpr_identifier("#dtor");
+            pp << xpr_identifier(u8"#dtor");
          }
       };
    }
@@ -404,7 +403,7 @@ namespace ipr {
             switch (*cur)
                {
                default:
-                  pp << *cur;
+                  pp << static_cast<char>(*cur);
                   break;
 
                case '\n':
@@ -474,7 +473,7 @@ namespace ipr {
 
    template<Category_code code, int N>
    void
-   new_style_cast(Printer& pp, const Cast_expr<code>& e, const char (&op)[N])
+   new_style_cast(Printer& pp, const Cast_expr<code>& e, const char8_t (&op)[N])
    {
       pp << xpr_identifier(op)
          << token("<|") << xpr_type(e.type()) << token("|>")
@@ -536,38 +535,38 @@ namespace ipr {
          //        dynamic_cast < type > ( expression )
          void visit(const Dynamic_cast& e) final
          {
-            new_style_cast(pp, e, "dynamic_cast");
+            new_style_cast(pp, e, u8"dynamic_cast");
          }
 
          //        static_cast < type > ( expression )
          void visit(const Static_cast& e) final
          {
-            new_style_cast(pp, e, "static_cast");
+            new_style_cast(pp, e, u8"static_cast");
          }
 
          //        const_cast < type > ( expression )
          void visit(const Const_cast& e) final
          {
-            new_style_cast(pp, e, "const_cast");
+            new_style_cast(pp, e, u8"const_cast");
          }
 
          //        reinterpret_cast < type > ( expression )
          void visit(const Reinterpret_cast& e) final
          {
-            new_style_cast(pp, e, "reinterpret_cast");
+            new_style_cast(pp, e, u8"reinterpret_cast");
          }
 
          //        typeid ( expression )
          void visit(const Typeid& e) final
          {
-            pp << xpr_identifier("typeid")
+            pp << xpr_identifier(u8"typeid")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
 
          //       noexcept '(' expression ')'
          void visit(const Noexcept& e) final
          {
-            pp << xpr_identifier("noexcept")
+            pp << xpr_identifier(u8"noexcept")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
       };
@@ -615,13 +614,13 @@ namespace ipr {
 
          void visit(const Sizeof& e) final
          {
-            pp << xpr_identifier("sizeof")
+            pp << xpr_identifier(u8"sizeof")
                << token(' ') << xpr_expr(e.operand());
          }
 
          void visit(const Args_cardinality& e) final
          {
-            pp << xpr_identifier("sizeof") << token("...")
+            pp << xpr_identifier(u8"sizeof") << token("...")
                << token('(') << xpr_expr(e.operand()) << token(')');
          }
 
@@ -632,7 +631,7 @@ namespace ipr {
 
          void visit(const New& e) final
          {
-            pp << xpr_identifier("new") << token(' ');
+            pp << xpr_identifier(u8"new") << token(' ');
             if (auto p = e.placement())
                pp << token('(') << p.get() << token(") ");
             // Note: The following does not exactly conform to the ISO C++ grammar (because of ambiguity).
@@ -641,14 +640,14 @@ namespace ipr {
 
          void visit(const Delete& e) final
          {
-            pp << xpr_identifier("delete")
+            pp << xpr_identifier(u8"delete")
                << token(' ')
                << xpr_cast_expr(e.storage());
          }
 
          void visit(const Array_delete& e) final
          {
-            pp << xpr_identifier("delete[]")
+            pp << xpr_identifier(u8"delete[]")
                << token(' ')
                << xpr_cast_expr(e.storage());
          }
@@ -666,7 +665,7 @@ namespace ipr {
          //       "(" type ")" cast-expression
          void visit(const Cast& e) final
          {
-            new_style_cast(pp, e, "cast");
+            new_style_cast(pp, e, u8"cast");
          }
       };
    }
@@ -1190,7 +1189,7 @@ namespace ipr {
          }
          void visit(const Throw& e) final
          {
-            pp << xpr_identifier("throw") << token(' ')
+            pp << xpr_identifier(u8"throw") << token(' ')
                << xpr_assignment_expression(e.operand());
          }
 
@@ -1265,13 +1264,13 @@ namespace ipr {
 
          void visit(const Type& t) final
          {
-            pp << xpr_identifier("throw")
+            pp << xpr_identifier(u8"throw")
                << token('(') << xpr_type(t) << token(')');
          }
 
          void visit(const Expr& e) final
          {
-            pp << xpr_identifier("noexcept")
+            pp << xpr_identifier(u8"noexcept")
                << token('(') << xpr_expr(e) << token(')');
          }
       };
@@ -1304,11 +1303,11 @@ namespace ipr {
    operator<<(Printer& printer, Type_qualifiers cv)
    {
       if (implies(cv, Type_qualifiers::Const))
-         printer << xpr_identifier("const");
+         printer << xpr_identifier(u8"const");
       if (implies(cv, Type_qualifiers::Volatile))
-         printer << xpr_identifier("volatile");
+         printer << xpr_identifier(u8"volatile");
       if (implies(cv, Type_qualifiers::Restrict))
-         printer << xpr_identifier("restrict");
+         printer << xpr_identifier(u8"restrict");
 
       return printer;
    }
@@ -1365,7 +1364,7 @@ namespace ipr {
 
       void visit(const Decltype& t) final
       {
-         pp << xpr_identifier("decltype") << token(' ')
+         pp << xpr_identifier(u8"decltype") << token(' ')
             << token('(') << xpr_expr(t.expr()) << token(')');
       }
 
@@ -1544,7 +1543,7 @@ namespace ipr {
             else
                pp << indentation(-3);
 
-            pp << xpr_identifier("label")
+            pp << xpr_identifier(u8"label")
                << token(' ')
                << xpr_expr(s.label())
                << token(':')
@@ -1576,14 +1575,14 @@ namespace ipr {
 
          void visit(const If& s) final
          {
-            pp << xpr_identifier("if")
+            pp << xpr_identifier(u8"if")
                << token(' ')
                << token('(') << xpr_expr(s.condition()) << token(')')
                << newline_and_indent(3)
                << xpr_stmt(s.consequence());
             if (auto alt = s.alternative()) {
                pp << newline_and_indent(-3)
-                  << xpr_identifier("else")
+                  << xpr_identifier(u8"else")
                   << newline_and_indent(3)
                   << xpr_stmt(alt.get());
             }
@@ -1592,7 +1591,7 @@ namespace ipr {
 
          void visit(const Return& s) final
          {
-            pp << xpr_identifier("return")
+            pp << xpr_identifier(u8"return")
                << token(' ')
                << xpr_expr(s.value())
                << token(';')
@@ -1601,7 +1600,7 @@ namespace ipr {
 
          void visit(const Switch& s) final
          {
-            pp << xpr_identifier("switch")
+            pp << xpr_identifier(u8"switch")
                << token(' ')
                << token('(') << xpr_expr(s.condition()) << token(')')
                << newline_and_indent(3)
@@ -1611,7 +1610,7 @@ namespace ipr {
 
          void visit(const While& s) final
          {
-            pp << xpr_identifier("while")
+            pp << xpr_identifier(u8"while")
                << token(' ')
                << token('(') << xpr_expr(s.condition()) << token(')')
                << newline_and_indent(3)
@@ -1621,11 +1620,11 @@ namespace ipr {
 
          void visit(const Do& s) final
          {
-            pp << xpr_identifier("do")
+            pp << xpr_identifier(u8"do")
                << newline_and_indent(3)
                << xpr_stmt(s.body())
                << newline_and_indent(-3)
-               << xpr_identifier("while")
+               << xpr_identifier(u8"while")
                << token(' ')
                << token('(') << xpr_expr(s.condition()) << token(')')
                << token(';') << needs_newline();
@@ -1633,7 +1632,7 @@ namespace ipr {
 
          void visit(const For& s) final
          {
-            pp << xpr_identifier("for")
+            pp << xpr_identifier(u8"for")
                << token(" (")
                << xpr_expr(s.initializer())
                << token("; ")
@@ -1648,7 +1647,7 @@ namespace ipr {
 
          void visit(const For_in& s) final
          {
-            pp << xpr_identifier("for")
+            pp << xpr_identifier(u8"for")
                << token(" (")
                << xpr_decl(s.variable())
                << token(" <- ")
@@ -1661,21 +1660,21 @@ namespace ipr {
 
          void visit(const Break&) final
          {
-            pp << xpr_identifier("break")
+            pp << xpr_identifier(u8"break")
                << token(';')
                << needs_newline();
          }
 
          void visit(const Continue&) final
          {
-            pp << xpr_identifier("continue")
+            pp << xpr_identifier(u8"continue")
                << token(';')
                << needs_newline();
          }
 
          void visit(const Goto& s) final
          {
-            pp << xpr_identifier("goto")
+            pp << xpr_identifier(u8"goto")
                << token(' ')
                << xpr_expr(s.target())
                << token(';')
@@ -1684,7 +1683,7 @@ namespace ipr {
 
          void visit(const Handler& s) final
          {
-            pp << xpr_identifier("catch")
+            pp << xpr_identifier(u8"catch")
                << token(' ')
                << token('(')
                << xpr_decl(s.exception())
@@ -1751,29 +1750,29 @@ namespace ipr {
    operator<<(Printer& printer, DeclSpecifiers spec)
    {
       if (implies(spec, DeclSpecifiers::Export))
-         printer << xpr_identifier("export");
+         printer << xpr_identifier(u8"export");
       if (implies(spec, DeclSpecifiers::Register))
-         printer << xpr_identifier("register");
+         printer << xpr_identifier(u8"register");
       if (implies(spec, DeclSpecifiers::Static))
-         printer << xpr_identifier("static");
+         printer << xpr_identifier(u8"static");
       if (implies(spec, DeclSpecifiers::Extern))
-         printer << xpr_identifier("extern");
+         printer << xpr_identifier(u8"extern");
       if (implies(spec, DeclSpecifiers::Mutable))
-         printer << xpr_identifier("mutable");
+         printer << xpr_identifier(u8"mutable");
       if (implies(spec, DeclSpecifiers::Inline))
-         printer << xpr_identifier("inline");
+         printer << xpr_identifier(u8"inline");
       if (implies(spec, DeclSpecifiers::Virtual))
-         printer << xpr_identifier("virtual");
+         printer << xpr_identifier(u8"virtual");
       if (implies(spec, DeclSpecifiers::Explicit))
-         printer << xpr_identifier("explicit");
+         printer << xpr_identifier(u8"explicit");
       if (implies(spec, DeclSpecifiers::Friend))
-         printer << xpr_identifier("friend");
+         printer << xpr_identifier(u8"friend");
       if (implies(spec, DeclSpecifiers::Public))
-         printer << xpr_identifier("public");
+         printer << xpr_identifier(u8"public");
       if (implies(spec, DeclSpecifiers::Protected))
-         printer << xpr_identifier("protected");
+         printer << xpr_identifier(u8"protected");
       if (implies(spec, DeclSpecifiers::Private))
-         printer << xpr_identifier("private");
+         printer << xpr_identifier(u8"private");
 
       return printer;
    }
@@ -1830,7 +1829,7 @@ namespace ipr {
          {
             b.name().accept(*this);
             pp << token(" : #")
-               << xpr_identifier("bitfield")
+               << xpr_identifier(u8"bitfield")
                << token('(') << xpr_expr(b.precision()) << token(')')
                << xpr_type(b.type());
          }

@@ -71,7 +71,7 @@ ipr::util::string::arena::allocate(size_type n)
 }
 
 const ipr::util::string*
-ipr::util::string::arena::make_string(const char* s, size_type n)
+ipr::util::string::arena::make_string(const char8_t* s, size_type n)
 {
    string* header = allocate(n);
    header->length = n;

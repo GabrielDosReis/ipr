@@ -11,14 +11,14 @@ TEST_CASE("C++ Standard Conversions") {
   INFO("static_cast<long long>(4);");
   // Integral Promotion            (Promotion)
   lexicon.make_promotion(
-    *lexicon.make_literal(lexicon.int_type(), "4"),
+    *lexicon.make_literal(lexicon.int_type(), u8"4"),
     lexicon.long_long_type()
   );
 
   INFO("(float)2.2;");
   // Floating-Point Conversion     (Demotion)
   lexicon.make_demotion(
-    *lexicon.make_literal(lexicon.double_type(), "2.2"),
+    *lexicon.make_literal(lexicon.double_type(), u8"2.2"),
     lexicon.float_type()
   );
 
@@ -26,9 +26,9 @@ TEST_CASE("C++ Standard Conversions") {
   // Pointer Conversion            (Coercion)
   const auto& ptr_type = lexicon.get_qualified(
     Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
-  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier("ptr"), ptr_type);
+  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier(u8"ptr"), ptr_type);
   ptr.init = lexicon.make_coercion(
-    *lexicon.make_literal(lexicon.int_type(), "0"),
+    *lexicon.make_literal(lexicon.int_type(), u8"0"),
     ptr_type,
     ptr_type
   );
@@ -46,7 +46,7 @@ TEST_CASE("C++ Standard Conversions") {
     lexicon.bool_type()
   );
   const auto& then_expr = *lexicon.make_coercion(
-      *lexicon.make_literal(lexicon.int_type(), "6"),
+      *lexicon.make_literal(lexicon.int_type(), u8"6"),
       lexicon.double_type(),
       lexicon.double_type()
   );
@@ -70,8 +70,8 @@ TEST_CASE("Class Conversions") {
   INFO("Derived* d;");
   auto& base_ptr = lexicon.get_pointer(base);
   auto& derived_ptr = lexicon.get_pointer(derived);
-  auto& b = *unit.global_region()->declare_var(lexicon.get_identifier("b"), base_ptr);
-  auto& d = *unit.global_region()->declare_var(lexicon.get_identifier("d"), derived_ptr);
+  auto& b = *unit.global_region()->declare_var(lexicon.get_identifier(u8"b"), base_ptr);
+  auto& d = *unit.global_region()->declare_var(lexicon.get_identifier(u8"d"), derived_ptr);
 
   // Derived-to-base conversion
   INFO("b = d;");
@@ -109,7 +109,7 @@ TEST_CASE("CV Conversions") {
   // Standard C++ CV qualification
   INFO("(int) -> (volatile int)");
   lexicon.make_qualification(
-    *lexicon.make_literal(lexicon.int_type(), "7"),
+    *lexicon.make_literal(lexicon.int_type(), u8"7"),
     Type_qualifiers::Volatile,
     lexicon.int_type() // prvalue can be adjusted to remove qualifiers (see 7.2.2/2)
   );
@@ -117,7 +117,7 @@ TEST_CASE("CV Conversions") {
   INFO("const int* ptr;");
   const auto& ptr_type = lexicon.get_qualified(
     Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
-  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier("ptr"), ptr_type);
+  auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier(u8"ptr"), ptr_type);
 
   // Removal of const is a non-implicit conversion
   INFO("const_cast<int* const>(ptr);");
@@ -129,7 +129,7 @@ TEST_CASE("CV Conversions") {
   INFO("int** ptr_ptr");
   const auto& ptr_ptr_type = lexicon.get_pointer(lexicon.get_pointer(lexicon.int_type()));
   auto& ptr_ptr = *unit.global_region()->declare_var(
-    lexicon.get_identifier("ptr_ptr"), ptr_ptr_type);
+    lexicon.get_identifier(u8"ptr_ptr"), ptr_ptr_type);
 
   INFO("(int**) -> (int* const* const)");
   lexicon.make_qualification(
@@ -145,7 +145,7 @@ TEST_CASE("CV Conversions") {
   );
 
   INFO("const int var = 0;");
-  auto& var = *unit.global_region()->declare_var(lexicon.get_identifier("var"), 
+  auto& var = *unit.global_region()->declare_var(lexicon.get_identifier(u8"var"), 
     lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type()));
 
   // Pretend can be used to explicitly reperesent automatic type adjustment as detailed

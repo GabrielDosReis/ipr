@@ -20,9 +20,7 @@ namespace ipr {
    const String& String::empty_string()
    {
       struct Empty_string final : impl::Node<String> {
-         Index size() const final { return 0; }
-         iterator begin() const final { return ""; }
-         iterator end() const final { return begin(); }
+         constexpr util::word_view characters() const final { return u8""; }
       };
 
       static constexpr Empty_string empty { };
@@ -35,50 +33,50 @@ namespace ipr::impl {
        // Representation of standard names (mostly identifiers) used in
        // in the internals of the IPR, with standard semantics.
        struct std_identifier : impl::Node<ipr::Identifier> {
-          constexpr std_identifier(const char* p) : str{p} { }
+          constexpr std_identifier(const char8_t* p) : str{p} { }
           constexpr const impl::String& operand() const final { return str; }
-          constexpr auto text() const { return str.text(); }
+          constexpr auto text() const { return str.characters(); }
        private:
           impl::String str;
        };
 
         // A table of statically known words used in the internal representation.
         constexpr std_identifier known_words[] {
-           "...",
-           "C",
-           "C++",
-           "auto",
-           "bool",
-           "char",
-           "char16_t",
-           "char32_t",
-           "char8_t",
-           "class",
-           "default",
-           "delete",
-           "double",
-           "enum",
-           "false",
-           "float",
-           "int",
-           "long",
-           "long double",
-           "long long",
-           "namespace",
-           "nullptr",
-           "short",
-           "signed char",
-           "this",
-           "true",
-           "typename",
-           "union",
-           "unsigned char",
-           "unsigned int",
-           "unsigned long",
-           "unsigned long long",
-           "unsigned short",
-           "void",
-           "wchar_t",
+           u8"...",
+           u8"C",
+           u8"C++",
+           u8"auto",
+           u8"bool",
+           u8"char",
+           u8"char16_t",
+           u8"char32_t",
+           u8"char8_t",
+           u8"class",
+           u8"default",
+           u8"delete",
+           u8"double",
+           u8"enum",
+           u8"false",
+           u8"float",
+           u8"int",
+           u8"long",
+           u8"long double",
+           u8"long long",
+           u8"namespace",
+           u8"nullptr",
+           u8"short",
+           u8"signed char",
+           u8"this",
+           u8"true",
+           u8"typename",
+           u8"union",
+           u8"unsigned char",
+           u8"unsigned int",
+           u8"unsigned long",
+           u8"unsigned long long",
+           u8"unsigned short",
+           u8"void",
+           u8"wchar_t",
         };
 
         // Lexicographical less-than comparison between two known words.
@@ -95,7 +93,7 @@ namespace ipr::impl {
 
         // Return the String representation for a known word.
         // Raise an exception otherwise.
-        constexpr const std_identifier& known_word(const char* p)
+        constexpr const std_identifier& known_word(const char8_t* p)
         {
             auto place = std::lower_bound(std::begin(known_words), std::end(known_words), p, word_lt);
             if (place >= std::end(known_words) or place->text() != p)
@@ -103,11 +101,11 @@ namespace ipr::impl {
             return *place;
         }
 
-        constexpr auto& internal_string(const char* p) { return known_word(p).operand(); }
+        constexpr auto& internal_string(const char8_t* p) { return known_word(p).operand(); }
 
         // Known language linkages to all C++ implementations.
-        constexpr Linkage c_link { internal_string("C") };
-        constexpr Linkage cxx_link { internal_string("C++") };
+        constexpr Linkage c_link { internal_string(u8"C") };
+        constexpr Linkage cxx_link { internal_string(u8"C++") };
     }
 
     const ipr::Linkage& c_linkage() { return impl::c_link; }
@@ -140,14 +138,14 @@ namespace ipr::impl {
       }
 
       // Truth value symbolic constants.
-      constexpr Symbol false_cst { known_word("false"), builtin(Fundamental::Bool) };
-      constexpr Symbol true_cst { known_word("true"), builtin(Fundamental::Bool) };
+      constexpr Symbol false_cst { known_word(u8"false"), builtin(Fundamental::Bool) };
+      constexpr Symbol true_cst { known_word(u8"true"), builtin(Fundamental::Bool) };
 
       // Universal defaulter constant.
-      constexpr Symbol default_cst { known_word("default"), builtin(Fundamental::Auto) };
+      constexpr Symbol default_cst { known_word(u8"default"), builtin(Fundamental::Auto) };
 
       // Universal deleted constant.  Nothing ever comes out.  Void.
-      constexpr Symbol delete_cst { known_word("delete"), builtin(Fundamental::Void) };
+      constexpr Symbol delete_cst { known_word(u8"delete"), builtin(Fundamental::Void) };
    }
 
    const ipr::Type& typename_type() { return builtin(Fundamental::Typename); }
@@ -161,7 +159,7 @@ namespace ipr::impl {
       // alias for that type, i.e. `std::nullptr_t` is a Decl, not a type.
       struct Nullptr : impl::Node<ipr::Symbol> {
          constexpr Nullptr() : typing{*this} { }
-         const ipr::Name& operand() const final { return known_word("nullptr"); }
+         const ipr::Name& operand() const final { return known_word(u8"nullptr"); }
          const ipr::Decltype& type() const final { return typing; }
       private:
          impl::Decltype typing;
@@ -185,7 +183,7 @@ namespace ipr::util {
         // Dynamically allocated words are slotted by their hash codes into singly-linked lists.
         const hash_code h { std::hash<word_view>{ }(w) };
         auto& bucket = (*this)[h];
-        const auto eq = [&w](auto& x) { return x.text() == w; };
+        const auto eq = [&w](auto& x) { return x.characters() == w; };
         if (const auto p = std::find_if(bucket.begin(), bucket.end(), eq); p != bucket.end())
             return *p;
         const auto fresh = strings.make_string(w.data(), w.length());
@@ -1462,18 +1460,18 @@ namespace ipr::impl {
       // -- Language linkage
       const ipr::Linkage& expr_factory::get_linkage(util::word_view w)
       {
-         if (w == "C")
+         if (w == u8"C")
             return impl::c_link;
-         else if (w == "C++")
+         else if (w == u8"C++")
             return impl::cxx_link;
          return get_linkage(get_string(w));
       }
 
       const ipr::Linkage& expr_factory::get_linkage(const ipr::String& lang)
       {
-         if (physically_same(lang, internal_string("C")))
+         if (physically_same(lang, internal_string(u8"C")))
             return impl::c_link;
-         else if (physically_same(lang, internal_string("C++")))
+         else if (physically_same(lang, internal_string(u8"C++")))
             return impl::cxx_link;
          return *linkages.insert(lang, unary_compare());
       }
@@ -1494,14 +1492,14 @@ namespace ipr::impl {
 
       const ipr::Symbol& expr_factory::get_label(const ipr::Identifier& n)
       {
-         if (physically_same(n, known_word("default")))
+         if (physically_same(n, known_word(u8"default")))
             return impl::default_cst;
          return get_symbol(n, impl::builtin(Fundamental::Void));
       }
 
       const ipr::Symbol& expr_factory::get_this(const ipr::Type& t)
       {
-         return get_symbol(known_word("this"), t);
+         return get_symbol(known_word(u8"this"), t);
       }
 
       impl::Phantom*
@@ -2181,13 +2179,13 @@ int main()
    impl::Scope* global_scope = unit.global_scope();
 
    // Build the variable's name,
-   auto& name = lexicon.get_identifier("bufsz");
+   auto& name = lexicon.get_identifier(u8"bufsz");
    // then its type,
    auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
    // and the actual impl::Var node,
    impl::Var* var = global_scope->make_var(name, type);
    // set its initializer,
-   var->init = lexicon.make_literal(lexicon.int_type(), "1024");
+   var->init = lexicon.make_literal(lexicon.int_type(), u8"1024");
    // and inject it into its scope.
 
    // Print out the whole translation unit
