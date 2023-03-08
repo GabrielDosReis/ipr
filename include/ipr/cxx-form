@@ -40,37 +40,53 @@ namespace ipr::cxx_form {
 
     // Base class for objects representing ptr-operator (C++ grammar).
     // While the source-level grammar of ISO C++ does not allow attributes on
-    // reference-style ptr-operator, the representation make room for that possibility.
+    // reference-style ptr-operator, the representation adopted here makes room for that possibility.
     // Hence all `Indirector` objects have an `attributes()` operation.
     // At the input source level, `Indirector`s precede the name being declared in the declarator.
     struct Indirector {
-        enum class Mode {
-            Deref,                  // "*" as ptr-operator in a declarator
-            Bind,                   // "&" as ptr-operator in a declarator
-            Move                    // "&&" as ptr-operator in a declarator
-        };
-        struct Simple;
-        struct Member;
+        struct Pointer;             // pointer indirector
+        struct Reference;           // reference indirector
+        struct Member;              // non-static member indirector
         virtual const Sequence<Attribute>& attributes() const = 0;
         virtual void accept(Indirector_visitor&) const = 0;
     };
 
-    // A simple `Indirector` object is a ptr-operator that specifies a simple indirection:
-    //     pointer, lvalue reference, or an rvalue reference
-    struct Indirector::Simple : Indirector {
-        virtual Mode mode() const = 0;
+    // A `Pointer` indirector object is a simple possibly cv-qualified pointer indirection.
+    // And object of this type corresponds to the instance of the ptr-operator C++ grammar:
+    //      `*` attribute-specifier-seq_opt cv-qualifier-seq_opt
+    struct Indirector::Pointer : Indirector {
+        virtual Type_qualifiers qualifiers() const = 0;
+    };
+
+    // Syntactic indication of reference binding flavor.
+    enum class Reference_flavor {
+        Lvalue,                     // "&" ptr-operator in an indirector
+        Rvalue                      // "&&" ptr-operator in an indirector
+    };
+
+    // A `Reference` indirector object is a reference indirection.
+    // An object of this type corresponds to an instance of any of the following alternatives
+    // of the ptr-operator C++ grammar production:
+    //     `&` attribute-specifier-seq_opt
+    //     `&&` attribute-specifier-seq_opt
+    struct Indirector::Reference : Indirector {
+        virtual Reference_flavor flavor() const = 0;
     };
 
     // A member `Indirector` object represents a ptr-operator that specifies a pointer to member.
+    // An object of this type corresponds to an instance of the following alternative of the
+    // ptr-operator C++ grammar production:
+    //     nested-named-specifier `*` attribute-specifier-seq_opt cv-qualifier-seq_opt
     struct Indirector::Member : Indirector {
-        virtual const Scope_ref& scope() const = 0;
+        virtual const Expr& scope() const = 0;
         virtual Type_qualifiers qualifiers() const = 0;
     };
 
     // Traversal of Indirector objects is facilitated by visitor classes deriving
     // from this interface.
     struct Indirector_visitor {
-        virtual void visit(const Indirector::Simple&) = 0;
+        virtual void visit(const Indirector::Pointer&) = 0;
+        virtual void visit(const Indirector::Reference&) = 0;
         virtual void visit(const Indirector::Member&) = 0;
     };
 

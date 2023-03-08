@@ -763,9 +763,14 @@ namespace ipr::cxx_form::impl {
       void accept(Indirector_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
    };
 
-   struct Simple_indirector : impl::Indirector<cxx_form::Indirector::Simple> {
-      Mode indirection { };
-      Mode mode() const final { return indirection; }
+   struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
+      ipr::Type_qualifiers cv_quals { };
+      ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
+   };
+
+   struct Reference_indirector : impl::Indirector<cxx_form::Indirector::Reference> {
+      Reference_flavor how { };
+      Reference_flavor flavor() const final { return how; }
    };
 
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
@@ -812,14 +817,16 @@ namespace ipr::cxx_form::impl {
    };
 
    struct form_factory {
-      Simple_indirector* make_simple_indirector();
+      Pointer_indirector* make_pointer_indirector();
+      Reference_indirector* make_reference_indirector();
       Member_indirector* make_member_indirector();
       Id_species* make_id_species();
       Callable_species* make_callable_species(const ipr::Region& parent, Mapping_level level);
       Array_species* make_array_species();
       Parenthesized_species* make_parenthesized_species();
    private:
-      ipr::impl::stable_farm<Simple_indirector> simple_indirectors;
+      ipr::impl::stable_farm<Pointer_indirector> pointer_indirectors;
+      ipr::impl::stable_farm<Reference_indirector> reference_indirectors;
       ipr::impl::stable_farm<Member_indirector> member_indirectors;
       ipr::impl::stable_farm<Id_species> id_species;
       ipr::impl::stable_farm<Callable_species> callable_species;

@@ -197,9 +197,14 @@ namespace ipr::cxx_form::impl {
       : inputs{ parent, level }
    { }
 
-   Simple_indirector* form_factory::make_simple_indirector()
+   Pointer_indirector* form_factory::make_pointer_indirector()
    {
-      return simple_indirectors.make();
+      return pointer_indirectors.make();
+   }
+
+   Reference_indirector* form_factory::make_reference_indirector()
+   {
+      return reference_indirectors.make();
    }
 
    Member_indirector* form_factory::make_member_indirector()
