@@ -19,14 +19,14 @@ jobs:
       matrix:
         config: [Debug, Release]
         os: [ubuntu-latest, windows-latest]
-        compiler: [g++-10, clang++-12, MSVC]
+        compiler: [g++-12, clang++-14, MSVC]
         exclude:
           - os: ubuntu-latest
             compiler: MSVC
           - os: windows-latest
-            compiler: g++-10
+            compiler: g++-12
           - os: windows-latest
-            compiler: clang++-12
+            compiler: clang++-14
             
     steps:
       - uses: actions/checkout@v2
