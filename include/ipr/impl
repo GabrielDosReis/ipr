@@ -774,9 +774,9 @@ namespace ipr::cxx_form::impl {
    };
 
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
-      util::ref<const ipr::Scope_ref> whole;
+      util::ref<const ipr::Expr> whole;
       ipr::Type_qualifiers cv_quals { };
-      const ipr::Scope_ref& scope() const final { return whole.get(); }
+      const ipr::Expr& scope() const final { return whole.get(); }
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
    };
 
