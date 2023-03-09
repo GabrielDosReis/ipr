@@ -756,6 +756,7 @@ namespace ipr::impl {
 }
 
 namespace ipr::cxx_form::impl {
+   // -- implementation of ipr::cxx_form::Indirector
    template<typename T>
    struct Indirector : T {
       ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
@@ -763,16 +764,19 @@ namespace ipr::cxx_form::impl {
       void accept(Indirector_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
    };
 
+   // -- implementation of ipr::cxx_form::Indirector::Pointer
    struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
       ipr::Type_qualifiers cv_quals { };
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
    };
 
+   // -- implementation of ipr::cxx_form::Indirector::Reference
    struct Reference_indirector : impl::Indirector<cxx_form::Indirector::Reference> {
       Reference_flavor how { };
       Reference_flavor flavor() const final { return how; }
    };
 
+   // -- implementation of ipr::cxx_form::Indirector::Member
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
       util::ref<const ipr::Expr> whole;
       ipr::Type_qualifiers cv_quals { };
@@ -780,58 +784,72 @@ namespace ipr::cxx_form::impl {
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
    };
 
+   // -- implementation of ipr::cxx_form::Morphism
    template<typename T>
-   struct Species : T {
-      void accept(Species_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   struct Morphism : T {
+      ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
+      const ipr::Sequence<ipr::Attribute>& attributes() const final { return attr_seq; }
+      void accept(Morphism_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
    };
 
-   struct Id_species : impl::Species<cxx_form::Species_declarator::Id> {
-      util::ref<const ipr::Expr> expr;
-      const ipr::Expr& name() const final { return expr.get(); }
-   };
-
-   struct Callable_species : impl::Species<cxx_form::Species_declarator::Callable> {
-      ipr::impl::ref_sequence<cxx_form::Species_declarator> preceding_species;
+   // -- implementation of ipr::cxx_form::Morphism::Function
+   struct Function_morphism : impl::Morphism<cxx_form::Morphism::Function> {
       ipr::impl::Parameter_list inputs;
       Optional<ipr::Expr> eh_spec;
       Type_qualifiers cv_quals { };
       Binding_mode ref_qual { };
-      Callable_species(const ipr::Region&, Mapping_level);
-      const ipr::Sequence<cxx_form::Species_declarator>& prefix() const final { return preceding_species; }
+      Function_morphism(const ipr::Region&, Mapping_level);
       const ipr::Parameter_list& parameters() const final { return inputs; }
       Optional<ipr::Expr> throws() const final { return eh_spec; }
       Type_qualifiers qualifiers() const final { return cv_quals; }
       Binding_mode binding_mode() const final { return ref_qual; }
    };
 
-   struct Array_species : impl::Species<cxx_form::Species_declarator::Array> {
-      ipr::impl::ref_sequence<cxx_form::Species_declarator> preceding_species;
+   // -- implementation of ipr::cxx_form::Morphism::Array
+   struct Array_morphism : impl::Morphism<cxx_form::Morphism::Array> {
       Optional<ipr::Expr> array_bound;
-      const ipr::Sequence<cxx_form::Species_declarator>& prefix() const final { return preceding_species; }
       Optional<ipr::Expr> bound() const final { return array_bound; }
    };
 
+   // -- implementation of ipr::cxx_form::Species_declarator
+   template<typename T>
+   struct Species : T {
+      ipr::impl::ref_sequence<cxx_form::Morphism> morphisms;
+      const ipr::Sequence<cxx_form::Morphism>& suffix() const final { return morphisms; }
+      void accept(Species_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Species_declarator::Id
+   struct Id_species : impl::Species<cxx_form::Species_declarator::Id> {
+      util::ref<const ipr::Expr> expr;
+      ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
+      const ipr::Sequence<ipr::Attribute>& attributes() const final { return attr_seq; }
+      const ipr::Expr& name() const final { return expr.get(); }
+   };
+
+   // -- implementation of ipr::cxx_form::Species_declarator::Parenthesized
    struct Parenthesized_species : impl::Species<cxx_form::Species_declarator::Parenthesized> {
       util::ref<const Declarator::Term> declarator;
       const Declarator::Term& term() const final { return declarator.get(); }
    };
 
+   // -- Factory of C++ declarator forms.
    struct form_factory {
       Pointer_indirector* make_pointer_indirector();
       Reference_indirector* make_reference_indirector();
       Member_indirector* make_member_indirector();
       Id_species* make_id_species();
-      Callable_species* make_callable_species(const ipr::Region& parent, Mapping_level level);
-      Array_species* make_array_species();
       Parenthesized_species* make_parenthesized_species();
+      Function_morphism* make_function_morphism(const ipr::Region& parent, Mapping_level level);
+      Array_morphism* make_array_morphism();
    private:
       ipr::impl::stable_farm<Pointer_indirector> pointer_indirectors;
       ipr::impl::stable_farm<Reference_indirector> reference_indirectors;
       ipr::impl::stable_farm<Member_indirector> member_indirectors;
       ipr::impl::stable_farm<Id_species> id_species;
-      ipr::impl::stable_farm<Callable_species> callable_species;
-      ipr::impl::stable_farm<Array_species> array_species;
       ipr::impl::stable_farm<Parenthesized_species> paren_species;
+      ipr::impl::stable_farm<Function_morphism> function_morphisms;
+      ipr::impl::stable_farm<Array_morphism> array_morphisms;
    };
 }
 

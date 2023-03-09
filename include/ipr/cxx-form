@@ -30,11 +30,14 @@ namespace ipr::cxx_form {
     // -- an optional component representing the initializer.  The decl-specifier-seq
     // -- is a soup made of decl-specifier such as `static`, `extern`, etc. and simple-type
     // -- names such as `int`, and type qualifiers.  Compound types are made with
-    // -- type-constructors such as `*` (pointer) or `&` (reference), etc.  
+    // -- type-constructors such as `*` (pointer) or `&` (reference), `[N]` (array), etc.  
     // -- The type-constructors (which really imply some form of data indirection) are specified
     // -- along with the name being introduced, making up the declarator.
     // -- Pointer-style type-constructors are modeled by `Indirector`.
-    // -- Mapping-style type constructors (functions, arrays) are modeled by `Species_declarator`.
+    // -- Mapping-style type constructors (functions, arrays) are modeled by classes in
+    // -- `Morphism` hierarchy.
+    // -- Complete declarators that have mapping-style type contructors are modelled in the
+    // -- `Species_declarator` class hierarchy.
 
     struct Indirector_visitor;      // Base class of visitors for traversing `Indirector`s.
 
@@ -90,48 +93,82 @@ namespace ipr::cxx_form {
         virtual void visit(const Indirector::Member&) = 0;
     };
 
-    // A species declarator indicates the typical usage of a named being declared.
-    //   - Id: an id-expression
-    //   - Callable: a callable expression
-    //   - Array: a table expression
-    //   - Parenthesized: requires parenthesis to obey operator precedence rules
+    // -- Species and Morphisms
+    // A species declarator introduces a name along with typical usage of a named being declared.
+    // This usage pattern is captured by a suffix of `Morphism`s.  A `Morphism` is a form that
+    // specifies the type constuctor from the declared entity to the type of typical uses of that 
+    // entity in expressions.
+    //   - Function: a callable expression, the entity is typically called
+    //   - Array: a table expression, the entity is typically indexed
 
+    // -- Morphism and navigation
+    struct Morphism_visitor;
+
+    struct Morphism {
+        struct Function;                            // -- (T, int) & noexcept
+        struct Array;                               // -- [34][] [[S::A]]
+        virtual const Sequence<Attribute>& attributes() const = 0;
+        virtual void accept(Morphism_visitor&) const = 0;
+    };
+
+    struct Morphism_visitor {
+        virtual void visit(const Morphism::Function&) = 0;
+        virtual void visit(const Morphism::Array&) = 0;
+    };
+
+    // -- Species and navigation
     struct Species_visitor;
 
+    // A species declarator is either a name (possibly a pack), or a parenthesized term declarator, followed
+    // by a possibly empty sequence of morphisms.  For instance, in the declaration
+    //        bool (*pfs[8])(int)
+    // that declares pfs as an array of 8 pointers to functions taking an `int` returning a `bool`, the complete
+    // declarator `(*pfs[8])(int)` is a parenthesized species (`(*pfs[8])`) with the suffix consisting exactly of
+    // the singleton sequence of function morphism `(int)`.
+    // The term declarator `*pfs[8]` in turn has the indirectors is comprised of the single pointer indirector `*`,
+    // and of the id species `pfs` with array suffix `[8]`.
     struct Species_declarator {
-        struct Id;
-        struct Callable;
-        struct Array;
-        struct Parenthesized;
+        struct Id;                                  // possible packy id-expression -- a or X::m or ...f
+        struct Parenthesized;                       // parenthesized term declarator -- (*p)
+        virtual const Sequence<Morphism>& suffix() const = 0;
         virtual void accept(Species_visitor&) const = 0;
     };
 
+    // -- Declarator.
     // -- A declarator is either a term, or a species with a target type.
     // -- A term is a sequence of indirectors followed by a species.
     // -- A species indicates the typical usage syntactic structure of the named being declared.
 
     struct Declarator_visitor;
 
-    // Almost all ISO C++ declarators have an optional attribute-specifier-seq.
-    // The modeling here allows (trailing) attribute sequence on all declarators,
-    // given by the `attributes()` operation.
     struct Declarator {
-        struct Term;
-        struct Targeted;
-        virtual const Sequence<Attribute>& attributes() const = 0;
+        struct Term;                                // *p or (&a)[42]
+        struct Targeted;                            // *f(T& p) -> int
+        virtual const Species_declarator& species() const = 0;
         virtual void accept(Declarator_visitor&) const = 0;
     };
 
     // A term declarator is a sequence of `Indirector`s followed by a species declarator.
+    // An object of this type represents an instance of the first alternative of the C++ 
+    // grammar production for declarator:
+    //     ptr-declarator
+    // Examples:
+    //     (&a)[42]
+    //     *f(T) noexcept
     struct Declarator::Term : Declarator {
         virtual const Sequence<Indirector>& indirectors() const = 0;
-        virtual const Species_declarator& species() const = 0;
     };
 
     // A targeted declarator is a species declarator with a trailing return type,
     // given by the `target()` operation.
+    // An object of this type represents an instance of the second alternative of the C++
+    // grammar production for declarator:
+    //     noptr-declarator paramters-and-qualifiers trailing-return-type
+    // In particular, the `species()` of a targeted declarator has a function Morphism as 
+    // last element in its `suffix()`.  Furthermore, a targeted declarator lacks indirectors.
+    // Examples:
+    //    f(T a, U b) -> decltype(a + b)
     struct Declarator::Targeted : Declarator {
-        virtual const Species_declarator::Callable& species() const = 0;
         virtual const Type& target() const = 0;
     };
 
@@ -142,39 +179,48 @@ namespace ipr::cxx_form {
         virtual void visit(const Declarator::Targeted&) = 0;
     };
 
-    // An id-expression in the species declarator.  That name may be further subject to pack expansion
+    // An id-expression in the species declarator.  That name may be a pack, i.e. preceded by "...".
     struct Species_declarator::Id : Species_declarator {
         virtual const Expr& name() const = 0;
+        virtual const Sequence<Attribute>& attributes() const = 0;
     };
 
-    // A species declarator indicating something that can be called.  That something
-    // is described by the species in the `prefix()` sequence of species.
-    struct Species_declarator::Callable : Species_declarator {
-        virtual const Sequence<Species_declarator>& prefix() const = 0;
+    // A term declarator requiring parentheses to obey operator precedence rules, or just
+    // a redundant parentheses. An object of this type represents an instance of the fourth
+    // alternative of the C++ grammar for noptr-declarator:
+    //      `(` ptr-declarator `)`
+    // Example:
+    //      (a)
+    //      (*p)
+    struct Species_declarator::Parenthesized : Species_declarator {
+        virtual const Declarator::Term& term() const = 0;
+    };
+
+    // -- Function Morphism
+    // A morphism for a declarator indicating something that can be called.
+    // An object of this type captures the components introduced by an instance the second 
+    // alternative of the C++ grammar of noptr-delarator:
+    //    noptr-declarator parameters-and-qualifiers
+    struct Morphism::Function : Morphism {
         virtual const Parameter_list& parameters() const = 0;
         virtual Type_qualifiers qualifiers() const = 0;
         virtual Binding_mode binding_mode() const = 0;
         virtual Optional<Expr> throws() const = 0;
     };
 
-    // A species declarator indicating something that can be indexed.  That something
-    // is described by the species in the `prefix()` sequence of species.
-    struct Species_declarator::Array : Species_declarator {
-        virtual const Sequence<Species_declarator>& prefix() const = 0;
+    // -- Array Morphism
+    // A morphism for a declarator indicating something that can be indexed.
+    // An object of this type captures the components introduced by an instance the third
+    // alternative of the C++ grammar of noptr-delarator:
+    //    noptr-declarator `[` constant-expression_opt `]` attribute-specifier-seq_opt
+    struct Morphism::Array : Morphism {
         virtual Optional<Expr> bound() const = 0;
-    };
-
-    // A term declarator requiring parenthesis to obey operator precedence rules.
-    struct Species_declarator::Parenthesized : Species_declarator {
-        virtual const Declarator::Term& term() const = 0;
     };
 
     // Traversal of species objects is facilitated by visitor classes deriving
     // from this interface.
     struct Species_visitor {
         virtual void visit(const Species_declarator::Id&) = 0;
-        virtual void visit(const Species_declarator::Callable&) = 0;
-        virtual void visit(const Species_declarator::Array&) = 0;
         virtual void visit(const Species_declarator::Parenthesized&) = 0;
     };
 
