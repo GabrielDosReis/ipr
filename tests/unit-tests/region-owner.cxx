@@ -37,7 +37,7 @@ TEST_CASE("Region-owner user") {
   CHECK(&r2 == unit.global_region());
 }
 
-TEST_CASE("Callable species")
+TEST_CASE("Function morphisms")
 {
   using namespace ipr;
   impl::Lexicon lexicon{};
@@ -48,7 +48,7 @@ TEST_CASE("Callable species")
   auto nesting = Mapping_level{0};
 
   auto& spread = *lexicon.make_specifiers_spread();
-  auto& callable = *region.make_callable_species(region, nesting);
+  auto& callable = *region.make_function_morphism(region, nesting);
   callable.inputs.parms.owned_by = &spread;
   spread.proc_seq.push_back(&callable);
 

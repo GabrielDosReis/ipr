@@ -193,7 +193,7 @@ namespace ipr::util {
 }
 
 namespace ipr::cxx_form::impl {
-   Callable_species::Callable_species(const ipr::Region& parent, Mapping_level level)
+   Function_morphism::Function_morphism(const ipr::Region& parent, Mapping_level level)
       : inputs{ parent, level }
    { }
 
@@ -217,14 +217,14 @@ namespace ipr::cxx_form::impl {
       return id_species.make();
    }
 
-   Callable_species* form_factory::make_callable_species(const ipr::Region& parent, Mapping_level level)
+   Function_morphism* form_factory::make_function_morphism(const ipr::Region& parent, Mapping_level level)
    {
-      return callable_species.make(parent, level);
+      return function_morphisms.make(parent, level);
    }
 
-   Array_species* form_factory::make_array_species()
+   Array_morphism* form_factory::make_array_morphism()
    {
-      return array_species.make();
+      return array_morphisms.make();
    }
 
    Parenthesized_species* form_factory::make_parenthesized_species()
