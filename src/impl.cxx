@@ -197,24 +197,44 @@ namespace ipr::cxx_form::impl {
       : inputs{ parent, level }
    { }
 
-   Pointer_indirector* form_factory::make_pointer_indirector()
+   Pointer_indirector* form_factory::make_pointer_indirector(ipr::Type_qualifiers cv)
    {
-      return pointer_indirectors.make();
+      return pointer_indirectors.make(cv);
    }
 
-   Reference_indirector* form_factory::make_reference_indirector()
+   Reference_indirector* form_factory::make_reference_indirector(Reference_flavor f)
    {
-      return reference_indirectors.make();
+      return reference_indirectors.make(f);
    }
 
-   Member_indirector* form_factory::make_member_indirector()
+   Member_indirector* form_factory::make_member_indirector(const ipr::Expr& s, Type_qualifiers cv)
    {
-      return member_indirectors.make();
+      return member_indirectors.make(s, cv);
    }
 
-   Id_species* form_factory::make_id_species()
+   Unqualified_id_species* form_factory::make_unqualified_id_species()
    {
-      return id_species.make();
+      return unqualified_id_species.make();
+   }
+
+   Unqualified_id_species* form_factory::make_unqualified_id_species(const ipr::Name& id)
+   {
+      return unqualified_id_species.make(id);
+   }
+
+   Pack_species* form_factory::make_pack_species()
+   {
+      return pack_species.make();
+   }
+
+   Pack_species* form_factory::make_pack_species(const ipr::Identifier& id)
+   {
+      return pack_species.make(id);
+   }
+
+   Qualified_id_species* form_factory::make_qualified_id_species(const ipr::Expr& s, const ipr::Name& n)
+   {
+      return qualified_id_species.make(s, n);
    }
 
    Function_morphism* form_factory::make_function_morphism(const ipr::Region& parent, Mapping_level level)
@@ -230,6 +250,16 @@ namespace ipr::cxx_form::impl {
    Parenthesized_species* form_factory::make_parenthesized_species()
    {
       return paren_species.make();
+   }
+
+   Term_declarator* form_factory::make_term_declarator()
+   {
+      return term_declarators.make();
+   }
+
+   Targeted_declarator* form_factory::make_targeted_declarator(const cxx_form::Species_declarator& s, const ipr::Type& t)
+   {
+      return targeted_declarators.make(s, t);
    }
 }
 

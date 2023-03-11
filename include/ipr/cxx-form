@@ -128,10 +128,41 @@ namespace ipr::cxx_form {
     // The term declarator `*pfs[8]` in turn has the indirectors is comprised of the single pointer indirector `*`,
     // and of the id species `pfs` with array suffix `[8]`.
     struct Species_declarator {
-        struct Id;                                  // possible packy id-expression -- a or X::m or ...f
+        struct Unqualified_id;                      // -- int p;
+        struct Pack;                                // -- Ts... xs
+        struct Qualified_id;                        // -- int X<T>::count;
         struct Parenthesized;                       // parenthesized term declarator -- (*p)
         virtual const Sequence<Morphism>& suffix() const = 0;
         virtual void accept(Species_visitor&) const = 0;
+    };
+
+    // Base class for representing instances of the C++ production id-expression in the C++
+    // grammar for declarator-id.
+    struct Declarator_id : Species_declarator {
+        virtual const Sequence<Attribute>& attributes() const = 0;
+    };
+
+    // Representation of an unqualified-id in an instance of the C++ grammar production for declarator-id.
+    // The operation `name()` returns an optional value for use in representing instances of the C++
+    // grammar production for noptr-abstract-declarator.
+    struct Species_declarator::Unqualified_id : Declarator_id {
+        virtual Optional<ipr::Name> name() const = 0;
+    };
+
+    // Representation of a pack parameter in an instance of the C++ grammar production for declarator-id
+    // The operation `name()` returns an optional value for use in representing instances of the C++
+    // grammar production for noptr-abstract-abstract-declarator.
+    // Example:
+    //     ... x
+    struct Species_declarator::Pack : Declarator_id {
+        virtual Optional<ipr::Identifier> name() const = 0;
+    };
+
+    // Representation of a qualified-id in an instance of the C++ grammar production for declarator-id
+    // Such qualified-id are used in the out-of-class definition of an entity.
+    struct Species_declarator::Qualified_id : Declarator_id {
+        virtual const ipr::Expr& scope() const = 0;
+        virtual const ipr::Name& member() const = 0;
     };
 
     // -- Declarator.
@@ -143,7 +174,7 @@ namespace ipr::cxx_form {
 
     struct Declarator {
         struct Term;                                // *p or (&a)[42]
-        struct Targeted;                            // *f(T& p) -> int
+        struct Targeted;                            // f(T& p) -> int
         virtual const Species_declarator& species() const = 0;
         virtual void accept(Declarator_visitor&) const = 0;
     };
@@ -177,12 +208,6 @@ namespace ipr::cxx_form {
     struct Declarator_visitor {
         virtual void visit(const Declarator::Term&) = 0;
         virtual void visit(const Declarator::Targeted&) = 0;
-    };
-
-    // An id-expression in the species declarator.  That name may be a pack, i.e. preceded by "...".
-    struct Species_declarator::Id : Species_declarator {
-        virtual const Expr& name() const = 0;
-        virtual const Sequence<Attribute>& attributes() const = 0;
     };
 
     // A term declarator requiring parentheses to obey operator precedence rules, or just
@@ -220,7 +245,9 @@ namespace ipr::cxx_form {
     // Traversal of species objects is facilitated by visitor classes deriving
     // from this interface.
     struct Species_visitor {
-        virtual void visit(const Species_declarator::Id&) = 0;
+        virtual void visit(const Species_declarator::Unqualified_id&) = 0;
+        virtual void visit(const Species_declarator::Pack&) = 0;
+        virtual void visit(const Species_declarator::Qualified_id&) = 0;
         virtual void visit(const Species_declarator::Parenthesized&) = 0;
     };
 
