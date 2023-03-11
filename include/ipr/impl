@@ -766,22 +766,28 @@ namespace ipr::cxx_form::impl {
 
    // -- implementation of ipr::cxx_form::Indirector::Pointer
    struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
-      ipr::Type_qualifiers cv_quals { };
+      explicit Pointer_indirector(ipr::Type_qualifiers cv) : cv_quals{cv} { }
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
+   private:
+      ipr::Type_qualifiers cv_quals;
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Reference
    struct Reference_indirector : impl::Indirector<cxx_form::Indirector::Reference> {
-      Reference_flavor how { };
+      explicit Reference_indirector(Reference_flavor f) : how{f} { }
       Reference_flavor flavor() const final { return how; }
+   private:
+      Reference_flavor how { };
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Member
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
-      util::ref<const ipr::Expr> whole;
-      ipr::Type_qualifiers cv_quals { };
-      const ipr::Expr& scope() const final { return whole.get(); }
+      Member_indirector(const ipr::Expr& s, ipr::Type_qualifiers cv) : whole{s}, cv_quals{cv} { }
+      const ipr::Expr& scope() const final { return whole; }
       ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
+   private:
+      const ipr::Expr& whole;
+      ipr::Type_qualifiers cv_quals;
    };
 
    // -- implementation of ipr::cxx_form::Morphism
@@ -819,12 +825,39 @@ namespace ipr::cxx_form::impl {
       void accept(Species_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
    };
 
-   // -- implementation of ipr::cxx_form::Species_declarator::Id
-   struct Id_species : impl::Species<cxx_form::Species_declarator::Id> {
-      util::ref<const ipr::Expr> expr;
+   // Provide implementation for common operations for the various classes implementing
+   // classes for instances of declarator-id.
+   template<typename T>
+   struct Id_species : impl::Species<T> {
       ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
       const ipr::Sequence<ipr::Attribute>& attributes() const final { return attr_seq; }
-      const ipr::Expr& name() const final { return expr.get(); }
+   };
+
+   // Provide implementation for common operations for the various classes implementing
+   // unqualified-id instances of declarator-id.
+   template<typename T, typename S>
+   struct Name_species : impl::Id_species<T> {
+      Name_species() = default;
+      explicit Name_species(const S& s) : id{s} { }
+      Optional<S> name() const final { return id; }
+   private:
+      Optional<S> id{ };
+   };
+
+   // -- implementation of ipr::cxx_form::Species_declarator::Unqualified_id
+   using Unqualified_id_species = Name_species<cxx_form::Species_declarator::Unqualified_id, ipr::Name>;
+
+   // -- implementation of ipr::cxx_form::Species_declarator::Pack
+   using Pack_species = Name_species<cxx_form::Species_declarator::Pack, ipr::Identifier>;
+
+   // -- implementation of ipr::cxx_form::Species_declarator::Qualified_id
+   struct Qualified_id_species : impl::Id_species<cxx_form::Species_declarator::Qualified_id> {
+      Qualified_id_species(const ipr::Expr& s, const ipr::Name& n) : outer{s}, id{n} { }
+      const ipr::Expr& scope() const final { return outer; }
+      const ipr::Name& member() const final { return id; }
+   private:
+      const ipr::Expr& outer;
+      const ipr::Name& id;
    };
 
    // -- implementation of ipr::cxx_form::Species_declarator::Parenthesized
@@ -833,23 +866,60 @@ namespace ipr::cxx_form::impl {
       const Declarator::Term& term() const final { return declarator.get(); }
    };
 
+   // -- implementation of ipr::cxx_form::Declarator.
+   // Only the `accept()` operation is implemented here.  The other common operation, `species()`,
+   // is individually implemented by each of the derived classes.
+   template<typename T>
+   struct Declarator : T {
+      void accept(cxx_form::Declarator_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Declarator::Term
+   struct Term_declarator : impl::Declarator<cxx_form::Declarator::Term> {
+      ipr::impl::ref_sequence<cxx_form::Indirector> prefix;
+      util::ref<cxx_form::Species_declarator> tail;
+      const ipr::Sequence<cxx_form::Indirector>& indirectors() const final { return prefix; }
+      const Species_declarator& species() const final { return tail.get(); }
+   };
+
+   // -- implementation of ipr::cxx_form::Declarator::Targeted
+   struct Targeted_declarator : impl::Declarator<cxx_form::Declarator::Targeted> {
+      Targeted_declarator(const cxx_form::Species_declarator& s, const ipr::Type& t)
+         : domain{s}, range{t} { }
+      const cxx_form::Species_declarator& species() const final { return domain; }
+      const ipr::Type& target() const final { return range; }
+   private:
+      const cxx_form::Species_declarator& domain;
+      const ipr::Type& range;
+   };
+
    // -- Factory of C++ declarator forms.
    struct form_factory {
-      Pointer_indirector* make_pointer_indirector();
-      Reference_indirector* make_reference_indirector();
-      Member_indirector* make_member_indirector();
-      Id_species* make_id_species();
+      Pointer_indirector* make_pointer_indirector(ipr::Type_qualifiers);
+      Reference_indirector* make_reference_indirector(Reference_flavor);
+      Member_indirector* make_member_indirector(const ipr::Expr&, Type_qualifiers);
+      Unqualified_id_species* make_unqualified_id_species();
+      Unqualified_id_species* make_unqualified_id_species(const ipr::Name&);
+      Pack_species* make_pack_species();
+      Pack_species* make_pack_species(const ipr::Identifier&);
+      Qualified_id_species* make_qualified_id_species(const ipr::Expr&, const ipr::Name&);
       Parenthesized_species* make_parenthesized_species();
       Function_morphism* make_function_morphism(const ipr::Region& parent, Mapping_level level);
       Array_morphism* make_array_morphism();
+      Term_declarator* make_term_declarator();
+      Targeted_declarator* make_targeted_declarator(const cxx_form::Species_declarator&, const ipr::Type&);
    private:
       ipr::impl::stable_farm<Pointer_indirector> pointer_indirectors;
       ipr::impl::stable_farm<Reference_indirector> reference_indirectors;
       ipr::impl::stable_farm<Member_indirector> member_indirectors;
-      ipr::impl::stable_farm<Id_species> id_species;
+      ipr::impl::stable_farm<Unqualified_id_species> unqualified_id_species;
+      ipr::impl::stable_farm<Pack_species> pack_species;
+      ipr::impl::stable_farm<Qualified_id_species> qualified_id_species;
       ipr::impl::stable_farm<Parenthesized_species> paren_species;
       ipr::impl::stable_farm<Function_morphism> function_morphisms;
       ipr::impl::stable_farm<Array_morphism> array_morphisms;
+      ipr::impl::stable_farm<Term_declarator> term_declarators;
+      ipr::impl::stable_farm<Targeted_declarator> targeted_declarators;
    };
 }
 
