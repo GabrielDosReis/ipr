@@ -261,6 +261,36 @@ namespace ipr::cxx_form::impl {
    {
       return targeted_declarators.make(s, t);
    }
+
+   Classic_provision* form_factory::make_classic_provision(const cxx_form::Elemental_initializer& x)
+   {
+      return classic_provisions.make(x);
+   }
+
+   Parenthesized_provision* form_factory::make_parenthesized_provision(const ipr::Expr& x)
+   {
+      return paren_provisions.make(x);
+   }
+
+   Braced_provision* form_factory::make_braced_provision()
+   {
+      return braced_provisions.make();
+   }
+
+   Designated_list_provision* form_factory::make_designated_provision()
+   {
+      return designated_provisions.make();
+   }
+
+   Field_designator* form_factory::make_field_designator(const ipr::Identifier& x)
+   {
+      return field_designators.make(x);
+   }
+
+   Slot_designator* form_factory::make_slot_designator(const ipr::Expr& x)
+   {
+      return slot_designators.make(x);
+   }
 }
 
 namespace ipr::impl {

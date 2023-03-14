@@ -759,6 +759,7 @@ namespace ipr::cxx_form::impl {
    // -- implementation of ipr::cxx_form::Indirector
    template<typename T>
    struct Indirector : T {
+      using Interface = T;
       ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
       const ipr::Sequence<ipr::Attribute>& attributes() const final { return attr_seq; }
       void accept(Indirector_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
@@ -793,6 +794,7 @@ namespace ipr::cxx_form::impl {
    // -- implementation of ipr::cxx_form::Morphism
    template<typename T>
    struct Morphism : T {
+      using Interface = T;
       ipr::impl::ref_sequence<ipr::Attribute> attr_seq;
       const ipr::Sequence<ipr::Attribute>& attributes() const final { return attr_seq; }
       void accept(Morphism_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
@@ -820,6 +822,7 @@ namespace ipr::cxx_form::impl {
    // -- implementation of ipr::cxx_form::Species_declarator
    template<typename T>
    struct Species : T {
+      using Interface = T;
       ipr::impl::ref_sequence<cxx_form::Morphism> morphisms;
       const ipr::Sequence<cxx_form::Morphism>& suffix() const final { return morphisms; }
       void accept(Species_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
@@ -871,6 +874,7 @@ namespace ipr::cxx_form::impl {
    // is individually implemented by each of the derived classes.
    template<typename T>
    struct Declarator : T {
+      using Interface = T;
       void accept(cxx_form::Declarator_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
    };
 
@@ -893,6 +897,82 @@ namespace ipr::cxx_form::impl {
       const ipr::Type& range;
    };
 
+   // -- implementation of ipr::cxx_form::Initialization_provision
+   template<typename T>
+   struct Initialization_provision : T {
+      void accept(cxx_form::Provision_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Elemental_initializer
+   template<typename T>
+   struct Elemental_initializer : T {
+      using Interface = T;
+      void accept(cxx_form::Initializer_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Subobject_designator
+   template<typename T>
+   struct Subobject_designator : T {
+      using Interface = T;
+      void accept(cxx_form::Designator_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Field_designator
+   struct Field_designator : impl::Subobject_designator<cxx_form::Field_designator> {
+      explicit Field_designator(const ipr::Identifier& x) : id{x} { }
+      const ipr::Identifier& name() const final { return id; }
+   private:
+      const ipr::Identifier& id;
+   };
+
+   // -- implementation of ipr::cxx_form::Slot_designator
+   struct Slot_designator : impl::Subobject_designator<cxx_form::Slot_designator> {
+      explicit Slot_designator(const ipr::Expr& x) : idx{x} { }
+      const ipr::Expr& index() const final { return idx; }
+   private:
+      const ipr::Expr& idx;
+   };
+
+   // -- implementation of ipr::cxx_form::Earmarked_initializer
+   struct Earmarked_initializer : cxx_form::Earmarked_initializer {
+      using Interface = cxx_form::Earmarked_initializer;
+      Earmarked_initializer(const cxx_form::Subobject_designator& f, const cxx_form::Initialization_provision& x)
+         : sub{f}, init{x} { }
+      const cxx_form::Subobject_designator& subobject() const final { return sub; }
+      const cxx_form::Initialization_provision& initializer() const final { return init; }
+   private:
+      const cxx_form::Subobject_designator& sub;
+      const cxx_form::Initialization_provision& init;
+   };
+
+   // -- implementation of ipr::cxx_form::Classic_provision
+   struct Classic_provision : impl::Initialization_provision<ipr::cxx_form::Classic_provision> {
+      explicit Classic_provision(const ipr::cxx_form::Elemental_initializer& i) : init{i} { }
+      const ipr::cxx_form::Elemental_initializer& initializer() const final { return init; }
+   private:
+      const ipr::cxx_form::Elemental_initializer& init;
+   };
+
+   // -- implementation of ipr::cxx_form::Parenthesized_provision
+   struct Parenthesized_provision : impl::Initialization_provision<ipr::cxx_form::Parenthesized_provision> {
+      explicit Parenthesized_provision(const ipr::Expr& x) : expr{x} { }
+      const ipr::Expr& initializer() const final { return expr; }
+   private:
+      const ipr::Expr& expr;
+   };
+
+   // -- implementation of ipr::cxx_form::Braced_provision
+   struct Braced_provision : impl::Initialization_provision<impl::Elemental_initializer<ipr::cxx_form::Braced_provision>> {
+      ipr::impl::ref_sequence<cxx_form::Elemental_initializer> seq;
+      const ipr::Sequence<cxx_form::Elemental_initializer>& elements() const final { return seq; }
+   };
+
+   // -- implementation of ipr::cxx_form::Designated_list_provision
+   struct Designated_list_provision : impl::Initialization_provision<impl::Elemental_initializer<cxx_form::Designated_list_provision>> {
+      ipr::impl::obj_sequence<cxx_form::impl::Earmarked_initializer> seq;
+      const ipr::Sequence<cxx_form::Earmarked_initializer>& elements() const final { return seq; }
+   };   
+
    // -- Factory of C++ declarator forms.
    struct form_factory {
       Pointer_indirector* make_pointer_indirector(ipr::Type_qualifiers);
@@ -908,6 +988,13 @@ namespace ipr::cxx_form::impl {
       Array_morphism* make_array_morphism();
       Term_declarator* make_term_declarator();
       Targeted_declarator* make_targeted_declarator(const cxx_form::Species_declarator&, const ipr::Type&);
+      Classic_provision* make_classic_provision(const cxx_form::Elemental_initializer&);
+      Parenthesized_provision* make_parenthesized_provision(const ipr::Expr&);
+      Braced_provision* make_braced_provision();
+      Designated_list_provision* make_designated_provision();
+      Field_designator* make_field_designator(const ipr::Identifier&);
+      Slot_designator* make_slot_designator(const ipr::Expr&);
+
    private:
       ipr::impl::stable_farm<Pointer_indirector> pointer_indirectors;
       ipr::impl::stable_farm<Reference_indirector> reference_indirectors;
@@ -920,6 +1007,12 @@ namespace ipr::cxx_form::impl {
       ipr::impl::stable_farm<Array_morphism> array_morphisms;
       ipr::impl::stable_farm<Term_declarator> term_declarators;
       ipr::impl::stable_farm<Targeted_declarator> targeted_declarators;
+      ipr::impl::stable_farm<Classic_provision> classic_provisions;
+      ipr::impl::stable_farm<Parenthesized_provision> paren_provisions;
+      ipr::impl::stable_farm<Braced_provision> braced_provisions;
+      ipr::impl::stable_farm<Designated_list_provision> designated_provisions;
+      ipr::impl::stable_farm<Field_designator> field_designators;
+      ipr::impl::stable_farm<Slot_designator> slot_designators;
    };
 }
 

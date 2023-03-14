@@ -251,10 +251,137 @@ namespace ipr::cxx_form {
         virtual void visit(const Species_declarator::Parenthesized&) = 0;
     };
 
+    // -- Proclamator.
+    // A proclamator is a complete declarator along with an initializer, or with a constraint.
+    // A proclamator represents an instance of the C++ grammar for init-declarator.  Furtermore,
+    // a proclamator holds the result of elaborating its declarator with a decl-specifier-seq that
+    // preceds it in a declaration.
+
+    // -- Initialization provision.
+    // -- An initialization provision is an initializer form that stipulates how an entity
+    // -- (the name of which is introduced by a declarator) shall be initialized. Choices range from
+    // -- classic provision introduced by the `=` sign, to recent innovations such as parenthesized
+    // -- expression list or brace enclosed initializer list for uniform initialization.
+
+    struct Provision_visitor;
+
+    // Base class of initialization provision classes.  They don't share much in common other than
+    // appearing in top-level init-declarators.
+    struct Initialization_provision {
+        virtual void accept(Provision_visitor&) const = 0;
+    };
+
+    // Base for navigating elemental initializers.
+    struct Initializer_visitor;
+
+    // Base class of initializer form (other than earmarked initializer) that can appear in a
+    // brace-enclosed initilizer form. 
+    struct Elemental_initializer {
+        virtual void accept(Initializer_visitor&) const = 0;
+    };
+
+    // Initialization provision of the form
+    //     `=` initializer-clause
+    struct Classic_provision : Initialization_provision {
+        virtual const Elemental_initializer& initializer() const = 0;
+    };
+
+    // Initialization provision of the form
+    //    `(` expression-list `)`;
+    struct Parenthesized_provision : Initialization_provision {
+        virtual const Expr& initializer() const = 0;
+    };
+
+    // Embedding of an expression in an elemental initializer hierarchy.
+    // Note that the expression here can be either
+    //      expression
+    // in general, or an
+    //     expression-list_opt
+    struct Expr_initializer : Elemental_initializer {
+        virtual const Expr& expression() const = 0;
+    };
+
+    // Initialization provision of the form
+    //    `{` initializer-list_opt `}`
+    struct Braced_provision : Initialization_provision, Elemental_initializer {
+        virtual const Sequence<Elemental_initializer>& elements() const = 0;
+    };
+
+    // An earmarked initializer is a form that specifies an initializer for a specific subobject
+    // of a structure or an array, in a designated-initializer-list.  Strictly speaking, ISO C++
+    // (unlike C99) currently supports only designated-initializer-list for structures, but not
+    // arrays.  But since the C99 designated-initialization for arrays is in practice accepted
+    // by major compilers as extensions, and that extension fits the general model here, the form
+    // data structures below make room for them.
+    struct Earmarked_initializer;
+
+    // An initializer provision of the form
+    //    `{` designated-initializer-list_opt `}`
+    struct Designated_list_provision : Initialization_provision, Elemental_initializer {
+        virtual const Sequence<Earmarked_initializer>& elements() const = 0;
+    };
+
+    // Base class for navigation of initialization provisions.
+    struct Provision_visitor {
+        virtual void visit(const Classic_provision&) = 0;
+        virtual void visit(const Parenthesized_provision&) = 0;
+        virtual void visit(const Braced_provision&) = 0;
+        virtual void visit(const Designated_list_provision&) = 0;
+    };
+
+    // -- Designator.
+    // A designator is a form that identifies an immediate subobject of a structure (by name),
+    // or an array (by slot index).  For example, in designated-initializer-list, the element
+    //     .galaxy { "Milky Way"}
+    // provides a braced-initializer for the field named `galaxy`.  Similarly the element
+    //     [4] = "Tau'ri"
+    // provides a classic-initializer for the fifth slot of the array being initialized.
+    struct Designator_visitor;
+
+    struct Subobject_designator {
+        virtual void accept(Designator_visitor&) const = 0;
+    };
+
+    // Designator of a field.
+    // Example:
+    //     . location
+    struct Field_designator : Subobject_designator {
+        virtual const Identifier& name() const = 0;
+    };
+
+    // Designator of an array slot.
+    // Example:
+    //    [ 13 ]
+    struct Slot_designator : Subobject_designator {
+        virtual const Expr& index() const = 0;
+    };
+
+    struct Designator_visitor {
+        virtual void visit(const Field_designator&) = 0;
+        virtual void visit(const Slot_designator&) = 0;
+    };
+
+    // An earmarked initializer is an element of a designated-initializer-list that provides
+    // an initialier for a direct subobject of a structure or an array.
+    // Example:
+    //    .galaxy { "Milky Way" }
+    //    [4] = "Tau'ri"
+    struct Earmarked_initializer {
+        virtual const Subobject_designator& subobject() const = 0;
+        virtual const Initialization_provision& initializer() const = 0;
+    };
+
+    // Base class for navigation of elemental initializers.
+    struct Initializer_visitor {
+        virtual void visit(const Expr_initializer&) = 0;
+        virtual void visit(const Braced_provision&) = 0;
+        virtual void visit(const Designated_list_provision&) = 0;
+    };
+
     struct Proclamator_visitor;
 
     struct Proclamator {
-        struct Initialized;
+        struct Initialized;                         // int ary[] { 1, 2, 3 };
         struct Constrained;
         virtual const Declarator& declarator() const = 0;
         virtual Decl& result() const = 0;
@@ -262,7 +389,7 @@ namespace ipr::cxx_form {
     };
 
     struct Proclamator::Initialized : Proclamator {
-        virtual Optional<Expr> initializer() const = 0;
+        virtual Optional<Initialization_provision> initializer() const = 0;
     };
 
     struct Proclamator::Constrained : Proclamator {
