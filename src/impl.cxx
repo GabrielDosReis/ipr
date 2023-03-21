@@ -197,6 +197,51 @@ namespace ipr::cxx_form::impl {
       : inputs{ parent, level }
    { }
 
+   Monadic_constraint* form_factory::make_monadic_constraint(const ipr::Identifier& n)
+   {
+      return monadic_constraints.make(n);
+   }
+
+   Monadic_constraint* form_factory::make_monadic_constraint(const ipr::Expr& s, const ipr::Identifier& n)
+   {
+      return monadic_constraints.make(s, n);
+   }
+
+   Polyadic_constraint* form_factory::make_polyadic_constraint(const ipr::Identifier& n)
+   {
+      return polyadic_constraints.make(n);
+   }
+
+   Polyadic_constraint* form_factory::make_polyadic_constraint(const ipr::Expr& s, const ipr::Identifier& n)
+   {
+      return polyadic_constraints.make(s, n);
+   }
+
+   Simple_requirement* form_factory::make_simple_requirement(const ipr::Expr& x)
+   {
+      return simple_reqs.make(x);
+   }
+
+   Type_requirement* form_factory::make_type_requirement(const ipr::Name& n)
+   {
+      return type_reqs.make(n);
+   }
+
+   Type_requirement* form_factory::make_type_requirement(const ipr::Expr& s, const ipr::Name& n)
+   {
+      return type_reqs.make(s, n);
+   }
+
+   Compound_requirement* form_factory::make_compound_requirement(const ipr::Expr& x)
+   {
+      return compound_reqs.make(x);
+   }
+
+   Nested_requirement* form_factory::make_nested_requirement(const ipr::Expr& x)
+   {
+      return nested_reqs.make(x);
+   }
+
    Pointer_indirector* form_factory::make_pointer_indirector(ipr::Type_qualifiers cv)
    {
       return pointer_indirectors.make(cv);
@@ -1233,6 +1278,9 @@ namespace ipr::impl {
          return decls;
       }
 
+      // -- impl::Restriction --
+      const ipr::Type& Restriction::type() const { return impl::builtin(Fundamental::Bool); }
+
       // ---------------
       // -- Enclosure --
       // ---------------
@@ -1276,6 +1324,9 @@ namespace ipr::impl {
       {
          inputs.parms.owned_by = this;
       }
+
+      // -- impl::Requires
+      const ipr::Type& Requires::type() const { return impl::builtin(Fundamental::Bool); }
 
       // -------------------------------
       // -- impl::Scope --
@@ -1722,6 +1773,11 @@ namespace ipr::impl {
          return make(cardinalities, e).with_type(t);
       }
 
+      impl::Restriction* expr_factory::make_restriction(const ipr::Expr& e)
+      {
+         return restrictions.make(e);
+      }
+
       impl::Typeid*
       expr_factory::make_typeid(const ipr::Expr& e, Optional<ipr::Type> t)
       {
@@ -2112,6 +2168,11 @@ namespace ipr::impl {
       impl::Lambda* expr_factory::make_lambda(const ipr::Region& r, Mapping_level l)
       {
          return lambdas.make(r, l);
+      }
+
+      impl::Requires* expr_factory::make_requires(const ipr::Region& r, Mapping_level l)
+      {
+         return reqs.make(r, l);
       }
 
       impl::Elementary_substitution*

@@ -53,6 +53,7 @@ Guide_name,                         // ipr::Guide_name
 Phantom,                            // ipr::Phantom
 Eclipsis,                           // ipr::Eclipsis
 Lambda,                             // ipr::Lambda
+Requires,                           // ipr::Requires
 
 Symbol,                             // ipr::Symbol
 Address,                            // ipr::Address
@@ -83,6 +84,7 @@ Unary_plus,                         // ipr::Unary_plus
 Expansion,                          // ipr::Expansion
 Noexcept,                           // ipr::Noexcept
 Args_cardinality,                   // ipr::Args_cardinality
+Restriction,                        // ipr::Restriction
 
 Rewrite,                            // ipr::Rewrite
 Scope_ref,                          // ipr::Scope_ref
