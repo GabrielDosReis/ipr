@@ -873,6 +873,12 @@ namespace ipr {
                                 // -- Args_cardinality --
    struct Args_cardinality : Unary<Category<Category_code::Args_cardinality>> { };
 
+                                // -- Restriction --
+   // Representation of what ISO C++ calls "requires-clause", an expression of the form
+   //      `requires` constant-expression
+   // at the input source level.  Not to be confusion with "requires-expression".
+   struct Restriction : Unary<Category<Category_code::Restriction>> { };
+
                                 // -- Noexcept --
    struct Noexcept : Unary<Category<Category_code::Noexcept>> { };
 
@@ -1307,6 +1313,15 @@ namespace ipr {
       virtual const Substitution& substitution() const = 0;
       virtual Optional<Expr> instance() const  = 0;
       const Type& type() const final { return instance().get().type(); }
+   };
+
+                                // -- Requires --
+   // Representation of a requires-expression.  Despite the presence of `parameters()`, this expression
+   // is not a parameterization of expressions in the conventional sense.  In particular the type of
+   // a requires-expression is never a mapping in any sense.  It is always `bool`.
+   struct Requires : Category<Category_code::Requires> {
+      virtual const Parameter_list& parameters() const = 0;
+      virtual const Sequence<cxx_form::Requirement>& body() const = 0;
    };
 
                                 // -- New --
@@ -1916,6 +1931,7 @@ namespace ipr {
       virtual void visit(const Phantom&);
       virtual void visit(const Eclipsis&);
       virtual void visit(const Lambda&);
+      virtual void visit(const Requires&);
 
       virtual void visit(const Symbol&);
       virtual void visit(const Address&);
@@ -1929,6 +1945,7 @@ namespace ipr {
       virtual void visit(const Alignof&);
       virtual void visit(const Sizeof&);
       virtual void visit(const Args_cardinality&);
+      virtual void visit(const Restriction&);
       virtual void visit(const Expr_stmt&);
       virtual void visit(const Typeid&);
       virtual void visit(const Id_expr&);

@@ -23,6 +23,104 @@
 // -- Note: There is no effort in this file to reify the parse trees of the ISO C++ grammar.
 
 namespace ipr::cxx_form {
+    // -- Syntactic constraints.
+    // -- C++ Concepts, as supported since C++20, focus primarily on the syntactic requirements
+    // -- on combinations of template arguments. The semantics counterpart is not yet supported by
+    // -- the base language.
+    // -- A constraint generally applies a concept to a compile-time argument list.  Hence the syntax
+    // -- uses the "template specialization" syntax for the application.  The result is a Boolean
+    // -- expression indicating whether the syntactic constraints contained in the body if the 
+    // -- concept are satisfied or not.  Given a monadic concept (a concept with exactly one parameter),
+    // -- the concept name, as a predicate, can be viewed as a type for a template-type parameter.  
+    // -- That is known as the "short-hand notation" . Similar notational convenience for non-type
+    // -- template parameter isn't as straightforward.
+    // -- Given a polyadic concept (a concept with more N parameters, N > 1), a constraint can be formed
+    // -- by applying the concept name to N-1 compile-time arguments (the "trailing arguments"). 
+
+    struct Constraint_visitor;
+
+    struct Constraint {
+        struct Monadic;                                         // -> C;
+        struct Polyadic;                                        // -> C<e1, e2>;
+        virtual void accept(Constraint_visitor&) const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the first alternative of the ISO C++
+    // grammar production for type-constraint
+    //          nested-name-specifier_opt concept-name
+    struct Constraint::Monadic : Constraint {
+        virtual Optional<Expr> scope() const = 0;
+        virtual const Identifier& concept_name() const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the second alternative of the ISO C++
+    // grammar production for type-constraint
+    //          nested-name-specifier_opt concept-name `< template-argument--list_opt `>`
+    struct Constraint::Polyadic : Constraint {
+        virtual Optional<Expr> scope() const = 0;
+        virtual const Identifier& concept_name() const = 0;
+        virtual const Sequence<Expr>& trailing_arguments() const = 0;
+    };
+
+    struct Constraint_visitor {
+        virtual void visit(const Constraint::Monadic&) = 0;
+        virtual void visit(const Constraint::Polyadic&) = 0;
+    };
+
+    // Base class for navigation of requirements.
+    struct Requirement_visitor;
+
+    // -- Typically, the definition of a concept is expressed in terms of syntactic requirements.
+    // -- Those requirements are formulated as proof obliggations for the validity of stylized
+    // -- expressions (usage patterns).
+    struct Requirement {
+        struct Simple;                                  // *p = t;
+        struct Type;                                    // typename C::iterator;
+        struct Compound;                                // { &*p } -> same_as<T*>;
+        struct Nested;                                  // requires Trivial<C::iterator>;
+        virtual void accept(Requirement_visitor&) const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the ISO C++ grammar production
+    // for simple-requirement:
+    //          expression `;`
+    struct Requirement::Simple : Requirement {
+        virtual const Expr& expr() const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the ISO C++ grammar production
+    // for type-requirement:
+    //      `typename` nested-name-specifier_opt type-namexpression `;`
+    struct Requirement::Type : Requirement {
+        virtual Optional<Expr> scope() const = 0;
+        virtual const Name& type_name() const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the ISO C++ grammar production
+    // for compound-requirement:
+    //      `{` expression `}` `noexcept`_opt return-type-requirement_opt `;`
+    // where the grammar production for return-type-requirement is
+    //     `->` type-constraint
+    struct Requirement::Compound : Requirement {
+        virtual const Expr& expr() const = 0;
+        virtual Optional<Constraint> constraint() const = 0;
+        virtual bool nothrow() const = 0;
+    };
+
+    // An object of this type corresponds to an instance of the ISO C++ grammar production
+    // for nested-requirement:
+    //      `requires` constant-expression `;`
+    struct Requirement::Nested : Requirement {
+        virtual const Expr& condition() const = 0;
+    };
+
+    struct Requirement_visitor {
+        virtual void visit(const Requirement::Simple&) = 0;
+        virtual void visit(const Requirement::Type&) = 0;
+        virtual void visit(const Requirement::Compound&) = 0;
+        virtual void visit(const Requirement::Nested&) = 0;
+    };
+
     // -- Abstraction of ISO C++ Declarators:
     // -- The C and C++ languages have tortuous grammars for declarations, whereby
     // -- declarations are structured to mimic use (operator precedence).  A declaration

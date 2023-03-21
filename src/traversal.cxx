@@ -300,6 +300,11 @@ void ipr::Visitor::visit(const Lambda& e)
    visit(as<Expr>(e));
 }
 
+void ipr::Visitor::visit(const Requires& e)
+{
+   visit(as<Expr>(e));
+}
+
 void
 ipr::Visitor::visit(const Symbol& e)
 {
@@ -366,6 +371,11 @@ ipr::Visitor::visit(const Sizeof& e)
 
 void
 ipr::Visitor::visit(const Args_cardinality& e)
+{
+   visit(as<Expr>(e));
+}
+
+void ipr::Visitor::visit(const Restriction& e)
 {
    visit(as<Expr>(e));
 }

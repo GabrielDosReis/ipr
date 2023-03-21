@@ -756,6 +756,83 @@ namespace ipr::impl {
 }
 
 namespace ipr::cxx_form::impl {
+   // -- implementation of ipr::cxx_form::Constraint
+   template<typename T>
+   struct Constraint : T, ipr::util::immotile {
+      using Interface = T;
+      void accept(Constraint_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Constraint::Monadic
+   struct Monadic_constraint : impl::Constraint<cxx_form::Constraint::Monadic> {
+      explicit Monadic_constraint(const ipr::Identifier& n) : id{n} { }
+      Monadic_constraint(const ipr::Expr& s, const ipr::Identifier& n) : outer{s}, id{n} { }
+      Optional<ipr::Expr> scope() const final { return outer; }
+      const ipr::Identifier& concept_name() const final { return id; }
+   private:
+      Optional<ipr::Expr> outer { };
+      const ipr::Identifier& id;
+   };
+
+   // -- implementation of ipr::cxx_form::Constraint::Polyadic
+   struct Polyadic_constraint : impl::Constraint<cxx_form::Constraint::Polyadic> {
+      ipr::impl::ref_sequence<ipr::Expr> args;
+      explicit Polyadic_constraint(const ipr::Identifier& n) : id{n} { }
+      Polyadic_constraint(const ipr::Expr& s, const ipr::Identifier& n) : outer{s}, id{n} { }
+      Optional<ipr::Expr> scope() const final { return outer; }
+      const ipr::Identifier& concept_name() const final { return id; }
+      const ipr::Sequence<ipr::Expr>& trailing_arguments() const final { return args; }
+   private:
+      Optional<ipr::Expr> outer { };
+      const ipr::Identifier& id;
+   };
+
+   // -- implementation of ipr::cxx_form::Requirement
+   template<typename T>
+   struct Requirement : T, ipr::util::immotile {
+      using Interface = T;
+      void accept(Requirement_visitor& v) const final { v.visit(static_cast<const T&>(*this)); }
+   };
+
+   // -- implementation of ipr::cxx_form::Requirement::Simple
+   struct Simple_requirement : impl::Requirement<cxx_form::Requirement::Simple> {
+      explicit Simple_requirement(const ipr::Expr& x) : pattern{x} { }
+      const ipr::Expr& expr() const final { return pattern; }
+   private:
+      const ipr::Expr& pattern;
+   };
+
+   // -- implementation of ipr::cxx_form::Requirement::Type
+   struct Type_requirement : impl::Requirement<cxx_form::Requirement::Type> {
+      explicit Type_requirement(const ipr::Name& n) : name{n} { }
+      Type_requirement(const ipr::Expr& s, const ipr::Name& n) : outer{s}, name{n} { }
+      Optional<ipr::Expr> scope() const final { return outer; }
+      const ipr::Name& type_name() const final { return name; }
+   private:
+      Optional<ipr::Expr> outer { };
+      const ipr::Name& name;
+   };
+
+   // -- implementation of ipr::cxx_form::Requirement::Compound
+   struct Compound_requirement : impl::Requirement<cxx_form::Requirement::Compound> {
+      Optional<cxx_form::Constraint> type;
+      bool has_noexcept = false;
+      explicit Compound_requirement(const ipr::Expr& x) : pattern{x} { }
+      const ipr::Expr& expr() const final { return pattern; }
+      Optional<cxx_form::Constraint> constraint() const final { return type; }
+      bool nothrow() const final { return has_noexcept; }
+   private:
+      const ipr::Expr& pattern;
+   };
+
+   // -- implementation of ipr::cxx_form::Requirement::Compound
+   struct Nested_requirement : impl::Requirement<cxx_form::Requirement::Nested> {
+      explicit Nested_requirement(const ipr::Expr& x) : cond{x} { }
+      const ipr::Expr& condition() const final { return cond; }
+   private:
+      const ipr::Expr& cond;
+   };
+
    // -- implementation of ipr::cxx_form::Indirector
    template<typename T>
    struct Indirector : T {
@@ -975,6 +1052,16 @@ namespace ipr::cxx_form::impl {
 
    // -- Factory of C++ declarator forms.
    struct form_factory {
+      Monadic_constraint* make_monadic_constraint(const ipr::Identifier&);
+      Monadic_constraint* make_monadic_constraint(const ipr::Expr&, const ipr::Identifier&);
+      Polyadic_constraint* make_polyadic_constraint(const ipr::Identifier&);
+      Polyadic_constraint* make_polyadic_constraint(const ipr::Expr&, const ipr::Identifier&);
+      Simple_requirement* make_simple_requirement(const ipr::Expr&);
+      Type_requirement* make_type_requirement(const ipr::Name&);
+      Type_requirement* make_type_requirement(const ipr::Expr&, const ipr::Name&);
+      Compound_requirement* make_compound_requirement(const ipr::Expr&);
+      Nested_requirement* make_nested_requirement(const ipr::Expr&);
+
       Pointer_indirector* make_pointer_indirector(ipr::Type_qualifiers);
       Reference_indirector* make_reference_indirector(Reference_flavor);
       Member_indirector* make_member_indirector(const ipr::Expr&, Type_qualifiers);
@@ -996,6 +1083,12 @@ namespace ipr::cxx_form::impl {
       Slot_designator* make_slot_designator(const ipr::Expr&);
 
    private:
+      ipr::impl::stable_farm<Monadic_constraint> monadic_constraints;
+      ipr::impl::stable_farm<Polyadic_constraint> polyadic_constraints;
+      ipr::impl::stable_farm<Simple_requirement> simple_reqs;
+      ipr::impl::stable_farm<Type_requirement> type_reqs;
+      ipr::impl::stable_farm<Compound_requirement> compound_reqs;
+      ipr::impl::stable_farm<Nested_requirement> nested_reqs;
       ipr::impl::stable_farm<Pointer_indirector> pointer_indirectors;
       ipr::impl::stable_farm<Reference_indirector> reference_indirectors;
       ipr::impl::stable_farm<Member_indirector> member_indirectors;
@@ -1556,6 +1649,15 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Capture_specification>& captures() const final { return env_spec; }
    };
 
+   struct Requires : immotile_node<ipr::Requires> {
+      impl::Parameter_list formals;
+      impl::ref_sequence<cxx_form::Requirement> requirements;
+      Requires(const ipr::Region& r, Mapping_level l) : formals{r, l} { }
+      const ipr::Type& type() const final;
+      const ipr::Parameter_list& parameters() const final { return formals; }
+      const ipr::Sequence<cxx_form::Requirement>& body() const final { return requirements; }
+   };
+
    using Address = Classic_unary_expr<ipr::Address>;
    using Array_delete = Classic_unary_expr<ipr::Array_delete>;
    using Complement = Classic_unary_expr<ipr::Complement>;
@@ -1586,6 +1688,11 @@ namespace ipr::impl {
    using Args_cardinality = Unary_expr<ipr::Args_cardinality>;
    using Typeid = Unary_expr<ipr::Typeid>;
    using Label = Unary_expr<ipr::Label>;
+
+   struct Restriction : Unary_node<ipr::Restriction> {
+      explicit Restriction(const ipr::Expr& x) : Unary_node<ipr::Restriction>{x} { }
+      const ipr::Type& type() const final;
+   };
 
    struct Id_expr : Unary_expr<ipr::Id_expr> {
       Optional<ipr::Expr> decls { };
@@ -2399,6 +2506,7 @@ namespace ipr::impl {
       Sizeof* make_sizeof(const ipr::Expr&, Optional<ipr::Type> = { });
       Args_cardinality* make_args_cardinality(const ipr::Expr&, Optional<ipr::Type> = { });
       Typeid* make_typeid(const ipr::Expr&, Optional<ipr::Type> = { });
+      Restriction* make_restriction(const ipr::Expr&);
       impl::Id_expr* make_id_expr(const ipr::Name&, Optional<ipr::Type> = {});
       Id_expr* make_id_expr(const ipr::Decl&);
       Label* make_label(const ipr::Identifier&, Optional<ipr::Type> = {});
@@ -2478,6 +2586,7 @@ namespace ipr::impl {
                                     const ipr::Expr&, Optional<ipr::Type> = {});
       Mapping* make_mapping(const ipr::Region&, Mapping_level);
       Lambda* make_lambda(const ipr::Region&, Mapping_level);
+      Requires* make_requires(const ipr::Region&, Mapping_level);
 
       Elementary_substitution* make_elementary_substitution(const ipr::Parameter&, const ipr::Expr&);
       General_substitution* make_general_substitution();
@@ -2528,6 +2637,7 @@ namespace ipr::impl {
       stable_farm<impl::Construction> constructions;
       stable_farm<impl::Noexcept> noexcepts;
       stable_farm<impl::Args_cardinality> cardinalities;
+      stable_farm<impl::Restriction> restrictions;
 
       stable_farm<impl::Rewrite> rewrites;
       stable_farm<impl::Scope_ref> scope_refs;
@@ -2588,6 +2698,7 @@ namespace ipr::impl {
       stable_farm<impl::Conditional> conds;
       stable_farm<impl::Mapping> mappings;
       stable_farm<impl::Lambda> lambdas;
+      stable_farm<impl::Requires> reqs;
 
       stable_farm<impl::Elementary_substitution> elem_substs;
       stable_farm<impl::General_substitution> gen_substs;

@@ -73,6 +73,7 @@ namespace ipr {
                                  // rethrow, empty parts of a For, etc...
    struct Eclipsis;              // the `...' in a unary fold
    struct Lambda;                // Lambda expression, packing an environment and a code pointer
+   struct Requires;              // requires-expression -- requires(T t) { ++t; }
 
    // -------------------------------------------------------
    // -- results of unary expression constructor constants --
@@ -108,6 +109,7 @@ namespace ipr {
    struct Expansion;             // pack expansion                    t...
    struct Noexcept;              // noexcept expression        noexcept(e)
    struct Args_cardinality;      // arguments count in a parameter pack: sizeof...(args)
+   struct Restriction;           // requires-clause           requires same_as<S, T>
 
    // --------------------------------------------------------
    // -- results of binary expression constructor constants --
