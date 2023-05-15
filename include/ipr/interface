@@ -101,6 +101,65 @@ namespace ipr {
       virtual const T& result() const = 0;
    };
 
+   // -- Logogram --
+   // A class of words (from a C++ input source) standing for themselves, with no particular elaboration.
+   struct Logogram : Basic_unary<const String&> {
+      const String& what() const { return operand(); }
+      bool operator==(const Logogram& x) const { return &what() == &x.what(); }
+      bool operator!=(const Logogram&) const = default;
+   };
+
+   // -- Calling_convention --
+   // The ISO C++ standards does not explicitly acknowledge function calling conventions, as they
+   // are considered low-level implementation details (beyond the fact that a language linkage is a thing).
+   // However, in practice, those implementation details bubble up (leaky abstraction) into
+   // the system system used by such implementations, in unpleasant ways.  As illustration, just have
+   // a look at the chaos introduced by language linkage in function types.
+   // Note: language linkage is represented separately; see `Linkage`.
+   // An object of this type provides a symbolic representation of a calling convention via an logogram
+   // given by the `name()` operation.
+   struct Calling_convention {
+      explicit constexpr Calling_convention(const Logogram& l) : conv{l} { }
+      const Logogram& name() const { return conv; }
+      bool operator==(const Calling_convention& x) const { return conv == x.conv; }
+      bool operator!=(const Calling_convention&) const = default;
+   private:
+      const Logogram& conv;
+   };
+
+                                // -- Linkage --
+   // An object of this type represents language linkage, e.g., "C" in `extern "C"'.
+   // The ISO standard mandates at least two language linkages: "C" and
+   // "C++".  If those were the only language linkages used in practice,
+   // then, we would have just used a 2-valued enum.  However, some C++
+   // implementations do have support for things like "Java" language
+   // linkage and whatnot.  Consequently, the most general representation
+   // is adopted in the form of a logogram.  From ISO C++ point of view, language 
+   // linkage applies only to function names, variable names, and function types.  
+   // Furthermore, a language linkage applied to a function type is a calling convention.
+   struct Linkage {
+      explicit constexpr Linkage(const Logogram& l) : lang{l} { }
+      const Logogram& language() const { return lang; }
+      bool operator==(const Linkage& x) const { return lang == x.lang; }
+      bool operator!=(const Linkage&) const = default;
+   private:
+      const Logogram& lang;
+   };
+
+   // -- Transfer --
+   // A summary of characteristics of data or control tranfer.  Both language linkage and 
+   // calling convention affect how data are transferred to subroutines in function calls.
+   // Furthermore, language linkage also affects linking across translation units.
+   struct Transfer : Basic_binary<const Linkage&, const Calling_convention&> {
+      const Linkage& linkage() const { return first(); }
+      const Calling_convention& convention() const { return second(); }
+      bool operator==(const Transfer& t) const
+      {
+         return linkage() == t.linkage() and convention() == t.convention();
+      }
+      bool operator!=(const Transfer&) const = default;
+   };
+
                                 // -- DeclSpecifiers --
    enum class DeclSpecifiers : std::uint32_t {
       None       = 0,
@@ -217,20 +276,6 @@ namespace ipr {
    // that the comment delimiters are part of Comment::text.
    struct Comment : Unary<Category<Category_code::Comment, Node>, const String&> {
       Arg_type text() const { return operand(); }
-   };
-
-                                // -- Linkage --
-   // This node represent language linkage, e.g., "C" in `extern "C"'.
-   // Ths ISO standard mandates at least two language linkages: "C" and
-   // "C++".  If those were the only language linkage used in practice,
-   // then, we would have just used a 2-valued enum.  However, some C++
-   // implementations do have support for things like "Java" language
-   // linkage and whatnot.  Consequently, the most general representation
-   // is adopted.  From ISO C++ point of view, language linkage applies
-   // only to function names, variable names, and function types.  Furthermore,
-   // a language linkage applied to a function type is a calling convention.
-   struct Linkage : Unary<Category<Category_code::Linkage, Node>, const String&> {
-      Arg_type language() const { return operand(); }
    };
 
                                 // -- Annotation --
@@ -466,11 +511,14 @@ namespace ipr {
    // interoperating with other languages.  The current representation
    // includes language linkage as integral part of Type.
    // Almost all types have "C++" language linkage.  The exceptions are: 
-   //   a. As_type built with explicit language specification
-   //   b. Function built with explicit language specification
+   //   a. As_type built with explicit language specification or more generally
+   //      data or control transfer
+   //   b. Function built with explicit language specification or more generally
+   //      data or control transfer
    struct Type : Expr {
       virtual const Name& name() const = 0;
-      virtual const Linkage& linkage() const = 0;
+      virtual const Transfer& transfer() const = 0;
+      const Linkage& linkage() const { return transfer().linkage(); }
    protected:
       constexpr Type(Category_code c) : Expr{ c } { }
    };
@@ -529,6 +577,8 @@ namespace ipr {
    // however, we've made a special node for template.  ISO C++ specifies
    // that function types have language linkages and two function types
    // with different language linkages are different.
+   // Furthermore, low-level implementation details such as calling conventions
+   // are accounted for through `Type::transfer()`.
    struct Function : Ternary<Category<Category_code::Function, Type>,
                               const Product&, const Type&, const Expr&> {
       // Parameter-type-list of a function of this type.  In full
@@ -1888,7 +1938,6 @@ namespace ipr {
       virtual void visit(const Region&);
       virtual void visit(const Comment&);
       virtual void visit(const String&);
-      virtual void visit(const Linkage&);
 
       virtual void visit(const Expr&) = 0;
       virtual void visit(const Classic&);

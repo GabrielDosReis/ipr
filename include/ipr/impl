@@ -65,23 +65,23 @@ namespace ipr::impl {
    template<typename T>
    struct immotile_node : impl::Node<T>, util::immotile { };
 
-                             // -- impl::Unary --
+   // -- Generic implementation of ipr::Basic_unary
    template<class Interface>
-   struct Unary : Interface {
+   struct Basic_unary : Interface {
       using typename Interface::Arg_type;
       Arg_type rep;
 
-      explicit constexpr Unary(Arg_type a) : rep{ a } { }
-      Arg_type operand() const final { return rep; }
+      explicit constexpr Basic_unary(Arg_type a) : rep{a} { }
+      constexpr Arg_type operand() const final { return rep; }
    };
 
    // -- impl::Unary_node: Shorthand for the implementation of generic unary nodes.
    template<typename T>
-   using Unary_node = Unary<immotile_node<T>>;
+   using Unary_node = impl::Basic_unary<immotile_node<T>>;
 
-                             // -- impl::Binary --
+   // -- Generic implementation of ipr::Basic_binary --
    template<class Interface>
-   struct Binary : Interface {
+   struct Basic_binary : Interface {
       using typename Interface::Arg1_type;
       using typename Interface::Arg2_type;
       struct Rep {
@@ -90,15 +90,15 @@ namespace ipr::impl {
       };
       Rep rep;
 
-      Binary(const Rep& r) : rep(r) { }
-      Binary(Arg1_type f, Arg2_type s) : rep{ f, s } { }
-      Arg1_type first() const final { return rep.first; }
-      Arg2_type second() const final { return rep.second; }
+      constexpr Basic_binary(const Rep& r) : rep{r} { }
+      constexpr Basic_binary(Arg1_type f, Arg2_type s) : rep{f, s} { }
+      constexpr Arg1_type first() const final { return rep.first; }
+      constexpr Arg2_type second() const final { return rep.second; }
    };
 
    // -- impl::Binary_node: Short hand for implementation of generic binary nodes.
    template<typename T>
-   using Binary_node = Binary<immotile_node<T>>;
+   using Binary_node = impl::Basic_binary<immotile_node<T>>;
 
                            // -- impl::Ternary --
    template<class Interface>
@@ -143,7 +143,9 @@ namespace ipr::impl {
       Arg4_type fourth() const final { return rep.fourth; }
    };
 
-   using Comment = Unary_node<Comment>;
+   using Logogram = Basic_unary<ipr::Logogram>;
+
+   using Comment = Unary_node<ipr::Comment>;
 
    using Identifier = Unary_node<ipr::Identifier>;
    using Suffix = Unary_node<ipr::Suffix>;
@@ -153,6 +155,30 @@ namespace ipr::impl {
    using Dtor_name = Unary_node<ipr::Dtor_name>;
    using Guide_name = Unary_node<ipr::Guide_name>;
    using Type_id = Unary_node<ipr::Type_id>;
+
+   // -- Generic implementarion of ipr::Transfer
+   using Transfer = impl::Basic_binary<ipr::Transfer>;
+
+   // -- Specialized implementation of ipr::Transfer
+   // An object of this class pairs a specified linkage with the natural
+   // C++ calling convention.
+   struct Transfer_from_linkage : ipr::Transfer {
+      constexpr explicit Transfer_from_linkage(const ipr::Linkage& l) : link{l} { }
+      const ipr::Linkage& first() const final { return link; }
+      const ipr::Calling_convention& second() const final;
+   private:
+      const ipr::Linkage& link;
+   };
+
+   // -- Specialized implementation of ipr::Transfer
+   // An object of this class pairs the C++ language linkage with a specified calling convention.
+   struct Transfer_from_cc : ipr::Transfer {
+      constexpr explicit Transfer_from_cc(const ipr::Calling_convention& cc) : conv{cc} { }
+      const ipr::Linkage& first() const final;
+      const ipr::Calling_convention& second() const final { return conv; }
+   private:
+      const ipr::Calling_convention& conv;
+   };
 }
 
 namespace ipr::util {
@@ -411,9 +437,12 @@ namespace ipr::impl {
 }
 
 namespace ipr::impl {
+   // The natural C++ data and control transfer.
+   const ipr::Transfer& cxx_transfer();
+
    // The two language linkages required of all C++ implementations.
    const ipr::Linkage& c_linkage();
-   const ipr::Linkage& cxx_linkage();
+   inline const ipr::Linkage& cxx_linkage() { return cxx_transfer().linkage(); }
 
    // The type of types, including itselt.
    // Yes, we have a ``Type: Type'' problem.
@@ -438,7 +467,7 @@ namespace ipr::impl {
 
    // -- impl::Unary_expr: Short hand for the implementation of generic unary expression nodes.
    template<typename T>
-   using Unary_expr = Unary<Expr<T>>;
+   using Unary_expr = Basic_unary<Expr<T>>;
 
    // -- impl::Classic_unary_expr
    template<typename T>
@@ -446,7 +475,7 @@ namespace ipr::impl {
 
    // -- impl::Binary_expr
    template<typename T>
-   using Binary_expr = Binary<Expr<T>>;
+   using Binary_expr = impl::Basic_binary<Expr<T>>;
 
    // -- impl::Classic_binary_expr
    template<typename T>
@@ -460,7 +489,7 @@ namespace ipr::impl {
    // The exceptions are handled elsewhere.
    template<class T>
    struct Type : impl::Node<T> {
-      const ipr::Linkage& linkage() const final { return impl::cxx_linkage(); }
+      const ipr::Transfer& transfer() const final { return impl::cxx_transfer(); }
    };
 
    // A composite type is one built from existing types and built-in type constructors.
@@ -476,11 +505,11 @@ namespace ipr::impl {
 
    // -- impl::Unary_type
    template<typename T>
-   using Unary_type = Unary<Composite<T>>;
+   using Unary_type = impl::Basic_unary<Composite<T>>;
 
    // -- impl::Binary_type
    template<typename T>
-   using Binary_type = Binary<Composite<T>>;
+   using Binary_type = impl::Basic_binary<Composite<T>>;
 
    // -- impl::Ternary_type
    template<typename T>
@@ -1144,9 +1173,9 @@ namespace ipr::impl {
    };
 
    template<typename T>
-   using Unary_attribute = impl::Unary<impl::Attribute<T>>;
+   using Unary_attribute = impl::Basic_unary<impl::Attribute<T>>;
    template<typename T>
-   using Binary_attribute = impl::Binary<impl::Attribute<T>>;
+   using Binary_attribute = impl::Basic_binary<impl::Attribute<T>>;
 
    // -- implementation of ipr::BasicAttribute
    using BasicAttribute = Unary_attribute<ipr::BasicAttribute>;
@@ -1288,6 +1317,21 @@ namespace ipr::impl {
       return compare(&lhs, &rhs);
    }
 
+   constexpr int compare(const ipr::String& lhs, const ipr::String& rhs)
+   {
+      return lhs.characters().compare(rhs.characters());
+   }
+
+   constexpr int compare(const ipr::Logogram& lhs, const ipr::Logogram& rhs)
+   {
+      return compare(lhs.what(), rhs.what());
+   }
+
+   constexpr int compare(const ipr::Linkage& lhs, const ipr::Linkage& rhs)
+   {
+      return compare(lhs.language(), rhs.language());
+   }
+
                               // -- Conversion_expr --
    template<class Interface>
    struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
@@ -1295,9 +1339,6 @@ namespace ipr::impl {
       using Base::Base;
       const ipr::Type& type() const final { return this->rep.first; }
    };
-
-                              // -- Linkage --
-   using Linkage = Unary_node<ipr::Linkage>;
 
    // All declarations (except parameters, base-classes, enumerations)
    // maintain data about their position and master declaration.  Since
@@ -1579,39 +1620,40 @@ namespace ipr::impl {
    using Sum = Unary_type<ipr::Sum>;
    using Forall = Binary_type<ipr::Forall>;
 
-   // A given core expression can be proclaimed to name a type with a specified
-   // language linkage.  That is useful for interoperating with code fragments
+   // -- Specialized implementation of ipr::As_type.
+   // A given core expression can be proclaimed to name a type with a specified data
+   // or control transfer. That is useful for interoperating with code fragments
    // written in other languages.
-   struct As_type_with_linkage : immotile_node<ipr::As_type> {
+   struct As_type_with_transfer : immotile_node<ipr::As_type> {
       struct Rep {
          const ipr::Expr& expr;
-         const ipr::Linkage& link;
+         const ipr::Transfer& xfer;
       };
 
-      explicit As_type_with_linkage(const Rep& r) : id{*this}, rep{r} { }
+      explicit As_type_with_transfer(const Rep& r) : id{*this}, rep{r} { }
       const ipr::Name& name() const final { return id; }
       const ipr::Type& type() const final { return impl::typename_type(); }
       const ipr::Expr& operand() const final { return rep.expr; }
-      const ipr::Linkage& linkage() const final { return rep.link; }
+      const ipr::Transfer& transfer() const final { return rep.xfer; }
    private:
       Type_id id;
       Rep rep;
    };
 
-   // A function type with a specified language linkage (other than C++) or, for
-   // that matter a specified calling convention (which serves as language linkage).
-   struct Function_with_linkage : immotile_node<ipr::Function> {
+   // -- Specialized implementation of ipr::Function.
+   // A function type with a specified data or control transfer (other than C++) protocol.
+   struct Function_with_transfer : immotile_node<ipr::Function> {
       struct Rep {
          const ipr::Product& source;
          const ipr::Type& target;
          const ipr::Expr& throws;
-         const ipr::Linkage& link;
+         const ipr::Transfer& xfer;
       };
 
-      explicit Function_with_linkage(const Rep& r) : id{*this}, rep{r} { }
+      explicit Function_with_transfer(const Rep& r) : id{*this}, rep{r} { }
       const ipr::Name& name() const final { return id; }
       const ipr::Type& type() const final { return impl::typename_type(); }
-      const ipr::Linkage& linkage() const final { return rep.link; }
+      const ipr::Transfer& transfer() const final { return rep.xfer; }
       const ipr::Product& first() const final { return rep.source; }
       const ipr::Type& second() const final { return rep.target; }
       const ipr::Expr& third() const final { return rep.throws; }
@@ -2172,21 +2214,25 @@ namespace ipr::impl {
    // as setting their types (as expressions) and their names.
 
    struct type_factory {
+      const ipr::Transfer& get_transfer_from_linkage(const ipr::Linkage&);
+      const ipr::Transfer& get_transfer_from_convention(const ipr::Calling_convention&);
+      const ipr::Transfer& get_transfer(const ipr::Linkage&, const ipr::Calling_convention&);
+
       // Build an IPR node for an expression that denotes a type.
-      // The linkage, if not specified, is assumed to be C++.
-      const ipr::As_type& get_as_type(const ipr::Expr&);
-      const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Linkage&);
+      // The transfer protocol, if not specified, is assumed to be C++.
       const ipr::As_type& get_as_type(const ipr::Identifier&);
+      const ipr::As_type& get_as_type(const ipr::Expr&);
+      const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Transfer&);
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
       const ipr::Qualified& get_qualified(ipr::Type_qualifiers, const ipr::Type&);
       const ipr::Decltype& get_decltype(const ipr::Expr&);
       const ipr::Tor& get_tor(const ipr::Product&, const ipr::Sum&);
       const ipr::Function& get_function(const ipr::Product&, const ipr::Type&);
-      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&, const ipr::Linkage&);
+      const ipr::Function& get_function(const ipr::Product&, const ipr::Type&, const ipr::Transfer&);
       const ipr::Function& get_function(const ipr::Product&, const ipr::Type&, const ipr::Expr&);
       const ipr::Function& get_function(const ipr::Product&, const ipr::Type&,
-                                        const ipr::Expr&, const ipr::Linkage&);
+                                        const ipr::Expr&, const ipr::Transfer&);
       const ipr::Pointer& get_pointer(const ipr::Type&);
       const ipr::Product& get_product(const ipr::Sequence<ipr::Type>&);
       const ipr::Product& get_product(const Warehouse<ipr::Type>&);
@@ -2204,13 +2250,17 @@ namespace ipr::impl {
       impl::Namespace* make_namespace(const ipr::Region&);
       impl::Closure* make_closure(const ipr::Region&);
    private:
+      util::rb_tree::container<impl::Transfer_from_linkage> xfer_links;
+      util::rb_tree::container<impl::Transfer_from_cc> xfer_ccs;
+      util::rb_tree::container<impl::Transfer> xfers;
+
       util::rb_tree::container<impl::extended_type> extendeds;
       util::rb_tree::container<impl::Array> arrays;
       util::rb_tree::container<impl::As_type> type_refs;
-      util::rb_tree::container<impl::As_type_with_linkage> type_links;
+      util::rb_tree::container<impl::As_type_with_transfer> type_xfers;
       util::rb_tree::container<impl::Tor> tors;
       util::rb_tree::container<impl::Function> functions;
-      util::rb_tree::container<impl::Function_with_linkage> fun_links;
+      util::rb_tree::container<impl::Function_with_transfer> fun_xfers;
       util::rb_tree::container<impl::Pointer> pointers;
       util::rb_tree::container<impl::Product> products;
       util::rb_tree::container<impl::Ptr_to_member> member_ptrs;
@@ -2294,13 +2344,13 @@ namespace ipr::impl {
    // -- Implementation of statements --
    // ----------------------------------
 
-   using Ctor_body = Binary<Stmt<Expr<ipr::Ctor_body>>>;
+   using Ctor_body = impl::Basic_binary<impl::Stmt<impl::Expr<ipr::Ctor_body>>>;
    using Do = Controlled_stmt<ipr::Do>;
    using Expr_stmt = impl::Unary_node<impl::Stmt<ipr::Expr_stmt>>;
    using Goto = impl::Unary_node<impl::Stmt<ipr::Goto>>;
    using If = Ternary<Stmt<Expr<ipr::If>>>;
    using Labeled_stmt = impl::Binary_node<impl::Stmt<ipr::Labeled_stmt>>;
-   using Return = impl::Unary<impl::Stmt<impl::Expr<ipr::Return>>>;
+   using Return = impl::Basic_unary<impl::Stmt<impl::Expr<ipr::Return>>>;
    using Switch = Controlled_stmt<ipr::Switch>;
    using While = Controlled_stmt<ipr::While>;
 
@@ -2460,8 +2510,10 @@ namespace ipr::impl {
       const ipr::Ctor_name& get_ctor_name(const ipr::Type&);
       const ipr::Dtor_name& get_dtor_name(const ipr::Type&);
       const ipr::Guide_name& get_guide_name(const ipr::Template&);
+      const ipr::Logogram& get_logogram(const ipr::String&);
    private:
       util::string_pool strings;
+      util::rb_tree::container<impl::Logogram> logos;
       util::rb_tree::container<impl::Identifier> ids;
       util::rb_tree::container<impl::Suffix> suffixes;
       util::rb_tree::container<impl::Conversion> convs;
@@ -2475,6 +2527,9 @@ namespace ipr::impl {
       // Returns an IPR node a language linkage.
       const ipr::Linkage& get_linkage(util::word_view);
       const ipr::Linkage& get_linkage(const ipr::String&);
+
+      // Rerturn an IPR for a calling convention.
+      const ipr::Calling_convention& get_calling_convention(util::word_view);
 
       // Return a symbol with a given name and type.
       const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
@@ -2597,8 +2652,8 @@ namespace ipr::impl {
       impl::Static_assert* make_static_assert_expr(const ipr::Expr&, Optional<ipr::String> = { });
 
    private:
-      // Language linkage nodes.
-      util::rb_tree::container<impl::Linkage> linkages;
+      util::rb_tree::container<ipr::Linkage> linkages;
+      util::rb_tree::container<ipr::Calling_convention> conventions;
 
       util::rb_tree::container<impl::Literal> lits;
       util::rb_tree::container<impl::Template_id> template_ids;

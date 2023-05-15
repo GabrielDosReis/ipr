@@ -28,11 +28,27 @@ namespace ipr {
    }
 }
 
+// -- invisible logogram
+// A invisible logogram is a logogram designated by the empty string.
+namespace ipr::impl {
+   namespace {
+      struct Invisible_logogram : ipr::Logogram {
+         const ipr::String& operand() const final { return String::empty_string(); }
+      };
+
+      constexpr Invisible_logogram invisible_logo { };
+      
+      // The natural calling convention of a C++ function.
+      constexpr ipr::Calling_convention natural_cc { invisible_logo };
+   }
+}
+
+// -- Known, standard names.
 namespace ipr::impl {
     namespace {
        // Representation of standard names (mostly identifiers) used in
        // in the internals of the IPR, with standard semantics.
-       struct std_identifier : impl::Node<ipr::Identifier> {
+       struct std_identifier : impl::Node<ipr::Identifier>, ipr::Logogram {
           constexpr std_identifier(const char8_t* p) : str{p} { }
           constexpr const impl::String& operand() const final { return str; }
           constexpr auto text() const { return str.characters(); }
@@ -91,25 +107,51 @@ namespace ipr::impl {
         // less-than comparator for known words (which are all constexpr data)
         constexpr auto word_lt = [](auto& x, auto& y) { return x.text() < y; };
 
+        constexpr const auto* word_if_known(util::word_view w)
+        {
+            auto place = std::lower_bound(std::begin(known_words), std::end(known_words), w, word_lt);
+            return place >= std::end(known_words) or place->text() != w ? nullptr : &*place;
+        }
+
         // Return the String representation for a known word.
         // Raise an exception otherwise.
-        constexpr const std_identifier& known_word(const char8_t* p)
+        constexpr const std_identifier& known_word(const char8_t* s)
         {
-            auto place = std::lower_bound(std::begin(known_words), std::end(known_words), p, word_lt);
-            if (place >= std::end(known_words) or place->text() != p)
-               throw std::domain_error("unknown word");
-            return *place;
+            auto place = word_if_known(s);
+            return place == nullptr 
+               ? throw std::domain_error("unknown word")
+               : *place;
         }
 
         constexpr auto& internal_string(const char8_t* p) { return known_word(p).operand(); }
 
         // Known language linkages to all C++ implementations.
-        constexpr Linkage c_link { internal_string(u8"C") };
-        constexpr Linkage cxx_link { internal_string(u8"C++") };
+        constexpr Linkage c_link { known_word(u8"C") };
+        constexpr Linkage cxx_link { known_word(u8"C++") };
     }
 
     const ipr::Linkage& c_linkage() { return impl::c_link; }
-    const ipr::Linkage& cxx_linkage() { return impl::cxx_link; }
+}
+
+// -- Natural transfer: C++ language linkage, and natural calling convention.
+namespace ipr::impl {
+   namespace {
+      struct Natural_transfer : ipr::Transfer {
+         const ipr::Linkage& first() const final { return impl::cxx_link; }
+         const ipr::Calling_convention& second() const final { return impl::natural_cc; }
+      };
+
+      constexpr Natural_transfer natural_xfer { };
+   }
+
+   const ipr::Transfer& cxx_transfer() { return natural_xfer; }
+}
+
+// -- Definitions of member functions for specialized implementations of ipr::Transfer.
+namespace ipr::impl {
+   const ipr::Calling_convention& Transfer_from_linkage::second() const { return impl::natural_cc; }
+
+   const ipr::Linkage& Transfer_from_cc::first() const { return impl::cxx_link; }
 }
 
 namespace ipr::impl {
@@ -176,8 +218,7 @@ namespace ipr::util {
          return ipr::String::empty_string();
 
         // For statically known words, just return the statically allocated address.
-        if (const auto p = std::lower_bound(std::begin(impl::known_words), std::end(impl::known_words), w, impl::word_lt);
-            p < std::end(impl::known_words) and p->text() == w)
+        if (const auto p = impl::word_if_known(w))
             return p->string();
 
         // Dynamically allocated words are slotted by their hash codes into singly-linked lists.
@@ -897,6 +938,19 @@ namespace ipr::impl {
          return param;
       }
 
+      // -- Named comparison function for implementation details purposes.
+      constexpr int compare(const ipr::Calling_convention& x, const ipr::Calling_convention& y)
+      {
+         return impl::compare(x.name(), y.name());
+      }
+
+      constexpr int compare(const ipr::Transfer& x, const ipr::Transfer& y)
+      {
+         if (auto cmp = impl::compare(x.linkage(), y.linkage()))
+            return cmp;
+         return impl::compare(x.convention(), y.convention());
+      }
+
       // ------------------------
       // -- impl::type_factory --
       // ------------------------
@@ -904,39 +958,39 @@ namespace ipr::impl {
       struct unary_compare {
          int operator()(const ipr::Node& lhs, const ipr::Node& rhs) const
          {
-            return compare(lhs, rhs);
+            return impl::compare(lhs, rhs);
          }
 
          template<class T>
          int operator()(const node_ref<T>& lhs, const ipr::Node& rhs) const
          {
-            return compare(lhs.node, rhs);
+            return impl::compare(lhs.node, rhs);
          }
 
          template<class T>
          int operator()(const ipr::Node& lhs, const node_ref<T>& rhs) const
          {
-            return compare(lhs, rhs.node);
+            return impl::compare(lhs, rhs.node);
          }
 
          template<class T>
-         int operator()(const Unary<T>& lhs,
-                        const typename Unary<T>::Arg_type& rhs) const
+         int operator()(const impl::Basic_unary<T>& lhs,
+                        const typename ipr::Basic_unary<T>::Arg_type& rhs) const
          {
-            return compare(lhs.rep, rhs);
+            return impl::compare(lhs.rep, rhs);
          }
 
          template<class T>
-         int operator()(const typename Unary<T>::Arg_type& lhs,
-                        const Unary<T>& rhs) const
+         int operator()(const typename ipr::Basic_unary<T>::Arg_type& lhs,
+                        const impl::Basic_unary<T>& rhs) const
          {
-            return compare(lhs, rhs.rep);
+            return impl::compare(lhs, rhs.rep);
          }
       };
 
       struct unary_lexicographic_compare {
          template<class T>
-         int operator()(const Unary<T>& lhs,
+         int operator()(const impl::Basic_unary<T>& lhs,
                         const ipr::Sequence<ipr::Type>& rhs) const
          {
             return util::lexicographical_compare()
@@ -946,7 +1000,7 @@ namespace ipr::impl {
 
          template<class T>
          int operator()(const ipr::Sequence<ipr::Type>& lhs,
-                        const Unary<T>& rhs) const
+                        const impl::Basic_unary<T>& rhs) const
          {
             return util::lexicographical_compare()
                (lhs.begin(), lhs.end(),
@@ -972,21 +1026,21 @@ namespace ipr::impl {
 
       struct binary_compare {
          template<class T>
-         int operator()(const Binary<T>& lhs,
-                        const typename Binary<T>::Rep& rhs) const
+         int operator()(const impl::Basic_binary<T>& lhs,
+                        const typename impl::Basic_binary<T>::Rep& rhs) const
          {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-
-            return compare(lhs.rep.second, rhs.second);
+            if (int cmp = impl::compare(lhs.rep.first, rhs.first))
+               return cmp;
+            return impl::compare(lhs.rep.second, rhs.second);
          }
 
          template<class T>
-         int operator()(const typename Binary<T>::Rep lhs,
-                         const Binary<T>& rhs) const
+         int operator()(const typename impl::Basic_binary<T>::Rep lhs,
+                         const impl::Basic_binary<T>& rhs) const
          {
-            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-
-            return compare(lhs.second, rhs.rep.second);
+            if (int cmp = compare(lhs.first, rhs.rep.first))
+               return cmp;
+            return impl::compare(lhs.second, rhs.rep.second);
          }
       };
 
@@ -994,12 +1048,12 @@ namespace ipr::impl {
       {
           int operator()(const ipr::Identifier& lhs, const ipr::String& rhs) const
           {
-              return compare(lhs.string(), rhs);
+              return impl::compare(lhs.string(), rhs);
           }
 
           int operator()(const ipr::String& lhs, const ipr::Identifier& rhs) const
           {
-              return compare(lhs, rhs.string());
+              return impl::compare(lhs, rhs.string());
           }
       };
 
@@ -1015,10 +1069,33 @@ namespace ipr::impl {
           template<class Cat, class Operand>
           int operator()(const ipr::Unary<Cat,Operand>& lhs, const ipr::Type& rhs) const
           {
-              return compare(lhs.operand(), rhs);
+              return impl::compare(lhs.operand(), rhs);
           }
       };
       // <<<< Yuriy Solodkyy: 2008/07/10
+
+      const ipr::Transfer& type_factory::get_transfer_from_linkage(const ipr::Linkage& l)
+      {
+         constexpr auto cmp = [](auto& x, auto& y) { return impl::compare(x.linkage(), y); };
+         return *xfer_links.insert(l, cmp);
+      }
+
+      const ipr::Transfer& type_factory::get_transfer_from_convention(const ipr::Calling_convention& c)
+      {
+         constexpr auto cmp = [](auto& x, auto& y) { return impl::compare(x.convention(), y); };
+         return *xfer_ccs.insert(c, cmp);
+      }
+
+      const ipr::Transfer& type_factory::get_transfer(const ipr::Linkage& l, const ipr::Calling_convention& c)
+      {
+         if (l == impl::cxx_link)
+            return get_transfer_from_convention(c);
+         else if (c == impl::natural_cc)
+            return get_transfer_from_linkage(l);
+
+         using Rep = impl::Transfer::Rep;
+         return *xfers.insert(Rep{l, c}, binary_compare{});
+      } 
 
       const ipr::Array& type_factory::get_array(const ipr::Type& t, const ipr::Expr& b)
       {
@@ -1061,18 +1138,18 @@ namespace ipr::impl {
       }
 
       const ipr::As_type&
-      type_factory::get_as_type(const ipr::Expr& e, const ipr::Linkage& l)
+      type_factory::get_as_type(const ipr::Expr& e, const ipr::Transfer& t)
       {
-         if (physically_same(l, impl::cxx_linkage()))
+         if (t == impl::cxx_transfer())
             return get_as_type(e);
 
-         using T = impl::As_type_with_linkage;
+         using T = impl::As_type_with_transfer;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
             {
-               if (auto cmp = compare(x.expr(), y.expr))
+               if (auto cmp = impl::compare(x.expr(), y.expr))
                   return cmp;
-               return compare(x.linkage(), y.link);
+               return impl::compare(x.transfer(), y.xfer);
             }
 
             int operator()(const T::Rep& x, const T& y) const
@@ -1080,7 +1157,7 @@ namespace ipr::impl {
                return -(*this)(y, x);
             }
          };
-         return *type_links.insert(T::Rep{e, l}, Comparator{ });
+         return *type_xfers.insert(T::Rep{e, t}, Comparator{ });
       }
 
       struct ternary_compare {
@@ -1088,9 +1165,10 @@ namespace ipr::impl {
          int operator()(const Ternary<T>& lhs,
                         const typename Ternary<T>::Rep& rhs) const
          {
-            if (int cmp = compare(lhs.rep.first, rhs.first)) return cmp;
-            if (int cmp = compare(lhs.rep.second, rhs.second)) return cmp;
-
+            if (int cmp = impl::compare(lhs.rep.first, rhs.first))
+               return cmp;
+            if (int cmp = impl::compare(lhs.rep.second, rhs.second))
+               return cmp;
             return compare(lhs.rep.third, rhs.third);
          }
 
@@ -1098,10 +1176,11 @@ namespace ipr::impl {
          int operator()(const typename Ternary<T>::Rep& lhs,
                         const Ternary<T>& rhs) const
          {
-            if (int cmp = compare(lhs.first, rhs.rep.first)) return cmp;
-            if (int cmp = compare(lhs.second, rhs.rep.second)) return cmp;
-
-            return compare(lhs.third, rhs.rep.third);
+            if (int cmp = impl::compare(lhs.first, rhs.rep.first))
+               return cmp;
+            if (int cmp = impl::compare(lhs.second, rhs.rep.second))
+               return cmp;
+            return impl::compare(lhs.third, rhs.rep.third);
          }
       };
 
@@ -1117,7 +1196,7 @@ namespace ipr::impl {
       }
 
       const ipr::Function&
-      type_factory::get_function(const ipr::Product& s, const ipr::Type& t, const ipr::Linkage& l)
+      type_factory::get_function(const ipr::Product& s, const ipr::Type& t, const ipr::Transfer& l)
       {
          return get_function(s, t, impl::false_cst, l);
       }
@@ -1132,22 +1211,22 @@ namespace ipr::impl {
 
       const ipr::Function&
       type_factory::get_function(const ipr::Product& s, const ipr::Type& t,
-                                 const ipr::Expr& e, const ipr::Linkage& l)
+                                 const ipr::Expr& e, const ipr::Transfer& l)
       {
-         if (physically_same(l, impl::cxx_linkage()))
+         if (l == impl::cxx_transfer())
             return get_function(s, t, e);
 
-         using T = impl::Function_with_linkage;
+         using T = impl::Function_with_transfer;
          struct Comparator {
             int operator()(const T& x, const T::Rep& y) const
             {
-               if (auto cmp = compare(x.source(), y.source))
+               if (auto cmp = impl::compare(x.source(), y.source))
                   return cmp;
-               if (auto cmp = compare(x.target(), y.target))
+               if (auto cmp = impl::compare(x.target(), y.target))
                   return cmp;
-               if (auto cmp = compare(x.throws(), y.throws))
+               if (auto cmp = impl::compare(x.throws(), y.throws))
                   return cmp;
-               return compare(x.linkage(), y.link);
+               return compare(x.transfer(), y.xfer);
             }
 
             int operator()(const T::Rep& x, const T& y) const
@@ -1156,7 +1235,7 @@ namespace ipr::impl {
             }
          };
 
-         return *fun_links.insert(T::Rep{ s, t, e, l }, Comparator{ });
+         return *fun_xfers.insert(T::Rep{ s, t, e, l }, Comparator{ });
       }
 
       const ipr::Pointer& type_factory::get_pointer(const ipr::Type& t)
@@ -1270,7 +1349,7 @@ namespace ipr::impl {
       // -------------
 
       Id_expr::Id_expr(const ipr::Name& n)
-            : impl::Unary<impl::Expr<ipr::Id_expr>>(n)
+            : impl::Basic_unary<impl::Expr<ipr::Id_expr>>(n)
       { }
 
       Optional<ipr::Expr>
@@ -1519,6 +1598,14 @@ namespace ipr::impl {
 
       // -- impl::name_factory
 
+      const ipr::Logogram& name_factory::get_logogram(const ipr::String& s)
+      {
+         if (s.size() == 0)
+            return invisible_logo;
+         constexpr auto lt = [](auto& x, auto& y) { return compare(x.what(), y); };
+         return *logos.insert(s, lt);
+      }
+
       const ipr::String& name_factory::get_string(util::word_view w)
       {
          return strings.intern(w);
@@ -1589,7 +1676,15 @@ namespace ipr::impl {
             return impl::c_link;
          else if (physically_same(lang, internal_string(u8"C++")))
             return impl::cxx_link;
-         return *linkages.insert(lang, unary_compare());
+         constexpr auto cmp = [](auto& x, auto& y) { return compare(x.language(), y); };
+         return *linkages.insert(get_logogram(lang), cmp);
+      }
+
+      const ipr::Calling_convention& expr_factory::get_calling_convention(util::word_view w)
+      {
+         auto& name = get_logogram(get_string(w));
+         constexpr auto cmp = [](auto& x, auto& y) { return compare(x.name(), y); };
+         return *conventions.insert(name, cmp);
       }
 
       const ipr::Symbol&
