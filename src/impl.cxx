@@ -939,12 +939,12 @@ namespace ipr::impl {
       }
 
       // -- Named comparison function for implementation details purposes.
-      constexpr int compare(const ipr::Calling_convention& x, const ipr::Calling_convention& y)
+      inline int compare(const ipr::Calling_convention& x, const ipr::Calling_convention& y)
       {
          return impl::compare(x.name(), y.name());
       }
 
-      constexpr int compare(const ipr::Transfer& x, const ipr::Transfer& y)
+      inline int compare(const ipr::Transfer& x, const ipr::Transfer& y)
       {
          if (auto cmp = impl::compare(x.linkage(), y.linkage()))
             return cmp;

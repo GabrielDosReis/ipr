@@ -1322,12 +1322,12 @@ namespace ipr::impl {
       return lhs.characters().compare(rhs.characters());
    }
 
-   constexpr int compare(const ipr::Logogram& lhs, const ipr::Logogram& rhs)
+   inline int compare(const ipr::Logogram& lhs, const ipr::Logogram& rhs)
    {
       return compare(lhs.what(), rhs.what());
    }
 
-   constexpr int compare(const ipr::Linkage& lhs, const ipr::Linkage& rhs)
+   inline int compare(const ipr::Linkage& lhs, const ipr::Linkage& rhs)
    {
       return compare(lhs.language(), rhs.language());
    }
