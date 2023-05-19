@@ -180,16 +180,6 @@ namespace ipr::impl {
 
       // Ensure all basic specifiers are representable with the precision declared for ipr::Specifiers.
       static_assert(std::size(std_specifiers) < std::bit_width(~std::underlying_type_t<ipr::Specifiers>{}));
-
-      // Retrieve a pointer to a decl-specifier if standard.
-      const Basic_specifier* specifier_if_known(util::word_view w)
-      {
-         for (auto& s : std_specifiers) {
-            if (s.logogram().what().characters() == w)
-               return &s;
-         }
-         return nullptr;
-      }
    }
 }
 
