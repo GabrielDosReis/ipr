@@ -8,6 +8,7 @@ add_executable(${TEST_BINARY}
    region-owner.cxx
    warehouse.cxx
    phased-eval.cxx
+   specifiers.cxx
 )
 
 target_link_libraries(${TEST_BINARY}

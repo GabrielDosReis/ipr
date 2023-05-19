@@ -51,7 +51,7 @@ namespace ipr
          None, Before, After
       };
 
-      explicit Printer(std::ostream&);
+      Printer(const Lexicon&, std::ostream&);
 
       Padding padding() const { return pad; }
 
@@ -62,11 +62,8 @@ namespace ipr
       int indent() const { return pending_indentation; }
       std::ostream& channel() { return stream; }
 
-      // This series of declarations cannot be adequately be reduced
-      // into one template declaration, because it would tend to
-      // take over all other good candidates when an implicit conversion
-      // would be needed.
       Printer& operator<<(const char8_t*);
+      Printer& operator<<(Specifiers);
       template<typename T> requires util::std_insertable<T>
       Printer& operator<<(T t) { stream << t; return *this; }
 
@@ -77,6 +74,7 @@ namespace ipr
 
 
    private:
+      const Lexicon& lexicon;
       std::ostream& stream;
       Padding pad;
       bool emit_newline;
@@ -121,6 +119,7 @@ namespace ipr
    Printer& operator<<(Printer&, const Translation_unit&);
 
    Printer& operator<<(Printer&, const Identifier&);
+   Printer& operator<<(Printer&, const Logogram&);
    Printer& operator<<(Printer&, Mapping_level);
    Printer& operator<<(Printer&, Decl_position);
 }

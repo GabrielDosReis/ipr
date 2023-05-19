@@ -19,7 +19,7 @@ TEST_CASE("global constant variable can be printed") {
   var->init = lexicon.make_literal(lexicon.int_type(), u8"1024");
 
   std::stringstream ss;
-  Printer pp{ss};
+  Printer pp{lexicon, ss};
   pp << unit;
   CHECK(!ss.str().empty());
 }
@@ -42,7 +42,7 @@ TEST_CASE("Can create and print line numbers")
   var->src_locus = loc;
 
   std::stringstream ss;
-  Printer pp{ss};
+  Printer pp{lexicon, ss};
   pp << unit;
   // By default location printing is off
   CHECK(ss.str().find("F1:1:2") == std::string::npos);

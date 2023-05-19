@@ -60,9 +60,13 @@ namespace ipr {
       Printer& pp;
    };
 
-   Printer::Printer(std::ostream& os)
-         : stream(os), pad(Padding::None), emit_newline(false),
-           pending_indentation(0) { }
+   Printer::Printer(const Lexicon& lex, std::ostream& os)
+      : lexicon{lex}, 
+        stream{os},
+        pad{Padding::None},
+        emit_newline{false},
+        pending_indentation{0}
+   { }
 
    Printer&
    Printer::operator<<(const char8_t* s)
@@ -229,6 +233,11 @@ namespace ipr {
    operator<<(Printer& pp, const Identifier& id)
    {
       return pp << xpr_identifier(id.string());
+   }
+
+   Printer& operator<<(Printer& pp, const Logogram& l)
+   {
+      return pp << xpr_identifier(l.what());
    }
 
    // ------------------------------
@@ -1746,35 +1755,12 @@ namespace ipr {
    }
 
 
-   Printer&
-   operator<<(Printer& printer, DeclSpecifiers spec)
+   Printer& Printer::operator<<(Specifiers spec)
    {
-      if (implies(spec, DeclSpecifiers::Export))
-         printer << xpr_identifier(u8"export");
-      if (implies(spec, DeclSpecifiers::Register))
-         printer << xpr_identifier(u8"register");
-      if (implies(spec, DeclSpecifiers::Static))
-         printer << xpr_identifier(u8"static");
-      if (implies(spec, DeclSpecifiers::Extern))
-         printer << xpr_identifier(u8"extern");
-      if (implies(spec, DeclSpecifiers::Mutable))
-         printer << xpr_identifier(u8"mutable");
-      if (implies(spec, DeclSpecifiers::Inline))
-         printer << xpr_identifier(u8"inline");
-      if (implies(spec, DeclSpecifiers::Virtual))
-         printer << xpr_identifier(u8"virtual");
-      if (implies(spec, DeclSpecifiers::Explicit))
-         printer << xpr_identifier(u8"explicit");
-      if (implies(spec, DeclSpecifiers::Friend))
-         printer << xpr_identifier(u8"friend");
-      if (implies(spec, DeclSpecifiers::Public))
-         printer << xpr_identifier(u8"public");
-      if (implies(spec, DeclSpecifiers::Protected))
-         printer << xpr_identifier(u8"protected");
-      if (implies(spec, DeclSpecifiers::Private))
-         printer << xpr_identifier(u8"private");
+      for (auto s : lexicon.decompose(spec))
+         *this << s.logogram();
 
-      return printer;
+      return *this;
    }
 
 

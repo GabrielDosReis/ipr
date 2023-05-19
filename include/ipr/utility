@@ -21,8 +21,12 @@
 #include <string>
 
 namespace ipr::util {
+   // Predicate to detect enumeration types.
+   template<typename T>
+   concept EnumType = std::is_enum_v<T>;
+   
    // Return the value representation of an enumeration value.
-   template<typename T> requires std::is_enum_v<T>
+   template<typename T> requires EnumType<T>
    constexpr auto rep(T t)
    {
       return static_cast<std::underlying_type_t<T>>(t);
