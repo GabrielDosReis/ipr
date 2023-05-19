@@ -13,6 +13,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 #include <ipr/utility>
 #include <ipr/synopsis>
 #include <ipr/ancillary>
