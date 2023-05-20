@@ -77,9 +77,12 @@ target_compile_options(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
    PRIVATE
-	  $<$<PLATFORM_ID:UNIX>:
-		 _FILE_OFFSET_BITS=64 # We want the ability to process large files.
-	  >
+      $<$<CXX_COMPILER_ID:MSVC>:
+         MSVC_WORKAROUND_VSO1822505    # Workaround a compile-time evaluation bug in MSVC
+      >
+	   $<$<PLATFORM_ID:UNIX>:
+		   _FILE_OFFSET_BITS=64 # We want the ability to process large files.
+	   >
 )
 
 install(

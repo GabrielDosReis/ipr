@@ -2340,17 +2340,27 @@ namespace ipr::impl {
 
       namespace {
          struct UnknownSpecifierError { const char8_t* specifier; };
-      }
-      // Helper function used to precompose known values of standard specifiers.
-      consteval ipr::Specifiers specifiers(const char8_t* s)
-      {
-         auto pos = 0;
-         for (auto& x : impl::std_specifiers) {
-            if (x.logogram().operand().characters() == s)
-               return ipr::Specifiers{1u << pos};
-            ++pos;
+
+         // Helper function used to precompose known values of standard specifiers.
+         // FIXME: MSVC has a bug in its compile-time evaluation of constexpr functions
+         //        involving dynamic dispatch.  The workaround below allows MSVC to compile
+         //        the code turning a compile-time computed integer constant into a repeated
+         //        runtime linear search.
+#ifndef MSVC_WORKAROUND_VSO1822505
+         consteval
+#else
+         constexpr
+#endif
+         ipr::Specifiers specifiers(const char8_t* s)
+         {
+            auto pos = 0;
+            for (auto& x : impl::std_specifiers) {
+               if (x.logogram().operand().characters() == s)
+                  return ipr::Specifiers{1u << pos};
+               ++pos;
+            }
+            throw UnknownSpecifierError{s};
          }
-         throw UnknownSpecifierError{s};
       }
 
       ipr::Specifiers Lexicon::export_specifier() const { return impl::specifiers(u8"export"); }
