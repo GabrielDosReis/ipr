@@ -13,6 +13,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 #include <ipr/utility>
 #include <ipr/synopsis>
 #include <ipr/ancillary>
@@ -160,67 +161,71 @@ namespace ipr {
       bool operator!=(const Transfer&) const = default;
    };
 
-                                // -- DeclSpecifiers --
-   enum class DeclSpecifiers : std::uint32_t {
-      None       = 0,
-      Register   = 1 << 0,   // Banned from C++17.
-      Static     = 1 << 1,
-      Extern     = 1 << 2,
-      Mutable    = 1 << 3,
-      Thread     = 1 << 4,
-      StorageClass  = Register | Static | Extern | Mutable | Thread,
-
-      Inline     = 1 << 5,
-      Virtual    = 1 << 6,   // also used as storage class specifier
-                             // for virtual base subobjects
-      Explicit   = 1 << 7,
-      Pure       = 1 << 8, 
-      FunctionSpecifier = Inline | Virtual | Explicit | Pure,
-
-      Friend     = 1 << 9,
-      Typedef    = 1 << 10,
-
-      Public     = 1 << 11,
-      Protected  = 1 << 12,
-      Private    = 1 << 13,
-      AccessProtection = Public | Protected | Private,
-
-      Export     = 1 << 14,  // For exported declarations.
-      Constexpr  = 1 << 15,  // C++ 11
-      Consteval  = 1 << 16,  // C++20
+   // -- Basic_specifier --
+   // A symbolic semantic denotation of an instance of a the C++ grammar for decl-specifier 
+   // that is not a defining-type-specifier.  This type is intended to capture the result of
+   // semantic elaboration, not mirror of a syntactic construct.
+   // Note: This symbolic form allows for extensions of decl-specifier beyond those explicitly
+   // listed in the C++ standards.
+   struct Basic_specifier {
+      constexpr Basic_specifier(const Logogram& l) : spec{&l} { }
+      constexpr const Logogram& logogram() const { return *spec; }
+      constexpr bool operator==(const Basic_specifier&) const = default;
+   private:
+      const Logogram* spec;
    };
 
-   constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
+   // -- Specifiers --
+   // An algebraic denotation of sets of basic specifiers.
+   // ISO C++ requires that decl-specifiers can appear in any order in the decl-specifier-seq
+   // of a declaration in the input source program.  Furthermore, any such decl-specifier
+   // can appear at most once. Taken together, those requirements mean that a decl-specifier-seq
+   // is in fact a set of basic specifiers. Therefore, the set of standard basic specifiers act
+   // as a basis of the space of decl-specifier-seqs, and the coordinates or a decl-specifier-seq
+   // are numbers drown from ZZ/2ZZ.  The space of those coordinates is represented by `Specifiers`.
+   // This space is kept abstract to allow extensions beyond the restricted set of speecifiers
+   // listed in the ISO C++ standards.  For example, from the IPR model perspective the ISO C++
+   // access control label `public`, `protected`, `private` are basic specifiers.
+   enum class Specifiers : std::uintptr_t { };
+
+   template<util::EnumType T>
+   constexpr T operator|(T a, T b)
    {
-      return DeclSpecifiers(std::uint32_t(a) | std::uint32_t(b));
+      return T{util::rep(a) | util::rep(b)};
    }
 
-   constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr T& operator|=(T& a, T b)
    {
       return a = a | b;
    }
 
-   constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr T operator&(T a, T b)
    {
-      return DeclSpecifiers(std::uint32_t(a) & std::uint32_t(b));
+      return T{util::rep(a) & util::rep(b)};
    }
 
-   constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr T& operator&=(T& a, T b)
    {
       return a = a & b;
    }
 
-   constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr T operator^(T a, T b)
    {
-      return DeclSpecifiers(std::uint32_t(a) ^ std::uint32_t(b));
+      return T{util::rep(a) ^ util::rep(b)};
    }
 
-   constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr T& operator^=(T& a, T b)
    {
       return a = a ^ b;
    }
 
-   constexpr bool implies(DeclSpecifiers a, DeclSpecifiers b)
+   template<util::EnumType T>
+   constexpr bool implies(T a, T b)
    {
       return (a & b) == b;
    }
@@ -265,6 +270,8 @@ namespace ipr {
       using iterator = util::word_view::const_iterator;
       using Index = std::size_t;
       virtual util::word_view characters() const = 0;
+      bool operator==(const String& s) const { return this == &s; }
+      bool operator!=(const String&) const = default;
       Index size() const { return characters().size(); }
       iterator begin() const { return characters().begin(); }
       iterator end() const { return characters().end(); }
@@ -1453,7 +1460,7 @@ namespace ipr {
    // - The type component of the decl-specifier-seq is given by `type()`.
    // - The non-type component of the decl-specifier-seq is given by `specifiers()`.
    struct Specifiers_spread : Category<Category_code::Specifiers_spread, Directive> {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual const Sequence<cxx_form::Proclamator>& targets() const = 0;
    };
 
@@ -1462,7 +1469,7 @@ namespace ipr {
    // (either an Alias or a Var) in the current binding environment by taking apart
    // the object value designated by the initializer.
    struct Structured_binding : Category<Category_code::Structured_binding, Directive> {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual Binding_mode mode() const = 0;
       virtual const Sequence<Identifier>& names() const = 0;
       virtual const Expr& initializer() const = 0;
@@ -1725,7 +1732,7 @@ namespace ipr {
    //     (a) a primary template; or
    //     (b) a non-template declaration.
    struct Decl : Stmt {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual const Linkage& linkage() const = 0;
 
       virtual const Name& name() const = 0;
@@ -1928,6 +1935,26 @@ namespace ipr {
 
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
+
+      virtual Specifiers export_specifier() const = 0;         // `export` specifier.
+      virtual Specifiers static_specifier() const = 0;         // `static` standard specifier.
+      virtual Specifiers extern_specifier() const = 0;         // `extern` standard specifier.
+      virtual Specifiers mutable_specifier() const = 0;        // `mutable` standard specifier.
+      virtual Specifiers thread_local_specifier() const = 0;   // `thread_local` standard specifier.
+      virtual Specifiers register_specifier() const = 0;       // `register` standard specifier -- banned from C++17 and up.
+      virtual Specifiers inline_specifier() const = 0;         // `inline` standard specifier.
+      virtual Specifiers constexpr_specifier() const = 0;      // `constexpr` standard specifier.
+      virtual Specifiers consteval_specifier() const = 0;      // `consteval` standard specifier.
+      virtual Specifiers virtual_specifier() const = 0;        // `virtual` standard specifier.
+      virtual Specifiers abstract_specifier() const = 0;       // for " = 0" virtual functions.
+      virtual Specifiers explicit_specifier() const = 0;       // `explicit` standard specifier.
+      virtual Specifiers friend_specifier() const = 0;         // `friend` standard specifier.
+      virtual Specifiers typedef_specifier() const = 0;        // `typedef` standard specifier.
+      virtual Specifiers public_specifier() const = 0;         // `public` specifier.
+      virtual Specifiers protected_specifier() const = 0;      // `protected` specifier.
+      virtual Specifiers private_specifier() const = 0;        // `private` specifier.
+      virtual Specifiers specifiers(Basic_specifier) const = 0;   // convert a basic specifier to its `Specifiers` coordinates.
+      virtual std::vector<Basic_specifier> decompose(Specifiers) const = 0;   // return the constituents of Specifiers.
    };
 
                                 // -- Visitor --

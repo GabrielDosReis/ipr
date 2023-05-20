@@ -4,8 +4,6 @@
 // See LICENSE for copright and license notices.
 //
 
-#include <ipr/impl>
-#include <ipr/traversal>
 #include <new>
 #include <stdexcept>
 #include <algorithm>
@@ -15,6 +13,11 @@
 #include <utility>
 #include <cstring>
 #include <array>
+#include <bit>
+#include <vector>
+#include <ipr/impl>
+#include <ipr/traversal>
+#include <ipr/io>
 
 namespace ipr {
    const String& String::empty_string()
@@ -56,9 +59,10 @@ namespace ipr::impl {
           impl::String str;
        };
 
-        // A table of statically known words used in the internal representation.
+        // A table of statically reserved words used in the internal representation.
         constexpr std_identifier known_words[] {
            u8"...",
+           u8"=0",
            u8"C",
            u8"C++",
            u8"auto",
@@ -68,22 +72,38 @@ namespace ipr::impl {
            u8"char32_t",
            u8"char8_t",
            u8"class",
+           u8"consteval",
+           u8"constexpr",
+           u8"constinit",
            u8"default",
            u8"delete",
            u8"double",
            u8"enum",
+           u8"explicit",
+           u8"export",
+           u8"extern",
            u8"false",
            u8"float",
+           u8"friend",
+           u8"inline",
            u8"int",
            u8"long",
            u8"long double",
            u8"long long",
+           u8"mutable",
            u8"namespace",
            u8"nullptr",
+           u8"private",
+           u8"protected",
+           u8"public",
+           u8"register",
            u8"short",
            u8"signed char",
+           u8"static",
            u8"this",
+           u8"thread_local",
            u8"true",
+           u8"typedef",
            u8"typename",
            u8"union",
            u8"unsigned char",
@@ -91,6 +111,7 @@ namespace ipr::impl {
            u8"unsigned long",
            u8"unsigned long long",
            u8"unsigned short",
+           u8"virtual",
            u8"void",
            u8"wchar_t",
         };
@@ -131,6 +152,35 @@ namespace ipr::impl {
     }
 
     const ipr::Linkage& c_linkage() { return impl::c_link; }
+}
+
+// -- Standard basic specifiers
+namespace ipr::impl {
+   namespace {
+      constexpr ipr::Basic_specifier std_specifiers[] {
+         known_word(u8"=0"),
+         known_word(u8"export"),
+         known_word(u8"public"),
+         known_word(u8"protected"),
+         known_word(u8"private"),
+         known_word(u8"consteval"),
+         known_word(u8"constexpr"),
+         known_word(u8"constinit"),
+         known_word(u8"explicit"),
+         known_word(u8"extern"),
+         known_word(u8"friend"),
+         known_word(u8"inline"),
+         known_word(u8"mutable"),
+         known_word(u8"register"),
+         known_word(u8"static"),
+         known_word(u8"thread_local"),
+         known_word(u8"typedef"),
+         known_word(u8"virtual"),
+      };
+
+      // Ensure all basic specifiers are representable with the precision declared for ipr::Specifiers.
+      static_assert(std::size(std_specifiers) < std::bit_width(~std::underlying_type_t<ipr::Specifiers>{}));
+   }
 }
 
 // -- Natural transfer: C++ language linkage, and natural calling convention.
@@ -1602,6 +1652,8 @@ namespace ipr::impl {
       {
          if (s.size() == 0)
             return invisible_logo;
+         else if (auto logo = word_if_known(s.characters()))
+            return *logo;
          constexpr auto lt = [](auto& x, auto& y) { return compare(x.what(), y); };
          return *logos.insert(s, lt);
       }
@@ -2285,6 +2337,75 @@ namespace ipr::impl {
 
       const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_link; }
       const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_link; }
+
+      namespace {
+         struct UnknownSpecifierError { const char8_t* specifier; };
+
+         // Helper function used to precompose known values of standard specifiers.
+         // FIXME: MSVC has a bug in its compile-time evaluation of constexpr functions
+         //        involving dynamic dispatch.  The workaround below allows MSVC to compile
+         //        the code turning a compile-time computed integer constant into a repeated
+         //        runtime linear search.
+#ifndef MSVC_WORKAROUND_VSO1822505
+         consteval
+#else
+         constexpr
+#endif
+         ipr::Specifiers specifiers(const char8_t* s)
+         {
+            auto pos = 0;
+            for (auto& x : impl::std_specifiers) {
+               if (x.logogram().operand().characters() == s)
+                  return ipr::Specifiers{1u << pos};
+               ++pos;
+            }
+            throw UnknownSpecifierError{s};
+         }
+      }
+
+      ipr::Specifiers Lexicon::export_specifier() const { return impl::specifiers(u8"export"); }
+      ipr::Specifiers Lexicon::static_specifier() const { return impl::specifiers(u8"static"); }
+      ipr::Specifiers Lexicon::extern_specifier() const { return impl::specifiers(u8"extern"); }
+      ipr::Specifiers Lexicon::mutable_specifier() const { return impl::specifiers(u8"mutable"); }
+      ipr::Specifiers Lexicon::thread_local_specifier() const { return impl::specifiers(u8"thread_local"); }
+      ipr::Specifiers Lexicon::register_specifier() const { return impl::specifiers(u8"register"); }
+      ipr::Specifiers Lexicon::inline_specifier() const { return impl::specifiers(u8"inline"); }
+      ipr::Specifiers Lexicon::consteval_specifier() const { return impl::specifiers(u8"consteval"); }
+      ipr::Specifiers Lexicon::constexpr_specifier() const { return impl::specifiers(u8"constexpr"); }
+      ipr::Specifiers Lexicon::virtual_specifier() const { return impl::specifiers(u8"virtual"); }
+      ipr::Specifiers Lexicon::abstract_specifier() const { return impl::specifiers(u8"=0"); }
+      ipr::Specifiers Lexicon::explicit_specifier() const { return impl::specifiers(u8"explicit"); }
+      ipr::Specifiers Lexicon::friend_specifier() const { return impl::specifiers(u8"friend"); }
+      ipr::Specifiers Lexicon::typedef_specifier() const { return impl::specifiers(u8"typedef"); }
+      ipr::Specifiers Lexicon::public_specifier() const { return impl::specifiers(u8"public"); }
+      ipr::Specifiers Lexicon::protected_specifier() const { return impl::specifiers(u8"protected"); }
+      ipr::Specifiers Lexicon::private_specifier() const { return impl::specifiers(u8"private"); }
+
+      ipr::Specifiers Lexicon::specifiers(ipr::Basic_specifier s) const
+      {
+         auto pos = 0;
+         for (auto& x : impl::std_specifiers) {
+            if (x == s)
+               return ipr::Specifiers{1u << pos};
+            ++pos;
+         }
+         // FIXME: Throw an exception to signal unknown basic specifier?
+         return { };
+      }
+
+      // Return the decomposition of a specifier in terms of its basic specifiers.
+      std::vector<ipr::Basic_specifier> Lexicon::decompose(ipr::Specifiers specs) const
+      {
+         std::vector<ipr::Basic_specifier> result;
+         int pos = 0;
+         for (auto& s : impl::std_specifiers) {
+            if (ipr::implies(specs, ipr::Specifiers{1u << pos}))
+               result.push_back(s);
+            ++pos;
+         }
+         return result;
+      }
+
 
       Lexicon::Lexicon() { }
       Lexicon::~Lexicon() { }
