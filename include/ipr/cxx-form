@@ -156,7 +156,7 @@ namespace ipr::cxx_form {
     // And object of this type corresponds to the instance of the ptr-operator C++ grammar:
     //      `*` attribute-specifier-seq_opt cv-qualifier-seq_opt
     struct Indirector::Pointer : Indirector {
-        virtual Type_qualifiers qualifiers() const = 0;
+        virtual Qualifiers qualifiers() const = 0;
     };
 
     // Syntactic indication of reference binding flavor.
@@ -180,7 +180,7 @@ namespace ipr::cxx_form {
     //     nested-named-specifier `*` attribute-specifier-seq_opt cv-qualifier-seq_opt
     struct Indirector::Member : Indirector {
         virtual const Expr& scope() const = 0;
-        virtual Type_qualifiers qualifiers() const = 0;
+        virtual Qualifiers qualifiers() const = 0;
     };
 
     // Traversal of Indirector objects is facilitated by visitor classes deriving
@@ -326,7 +326,7 @@ namespace ipr::cxx_form {
     //    noptr-declarator parameters-and-qualifiers
     struct Morphism::Function : Morphism {
         virtual const Parameter_list& parameters() const = 0;
-        virtual Type_qualifiers qualifiers() const = 0;
+        virtual Qualifiers qualifiers() const = 0;
         virtual Binding_mode binding_mode() const = 0;
         virtual Optional<Expr> throws() const = 0;
     };

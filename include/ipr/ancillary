@@ -36,52 +36,10 @@ namespace ipr {
       All                  = ~0x0,
    };
 
-                                // -- Type_qualifier --
-   // cv-qualifiers are actually type operators.  Much of these operators
-   // currently make sense only for classic type -- although it might
-   // be interesting to explore the notion of pointer to overload-set
-   // or reference to such an expression.
-   enum class Type_qualifiers : std::uint8_t {
-      None             = 0,
-      Const            = 1 << 0,
-      Volatile         = 1 << 1,
-      Restrict         = 1 << 2        // not standard C++
-   };
-
-   constexpr Type_qualifiers operator|(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) | uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator|=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a | b;
-   }
-
-   constexpr Type_qualifiers operator&(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) & uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator&=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a & b;
-   }
-
-   constexpr Type_qualifiers operator^(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) ^ uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator^=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a ^ b;
-   }
-
-   constexpr bool implies(Type_qualifiers a, Type_qualifiers b)
-   {
-      return (a & b) == b;
-   }
+   // -- Qualifiers --
+   // Abstract data type capturing compositions of standard and extended type qualifiers.
+   // Composition of type qualifiers is commutative.
+   enum class Qualifiers : std::uintptr_t { };
 
                                 // -- Binding_mode --
    // Mode of binding of a object value to a name (parameter, variable, alias, etc).

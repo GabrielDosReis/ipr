@@ -7,6 +7,7 @@
 #include <new>
 #include <stdexcept>
 #include <algorithm>
+#include <functional>
 #include <typeinfo>
 #include <cassert>
 #include <iterator>
@@ -72,6 +73,7 @@ namespace ipr::impl {
            u8"char32_t",
            u8"char8_t",
            u8"class",
+           u8"const",
            u8"consteval",
            u8"constexpr",
            u8"constinit",
@@ -97,6 +99,7 @@ namespace ipr::impl {
            u8"protected",
            u8"public",
            u8"register",
+           u8"restrict",
            u8"short",
            u8"signed char",
            u8"static",
@@ -113,6 +116,7 @@ namespace ipr::impl {
            u8"unsigned short",
            u8"virtual",
            u8"void",
+           u8"volatile",
            u8"wchar_t",
         };
 
@@ -154,7 +158,7 @@ namespace ipr::impl {
     const ipr::Linkage& c_linkage() { return impl::c_link; }
 }
 
-// -- Standard basic specifiers
+// -- Standard basic specifiers and qualifiers
 namespace ipr::impl {
    namespace {
       constexpr ipr::Basic_specifier std_specifiers[] {
@@ -179,7 +183,16 @@ namespace ipr::impl {
       };
 
       // Ensure all basic specifiers are representable with the precision declared for ipr::Specifiers.
-      static_assert(std::size(std_specifiers) < std::bit_width(~std::underlying_type_t<ipr::Specifiers>{}));
+      static_assert(std::size(std_specifiers) < std::bit_width(~util::raw<ipr::Specifiers>{}));
+
+      constexpr ipr::Basic_qualifier std_qualifiers[] {
+         known_word(u8"const"),
+         known_word(u8"volatile"),
+         known_word(u8"restrict"),
+      };
+
+      // Ensure all basic qualifiers are representable with the precision declared for ipr::Qualifiers.
+      static_assert(std::size(std_qualifiers) < std::bit_width(~util::raw<ipr::Qualifiers>{}));
    }
 }
 
@@ -333,9 +346,9 @@ namespace ipr::cxx_form::impl {
       return nested_reqs.make(x);
    }
 
-   Pointer_indirector* form_factory::make_pointer_indirector(ipr::Type_qualifiers cv)
+   Pointer_indirector* form_factory::make_pointer_indirector(ipr::Qualifiers q)
    {
-      return pointer_indirectors.make(cv);
+      return pointer_indirectors.make(q);
    }
 
    Reference_indirector* form_factory::make_reference_indirector(Reference_flavor f)
@@ -343,9 +356,9 @@ namespace ipr::cxx_form::impl {
       return reference_indirectors.make(f);
    }
 
-   Member_indirector* form_factory::make_member_indirector(const ipr::Expr& s, Type_qualifiers cv)
+   Member_indirector* form_factory::make_member_indirector(const ipr::Expr& s, ipr::Qualifiers q)
    {
-      return member_indirectors.make(s, cv);
+      return member_indirectors.make(s, q);
    }
 
    Unqualified_id_species* form_factory::make_unqualified_id_species()
@@ -1154,16 +1167,16 @@ namespace ipr::impl {
       }
 
       const ipr::Qualified&
-      type_factory::get_qualified(ipr::Type_qualifiers cv, const ipr::Type& t)
+      type_factory::get_qualified(ipr::Qualifiers q, const ipr::Type& t)
       {
          // It is an error to call this function if there is no real
          // qualified.
-         if (cv == ipr::Type_qualifiers::None)
+         if (q == ipr::Qualifiers{})
             throw std::domain_error
                ("type_factoy::get_qualified: no qualifier");
 
          using rep = impl::Qualified::Rep;
-         return *qualifieds.insert(rep{ cv, t }, binary_compare());
+         return *qualifieds.insert(rep{ q, t }, binary_compare());
       }
 
       const ipr::Decltype& type_factory::get_decltype(const ipr::Expr& e)
@@ -2220,7 +2233,7 @@ namespace ipr::impl {
       }
 
       impl::Qualification*
-      expr_factory::make_qualification(const ipr::Expr& e, ipr::Type_qualifiers q, const ipr::Type& t)
+      expr_factory::make_qualification(const ipr::Expr& e, ipr::Qualifiers q, const ipr::Type& t)
       {
          return make(qualifications, e, q).with_type(t);
       }
@@ -2339,73 +2352,110 @@ namespace ipr::impl {
       const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_link; }
 
       namespace {
-         struct UnknownSpecifierError { const char8_t* specifier; };
+         struct UnknownLogogramError { 
+            util::word_view what;
+            UnknownLogogramError(util::word_view w) : what{w} { }
+            UnknownLogogramError(Basic_specifier s) : what{s.logogram().what().characters()} { }
+            UnknownLogogramError(Basic_qualifier q) : what{q.logogram().what().characters()} { }
+         };
 
-         // Helper function used to precompose known values of standard specifiers.
-         // FIXME: MSVC has a bug in its compile-time evaluation of constexpr functions
-         //        involving dynamic dispatch.  The workaround below allows MSVC to compile
-         //        the code turning a compile-time computed integer constant into a repeated
-         //        runtime linear search.
-#ifndef MSVC_WORKAROUND_VSO1822505
-         consteval
-#else
-         constexpr
-#endif
-         ipr::Specifiers specifiers(const char8_t* s)
+         // Helper function used to precompose known values of symbolic denotations.
+         constexpr auto project(auto s, auto& table, auto pred)
          {
             auto pos = 0;
-            for (auto& x : impl::std_specifiers) {
-               if (x.logogram().operand().characters() == s)
-                  return ipr::Specifiers{1u << pos};
+            for (auto& x : table) {
+               if (pred(x, s))
+                  return 1u << pos;
                ++pos;
             }
-            throw UnknownSpecifierError{s};
+            throw UnknownLogogramError{s};
          }
+
+         // Representation of a family of basic symbolic denotations taken as basis
+         // for expressing combinations of elements of said family.
+         template<typename T, auto& table>
+         struct Basis {
+            // FIXME: MSVC has a bug in its compile-time evaluation of constexpr functions
+            //        involving dynamic dispatch.  The workaround below allows MSVC to compile
+            //        the code turning a compile-time computed integer constant into a repeated
+            //        runtime linear search.
+#ifndef MSVC_WORKAROUND_VSO1822505
+            consteval
+#else
+            constexpr
+#endif
+            T operator[](const char8_t* s) const
+            { 
+               constexpr auto has_name = [](auto& x, auto& y) { return x.logogram().operand().characters() == y; };
+               return T{impl::project(s, table, has_name)};
+            }
+
+            template<typename S>
+            T operator()(S s) const
+            {
+               return T{impl::project(s, table, std::equal_to<>{})};
+            }
+
+            template<typename S>
+            static std::vector<S> decompose(T element)
+            {
+               std::vector<S> result;
+               int pos = 0;
+               for (auto& b : table) {
+                  if (ipr::implies(element, T{1u << pos}))
+                     result.push_back(b);
+                  ++pos;
+               }
+               return result;
+            }
+         };
+
+         constexpr Basis<ipr::Specifiers, impl::std_specifiers> specifier_basis { };
+         constexpr Basis<ipr::Qualifiers, impl::std_qualifiers> qualifier_basis { };
       }
 
-      ipr::Specifiers Lexicon::export_specifier() const { return impl::specifiers(u8"export"); }
-      ipr::Specifiers Lexicon::static_specifier() const { return impl::specifiers(u8"static"); }
-      ipr::Specifiers Lexicon::extern_specifier() const { return impl::specifiers(u8"extern"); }
-      ipr::Specifiers Lexicon::mutable_specifier() const { return impl::specifiers(u8"mutable"); }
-      ipr::Specifiers Lexicon::thread_local_specifier() const { return impl::specifiers(u8"thread_local"); }
-      ipr::Specifiers Lexicon::register_specifier() const { return impl::specifiers(u8"register"); }
-      ipr::Specifiers Lexicon::inline_specifier() const { return impl::specifiers(u8"inline"); }
-      ipr::Specifiers Lexicon::consteval_specifier() const { return impl::specifiers(u8"consteval"); }
-      ipr::Specifiers Lexicon::constexpr_specifier() const { return impl::specifiers(u8"constexpr"); }
-      ipr::Specifiers Lexicon::virtual_specifier() const { return impl::specifiers(u8"virtual"); }
-      ipr::Specifiers Lexicon::abstract_specifier() const { return impl::specifiers(u8"=0"); }
-      ipr::Specifiers Lexicon::explicit_specifier() const { return impl::specifiers(u8"explicit"); }
-      ipr::Specifiers Lexicon::friend_specifier() const { return impl::specifiers(u8"friend"); }
-      ipr::Specifiers Lexicon::typedef_specifier() const { return impl::specifiers(u8"typedef"); }
-      ipr::Specifiers Lexicon::public_specifier() const { return impl::specifiers(u8"public"); }
-      ipr::Specifiers Lexicon::protected_specifier() const { return impl::specifiers(u8"protected"); }
-      ipr::Specifiers Lexicon::private_specifier() const { return impl::specifiers(u8"private"); }
+      ipr::Specifiers Lexicon::export_specifier() const { return impl::specifier_basis[u8"export"]; }
+      ipr::Specifiers Lexicon::static_specifier() const { return impl::specifier_basis[u8"static"]; }
+      ipr::Specifiers Lexicon::extern_specifier() const { return impl::specifier_basis[u8"extern"]; }
+      ipr::Specifiers Lexicon::mutable_specifier() const { return impl::specifier_basis[u8"mutable"]; }
+      ipr::Specifiers Lexicon::thread_local_specifier() const { return impl::specifier_basis[u8"thread_local"]; }
+      ipr::Specifiers Lexicon::register_specifier() const { return impl::specifier_basis[u8"register"]; }
+      ipr::Specifiers Lexicon::inline_specifier() const { return impl::specifier_basis[u8"inline"]; }
+      ipr::Specifiers Lexicon::consteval_specifier() const { return impl::specifier_basis[u8"consteval"]; }
+      ipr::Specifiers Lexicon::constexpr_specifier() const { return impl::specifier_basis[u8"constexpr"]; }
+      ipr::Specifiers Lexicon::virtual_specifier() const { return impl::specifier_basis[u8"virtual"]; }
+      ipr::Specifiers Lexicon::abstract_specifier() const { return impl::specifier_basis[u8"=0"]; }
+      ipr::Specifiers Lexicon::explicit_specifier() const { return impl::specifier_basis[u8"explicit"]; }
+      ipr::Specifiers Lexicon::friend_specifier() const { return impl::specifier_basis[u8"friend"]; }
+      ipr::Specifiers Lexicon::typedef_specifier() const { return impl::specifier_basis[u8"typedef"]; }
+      ipr::Specifiers Lexicon::public_specifier() const { return impl::specifier_basis[u8"public"]; }
+      ipr::Specifiers Lexicon::protected_specifier() const { return impl::specifier_basis[u8"protected"]; }
+      ipr::Specifiers Lexicon::private_specifier() const { return impl::specifier_basis[u8"private"]; }
 
       ipr::Specifiers Lexicon::specifiers(ipr::Basic_specifier s) const
       {
-         auto pos = 0;
-         for (auto& x : impl::std_specifiers) {
-            if (x == s)
-               return ipr::Specifiers{1u << pos};
-            ++pos;
-         }
-         // FIXME: Throw an exception to signal unknown basic specifier?
-         return { };
+         return impl::specifier_basis(s);
       }
 
       // Return the decomposition of a specifier in terms of its basic specifiers.
       std::vector<ipr::Basic_specifier> Lexicon::decompose(ipr::Specifiers specs) const
       {
-         std::vector<ipr::Basic_specifier> result;
-         int pos = 0;
-         for (auto& s : impl::std_specifiers) {
-            if (ipr::implies(specs, ipr::Specifiers{1u << pos}))
-               result.push_back(s);
-            ++pos;
-         }
-         return result;
+         return impl::specifier_basis.decompose<ipr::Basic_specifier>(specs);
       }
 
+      ipr::Qualifiers Lexicon::const_qualifier() const { return impl::qualifier_basis[u8"const"]; }
+      ipr::Qualifiers Lexicon::volatile_qualifier() const { return impl::qualifier_basis[u8"volatile"]; }
+      ipr::Qualifiers Lexicon::restrict_qualifier() const { return impl::qualifier_basis[u8"restrict"]; }
+
+      ipr::Qualifiers Lexicon::qualifiers(ipr::Basic_qualifier q) const
+      {
+         return impl::qualifier_basis(q);
+      }
+
+      std::vector<ipr::Basic_qualifier> Lexicon::decompose(ipr::Qualifiers quals) const
+      {
+         return impl::qualifier_basis.decompose<ipr::Basic_qualifier>(quals);
+      }
 
       Lexicon::Lexicon() { }
       Lexicon::~Lexicon() { }
@@ -2523,7 +2573,7 @@ int main()
    // Build the variable's name,
    auto& name = lexicon.get_identifier(u8"bufsz");
    // then its type,
-   auto& type = lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type());
+   auto& type = lexicon.get_qualified(lexicon.const_qualifier(), lexicon.int_type());
    // and the actual impl::Var node,
    impl::Var* var = global_scope->make_var(name, type);
    // set its initializer,

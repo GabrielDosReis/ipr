@@ -64,6 +64,7 @@ namespace ipr
 
       Printer& operator<<(const char8_t*);
       Printer& operator<<(Specifiers);
+      Printer& operator<<(Qualifiers);
       template<typename T> requires util::std_insertable<T>
       Printer& operator<<(T t) { stream << t; return *this; }
 
