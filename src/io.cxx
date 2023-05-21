@@ -1308,17 +1308,11 @@ namespace ipr {
       return pp;
    }
 
-   Printer&
-   operator<<(Printer& printer, Type_qualifiers cv)
+   Printer& Printer::operator<<(Qualifiers quals)
    {
-      if (implies(cv, Type_qualifiers::Const))
-         printer << xpr_identifier(u8"const");
-      if (implies(cv, Type_qualifiers::Volatile))
-         printer << xpr_identifier(u8"volatile");
-      if (implies(cv, Type_qualifiers::Restrict))
-         printer << xpr_identifier(u8"restrict");
-
-      return printer;
+      for (auto q : lexicon.decompose(quals))
+         *this << q.logogram();
+      return *this;
    }
 
    struct xpr_type_expr {

@@ -873,10 +873,10 @@ namespace ipr::cxx_form::impl {
 
    // -- implementation of ipr::cxx_form::Indirector::Pointer
    struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
-      explicit Pointer_indirector(ipr::Type_qualifiers cv) : cv_quals{cv} { }
-      ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
+      explicit Pointer_indirector(ipr::Qualifiers q) : quals{q} { }
+      ipr::Qualifiers qualifiers() const final { return quals; }
    private:
-      ipr::Type_qualifiers cv_quals;
+      ipr::Qualifiers quals;
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Reference
@@ -889,12 +889,12 @@ namespace ipr::cxx_form::impl {
 
    // -- implementation of ipr::cxx_form::Indirector::Member
    struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
-      Member_indirector(const ipr::Expr& s, ipr::Type_qualifiers cv) : whole{s}, cv_quals{cv} { }
+      Member_indirector(const ipr::Expr& s, ipr::Qualifiers q) : whole{s}, quals{q} { }
       const ipr::Expr& scope() const final { return whole; }
-      ipr::Type_qualifiers qualifiers() const final { return cv_quals; }
+      ipr::Qualifiers qualifiers() const final { return quals; }
    private:
       const ipr::Expr& whole;
-      ipr::Type_qualifiers cv_quals;
+      ipr::Qualifiers quals;
    };
 
    // -- implementation of ipr::cxx_form::Morphism
@@ -910,12 +910,12 @@ namespace ipr::cxx_form::impl {
    struct Function_morphism : impl::Morphism<cxx_form::Morphism::Function> {
       ipr::impl::Parameter_list inputs;
       Optional<ipr::Expr> eh_spec;
-      Type_qualifiers cv_quals { };
+      ipr::Qualifiers quals { };
       Binding_mode ref_qual { };
       Function_morphism(const ipr::Region&, Mapping_level);
       const ipr::Parameter_list& parameters() const final { return inputs; }
       Optional<ipr::Expr> throws() const final { return eh_spec; }
-      Type_qualifiers qualifiers() const final { return cv_quals; }
+      ipr::Qualifiers qualifiers() const final { return quals; }
       Binding_mode binding_mode() const final { return ref_qual; }
    };
 
@@ -1091,9 +1091,9 @@ namespace ipr::cxx_form::impl {
       Compound_requirement* make_compound_requirement(const ipr::Expr&);
       Nested_requirement* make_nested_requirement(const ipr::Expr&);
 
-      Pointer_indirector* make_pointer_indirector(ipr::Type_qualifiers);
+      Pointer_indirector* make_pointer_indirector(ipr::Qualifiers);
       Reference_indirector* make_reference_indirector(Reference_flavor);
-      Member_indirector* make_member_indirector(const ipr::Expr&, Type_qualifiers);
+      Member_indirector* make_member_indirector(const ipr::Expr&, ipr::Qualifiers);
       Unqualified_id_species* make_unqualified_id_species();
       Unqualified_id_species* make_unqualified_id_species(const ipr::Name&);
       Pack_species* make_pack_species();
@@ -2225,7 +2225,7 @@ namespace ipr::impl {
       const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Transfer&);
 
       const ipr::Array& get_array(const ipr::Type&, const ipr::Expr&);
-      const ipr::Qualified& get_qualified(ipr::Type_qualifiers, const ipr::Type&);
+      const ipr::Qualified& get_qualified(ipr::Qualifiers, const ipr::Type&);
       const ipr::Decltype& get_decltype(const ipr::Expr&);
       const ipr::Tor& get_tor(const ipr::Product&, const ipr::Sum&);
       const ipr::Function& get_function(const ipr::Product&, const ipr::Type&);
@@ -2623,9 +2623,8 @@ namespace ipr::impl {
       Plus* make_plus(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Plus_assign* make_plus_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Pretend* make_pretend(const ipr::Expr&, const ipr::Type&, const ipr::Type&);
-      Qualification* make_qualification(const ipr::Expr&, ipr::Type_qualifiers, const ipr::Type&);
-      Reinterpret_cast* make_reinterpret_cast(const ipr::Type&,
-                                                const ipr::Expr&);
+      Qualification* make_qualification(const ipr::Expr&, ipr::Qualifiers, const ipr::Type&);
+      Reinterpret_cast* make_reinterpret_cast(const ipr::Type&, const ipr::Expr&);
       Scope_ref* make_scope_ref(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Rshift* make_rshift(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
       Rshift_assign* make_rshift_assign(const ipr::Expr&, const ipr::Expr&, Optional<ipr::Type> = {});
@@ -2823,26 +2822,31 @@ namespace ipr::impl {
       const ipr::Linkage& cxx_linkage() const final;
       const ipr::Linkage& c_linkage() const final;
 
-      Specifiers export_specifier() const final;
-      Specifiers static_specifier() const final;
-      Specifiers extern_specifier() const final;
-      Specifiers mutable_specifier() const final;
-      Specifiers thread_local_specifier() const final;
-      Specifiers register_specifier() const final;
-      Specifiers inline_specifier() const final; 
-      Specifiers constexpr_specifier() const final;
-      Specifiers consteval_specifier() const final;
-      Specifiers virtual_specifier() const final;
-      Specifiers abstract_specifier() const final;
-      Specifiers explicit_specifier() const final;
-      Specifiers friend_specifier() const final;
-      Specifiers typedef_specifier() const final;
-      Specifiers public_specifier() const final;
-      Specifiers protected_specifier() const final;
-      Specifiers private_specifier() const final;
+      ipr::Specifiers export_specifier() const final;
+      ipr::Specifiers static_specifier() const final;
+      ipr::Specifiers extern_specifier() const final;
+      ipr::Specifiers mutable_specifier() const final;
+      ipr::Specifiers thread_local_specifier() const final;
+      ipr::Specifiers register_specifier() const final;
+      ipr::Specifiers inline_specifier() const final; 
+      ipr::Specifiers constexpr_specifier() const final;
+      ipr::Specifiers consteval_specifier() const final;
+      ipr::Specifiers virtual_specifier() const final;
+      ipr::Specifiers abstract_specifier() const final;
+      ipr::Specifiers explicit_specifier() const final;
+      ipr::Specifiers friend_specifier() const final;
+      ipr::Specifiers typedef_specifier() const final;
+      ipr::Specifiers public_specifier() const final;
+      ipr::Specifiers protected_specifier() const final;
+      ipr::Specifiers private_specifier() const final;
       ipr::Specifiers specifiers(ipr::Basic_specifier) const final;
       std::vector<ipr::Basic_specifier> decompose(ipr::Specifiers) const final;
 
+      ipr::Qualifiers const_qualifier() const final;
+      ipr::Qualifiers volatile_qualifier() const final;
+      ipr::Qualifiers restrict_qualifier() const final;
+      ipr::Qualifiers qualifiers(ipr::Basic_qualifier) const final;
+      std::vector<ipr::Basic_qualifier> decompose(ipr::Qualifiers) const final;
 
       const ipr::Template_id& get_template_id(const ipr::Expr&,
                                                 const ipr::Expr_list&);

@@ -188,6 +188,20 @@ namespace ipr {
    // access control label `public`, `protected`, `private` are basic specifiers.
    enum class Specifiers : std::uintptr_t { };
 
+   // -- Basic_qualifier --
+   // Symbolic semantic denotation of a type qualifier.  Note that a type qualifier is a monadic
+   // type constructor.  The set of ISO C++ type qualifiers is { `const`, `volatile` }.  In practice,
+   // C++ implementations support more type qualifiers, including ISO C's `restrict`.  The name
+   // of the qualifier is indicated by the `logogram()` operation.
+   struct Basic_qualifier {
+      constexpr Basic_qualifier(const Logogram& l) : qual{&l} { }
+      constexpr const Logogram& logogram() const { return *qual; }
+      constexpr bool operator==(const Basic_qualifier&) const = default;
+   private:
+      const Logogram* qual;
+   };
+
+   // Algebraic operations on symbolic denotations expressed as bitwise operations (i.e. ZZ/2ZZ).
    template<util::EnumType T>
    constexpr T operator|(T a, T b)
    {
@@ -639,7 +653,7 @@ namespace ipr {
    // We also maintain the invariant that Qualified::qualifiers is never
    // Type::None, consequently it is an error to attempt to create such a node.
    struct Qualified : Binary<Category<Category_code::Qualified, Type>,
-                             ipr::Type_qualifiers, const Type&> {
+                             ipr::Qualifiers, const Type&> {
       Arg1_type qualifiers() const { return first(); }
       Arg2_type main_variant() const { return second(); }
    };
@@ -1290,7 +1304,7 @@ namespace ipr {
 
                                 // -- Qualification --
    // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifiers> {
+   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Qualifiers> {
       Arg1_type expr() const { return first(); }
       Arg2_type qualifiers() const { return second(); }
    };
@@ -1955,6 +1969,12 @@ namespace ipr {
       virtual Specifiers private_specifier() const = 0;        // `private` specifier.
       virtual Specifiers specifiers(Basic_specifier) const = 0;   // convert a basic specifier to its `Specifiers` coordinates.
       virtual std::vector<Basic_specifier> decompose(Specifiers) const = 0;   // return the constituents of Specifiers.
+
+      virtual Qualifiers const_qualifier() const = 0;             // `const` cv-qualifier.
+      virtual Qualifiers volatile_qualifier() const = 0;          // `volatile` cv-qualifier.
+      virtual Qualifiers restrict_qualifier() const = 0;          // `restrict` cv-qualifier.
+      virtual Qualifiers qualifiers(Basic_qualifier) const = 0;   // retrieve the algebraic coordinate of a named qualifier.
+      virtual std::vector<Basic_qualifier> decompose(Qualifiers) const = 0;   // retrieve the constituents of Qualifiers.
    };
 
                                 // -- Visitor --
