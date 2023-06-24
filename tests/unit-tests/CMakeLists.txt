@@ -19,13 +19,6 @@ target_include_directories(${TEST_BINARY}
   SYSTEM PRIVATE ${DOCTEST_INCLUDE_DIR}
 )
 
-set_target_properties(${TEST_BINARY}
-   PROPERTIES
-      CXX_STANDARD 20
-      CXX_STANDARD_REQUIRED ON
-      CXX_EXTENSIONS OFF
-)
-
 target_compile_options(${TEST_BINARY}
    PRIVATE
       $<$<CXX_COMPILER_ID:MSVC>:
