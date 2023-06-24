@@ -1,4 +1,4 @@
-![Ubuntu-Build](https://github.com/GabrielDosReis/ipr/workflows/Ubuntu-Build/badge.svg)
+![Build & Test](https://github.com/GabrielDosReis/ipr/workflows/main.yml/badge.svg)
 
 The IPR, short for *Internal Program Representation*, is an open source
 project originally developed as the core data structures of a framework
