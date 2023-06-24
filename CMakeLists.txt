@@ -1,5 +1,5 @@
 cmake_minimum_required(
-   VERSION 3.16
+   VERSION 3.24
 )
 include(CheckIPOSupported)
 
@@ -12,6 +12,10 @@ project(ipr
    VERSION 0.50
    LANGUAGES CXX
 )
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS False)
 
 # Enable link-time optimization or close approximation
 check_ipo_supported(RESULT ipo_supported OUTPUT ipo_disbaled_msg)
