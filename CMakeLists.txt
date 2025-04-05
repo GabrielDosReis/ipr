@@ -63,18 +63,23 @@ set_target_properties(${PROJECT_NAME}
 )
 
 target_compile_options(${PROJECT_NAME}
-   PRIVATE
+   PUBLIC
       $<$<CXX_COMPILER_ID:MSVC>:
-         /W2           # Usual warnings
          /permissive-  # Turn on strict language conformance
          /EHsc         # Turn on exception handling semantics
       >
       $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
+         -Wno-overloaded-virtual  # Avoid bogus warnings against foundational techniques.
+      >
+   PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:
+         /W2           # Usual warnings
+      >
+      $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
          -Wall         # Turn on all useful warnings
          -pedantic     # Turn on strict language conformance
-      >
+         >
       $<$<CXX_COMPILER_ID:Clang>:
-		 -Wno-overloaded-virtual                   # Too many false positives
 		 -Wno-delete-non-abstract-non-virtual-dtor # System headers plagued
       >
 )
