@@ -1,5 +1,5 @@
 cmake_minimum_required(
-   VERSION 3.24
+   VERSION 3.28
 )
 include(CheckIPOSupported)
 
@@ -30,6 +30,7 @@ add_library(${PROJECT_NAME}
    src/impl.cxx
    src/io.cxx
    src/traversal.cxx
+   src/input.cxx
    src/utility.cxx
 )
 
@@ -52,6 +53,7 @@ target_sources(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/include/ipr/synopsis
         ${PROJECT_SOURCE_DIR}/include/ipr/traversal
         ${PROJECT_SOURCE_DIR}/include/ipr/utility
+        ${PROJECT_SOURCE_DIR}/include/ipr/input
         ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
 )
 

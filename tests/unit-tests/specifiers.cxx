@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <ranges>
 #include <ipr/impl>
 #include <ipr/io>
 #include <ipr/utility>
@@ -61,7 +62,7 @@ TEST_CASE("random combination of basic specifiers") {
     const auto sample_size = 1 + std::rand() % spec_count;
     std::vector<std::u8string_view> test;
     ipr::Specifiers specifiers { };
-    for (int i = 0; i < sample_size; ++i) {
+    for (auto i[[maybe_unused]] : std::views::iota(0u, sample_size)) {
         auto w = specs[std::rand() % sample_size];
         // Only add new specifier.
         if (std::find(test.begin(), test.end(), w) < test.end())
