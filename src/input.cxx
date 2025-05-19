@@ -76,7 +76,7 @@ namespace ipr::input {
 #endif
     }
 
-    SourceFile::SourceFile(SourceFile&& src) : view{src.view}
+    SourceFile::SourceFile(SourceFile&& src) noexcept : view{src.view}
     {
         src.view = { };
     }

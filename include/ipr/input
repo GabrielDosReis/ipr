@@ -42,7 +42,7 @@ namespace ipr::input {
         using View = std::span<const std::byte>;
         
         explicit SourceFile(const SystemPath&);
-        SourceFile(SourceFile&&);
+        SourceFile(SourceFile&&) noexcept;
         ~SourceFile();
         View bytes() const { return view; }
     private:
