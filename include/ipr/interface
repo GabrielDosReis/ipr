@@ -156,7 +156,7 @@ namespace ipr {
       const Logogram& conv;
    };
 
-                                // -- Linkage --
+                                // -- Language_linkage --
    // An object of this type represents language linkage, e.g., "C" in `extern "C"'.
    // The ISO standard mandates at least two language linkages: "C" and
    // "C++".  If those were the only language linkages used in practice,
@@ -166,11 +166,11 @@ namespace ipr {
    // is adopted in the form of a logogram.  From ISO C++ point of view, language 
    // linkage applies only to function names, variable names, and function types.  
    // Furthermore, a language linkage applied to a function type is a calling convention.
-   struct Linkage {
-      explicit constexpr Linkage(const Logogram& l) : lang{l} { }
+   struct Language_linkage {
+      explicit constexpr Language_linkage(const Logogram& l) : lang{l} { }
       const Logogram& language() const { return lang; }
-      bool operator==(const Linkage& x) const { return lang == x.lang; }
-      bool operator!=(const Linkage&) const = default;
+      bool operator==(const Language_linkage& x) const { return lang == x.lang; }
+      bool operator!=(const Language_linkage&) const = default;
    private:
       const Logogram& lang;
    };
@@ -179,12 +179,12 @@ namespace ipr {
    // A summary of characteristics of data or control tranfer.  Both language linkage and 
    // calling convention affect how data are transferred to subroutines in function calls.
    // Furthermore, language linkage also affects linking across translation units.
-   struct Transfer : Basic_binary<const Linkage&, const Calling_convention&> {
-      const Linkage& linkage() const { return first(); }
+   struct Transfer : Basic_binary<const Language_linkage&, const Calling_convention&> {
+      const Language_linkage& language_linkage() const { return first(); }
       const Calling_convention& convention() const { return second(); }
       bool operator==(const Transfer& t) const
       {
-         return linkage() == t.linkage() and convention() == t.convention();
+         return language_linkage() == t.language_linkage() and convention() == t.convention();
       }
       bool operator!=(const Transfer&) const = default;
    };
@@ -568,7 +568,6 @@ namespace ipr {
    struct Type : Expr {
       virtual const Name& name() const = 0;
       virtual const Transfer& transfer() const = 0;
-      const Linkage& linkage() const { return transfer().linkage(); }
    protected:
       constexpr Type(Category_code c) : Expr{ c } { }
    };
@@ -1776,7 +1775,7 @@ namespace ipr {
    //     (b) a non-template declaration.
    struct Decl : Stmt {
       virtual Specifiers specifiers() const = 0;
-      virtual const Linkage& linkage() const = 0;
+      virtual const Language_linkage& language_linkage() const = 0;
 
       virtual const Name& name() const = 0;
 
@@ -1994,8 +1993,8 @@ namespace ipr {
                                                                //             and as default value for case in labeled statements.
       virtual const Symbol& delete_value() const = 0;          // "delete" - as initializer in deleted function definitions.
 
-      virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
-      virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
+      virtual const Language_linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
+      virtual const Language_linkage& c_linkage() const = 0;            // constant for 'extern "C"'
 
       virtual Specifiers export_specifier() const = 0;         // `export` specifier.
       virtual Specifiers static_specifier() const = 0;         // `static` standard specifier.

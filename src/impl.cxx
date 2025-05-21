@@ -151,11 +151,11 @@ namespace ipr::impl {
         constexpr auto& internal_string(const char8_t* p) { return known_word(p).operand(); }
 
         // Known language linkages to all C++ implementations.
-        constexpr Linkage c_link { known_word(u8"C") };
-        constexpr Linkage cxx_link { known_word(u8"C++") };
+        constexpr Language_linkage c_link { known_word(u8"C") };
+        constexpr Language_linkage cxx_link { known_word(u8"C++") };
     }
 
-    const ipr::Linkage& c_linkage() { return impl::c_link; }
+    const ipr::Language_linkage& c_linkage() { return impl::c_link; }
 }
 
 // -- Standard basic specifiers and qualifiers
@@ -200,7 +200,7 @@ namespace ipr::impl {
 namespace ipr::impl {
    namespace {
       struct Natural_transfer : ipr::Transfer {
-         const ipr::Linkage& first() const final { return impl::cxx_link; }
+         const ipr::Language_linkage& first() const final { return impl::cxx_link; }
          const ipr::Calling_convention& second() const final { return impl::natural_cc; }
       };
 
@@ -214,7 +214,7 @@ namespace ipr::impl {
 namespace ipr::impl {
    const ipr::Calling_convention& Transfer_from_linkage::second() const { return impl::natural_cc; }
 
-   const ipr::Linkage& Transfer_from_cc::first() const { return impl::cxx_link; }
+   const ipr::Language_linkage& Transfer_from_cc::first() const { return impl::cxx_link; }
 }
 
 namespace ipr::impl {
@@ -1009,7 +1009,7 @@ namespace ipr::impl {
 
       inline int compare(const ipr::Transfer& x, const ipr::Transfer& y)
       {
-         if (auto cmp = impl::compare(x.linkage(), y.linkage()))
+         if (auto cmp = impl::compare(x.language_linkage(), y.language_linkage()))
             return cmp;
          return impl::compare(x.convention(), y.convention());
       }
@@ -1137,9 +1137,9 @@ namespace ipr::impl {
       };
       // <<<< Yuriy Solodkyy: 2008/07/10
 
-      const ipr::Transfer& type_factory::get_transfer_from_linkage(const ipr::Linkage& l)
+      const ipr::Transfer& type_factory::get_transfer_from_linkage(const ipr::Language_linkage& l)
       {
-         constexpr auto cmp = [](auto& x, auto& y) { return impl::compare(x.linkage(), y); };
+         constexpr auto cmp = [](auto& x, auto& y) { return impl::compare(x.language_linkage(), y); };
          return *xfer_links.insert(l, cmp);
       }
 
@@ -1149,7 +1149,7 @@ namespace ipr::impl {
          return *xfer_ccs.insert(c, cmp);
       }
 
-      const ipr::Transfer& type_factory::get_transfer(const ipr::Linkage& l, const ipr::Calling_convention& c)
+      const ipr::Transfer& type_factory::get_transfer(const ipr::Language_linkage& l, const ipr::Calling_convention& c)
       {
          if (l == impl::cxx_link)
             return get_transfer_from_convention(c);
@@ -1726,7 +1726,7 @@ namespace ipr::impl {
       // ------------------------
 
       // -- Language linkage
-      const ipr::Linkage& expr_factory::get_linkage(util::word_view w)
+      const ipr::Language_linkage& expr_factory::get_linkage(util::word_view w)
       {
          if (w == u8"C")
             return impl::c_link;
@@ -1735,7 +1735,7 @@ namespace ipr::impl {
          return get_linkage(get_string(w));
       }
 
-      const ipr::Linkage& expr_factory::get_linkage(const ipr::String& lang)
+      const ipr::Language_linkage& expr_factory::get_linkage(const ipr::String& lang)
       {
          if (physically_same(lang, internal_string(u8"C")))
             return impl::c_link;
@@ -2348,8 +2348,8 @@ namespace ipr::impl {
 
       // -- impl::Lexicon --
 
-      const ipr::Linkage& Lexicon::c_linkage() const { return impl::c_link; }
-      const ipr::Linkage& Lexicon::cxx_linkage() const { return impl::cxx_link; }
+      const ipr::Language_linkage& Lexicon::c_linkage() const { return impl::c_link; }
+      const ipr::Language_linkage& Lexicon::cxx_linkage() const { return impl::cxx_link; }
 
       namespace {
          struct UnknownLogogramError { 

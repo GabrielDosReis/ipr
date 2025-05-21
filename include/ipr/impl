@@ -160,21 +160,21 @@ namespace ipr::impl {
    using Transfer = impl::Basic_binary<ipr::Transfer>;
 
    // -- Specialized implementation of ipr::Transfer
-   // An object of this class pairs a specified linkage with the natural
+   // An object of this class pairs a specified language linkage with the natural
    // C++ calling convention.
    struct Transfer_from_linkage : ipr::Transfer {
-      constexpr explicit Transfer_from_linkage(const ipr::Linkage& l) : link{l} { }
-      const ipr::Linkage& first() const final { return link; }
+      constexpr explicit Transfer_from_linkage(const ipr::Language_linkage& l) : link{l} { }
+      const ipr::Language_linkage& first() const final { return link; }
       const ipr::Calling_convention& second() const final;
    private:
-      const ipr::Linkage& link;
+      const ipr::Language_linkage& link;
    };
 
    // -- Specialized implementation of ipr::Transfer
    // An object of this class pairs the C++ language linkage with a specified calling convention.
    struct Transfer_from_cc : ipr::Transfer {
       constexpr explicit Transfer_from_cc(const ipr::Calling_convention& cc) : conv{cc} { }
-      const ipr::Linkage& first() const final;
+      const ipr::Language_linkage& first() const final;
       const ipr::Calling_convention& second() const final { return conv; }
    private:
       const ipr::Calling_convention& conv;
@@ -441,8 +441,8 @@ namespace ipr::impl {
    const ipr::Transfer& cxx_transfer();
 
    // The two language linkages required of all C++ implementations.
-   const ipr::Linkage& c_linkage();
-   inline const ipr::Linkage& cxx_linkage() { return cxx_transfer().linkage(); }
+   const ipr::Language_linkage& c_linkage();
+   inline const ipr::Language_linkage& cxx_linkage() { return cxx_transfer().language_linkage(); }
 
    // The type of types, including itselt.
    // Yes, we have a ``Type: Type'' problem.
@@ -730,7 +730,7 @@ namespace ipr::impl {
       unique_decl() : seq{*this} { }
       ipr::Specifiers specifiers() const override { return { }; }
       const ipr::Decl& master() const final { return *this; }
-      const ipr::Linkage& linkage() const final { return impl::cxx_linkage(); }
+      const ipr::Language_linkage& language_linkage() const final { return impl::cxx_linkage(); }
       const ipr::Sequence<ipr::Decl>& decl_set() const final { return seq; }
    private:
       singleton_ref<ipr::Decl> seq;
@@ -1327,7 +1327,7 @@ namespace ipr::impl {
       return compare(lhs.what(), rhs.what());
    }
 
-   inline int compare(const ipr::Linkage& lhs, const ipr::Linkage& rhs)
+   inline int compare(const ipr::Language_linkage& lhs, const ipr::Language_linkage& rhs)
    {
       return compare(lhs.language(), rhs.language());
    }
@@ -1389,7 +1389,7 @@ namespace ipr::impl {
    struct master_decl_data : basic_decl_data<Interface>, overload_entry {
       // The declaration that is considered to be the definition.
       Optional<Interface> def { };
-      util::ref<const ipr::Linkage> langlinkage { };
+      util::ref<const ipr::Language_linkage> lang_linkage { };
 
       // The overload set that contains this master declaration.  It
       // shall be set at the time the node for the master declaration
@@ -1410,7 +1410,7 @@ namespace ipr::impl {
       using Base = basic_decl_data<ipr::Template>;
       // The declaration that is considered to be the definition.
       Optional<ipr::Template> def { };
-      util::ref<const ipr::Linkage> langlinkage { };
+      util::ref<const ipr::Language_linkage> lang_linkage { };
       const ipr::Template* primary;
       const ipr::Region* home;
 
@@ -1489,9 +1489,9 @@ namespace ipr::impl {
 
       Decl() : decl_data{ nullptr } { }
 
-      const ipr::Linkage& linkage() const final
+      const ipr::Language_linkage& language_linkage() const final
       {
-         return util::check(decl_data.master_data)->langlinkage.get();
+         return util::check(decl_data.master_data)->lang_linkage.get();
       }
 
       const ipr::Region& home_region() const final {
@@ -2225,9 +2225,9 @@ namespace ipr::impl {
    // as setting their types (as expressions) and their names.
 
    struct type_factory {
-      const ipr::Transfer& get_transfer_from_linkage(const ipr::Linkage&);
+      const ipr::Transfer& get_transfer_from_linkage(const ipr::Language_linkage&);
       const ipr::Transfer& get_transfer_from_convention(const ipr::Calling_convention&);
-      const ipr::Transfer& get_transfer(const ipr::Linkage&, const ipr::Calling_convention&);
+      const ipr::Transfer& get_transfer(const ipr::Language_linkage&, const ipr::Calling_convention&);
 
       // Build an IPR node for an expression that denotes a type.
       // The transfer protocol, if not specified, is assumed to be C++.
@@ -2536,8 +2536,8 @@ namespace ipr::impl {
 
    struct expr_factory : name_factory {
       // Returns an IPR node a language linkage.
-      const ipr::Linkage& get_linkage(util::word_view);
-      const ipr::Linkage& get_linkage(const ipr::String&);
+      const ipr::Language_linkage& get_linkage(util::word_view);
+      const ipr::Language_linkage& get_linkage(const ipr::String&);
 
       // Rerturn an IPR for a calling convention.
       const ipr::Calling_convention& get_calling_convention(util::word_view);
@@ -2662,7 +2662,7 @@ namespace ipr::impl {
       impl::Static_assert* make_static_assert_expr(const ipr::Expr&, Optional<ipr::String> = { });
 
    private:
-      util::rb_tree::container<ipr::Linkage> linkages;
+      util::rb_tree::container<ipr::Language_linkage> linkages;
       util::rb_tree::container<ipr::Calling_convention> conventions;
 
       util::rb_tree::container<impl::Literal> lits;
@@ -2830,8 +2830,8 @@ namespace ipr::impl {
       Lexicon();
       ~Lexicon();
 
-      const ipr::Linkage& cxx_linkage() const final;
-      const ipr::Linkage& c_linkage() const final;
+      const ipr::Language_linkage& cxx_linkage() const final;
+      const ipr::Language_linkage& c_linkage() const final;
 
       ipr::Specifiers export_specifier() const final;
       ipr::Specifiers static_specifier() const final;
