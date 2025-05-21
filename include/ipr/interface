@@ -80,8 +80,52 @@ namespace ipr {
 #include <ipr/node-category>
    };
 
-   // -- General structural utility types.
+   // -- General structural utility types and functions.
 
+   // -- Common operations of bitflags.
+   template<util::Enum T>
+   constexpr T operator&(T x, T y)
+   {
+      return T{util::rep(x) & util::rep(y)};
+   }
+
+   template<util::Enum T>
+   constexpr T& operator&=(T& x, T y)
+   {
+      return x = x & y;
+   }
+
+   template<util::Enum T>
+   constexpr T operator|(T x, T y)
+   {
+      return T{util::rep(x) | util::rep(y)};
+   }
+
+   template<util::Enum T>
+   constexpr T& operator|(T& x, T y)
+   {
+      return x = x | y;
+   }
+
+   template<util::Enum T>
+   constexpr T operator^(T x, T y)
+   {
+      return T{util::rep(x) ^ util::rep(y)};
+   }
+
+   template<util::Enum T>
+   constexpr T& operator^=(T& x, T y)
+   {
+      return x = x ^ y;
+   }
+
+   template<util::Enum T>
+   constexpr bool implies(T x, T y)
+   {
+      return (x & y) == y;
+   }
+
+   // -- General node category class.
    template<Category_code Cat, class T = Expr>
    struct Category : T {
    protected:
@@ -115,8 +159,6 @@ namespace ipr {
       Virtual    = 1 << 6,   // also used as storage class specifier
                              // for virtual base subobjects
       Explicit   = 1 << 7,
-      Pure       = 1 << 8, 
-      FunctionSpecifier = Inline | Virtual | Explicit | Pure,
 
       Friend     = 1 << 9,
       Typedef    = 1 << 10,
@@ -128,51 +170,16 @@ namespace ipr {
 
       Export     = 1 << 14,  // For exported declarations.
       Constexpr  = 1 << 15,  // C++ 11
-      Consteval  = 1 << 16,  // C++20
    };
 
-   constexpr DeclSpecifiers operator|(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(std::uint32_t(a) | std::uint32_t(b));
-   }
-
-   constexpr DeclSpecifiers& operator|=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a | b;
-   }
-
-   constexpr DeclSpecifiers operator&(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(std::uint32_t(a) & std::uint32_t(b));
-   }
-
-   constexpr DeclSpecifiers& operator&=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a & b;
-   }
-
-   constexpr DeclSpecifiers operator^(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return DeclSpecifiers(std::uint32_t(a) ^ std::uint32_t(b));
-   }
-
-   constexpr DeclSpecifiers& operator^=(DeclSpecifiers& a, DeclSpecifiers b)
-   {
-      return a = a ^ b;
-   }
-
-   constexpr bool implies(DeclSpecifiers a, DeclSpecifiers b)
-   {
-      return (a & b) == b;
-   }
-
                                  // -- Lambda_specifiers --
-   // Declaration specifiers that can appear on a lambda expression.
+   // Declaration specifiers that can appear in a lambda expression.
    enum class Lambda_specifiers : std::uint32_t {
       None = 0,
-      Mutable    = 1 << 0,
-      Constexpr  = 1 << 1,
-      Consteval  = 1 << 2,
+      Mutable    = 1 << 0,                   // `mutable` lambda
+      Constexpr  = 1 << 1,                   // `constexpr` lambda
+      Consteval  = 1 << 2,                   // `consteval` lambda
+      ExplicitObject = 1 << 3,               // explicit object parameter `this`.
    };
 
                                 // -- Module_name --
@@ -1770,13 +1777,31 @@ namespace ipr {
       Optional<Expr> initializer() const final { return { }; }
    };
 
+   // -- Semantic traits of a function declaration.
+   enum class FunctionTraits : std::uint32_t {
+      Nothing  = 0x0,                     // No particular traits
+      Pure     = 1 << 0,                  // pure virtual function
+      Virtual  = 1 << 1,                  // virtual function
+      Static   = 1 << 2,                  // static member-function, NOT linkage
+      Inline   = 1 << 3,                  // inline function
+      Explicit = 1 << 4,                  // function declared `explicit`
+      Constexpr = 1 << 5,                 // constexpr function
+      Consteval = 1 << 6,                 // consteval function
+      ExplicitObject = 1 << 7,            // function with explicit object parameter.
+   };
+
                                 // -- Fundecl --
    // This node represents a function declaration. Notice that the
    // exception specification is actually made part of the function type.
    struct Fundecl : Category<Category_code::Fundecl, Decl> {
+      virtual FunctionTraits traits() const = 0;
       virtual Optional<Mapping> mapping() const = 0;
       virtual const Parameter_list& parameters() const = 0;
       virtual Optional<Fundecl> definition() const = 0;
+   };
+
+                                // -- Concept --
+   struct Concept : Category<Category_code::Concept, Decl>, Parameterization<Expr> {
    };
 
                                 // -- Var --
@@ -2056,6 +2081,7 @@ namespace ipr {
       virtual void visit(const Field&);
       virtual void visit(const Fundecl&);
       virtual void visit(const Template&);
+      virtual void visit(const Concept&);
       virtual void visit(const Parameter&);
       virtual void visit(const Parameter_list&);
       virtual void visit(const Typedecl&);

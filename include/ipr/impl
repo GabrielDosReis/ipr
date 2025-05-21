@@ -1923,11 +1923,21 @@ namespace ipr::impl {
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
 
+   struct Concept : impl::Decl<ipr::Concept> {
+      impl::Parameter_list inputs;
+      util::ref<const ipr::Expr> init;
+      explicit Concept(const ipr::Region& r) : inputs{r, { }} { }
+      const ipr::Parameter_list& parameters() const final { return inputs; }
+      const ipr::Expr& result() const final { return init.get(); }
+      Optional<ipr::Expr> initializer() const final { return { *this }; }
+   };
+
    // For a non-defining function declaration, the parameters - if any is named
    // or has a default argument - are stored with that particular declaration.
    // A function definition is one that specifies the initializer (Mapping) which
    // already has room for the named parameters or the default arguments.
    struct fundecl_data : std::variant<impl::Parameter_list*, impl::Mapping*> {
+      ipr::FunctionTraits traits { };
       impl::Parameter_list* parameters() const { return std::get<0>(*this); }
       impl::Mapping* mapping() const { return std::get<1>(*this); }
    };
@@ -1938,6 +1948,7 @@ namespace ipr::impl {
 
       Fundecl();
 
+      ipr::FunctionTraits traits() const final { return data.traits; }
       const ipr::Parameter_list& parameters() const final;
       Optional<ipr::Mapping> mapping() const final;
       Optional<ipr::Expr> initializer() const final;

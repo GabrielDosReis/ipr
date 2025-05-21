@@ -220,6 +220,7 @@ namespace ipr {
    struct Bitfield;              // bitfield
    struct Fundecl;               // function-declaration
    struct Template;              // template-declaration
+   struct Concept;               // concept definition
    struct Parameter;             // function or template parameter
    struct Typedecl;              // declaration for a type
    struct Var;                   // variable declaration
