@@ -13,6 +13,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 #include <ipr/utility>
 #include <ipr/synopsis>
 #include <ipr/ancillary>
@@ -82,49 +83,6 @@ namespace ipr {
 
    // -- General structural utility types and functions.
 
-   // -- Common operations of bitflags.
-   template<util::Enum T>
-   constexpr T operator&(T x, T y)
-   {
-      return T{util::rep(x) & util::rep(y)};
-   }
-
-   template<util::Enum T>
-   constexpr T& operator&=(T& x, T y)
-   {
-      return x = x & y;
-   }
-
-   template<util::Enum T>
-   constexpr T operator|(T x, T y)
-   {
-      return T{util::rep(x) | util::rep(y)};
-   }
-
-   template<util::Enum T>
-   constexpr T& operator|(T& x, T y)
-   {
-      return x = x | y;
-   }
-
-   template<util::Enum T>
-   constexpr T operator^(T x, T y)
-   {
-      return T{util::rep(x) ^ util::rep(y)};
-   }
-
-   template<util::Enum T>
-   constexpr T& operator^=(T& x, T y)
-   {
-      return x = x ^ y;
-   }
-
-   template<util::Enum T>
-   constexpr bool implies(T x, T y)
-   {
-      return (x & y) == y;
-   }
-
    // -- General node category class.
    template<Category_code Cat, class T = Expr>
    struct Category : T {
@@ -172,6 +130,148 @@ namespace ipr {
       Constexpr  = 1 << 15,  // C++ 11
    };
 
+   // -- Logogram --
+   // A class of words (from a C++ input source) standing for themselves, with no particular elaboration.
+   struct Logogram : Basic_unary<const String&> {
+      const String& what() const { return operand(); }
+      bool operator==(const Logogram& x) const { return &what() == &x.what(); }
+      bool operator!=(const Logogram&) const = default;
+   };
+
+   // -- Calling_convention --
+   // The ISO C++ standards does not explicitly acknowledge function calling conventions, as they
+   // are considered low-level implementation details (beyond the fact that a language linkage is a thing).
+   // However, in practice, those implementation details bubble up (leaky abstraction) into
+   // the system system used by such implementations, in unpleasant ways.  As illustration, just have
+   // a look at the chaos introduced by language linkage in function types.
+   // Note: language linkage is represented separately; see `Linkage`.
+   // An object of this type provides a symbolic representation of a calling convention via an logogram
+   // given by the `name()` operation.
+   struct Calling_convention {
+      explicit constexpr Calling_convention(const Logogram& l) : conv{l} { }
+      const Logogram& name() const { return conv; }
+      bool operator==(const Calling_convention& x) const { return conv == x.conv; }
+      bool operator!=(const Calling_convention&) const = default;
+   private:
+      const Logogram& conv;
+   };
+
+                                // -- Linkage --
+   // An object of this type represents language linkage, e.g., "C" in `extern "C"'.
+   // The ISO standard mandates at least two language linkages: "C" and
+   // "C++".  If those were the only language linkages used in practice,
+   // then, we would have just used a 2-valued enum.  However, some C++
+   // implementations do have support for things like "Java" language
+   // linkage and whatnot.  Consequently, the most general representation
+   // is adopted in the form of a logogram.  From ISO C++ point of view, language 
+   // linkage applies only to function names, variable names, and function types.  
+   // Furthermore, a language linkage applied to a function type is a calling convention.
+   struct Linkage {
+      explicit constexpr Linkage(const Logogram& l) : lang{l} { }
+      const Logogram& language() const { return lang; }
+      bool operator==(const Linkage& x) const { return lang == x.lang; }
+      bool operator!=(const Linkage&) const = default;
+   private:
+      const Logogram& lang;
+   };
+
+   // -- Transfer --
+   // A summary of characteristics of data or control tranfer.  Both language linkage and 
+   // calling convention affect how data are transferred to subroutines in function calls.
+   // Furthermore, language linkage also affects linking across translation units.
+   struct Transfer : Basic_binary<const Linkage&, const Calling_convention&> {
+      const Linkage& linkage() const { return first(); }
+      const Calling_convention& convention() const { return second(); }
+      bool operator==(const Transfer& t) const
+      {
+         return linkage() == t.linkage() and convention() == t.convention();
+      }
+      bool operator!=(const Transfer&) const = default;
+   };
+
+   // -- Basic_specifier --
+   // A symbolic semantic denotation of an instance of a the C++ grammar for decl-specifier 
+   // that is not a defining-type-specifier.  This type is intended to capture the result of
+   // semantic elaboration, not mirror of a syntactic construct.
+   // Note: This symbolic form allows for extensions of decl-specifier beyond those explicitly
+   // listed in the C++ standards.
+   struct Basic_specifier {
+      constexpr Basic_specifier(const Logogram& l) : spec{&l} { }
+      constexpr const Logogram& logogram() const { return *spec; }
+      constexpr bool operator==(const Basic_specifier&) const = default;
+   private:
+      const Logogram* spec;
+   };
+
+   // -- Specifiers --
+   // An algebraic denotation of sets of basic specifiers.
+   // ISO C++ requires that decl-specifiers can appear in any order in the decl-specifier-seq
+   // of a declaration in the input source program.  Furthermore, any such decl-specifier
+   // can appear at most once. Taken together, those requirements mean that a decl-specifier-seq
+   // is in fact a set of basic specifiers. Therefore, the set of standard basic specifiers act
+   // as a basis of the space of decl-specifier-seqs, and the coordinates or a decl-specifier-seq
+   // are numbers drown from ZZ/2ZZ.  The space of those coordinates is represented by `Specifiers`.
+   // This space is kept abstract to allow extensions beyond the restricted set of speecifiers
+   // listed in the ISO C++ standards.  For example, from the IPR model perspective the ISO C++
+   // access control label `public`, `protected`, `private` are basic specifiers.
+   enum class Specifiers : std::uintptr_t { };
+
+   // -- Basic_qualifier --
+   // Symbolic semantic denotation of a type qualifier.  Note that a type qualifier is a monadic
+   // type constructor.  The set of ISO C++ type qualifiers is { `const`, `volatile` }.  In practice,
+   // C++ implementations support more type qualifiers, including ISO C's `restrict`.  The name
+   // of the qualifier is indicated by the `logogram()` operation.
+   struct Basic_qualifier {
+      constexpr Basic_qualifier(const Logogram& l) : qual{&l} { }
+      constexpr const Logogram& logogram() const { return *qual; }
+      constexpr bool operator==(const Basic_qualifier&) const = default;
+   private:
+      const Logogram* qual;
+   };
+
+   // Algebraic operations on symbolic denotations expressed as bitwise operations (i.e. ZZ/2ZZ).
+   template<util::EnumType T>
+   constexpr T operator|(T a, T b)
+   {
+      return T{util::rep(a) | util::rep(b)};
+   }
+
+   template<util::EnumType T>
+   constexpr T& operator|=(T& a, T b)
+   {
+      return a = a | b;
+   }
+
+   template<util::EnumType T>
+   constexpr T operator&(T a, T b)
+   {
+      return T{util::rep(a) & util::rep(b)};
+   }
+
+   template<util::EnumType T>
+   constexpr T& operator&=(T& a, T b)
+   {
+      return a = a & b;
+   }
+
+   template<util::EnumType T>
+   constexpr T operator^(T a, T b)
+   {
+      return T{util::rep(a) ^ util::rep(b)};
+   }
+
+   template<util::EnumType T>
+   constexpr T& operator^=(T& a, T b)
+   {
+      return a = a ^ b;
+   }
+
+   template<util::EnumType T>
+   constexpr bool implies(T a, T b)
+   {
+      return (a & b) == b;
+   }
+
                                  // -- Lambda_specifiers --
    // Declaration specifiers that can appear in a lambda expression.
    enum class Lambda_specifiers : std::uint32_t {
@@ -213,6 +313,8 @@ namespace ipr {
       using iterator = util::word_view::const_iterator;
       using Index = std::size_t;
       virtual util::word_view characters() const = 0;
+      bool operator==(const String& s) const { return this == &s; }
+      bool operator!=(const String&) const = default;
       Index size() const { return characters().size(); }
       iterator begin() const { return characters().begin(); }
       iterator end() const { return characters().end(); }
@@ -224,20 +326,6 @@ namespace ipr {
    // that the comment delimiters are part of Comment::text.
    struct Comment : Unary<Category<Category_code::Comment, Node>, const String&> {
       Arg_type text() const { return operand(); }
-   };
-
-                                // -- Linkage --
-   // This node represent language linkage, e.g., "C" in `extern "C"'.
-   // Ths ISO standard mandates at least two language linkages: "C" and
-   // "C++".  If those were the only language linkage used in practice,
-   // then, we would have just used a 2-valued enum.  However, some C++
-   // implementations do have support for things like "Java" language
-   // linkage and whatnot.  Consequently, the most general representation
-   // is adopted.  From ISO C++ point of view, language linkage applies
-   // only to function names, variable names, and function types.  Furthermore,
-   // a language linkage applied to a function type is a calling convention.
-   struct Linkage : Unary<Category<Category_code::Linkage, Node>, const String&> {
-      Arg_type language() const { return operand(); }
    };
 
                                 // -- Annotation --
@@ -473,11 +561,14 @@ namespace ipr {
    // interoperating with other languages.  The current representation
    // includes language linkage as integral part of Type.
    // Almost all types have "C++" language linkage.  The exceptions are: 
-   //   a. As_type built with explicit language specification
-   //   b. Function built with explicit language specification
+   //   a. As_type built with explicit language specification or more generally
+   //      data or control transfer
+   //   b. Function built with explicit language specification or more generally
+   //      data or control transfer
    struct Type : Expr {
       virtual const Name& name() const = 0;
-      virtual const Linkage& linkage() const = 0;
+      virtual const Transfer& transfer() const = 0;
+      const Linkage& linkage() const { return transfer().linkage(); }
    protected:
       constexpr Type(Category_code c) : Expr{ c } { }
    };
@@ -536,6 +627,8 @@ namespace ipr {
    // however, we've made a special node for template.  ISO C++ specifies
    // that function types have language linkages and two function types
    // with different language linkages are different.
+   // Furthermore, low-level implementation details such as calling conventions
+   // are accounted for through `Type::transfer()`.
    struct Function : Ternary<Category<Category_code::Function, Type>,
                               const Product&, const Type&, const Expr&> {
       // Parameter-type-list of a function of this type.  In full
@@ -589,7 +682,7 @@ namespace ipr {
    // We also maintain the invariant that Qualified::qualifiers is never
    // Type::None, consequently it is an error to attempt to create such a node.
    struct Qualified : Binary<Category<Category_code::Qualified, Type>,
-                             ipr::Type_qualifiers, const Type&> {
+                             ipr::Qualifiers, const Type&> {
       Arg1_type qualifiers() const { return first(); }
       Arg2_type main_variant() const { return second(); }
    };
@@ -1240,7 +1333,7 @@ namespace ipr {
 
                                 // -- Qualification --
    // A conversion that add cv-qualifiers
-   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Type_qualifiers> {
+   struct Qualification : Binary<Category<Category_code::Qualification>, const Expr&, Qualifiers> {
       Arg1_type expr() const { return first(); }
       Arg2_type qualifiers() const { return second(); }
    };
@@ -1410,7 +1503,7 @@ namespace ipr {
    // - The type component of the decl-specifier-seq is given by `type()`.
    // - The non-type component of the decl-specifier-seq is given by `specifiers()`.
    struct Specifiers_spread : Category<Category_code::Specifiers_spread, Directive> {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual const Sequence<cxx_form::Proclamator>& targets() const = 0;
    };
 
@@ -1419,7 +1512,7 @@ namespace ipr {
    // (either an Alias or a Var) in the current binding environment by taking apart
    // the object value designated by the initializer.
    struct Structured_binding : Category<Category_code::Structured_binding, Directive> {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual Binding_mode mode() const = 0;
       virtual const Sequence<Identifier>& names() const = 0;
       virtual const Expr& initializer() const = 0;
@@ -1682,7 +1775,7 @@ namespace ipr {
    //     (a) a primary template; or
    //     (b) a non-template declaration.
    struct Decl : Stmt {
-      virtual DeclSpecifiers specifiers() const = 0;
+      virtual Specifiers specifiers() const = 0;
       virtual const Linkage& linkage() const = 0;
 
       virtual const Name& name() const = 0;
@@ -1903,6 +1996,32 @@ namespace ipr {
 
       virtual const Linkage& cxx_linkage() const = 0;          // constant for 'extern "C++"'
       virtual const Linkage& c_linkage() const = 0;            // constant for 'extern "C"'
+
+      virtual Specifiers export_specifier() const = 0;         // `export` specifier.
+      virtual Specifiers static_specifier() const = 0;         // `static` standard specifier.
+      virtual Specifiers extern_specifier() const = 0;         // `extern` standard specifier.
+      virtual Specifiers mutable_specifier() const = 0;        // `mutable` standard specifier.
+      virtual Specifiers thread_local_specifier() const = 0;   // `thread_local` standard specifier.
+      virtual Specifiers register_specifier() const = 0;       // `register` standard specifier -- banned from C++17 and up.
+      virtual Specifiers inline_specifier() const = 0;         // `inline` standard specifier.
+      virtual Specifiers constexpr_specifier() const = 0;      // `constexpr` standard specifier.
+      virtual Specifiers consteval_specifier() const = 0;      // `consteval` standard specifier.
+      virtual Specifiers virtual_specifier() const = 0;        // `virtual` standard specifier.
+      virtual Specifiers abstract_specifier() const = 0;       // for " = 0" virtual functions.
+      virtual Specifiers explicit_specifier() const = 0;       // `explicit` standard specifier.
+      virtual Specifiers friend_specifier() const = 0;         // `friend` standard specifier.
+      virtual Specifiers typedef_specifier() const = 0;        // `typedef` standard specifier.
+      virtual Specifiers public_specifier() const = 0;         // `public` specifier.
+      virtual Specifiers protected_specifier() const = 0;      // `protected` specifier.
+      virtual Specifiers private_specifier() const = 0;        // `private` specifier.
+      virtual Specifiers specifiers(Basic_specifier) const = 0;   // convert a basic specifier to its `Specifiers` coordinates.
+      virtual std::vector<Basic_specifier> decompose(Specifiers) const = 0;   // return the constituents of Specifiers.
+
+      virtual Qualifiers const_qualifier() const = 0;             // `const` cv-qualifier.
+      virtual Qualifiers volatile_qualifier() const = 0;          // `volatile` cv-qualifier.
+      virtual Qualifiers restrict_qualifier() const = 0;          // `restrict` cv-qualifier.
+      virtual Qualifiers qualifiers(Basic_qualifier) const = 0;   // retrieve the algebraic coordinate of a named qualifier.
+      virtual std::vector<Basic_qualifier> decompose(Qualifiers) const = 0;   // retrieve the constituents of Qualifiers.
    };
 
                                 // -- Visitor --
@@ -1913,7 +2032,6 @@ namespace ipr {
       virtual void visit(const Region&);
       virtual void visit(const Comment&);
       virtual void visit(const String&);
-      virtual void visit(const Linkage&);
 
       virtual void visit(const Expr&) = 0;
       virtual void visit(const Classic&);

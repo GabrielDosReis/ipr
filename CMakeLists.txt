@@ -13,6 +13,10 @@ project(ipr
    LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS False)
+
 # Enable link-time optimization or close approximation
 check_ipo_supported(RESULT ipo_supported OUTPUT ipo_disbaled_msg)
 if (ipo_supported)
@@ -26,6 +30,7 @@ add_library(${PROJECT_NAME}
    src/impl.cxx
    src/io.cxx
    src/traversal.cxx
+   src/input.cxx
    src/utility.cxx
 )
 
@@ -48,6 +53,7 @@ target_sources(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/include/ipr/synopsis
         ${PROJECT_SOURCE_DIR}/include/ipr/traversal
         ${PROJECT_SOURCE_DIR}/include/ipr/utility
+        ${PROJECT_SOURCE_DIR}/include/ipr/input
         ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
 )
 
@@ -59,27 +65,35 @@ set_target_properties(${PROJECT_NAME}
 )
 
 target_compile_options(${PROJECT_NAME}
-   PRIVATE
+   PUBLIC
       $<$<CXX_COMPILER_ID:MSVC>:
-         /W2           # Usual warnings
          /permissive-  # Turn on strict language conformance
          /EHsc         # Turn on exception handling semantics
       >
       $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
+         -Wno-overloaded-virtual  # Avoid bogus warnings against foundational techniques.
+      >
+   PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:
+         /W2           # Usual warnings
+      >
+      $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
          -Wall         # Turn on all useful warnings
          -pedantic     # Turn on strict language conformance
-      >
+         >
       $<$<CXX_COMPILER_ID:Clang>:
-		 -Wno-overloaded-virtual                   # Too many false positives
 		 -Wno-delete-non-abstract-non-virtual-dtor # System headers plagued
       >
 )
 
 target_compile_definitions(${PROJECT_NAME}
    PRIVATE
-	  $<$<PLATFORM_ID:UNIX>:
-		 _FILE_OFFSET_BITS=64 # We want the ability to process large files.
-	  >
+      $<$<CXX_COMPILER_ID:MSVC>:
+         MSVC_WORKAROUND_VSO1822505    # Workaround a compile-time evaluation bug in MSVC
+      >
+	   $<$<PLATFORM_ID:UNIX>:
+		   _FILE_OFFSET_BITS=64 # We want the ability to process large files.
+	   >
 )
 
 install(

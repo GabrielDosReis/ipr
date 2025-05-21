@@ -1,0 +1,51 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+
+#include <cstddef>
+#include <span>
+#include <filesystem>
+
+namespace ipr::input {
+    // Type for the error code values used by the host OS.
+#ifdef _WIN32
+    using ErrorCode = DWORD;
+#else
+    using ErrorCode = int;
+#endif
+
+    // String type preferred by the host OS to specify pathnames.
+    using SystemPath = std::filesystem::path::string_type;
+
+    // Exception type used to signal inability of the host OS to access a file.
+    struct AccessError {
+        SystemPath path;
+        ErrorCode error_code;
+    };
+
+    // Exception type used to signal the file designated by th `path` is not a regular file.
+    struct RegularFileError {
+        SystemPath path;
+    };
+
+    // Exception type used to signal inability of the host OS to memory-map a file.
+    struct FileMappingError {
+        SystemPath path;
+        ErrorCode error_code;
+    };
+
+    // Input source file mapped to memory as sequence of raw bytes.
+    struct SourceFile {
+        using View = std::span<const std::byte>;
+        
+        explicit SourceFile(const SystemPath&);
+        SourceFile(SourceFile&&) noexcept;
+        ~SourceFile();
+        View bytes() const { return view; }
+    private:
+        View view;
+    };
+}

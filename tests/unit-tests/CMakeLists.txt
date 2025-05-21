@@ -8,6 +8,7 @@ add_executable(${TEST_BINARY}
    region-owner.cxx
    warehouse.cxx
    phased-eval.cxx
+   specifiers.cxx
 )
 
 target_link_libraries(${TEST_BINARY}
@@ -16,13 +17,6 @@ target_link_libraries(${TEST_BINARY}
 
 target_include_directories(${TEST_BINARY}
   SYSTEM PRIVATE ${DOCTEST_INCLUDE_DIR}
-)
-
-set_target_properties(${TEST_BINARY}
-   PROPERTIES
-      CXX_STANDARD 20
-      CXX_STANDARD_REQUIRED ON
-      CXX_EXTENSIONS OFF
 )
 
 target_compile_options(${TEST_BINARY}

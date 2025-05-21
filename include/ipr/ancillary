@@ -36,52 +36,10 @@ namespace ipr {
       All                  = ~0x0,
    };
 
-                                // -- Type_qualifier --
-   // cv-qualifiers are actually type operators.  Much of these operators
-   // currently make sense only for classic type -- although it might
-   // be interesting to explore the notion of pointer to overload-set
-   // or reference to such an expression.
-   enum class Type_qualifiers : std::uint8_t {
-      None             = 0,
-      Const            = 1 << 0,
-      Volatile         = 1 << 1,
-      Restrict         = 1 << 2        // not standard C++
-   };
-
-   constexpr Type_qualifiers operator|(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) | uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator|=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a | b;
-   }
-
-   constexpr Type_qualifiers operator&(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) & uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator&=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a & b;
-   }
-
-   constexpr Type_qualifiers operator^(Type_qualifiers a, Type_qualifiers b)
-   {
-      return Type_qualifiers(uint8_t(a) ^ uint8_t(b));
-   }
-
-   constexpr Type_qualifiers& operator^=(Type_qualifiers& a, Type_qualifiers b)
-   {
-      return a = a ^ b;
-   }
-
-   constexpr bool implies(Type_qualifiers a, Type_qualifiers b)
-   {
-      return (a & b) == b;
-   }
+   // -- Qualifiers --
+   // Abstract data type capturing compositions of standard and extended type qualifiers.
+   // Composition of type qualifiers is commutative.
+   enum class Qualifiers : std::uintptr_t { };
 
                                 // -- Binding_mode --
    // Mode of binding of a object value to a name (parameter, variable, alias, etc).
@@ -102,6 +60,14 @@ namespace ipr {
       Angle,                     // "<>"
    };
 
+   // -- Basic_unary --
+   // A structure entirely determined by its sole component, the `operand()`.
+   template<typename Operand>
+   struct Basic_unary {
+      using Arg_type = Operand;
+      virtual Operand operand() const = 0;
+   };
+
                                 // -- Unary<> --
    // A unary-expression is a specification of an operation that takes
    // only one operand, an expression.  By extension, a unary-node is a
@@ -113,11 +79,19 @@ namespace ipr {
    // template-parameter designates the actual node subcategory this class
    // provides an interface for.
    template<class Cat, class Operand = const Expr&>
-   struct Unary : Cat {
-      using Arg_type = Operand;
-      virtual Operand operand() const = 0;
-   };
+   struct Unary : Cat, Basic_unary<Operand> { };
 
+
+   // -- Basic_binary --
+   // A structure entirely determined by its two components, the `first()`
+   // and `second()`.
+   template<typename First, typename Second>
+   struct Basic_binary {
+      using Arg1_type = First;
+      using Arg2_type = Second;
+      virtual First first() const = 0;
+      virtual Second second() const = 0;
+   };
                                 // -- Binary<> --
    // In full generality, a binary-expression is an expression that
    // consists in (a) an operator, and (b) two operands.  In Standard
@@ -132,12 +106,7 @@ namespace ipr {
    // As for Unary<> nodes, we indicate the operands' type information
    // through the template-parameters First and Second.
    template<class Cat, class First = const Expr&, class Second = const Expr&>
-   struct Binary : Cat {
-      using Arg1_type = First;
-      using Arg2_type = Second;
-      virtual First first() const = 0;
-      virtual Second second() const = 0;
-   };
+   struct Binary : Cat, Basic_binary<First, Second> { };
 
                                 // -- Ternary<> --
    // Similar to Unary<> and Binary<> categories.  This is for

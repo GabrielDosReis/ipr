@@ -74,12 +74,6 @@ ipr::Visitor::visit(const String& s)
    visit(as<Node>(s));
 }
 
-void
-ipr::Visitor::visit(const Linkage& l)
-{
-   visit(as<Node>(l));
-}
-
 // Because Name is a very high-level interface to
 // Identifier, Operator, Conversion, Instantiation and
 // Qualified and these share common very high-level

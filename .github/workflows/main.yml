@@ -19,14 +19,14 @@ jobs:
       matrix:
         config: [Debug, Release]
         os: [ubuntu-latest, windows-latest]
-        compiler: [g++-12, clang++-14, MSVC]
+        compiler: [g++-14, clang++-18, MSVC]
         exclude:
           - os: ubuntu-latest
             compiler: MSVC
           - os: windows-latest
-            compiler: g++-12
+            compiler: g++-14
           - os: windows-latest
-            compiler: clang++-14
+            compiler: clang++-18
             
     steps:
       - uses: actions/checkout@v2
@@ -39,6 +39,7 @@ jobs:
           echo 'APT::Get::Always-Include-Phased-Updates "false";' | sudo tee /etc/apt/apt.conf.d/99-phased-updates
           sudo apt update && sudo apt-get -y upgrade --fix-missing
           sudo apt-get install build-essential cmake
+          sudo apt-get install ${{ matrix.compiler }}
 
       - name: Configure and build
         uses: lukka/run-cmake@v3

@@ -15,7 +15,6 @@ Annotation,                         // ipr::Annotation
 Region,                             // ipr::Region
 Comment,                            // ipr::Comment
 String,                             // ipr::String
-Linkage,                            // ipr::Linkage
 Parameter_list,                     // ipr::Parameter_list
 
 Overload,                           // ipr::Overload

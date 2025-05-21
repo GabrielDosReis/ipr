@@ -25,7 +25,7 @@ TEST_CASE("C++ Standard Conversions") {
   INFO("int* const ptr = 0;");
   // Pointer Conversion            (Coercion)
   const auto& ptr_type = lexicon.get_qualified(
-    Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
+    lexicon.const_qualifier(), lexicon.get_pointer(lexicon.int_type()));
   auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier(u8"ptr"), ptr_type);
   ptr.init = lexicon.make_coercion(
     *lexicon.make_literal(lexicon.int_type(), u8"0"),
@@ -110,19 +110,19 @@ TEST_CASE("CV Conversions") {
   INFO("(int) -> (volatile int)");
   lexicon.make_qualification(
     *lexicon.make_literal(lexicon.int_type(), u8"7"),
-    Type_qualifiers::Volatile,
+    lexicon.volatile_qualifier(),
     lexicon.int_type() // prvalue can be adjusted to remove qualifiers (see 7.2.2/2)
   );
 
   INFO("const int* ptr;");
   const auto& ptr_type = lexicon.get_qualified(
-    Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type()));
+    lexicon.const_qualifier(), lexicon.get_pointer(lexicon.int_type()));
   auto& ptr = *unit.global_region()->declare_var(lexicon.get_identifier(u8"ptr"), ptr_type);
 
   // Removal of const is a non-implicit conversion
   INFO("const_cast<int* const>(ptr);");
   lexicon.make_const_cast(
-    lexicon.get_qualified(Type_qualifiers::Const, lexicon.get_pointer(lexicon.int_type())),
+    lexicon.get_qualified(lexicon.const_qualifier(), lexicon.get_pointer(lexicon.int_type())),
     *lexicon.make_id_expr(ptr)
   );
 
@@ -135,18 +135,18 @@ TEST_CASE("CV Conversions") {
   lexicon.make_qualification(
     *lexicon.make_qualification(
       *lexicon.make_id_expr(ptr_ptr),
-      Type_qualifiers::Const,
-      lexicon.get_qualified(Type_qualifiers::Const, ptr_ptr.type())
+      lexicon.const_qualifier(),
+      lexicon.get_qualified(lexicon.const_qualifier(), ptr_ptr.type())
     ),
-    Type_qualifiers::Const,
-    lexicon.get_pointer(lexicon.get_qualified(Type_qualifiers::Const,
+    lexicon.const_qualifier(),
+    lexicon.get_pointer(lexicon.get_qualified(lexicon.const_qualifier(),
       lexicon.get_pointer(lexicon.int_type())))
       // prvalue can be adjusted to remove qualifier on top-level (see 7.2.2/2)
   );
 
   INFO("const int var = 0;");
   auto& var = *unit.global_region()->declare_var(lexicon.get_identifier(u8"var"), 
-    lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type()));
+    lexicon.get_qualified(lexicon.const_qualifier(), lexicon.int_type()));
 
   // Pretend can be used to explicitly reperesent automatic type adjustment as detailed
   // in (7.2.2/2). Compilers are likely to just apply this adjustment on constraints without
@@ -156,7 +156,7 @@ TEST_CASE("CV Conversions") {
   lexicon.make_pretend(
     *lexicon.make_address(
       *lexicon.make_id_expr(var),
-      &lexicon.get_qualified(Type_qualifiers::Const, lexicon.int_type())
+      &lexicon.get_qualified(lexicon.const_qualifier(), lexicon.int_type())
     ),
     lexicon.int_type(),
     lexicon.int_type()
