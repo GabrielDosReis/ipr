@@ -177,6 +177,7 @@ Field,                              // ipr::Field
 Bitfield,                           // ipr::Bitfield
 Fundecl,                            // ipr::Fundecl
 Template,                           // ipr::Template
+Concept,                            // ipr::Concept
 Parameter,                          // ipr::Parameter
 Typedecl,                           // ipr::Typedecl
 Var,                                // ipr::Var

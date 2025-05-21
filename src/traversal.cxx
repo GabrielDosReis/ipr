@@ -979,6 +979,11 @@ ipr::Visitor::visit(const Fundecl& d)
    visit(as<Decl>(d));
 }
 
+void ipr::Visitor::visit(const Concept& d)
+{
+   visit(as<Decl>(d));
+}
+
 void
 ipr::Visitor::visit(const Parameter& d)
 {

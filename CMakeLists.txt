@@ -1,5 +1,5 @@
 cmake_minimum_required(
-   VERSION 3.28
+   VERSION 3.31
 )
 include(CheckIPOSupported)
 
@@ -59,7 +59,7 @@ target_sources(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME}
    PROPERTIES
-      CXX_STANDARD 20
+      CXX_STANDARD 23
       CXX_STANDARD_REQUIRED ON
 	   CXX_EXTENSIONS OFF
 )
