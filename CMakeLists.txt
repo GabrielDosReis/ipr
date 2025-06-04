@@ -96,6 +96,8 @@ target_compile_definitions(${PROJECT_NAME}
 	   >
 )
 
+set_property(SOURCE ${PROJECT_SOURCE_DIR}/src/input.cxx APPEND PROPERTY COMPILE_DEFINITIONS NDEBUG)
+
 install(
    TARGETS ipr
    LIBRARY DESTINATION lib

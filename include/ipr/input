@@ -37,15 +37,72 @@ namespace ipr::input {
         ErrorCode error_code;
     };
 
+    // A morsel is a pierce of source text designated by an offset from
+    // from the start of the source and its extent in bytes. 
+    struct Morsel {
+        std::uint64_t offset : 48;      // offset from the beginning of containing text
+        std::uint64_t length : 16;      // number of bytes from the start
+    };
+
     // Input source file mapped to memory as sequence of raw bytes.
+    // UTF-8 is assumed as the encoding of the text.
     struct SourceFile {
-        using View = std::span<const std::byte>;
+        using View = std::span<const char8_t>;
+        struct LineRange;
         
         explicit SourceFile(const SystemPath&);
         SourceFile(SourceFile&&) noexcept;
         ~SourceFile();
-        View bytes() const { return view; }
+        LineRange lines() const noexcept;
+        View contents() const noexcept { return view; }
+        View contents(Morsel m) const noexcept;
     private:
         View view;
     };
+
+    // A source file line range is an input_range of morsels, each representing a physical 
+    // line in the input source file.
+    struct SourceFile::LineRange {
+        using difference_type = std::ptrdiff_t;
+        struct iterator;
+        explicit LineRange(const SourceFile&);
+        iterator begin() noexcept;
+        iterator end() noexcept;
+    private:
+        const SourceFile* src;
+        const char8_t* ptr;
+        Morsel cache { };
+        void next_line() noexcept;
+    };
+
+    // An iterator for input source file line range.
+    struct SourceFile::LineRange::iterator {
+        using difference_type = std::ptrdiff_t;
+        using value_type = Morsel;
+        using iterator_category = std::input_iterator_tag;
+
+        explicit iterator(LineRange* r) noexcept : range{r} { }
+        Morsel operator*() const noexcept;
+        iterator& operator++() noexcept;
+        void operator++(int) noexcept { ++(*this); }
+        bool operator==(const iterator& that) const noexcept { return range == that.range; }
+        bool operator!=(const iterator& that) const noexcept = default;
+    private:
+        LineRange* range;
+    };
+
+    inline SourceFile::LineRange SourceFile::lines() const noexcept
+    {
+        return LineRange{*this};
+    }
+
+    inline SourceFile::LineRange::iterator SourceFile::LineRange::begin() noexcept
+    {
+        return iterator{this};
+    }
+
+    inline SourceFile::LineRange::iterator SourceFile::LineRange::end() noexcept
+    {
+        return iterator{nullptr};
+    }
 }
