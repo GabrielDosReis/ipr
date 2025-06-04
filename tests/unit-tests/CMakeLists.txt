@@ -9,6 +9,7 @@ add_executable(${TEST_BINARY}
    warehouse.cxx
    phased-eval.cxx
    specifiers.cxx
+   lines.cxx
 )
 
 target_link_libraries(${TEST_BINARY}

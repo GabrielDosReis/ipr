@@ -13,7 +13,9 @@
 #  include <unistd.h>
 #endif
 
-#include <ipr/input>
+#include <assert.h>
+#include <iostream>
+#include "ipr/input"
 
 namespace ipr::input {
 #ifdef _WIN32
@@ -46,13 +48,13 @@ namespace ipr::input {
         LARGE_INTEGER s { };
         if (not GetFileSizeEx(file.get_handle(), &s))
             throw AccessError{ path, GetLastError() };
-        if (s.QuadPart)
+        if (s.QuadPart == 0)
             return;
         SystemHandle mapping = CreateFileMapping(file.get_handle(), nullptr, PAGE_READONLY, 0, 0, nullptr);
         if (mapping.get_handle() == nullptr)
             throw FileMappingError{ path, GetLastError() };
         auto start = MapViewOfFile(mapping.get_handle(), FILE_MAP_READ, 0, 0, 0);
-        view = { reinterpret_cast<const std::byte*>(start), static_cast<View::size_type>(s.QuadPart) };
+        view = { reinterpret_cast<const char8_t*>(start), static_cast<View::size_type>(s.QuadPart) };
 #else
         struct stat s { };
         errno = 0;
@@ -72,7 +74,7 @@ namespace ipr::input {
         close(fd);
         if (start == MAP_FAILED)
             throw FileMappingError{ path };
-        view = { reinterpret_cast<std::byte*>(start), static_cast<View::size_type>(s.st_size) };
+        view = { reinterpret_cast<const char8_t*>(start), static_cast<View::size_type>(s.st_size) };
 #endif
     }
 
@@ -88,8 +90,69 @@ namespace ipr::input {
 #ifdef _WIN32
             UnmapViewOfFile(view.data());
 #else
-            munmap(const_cast<std::byte*>(view.data()), view.size());
+            munmap(const_cast<char8_t*>(view.data()), view.size());
 #endif
         }
+    }
+
+    SourceFile::View SourceFile::contents(Morsel m) const noexcept
+    {
+        assert(m.length < view.size());
+        return { view.data() + m.offset, m.length };
+    }
+
+    // All code fragments directly indexable must have offsets and extents less than these limits.
+    constexpr auto max_offset = std::uint64_t{1} << 48;
+    constexpr auto max_extent = std::uint64_t{1} << 16;
+
+    // Characters from a raw input source file marking new lines: either CR+LR or just LF.
+    constexpr char8_t carriage_return = 0x0D;    // '\r';
+    constexpr char8_t line_feed = 0x0A;          // '\n';
+
+    void SourceFile::LineRange::next_line() noexcept
+    {
+        const auto offset = static_cast<std::uint64_t>(ptr - src->view.data());
+        assert(offset < max_offset);
+        const auto limit = src->view.size();
+        std::uint64_t idx = 0;
+        while (idx < limit and ptr[idx] != carriage_return and ptr[idx] != line_feed)
+            ++idx;
+        assert(idx < max_extent);
+        cache.offset = offset;
+        cache.length = idx;
+
+        // Skip the new line marker.
+        if (idx < limit)
+        {
+            if (ptr[idx] == carriage_return and idx+1 < limit and ptr[idx+1] == line_feed)
+                ++idx;
+            ++idx;
+        }
+        ptr += idx;
+    }
+
+    SourceFile::LineRange::LineRange(const SourceFile& src) : src{&src}, ptr{src.view.data()}
+    {
+        // Skip a possible misguided UTF-8 BOM.
+        if (src.view.size() >= 3 and ptr[0] == 0xEF and ptr[1] == 0xBB and ptr[2] == 0xBF)
+            ptr += 3;
+        next_line();
+    }
+
+    Morsel SourceFile::LineRange::iterator::operator*() const noexcept
+    {
+        assert(range != nullptr);
+        return range->cache;
+    }
+
+    SourceFile::LineRange::iterator& SourceFile::LineRange::iterator::operator++() noexcept
+    {
+        assert(range != nullptr);
+        if (range->ptr >= range->src->view.data() + range->src->view.size())
+            range = nullptr;
+        else
+            range->next_line();
+
+        return *this;
     }
 }
