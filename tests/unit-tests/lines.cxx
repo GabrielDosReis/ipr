@@ -13,14 +13,14 @@
 TEST_CASE("echo input file") {
     ipr::input::SystemPath path = WIDEN(__FILE__);
     ipr::input::SourceFile file{path};
-    auto n = 1;
     std::cout << "file.size: " << file.contents().size() << std::endl;
+    std::uint32_t last_line_number = 0;
     for (auto line : file.lines())
     {
-        std::cout << '[' << n << ']'
-                << " -> {offset: " << line.offset
-                << ", length: " << line.length << "}\n";
-        ++n;
+        std::cout << '[' << line.number << ']'
+                << " -> {offset: " << line.morsel.offset
+                << ", length: " << line.morsel.length << "}\n";
+        last_line_number = line.number;
     }
-    CHECK(n == 27); // Adjust this number based on the actual number of lines in the file
+    CHECK(last_line_number == 26); // Adjust this number based on the actual number of lines in the file
 }

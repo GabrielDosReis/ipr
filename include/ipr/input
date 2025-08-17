@@ -44,6 +44,12 @@ namespace ipr::input {
         std::uint64_t length : 16;      // number of bytes from the start
     };
 
+    // Descriptor for a physical line from an input source file.
+    struct PhysicalLine {
+        Morsel morsel { };
+        std::uint32_t number { };
+    };
+
     // Input source file mapped to memory as sequence of raw bytes.
     // UTF-8 is assumed as the encoding of the text.
     struct SourceFile {
@@ -71,7 +77,7 @@ namespace ipr::input {
     private:
         const SourceFile* src;
         const char8_t* ptr;
-        Morsel cache { };
+        PhysicalLine cache { };
         void next_line() noexcept;
     };
 
@@ -82,7 +88,7 @@ namespace ipr::input {
         using iterator_category = std::input_iterator_tag;
 
         explicit iterator(LineRange* r) noexcept : range{r} { }
-        Morsel operator*() const noexcept;
+        PhysicalLine operator*() const noexcept;
         iterator& operator++() noexcept;
         void operator++(int) noexcept { ++(*this); }
         bool operator==(const iterator& that) const noexcept { return range == that.range; }
