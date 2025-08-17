@@ -118,8 +118,9 @@ namespace ipr::input {
         while (idx < limit and ptr[idx] != carriage_return and ptr[idx] != line_feed)
             ++idx;
         assert(idx < max_extent);
-        cache.offset = offset;
-        cache.length = idx;
+        cache.morsel.offset = offset;
+        cache.morsel.length = idx;
+        ++cache.number;
 
         // Skip the new line marker.
         if (idx < limit)
@@ -139,7 +140,7 @@ namespace ipr::input {
         next_line();
     }
 
-    Morsel SourceFile::LineRange::iterator::operator*() const noexcept
+    PhysicalLine SourceFile::LineRange::iterator::operator*() const noexcept
     {
         assert(range != nullptr);
         return range->cache;
