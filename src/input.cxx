@@ -15,6 +15,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <utility>
 #include "ipr/input"
 
 namespace ipr::input {
