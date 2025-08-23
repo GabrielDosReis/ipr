@@ -7,12 +7,15 @@
 #  define WIDEN(S) S
 #endif
 
+#define  DUP(S) \
+    S ## S
+
 #include <iostream>
 #include "ipr/input"
 
 TEST_CASE("echo input file") {
     ipr::input::SystemPath path = WIDEN(__FILE__);
-    ipr::input::SourceFile file{path};
+    ipr::input::SourceListing file{path};
     std::cout << "file.size: " << file.contents().size() << std::endl;
     std::uint32_t last_line_number = 0;
     for (auto line : file.lines())
@@ -22,5 +25,5 @@ TEST_CASE("echo input file") {
                 << ", length: " << line.morsel.length << "}\n";
         last_line_number = line.number;
     }
-    CHECK(last_line_number == 26); // Adjust this number based on the actual number of lines in the file
+    CHECK(last_line_number == 29); // Adjust this number based on the actual number of lines in the file
 }
