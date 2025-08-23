@@ -18,6 +18,17 @@
 #include "ipr/input"
 
 namespace ipr::input {
+    static constexpr std::uint32_t index_watermark { 1u << 31 }; 
+
+
+    LineIndex::LineIndex(LineSort s, std::uint32_t i)
+        : srt{(assert(s == LineSort::Simple || s == LineSort::Composite), std::to_underlying(s))}, 
+          idx{(assert(i < index_watermark), i)}
+    {
+    }
+
+
+
 #ifdef _WIN32
     // Helper type for automatically closing a handle on scope exit.
     struct SystemHandle {
@@ -109,6 +120,17 @@ namespace ipr::input {
     constexpr char8_t carriage_return = 0x0D;    // '\r';
     constexpr char8_t line_feed = 0x0A;          // '\n';
 
+    static inline bool white_space(char8_t c)
+    {
+        switch (c)
+        {
+        case u' ': case u8'\t': case u8'\v': case u8'\f':
+            return true;
+        default:
+            return false;
+        }
+    }
+
     void SourceFile::LineRange::next_line() noexcept
     {
         const auto offset = static_cast<std::uint64_t>(ptr - src->view.data());
@@ -155,5 +177,69 @@ namespace ipr::input {
             range->next_line();
 
         return *this;
+    }
+
+    namespace {
+        LineDepot read_lines(const SourceFile& src)
+        {
+            LineDepot depot { };
+            const auto file_start = src.contents().data();
+
+            CompositeLine composite { };
+            for (auto line: src.lines())
+            {
+                if (line.empty())
+                    continue;
+                // Trim any trailing whitespace character when determining logical line continuation.
+                const auto line_start = file_start + line.morsel.offset;
+                auto cursor = line_start + line.morsel.length;
+                while (--cursor > line_start and white_space(*cursor))
+                    ;
+                if (cursor <= line_start)
+                    continue;               // skip entirely blank lines.
+                if (*cursor == u8'\\')
+                {
+                    line.morsel.length = cursor - line_start;
+                    composite.lines.push_back(line);
+                    continue;
+                }
+                else if (not composite.lines.empty())
+                {
+                    composite.lines.push_back(line);
+                    auto idx = depot.composites.size();
+                    depot.composites.push_back(composite);
+                    depot.indices.emplace_back(LineSort::Composite, idx);
+                    composite.lines.clear();
+                }
+                else
+                {
+                    auto idx = depot.simples.size();
+                    depot.indices.emplace_back(LineSort::Simple, idx);
+                    depot.simples.emplace_back(line);
+                }
+            }
+
+            return depot;
+        }
+    }
+
+    SourceListing::SourceListing(const SystemPath& path) 
+        : SourceFile{path}, depot{read_lines(*this)}
+    { }
+
+    const SimpleLine& SourceListing::simple_line(LineIndex line) const
+    {
+        assert(idx.sort() == LineSort::Simple);
+        auto n = line.index();
+        assert(n < depot.simples.size());
+        return depot.simples[n];
+    }
+
+    const CompositeLine& SourceListing::composite_line(LineIndex line) const
+    {
+        assert(idx.sort() == LineSort::Composite);
+        auto n = line.index();
+        assert(n < depot.composites.size());
+        return depot.composites[n];
     }
 }

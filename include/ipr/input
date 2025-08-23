@@ -48,7 +48,35 @@ namespace ipr::input {
     struct PhysicalLine {
         Morsel morsel { };
         std::uint32_t number { };
+
+        bool empty() const { return morsel.length == 0; }
     };
+
+    // A logical line is either a simple phyiscal line or a composite of multiple
+    // physical lines spliced together.
+    enum class LineSort : std::uint8_t {
+        Simple = 0x01,          // A simple, non-continuating physical line.
+        Composite = 0x02,       // Result of spliced multiple physical lines.
+    };
+
+    struct SimpleLine {
+        PhysicalLine line;
+    };
+
+    struct CompositeLine {
+        std::vector<PhysicalLine> lines;
+    };
+
+    struct LineIndex {
+        LineIndex(LineSort, std::uint32_t);
+        LineSort sort() const { return static_cast<LineSort>(srt); }
+        std::uint32_t index() const { return idx; }
+    private:
+        std::uint32_t srt : 2;
+        std::uint32_t idx : 30;
+    };
+
+    static_assert(sizeof(LineIndex) == 4);
 
     // Input source file mapped to memory as sequence of raw bytes.
     // UTF-8 is assumed as the encoding of the text.
@@ -111,4 +139,21 @@ namespace ipr::input {
     {
         return iterator{nullptr};
     }
+
+    // A depot of lines read from an input source file.
+    struct LineDepot {
+        std::vector<SimpleLine> simples;
+        std::vector<CompositeLine> composites;
+        std::vector<LineIndex> indices;
+    };
+
+    // An input source listing is a source file with its lines read into logical lines.
+    struct SourceListing : SourceFile {
+        explicit SourceListing(const SystemPath&);
+        const SimpleLine& simple_line(LineIndex) const;
+        const CompositeLine& composite_line(LineIndex) const;
+        const std::vector<LineIndex>& logical_lines() const { return depot.indices; }
+    private:
+        LineDepot depot;
+    };
 }
