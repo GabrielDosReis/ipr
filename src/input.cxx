@@ -196,8 +196,6 @@ namespace ipr::input {
                 auto cursor = line_start + line.morsel.length;
                 while (--cursor > line_start and white_space(*cursor))
                     ;
-                if (cursor <= line_start)
-                    continue;               // skip entirely blank lines.
                 if (*cursor == u8'\\')
                 {
                     line.morsel.length = cursor - line_start;
@@ -212,6 +210,8 @@ namespace ipr::input {
                     depot.indices.emplace_back(LineSort::Composite, idx);
                     composite.lines.clear();
                 }
+                else if (cursor == line_start)
+                    continue;               // skip entirely blank logical lines.
                 else
                 {
                     auto idx = depot.simples.size();
