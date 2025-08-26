@@ -45,10 +45,13 @@ namespace ipr::input {
         std::uint64_t length : 16;      // number of bytes from the start
     };
 
+    static_assert(sizeof(Morsel) == 2 * sizeof(std::uint32_t));
+
     // Descriptor for a physical line from an input source file.
     struct PhysicalLine {
         Morsel morsel { };
         std::uint32_t number { };
+        // FIXME: Possible padding bits of size of std::uint32_t.
 
         bool empty() const { return morsel.length == 0; }
     };
@@ -56,28 +59,66 @@ namespace ipr::input {
     // A logical line is either a simple phyiscal line or a composite of multiple
     // physical lines spliced together.
     enum class LineSort : std::uint8_t {
-        Simple = 0x01,          // A simple, non-continuating physical line.
-        Composite = 0x02,       // Result of spliced multiple physical lines.
+        Simple = 0x00,          // A simple, non-continuating physical line.
+        Composite = 0x01,       // Result of spliced multiple physical lines.
     };
 
+    // Classification of input logical lines.
+    enum class LineSpecies : std::uint8_t {
+        Unknown = 0x00,
+        Text,                               // text line
+        SolitaryHash,                       // `#` by itself on a line
+        If,                                 // `#if` line
+        Ifdef,                              // `#ifdef` line
+        Ifndef,                             // `#ifndef` line
+        Elif,                               // `#elif` line
+        Elifdef,                            // `#elifdef` line
+        Elifndef,                           // `#elifndef` line
+        Else,                               // `#else` line
+        Endif,                              // `#endif` line
+        Include,                            // `#include` line
+        Export,                             // `export` line
+        Import,                             // `import` line
+        Embed,                              // `#embed` line
+        Define,                             // `#define` line
+        Undef,                              // `#undef` line
+        Line,                               // `#line` line
+        Error,                              // `#error` line
+        Warning,                            // `#warning` line
+        Pragma,                             // `#pragma` line
+        ExtendedDirective,                  // Some other `#` directive
+    };
+
+    // This predicate holds if its argument designates an explicitly listed enumerator.
+    bool valid_species(LineSpecies);
+
+    // A physical line that is a logical line by itself, e.g. not ending with a backslash.
     struct SimpleLine {
         PhysicalLine line;
     };
 
+    // An aggregate of physical lines spliced to form a logical line.
     struct CompositeLine {
         std::vector<PhysicalLine> lines;
     };
 
-    struct LineIndex {
-        LineIndex(LineSort, std::uint32_t);
+    // A descriptor for a logical line:
+    //    (a) whether it is simple or composite
+    //    (b) preprocessing line classification
+    //    (c) index into the appropriate table to retrieve its physical location
+    // Note: a line descritptor is designed to fit in a 64-bit integer storage.
+    struct LineDescriptor {
+        LineDescriptor(LineSort, LineSpecies, std::uint64_t);
         LineSort sort() const { return static_cast<LineSort>(srt); }
-        std::uint32_t index() const { return idx; }
+        LineSpecies species() const { return static_cast<LineSpecies>(spc); }
+        std::uint64_t index() const { return idx; }
     private:
-        std::uint32_t srt : 2;
-        std::uint32_t idx : 30;
+        std::uint64_t srt : 1;
+        std::uint64_t spc : 5;
+        std::uint64_t idx : 58;
     };
 
-    static_assert(sizeof(LineIndex) == 4);
+    static_assert(sizeof(LineDescriptor) == sizeof(std::uint64_t));
 
     // Input source file mapped to memory as sequence of raw bytes.
     // UTF-8 is assumed as the encoding of the text.
@@ -145,15 +186,15 @@ namespace ipr::input {
     struct LineDepot {
         std::vector<SimpleLine> simples;
         std::vector<CompositeLine> composites;
-        std::vector<LineIndex> indices;
+        std::vector<LineDescriptor> indices;
     };
 
     // An input source listing is a source file with its lines read into logical lines.
     struct SourceListing : SourceFile {
         explicit SourceListing(const SystemPath&);
-        const SimpleLine& simple_line(LineIndex) const;
-        const CompositeLine& composite_line(LineIndex) const;
-        const std::vector<LineIndex>& logical_lines() const { return depot.indices; }
+        const SimpleLine& simple_line(LineDescriptor) const;
+        const CompositeLine& composite_line(LineDescriptor) const;
+        const std::vector<LineDescriptor>& logical_lines() const { return depot.indices; }
     private:
         LineDepot depot;
     };
