@@ -16,14 +16,55 @@
 #include <assert.h>
 #include <iostream>
 #include <utility>
+#include <string_view>
+#include <algorithm>
 #include "ipr/input"
 
 namespace ipr::input {
-    static constexpr std::uint32_t index_watermark { 1u << 31 }; 
+    namespace {
+        // A cap on valid index values.
+        constexpr std::uint64_t index_watermark { std::uint64_t{1} << 58 }; 
 
+        // A valid input line is either simple or composite.
+        bool valid_category(LineSort k)
+        {
+            return k == LineSort::Simple or k == LineSort::Composite; 
+        }
+    }
 
-    LineIndex::LineIndex(LineSort s, std::uint32_t i)
-        : srt{(assert(s == LineSort::Simple || s == LineSort::Composite), std::to_underlying(s))}, 
+    bool valid_species(LineSpecies s)
+    {
+        switch (s) {
+        case LineSpecies::Text:
+        case LineSpecies::SolitaryHash:
+        case LineSpecies::If:
+        case LineSpecies::Ifdef:
+        case LineSpecies::Ifndef:
+        case LineSpecies::Elif:
+        case LineSpecies::Elifdef:
+        case LineSpecies::Elifndef:
+        case LineSpecies::Else:
+        case LineSpecies::Endif:
+        case LineSpecies::Include:
+        case LineSpecies::Export:
+        case LineSpecies::Import:
+        case LineSpecies::Embed:
+        case LineSpecies::Define:
+        case LineSpecies::Undef:
+        case LineSpecies::Line:
+        case LineSpecies::Error:
+        case LineSpecies::Warning:
+        case LineSpecies::Pragma:
+        case LineSpecies::ExtendedDirective:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    LineDescriptor::LineDescriptor(LineSort k, LineSpecies s, std::uint64_t i)
+        : srt{(assert(valid_category(k)), std::to_underlying(k))},
+          spc{(assert(valid_species(s)), std::to_underlying(s))},
           idx{(assert(i < index_watermark), i)}
     {
     }
@@ -181,6 +222,118 @@ namespace ipr::input {
     }
 
     namespace {
+        // A mapping of a preprocessing directive to an algebraic value.
+        struct StandardDirective {
+            const char8_t* name;
+            LineSpecies species;
+        };
+
+        constexpr auto cmp_dir_by_name = [](auto& x, auto& y) constexpr {
+            return std::u8string_view{x.name} < std::u8string_view{y.name};
+        };
+
+        // A mapping of standard directive spelling to line species.
+        // Note: This table is stored in alphabetic order of the spelling.
+        constexpr StandardDirective standard_directives[] {
+            {u8"define", LineSpecies::Define},
+            {u8"elif", LineSpecies::Elif},
+            {u8"elifdef", LineSpecies::Elifdef},
+            {u8"elifndef", LineSpecies::Elifndef},
+            {u8"else", LineSpecies::Else},
+            {u8"embed", LineSpecies::Embed},
+            {u8"endif", LineSpecies::Endif},
+            {u8"error", LineSpecies::Error},
+            {u8"export", LineSpecies::Export},
+            {u8"if", LineSpecies::If},
+            {u8"ifdef", LineSpecies::Ifdef},
+            {u8"ifndef", LineSpecies::Ifndef},
+            {u8"import", LineSpecies::Import},
+            {u8"include", LineSpecies::Include},
+            {u8"line", LineSpecies::Line},
+            {u8"pragma", LineSpecies::Pragma},
+            {u8"undef", LineSpecies::Undef},
+            {u8"warning", LineSpecies::Warning},
+        };
+
+        static_assert(std::ranges::is_sorted(standard_directives, cmp_dir_by_name));
+
+        // If the argument for `s` is the spelling of a standard preprocessing directive,
+        // return a pointer to the corresponding precomputed map entry.  Otherwise, return null.
+        const StandardDirective* get_standard_directive(std::u8string_view s)
+        {
+            auto where = std::ranges::lower_bound(standard_directives, s, { }, &StandardDirective::name);
+            if (where == std::end(standard_directives) or where->name > s)
+                return nullptr;
+            return where;
+        }
+
+        // This predicate holds if the argument for `c` denotes the first character of a standard
+        // preprocessing directive.
+        inline bool may_begin_standard_directive(char8_t c)
+        {
+            switch (c) {
+            case u8'd': case u8'e': case u8'i': case u8'l':
+            case u8'p': case u8'u': case u8'w':
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        // Quick and simple predicate for constitutents of a narrow identifier.
+        inline bool narrow_letter_or_digit(char8_t c)
+        {
+            return (c >= u8'A' and c <= u8'Z')
+                or (c >= u8'z' and c <= u8'z')
+                or (c >= u8'0' and c <= u8'9')
+                or c == u8'_';
+        }
+
+        // Advance the argument bound to `cursor` past the next consecutive whitespace characters.
+        inline void skip_blank(const char8_t*& cursor, const char8_t* end)
+        {
+            while (cursor < end and white_space(*cursor))
+                ++cursor;
+        }
+
+        // Return the species of a logical line.
+        LineSpecies species(SourceFile::View line)
+        {
+            auto cursor = line.data();
+            const auto line_end = cursor + line.size();
+            skip_blank(cursor, line_end);
+            if (cursor == line_end)
+                return LineSpecies::Unknown;
+            else if (*cursor != u8'#')
+                return LineSpecies::Text;
+
+            skip_blank(++cursor, line_end);
+            if (cursor == line_end)
+                return LineSpecies::SolitaryHash;
+            if (not may_begin_standard_directive(*cursor))
+                return LineSpecies::ExtendedDirective;
+            
+            const auto directive_start = cursor;
+            while (cursor < line_end and narrow_letter_or_digit(*cursor))
+                ++cursor;
+            if (auto directive = get_standard_directive({directive_start, cursor}))
+                return directive->species;
+            return LineSpecies::ExtendedDirective;
+        }
+
+        // Return the species of a composite logical line.
+        LineSpecies species(const SourceFile& src, const CompositeLine& composite)
+        {
+            // FIXME: Building a buffer is not strictly needed in most practical cases.
+            std::u8string buffer;
+            for (auto& line : composite.lines)
+            {
+                auto chars = src.contents(line.morsel);
+                buffer.append(chars.data(), chars.size());
+            }
+            return species(buffer);
+        }
+
         LineDepot read_lines(const SourceFile& src)
         {
             LineDepot depot { };
@@ -207,7 +360,8 @@ namespace ipr::input {
                     composite.lines.push_back(line);
                     auto idx = depot.composites.size();
                     depot.composites.push_back(composite);
-                    depot.indices.emplace_back(LineSort::Composite, idx);
+                    auto spc = species(src, composite);
+                    depot.indices.emplace_back(LineSort::Composite, spc, idx);
                     composite.lines.clear();
                 }
                 else if (cursor == line_start)
@@ -215,7 +369,8 @@ namespace ipr::input {
                 else
                 {
                     auto idx = depot.simples.size();
-                    depot.indices.emplace_back(LineSort::Simple, idx);
+                    auto spc = species({line_start, cursor});
+                    depot.indices.emplace_back(LineSort::Simple, spc, idx);
                     depot.simples.emplace_back(line);
                 }
             }
@@ -228,7 +383,7 @@ namespace ipr::input {
         : SourceFile{path}, depot{read_lines(*this)}
     { }
 
-    const SimpleLine& SourceListing::simple_line(LineIndex line) const
+    const SimpleLine& SourceListing::simple_line(LineDescriptor line) const
     {
         assert(idx.sort() == LineSort::Simple);
         auto n = line.index();
@@ -236,7 +391,7 @@ namespace ipr::input {
         return depot.simples[n];
     }
 
-    const CompositeLine& SourceListing::composite_line(LineIndex line) const
+    const CompositeLine& SourceListing::composite_line(LineDescriptor line) const
     {
         assert(idx.sort() == LineSort::Composite);
         auto n = line.index();
