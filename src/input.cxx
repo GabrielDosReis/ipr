@@ -148,14 +148,14 @@ namespace ipr::input {
         }
     }
 
-    SourceFile::View SourceFile::contents(Morsel m) const noexcept
+    SourceFile::View SourceFile::contents(Isle m) const noexcept
     {
         assert(m.length < view.size());
         return { view.data() + m.offset, m.length };
     }
 
     // All code fragments directly indexable must have offsets and extents less than these limits.
-    constexpr auto max_offset = std::uint64_t{1} << 48;
+    constexpr auto max_offset = std::uint64_t{1} << 47;
     constexpr auto max_extent = std::uint64_t{1} << 16;
 
     // Characters from a raw input source file marking new lines: either CR+LR or just LF.
@@ -182,9 +182,11 @@ namespace ipr::input {
         while (idx < limit and ptr[idx] != carriage_return and ptr[idx] != line_feed)
             ++idx;
         assert(idx < max_extent);
-        cache.morsel.offset = offset;
-        cache.morsel.length = idx;
+        cache.isle.offset = offset;
+        cache.isle.length = idx;
         ++cache.number;
+        for (cache.indent = 0; cache.indent < idx and white_space(ptr[cache.indent]); ++cache.indent)
+            ;
 
         // Skip the new line marker.
         if (idx < limit)
@@ -328,7 +330,7 @@ namespace ipr::input {
             std::u8string buffer;
             for (auto& line : composite.lines)
             {
-                auto chars = src.contents(line.morsel);
+                auto chars = src.contents(line.isle);
                 buffer.append(chars.data(), chars.size());
             }
             return species(buffer);
@@ -345,13 +347,13 @@ namespace ipr::input {
                 if (line.empty())
                     continue;
                 // Trim any trailing whitespace character when determining logical line continuation.
-                const auto line_start = file_start + line.morsel.offset;
-                auto cursor = line_start + line.morsel.length;
-                while (--cursor > line_start and white_space(*cursor))
+                const auto line_start = file_start + line.isle.offset + line.indent;
+                auto extent = line.isle.length;
+                while (--extent > line.indent and white_space(line_start[extent]))
                     ;
-                if (*cursor == u8'\\')
+                if (line_start[extent] == u8'\\')
                 {
-                    line.morsel.length = cursor - line_start;
+                    line.isle.length = extent;
                     composite.lines.push_back(line);
                     continue;
                 }
@@ -364,12 +366,12 @@ namespace ipr::input {
                     depot.indices.emplace_back(LineSort::Composite, spc, idx);
                     composite.lines.clear();
                 }
-                else if (cursor == line_start)
+                else if (extent == line.indent)
                     continue;               // skip entirely blank logical lines.
                 else
                 {
                     auto idx = depot.simples.size();
-                    auto spc = species({line_start, cursor});
+                    auto spc = species({line_start, extent});
                     depot.indices.emplace_back(LineSort::Simple, spc, idx);
                     depot.simples.emplace_back(line);
                 }

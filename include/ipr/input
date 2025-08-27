@@ -38,23 +38,64 @@ namespace ipr::input {
         ErrorCode error_code;
     };
 
-    // A morsel is a pierce of source text designated by an offset from
-    // from the start of the source and its extent in bytes. 
-    struct Morsel {
-        std::uint64_t offset : 48;      // offset from the beginning of containing text
-        std::uint64_t length : 16;      // number of bytes from the start
+    // Abstract number of items in a non-empty collection.
+    enum class Multiplicity : std::uint8_t {
+        One = 0x0,
+        Many = 0x1
     };
 
-    static_assert(sizeof(Morsel) == 2 * sizeof(std::uint32_t));
+    // A morsel is a piece of source text either as contiguous sequence of bytes (isle),
+    // or as a sequence of isles (archipelago).
+    struct Isle;
+    struct Archipelago;
+
+    struct Morsel {
+        Multiplicity multiplicity() const { return static_cast<Multiplicity>(tag); }
+        auto start() const { return where; }
+        auto size() const { return extent; }
+    private:
+        Morsel(std::uint64_t w, std::uint64_t e, std::uint64_t t)
+            : where{w}, extent{e}, tag{t}
+        { }
+        std::uint64_t where : 47;           // where to find items in this morsel.
+        std::uint64_t extent : 16;          // number of items in this morsel.
+        const std::uint64_t tag : 1;        // discriminant between isle and achipelago.
+        friend Isle;
+        friend Archipelago;
+    };
+
+    static_assert(sizeof(Morsel) == sizeof(std::uint64_t));
+
+    // An isle of text is contiguous morsel, coded over 63-bit out of the 64-bit precision of a morsel. 
+    struct Isle {
+        std::uint64_t offset : 47;              // offset from the beginning of containing text
+        std::uint64_t length : 16;              // number of bytes from the start
+        const std::uint64_t tag : 1 = 0;        // discriminant between isle and archipelago.  Always 0.
+        operator Morsel() const { return { offset, length, tag }; }
+    };
+
+    static_assert(sizeof(Isle) == sizeof(Morsel));
+
+    // An archipelago of text is a collection of isles, coded over 63-bit of the 64-bit precision of a morsel.
+    struct Archipelago {
+        std::uint64_t start : 47;               // index of the first isle in this archipelago.
+        std::uint64_t count : 16;               // number of isles in this archipelago.
+        const std::uint64_t tag : 1 = 1;        // discriminant between isle and archipelago.  Always 1.
+        operator Morsel() const { return { start, count, tag }; }
+    };
+
+    static_assert(sizeof(Archipelago) == sizeof(Morsel));
 
     // Descriptor for a physical line from an input source file.
     struct PhysicalLine {
-        Morsel morsel { };
-        std::uint32_t number { };
-        // FIXME: Possible padding bits of size of std::uint32_t.
+        Isle isle { };
+        std::uint64_t number : 48 { };
+        std::uint64_t indent : 16 { };
 
-        bool empty() const { return morsel.length == 0; }
+        bool empty() const { return isle.length == 0; }
     };
+
+    static_assert(sizeof(PhysicalLine) == 2 * sizeof(Morsel));
 
     // A logical line is either a simple phyiscal line or a composite of multiple
     // physical lines spliced together.
@@ -131,12 +172,12 @@ namespace ipr::input {
         ~SourceFile();
         LineRange lines() const noexcept;
         View contents() const noexcept { return view; }
-        View contents(Morsel m) const noexcept;
+        View contents(Isle m) const noexcept;
     private:
         View view;
     };
 
-    // A source file line range is an input_range of morsels, each representing a physical 
+    // A source file line range is an input_range of isles, each representing a physical 
     // line in the input source file.
     struct SourceFile::LineRange {
         using difference_type = std::ptrdiff_t;
@@ -154,7 +195,7 @@ namespace ipr::input {
     // An iterator for input source file line range.
     struct SourceFile::LineRange::iterator {
         using difference_type = std::ptrdiff_t;
-        using value_type = Morsel;
+        using value_type = Isle;
         using iterator_category = std::input_iterator_tag;
 
         explicit iterator(LineRange* r) noexcept : range{r} { }
