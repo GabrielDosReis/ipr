@@ -21,8 +21,8 @@ TEST_CASE("echo input file") {
     for (auto line : file.lines())
     {
         std::cout << '[' << line.number << ']'
-                << " -> {offset: " << line.morsel.offset
-                << ", length: " << line.morsel.length << "}\n";
+                << " -> {offset: " << line.isle.offset
+                << ", length: " << line.isle.length << "}\n";
         last_line_number = line.number;
     }
     CHECK(last_line_number == 29); // Adjust this number based on the actual number of lines in the file
