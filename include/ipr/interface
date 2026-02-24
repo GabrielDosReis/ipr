@@ -1656,7 +1656,7 @@ namespace ipr {
       virtual const Region& region() const = 0;
       const Sequence<Expr>& body() const { return region().body(); }
       virtual const Sequence<Handler>& handlers() const = 0;
-      bool try_block() const { return handlers().size() == 0; }
+      bool plain_block() const { return handlers().size() == 0; }
    };
 
                                 // -- Ctor_body --
@@ -1966,7 +1966,7 @@ namespace ipr {
       virtual const Type& char16_t_type() const = 0;           // "char16_t"
       virtual const Type& char32_t_type() const = 0;           // "char32_t"
       virtual const Type& short_type() const = 0;              // "short"
-      virtual const Type& ushort_type() const = 0;             // "unsigned char"
+      virtual const Type& ushort_type() const = 0;             // "unsigned short"
       virtual const Type& int_type() const = 0;                // "int"
       virtual const Type& uint_type() const = 0;               // "unsigned int"
       virtual const Type& long_type() const = 0;               // "long"

@@ -1,7 +1,7 @@
 //
 // This file is part of The Pivot framework.
 // Written by Gabriel Dos Reis.
-// See LICENSE for copright and license notices.
+// See LICENSE for copyright and license notices.
 //
 
 #include <algorithm>
@@ -26,7 +26,7 @@ namespace ipr {
    {
       return physically_same(lhs, rhs)
          or (structurally_same(lhs.first(), rhs.first())
-             and structurally_same(lhs.first(), rhs.first()));
+             and structurally_same(lhs.second(), rhs.second()));
    }
 
    template<class Cat, class Op1, class Op2, class Op3>

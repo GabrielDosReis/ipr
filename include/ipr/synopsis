@@ -97,10 +97,10 @@ namespace ipr {
    struct Materialization;       // temporary materialization
    struct Not;                   // logical negation                 !cond
    struct Enclosure;             // expression in enclosed in paired delimiters, e.g. (a) or {x, y, y}
-   struct Post_decrement;        // post-increment                     p++
-   struct Post_increment;        // post-decrement                     p--
-   struct Pre_decrement;         // pre-increment                      ++p
-   struct Pre_increment;         // pre-decrement                      --p
+   struct Post_decrement;        // post-decrement                     p--
+   struct Post_increment;        // post-increment                     p++
+   struct Pre_decrement;         // pre-decrement                      --p
+   struct Pre_increment;         // pre-increment                      ++p
    struct Promotion;             // integral or floating-point promotion -- implicit conversion
    struct Read;                  // lvalue to rvalue conversion  -- implicit conversion
    struct Throw;                 // throw expression               throw a
