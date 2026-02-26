@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
 # Enable link-time optimization or close approximation
-check_ipo_supported(RESULT ipo_supported OUTPUT ipo_disbaled_msg)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_disabled_msg)
 if (ipo_supported)
    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 else()

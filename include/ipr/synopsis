@@ -18,7 +18,7 @@ namespace ipr {
    struct Comment;               // C-style and BCPL-style comments
    struct String;                // literal string
 
-   struct Linkage;               // general language linkage
+   struct Language_linkage;      // general language linkage
    struct Expr;                  // general expressions
    struct Name;                  // general names
    struct Type;                  // general types
@@ -188,7 +188,6 @@ namespace ipr {
    struct Ctor_body;             // constructor-body
    struct Do;                    // do-statement
    struct Expr_stmt;             // expression-statement
-   struct Empty_stmt;            // empty statement -- particular Expr_stmt
    struct For;                   // for-statement
    struct For_in;                // structured for-statement
    struct Goto;                  // goto-statement

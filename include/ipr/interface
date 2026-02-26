@@ -69,7 +69,7 @@ namespace ipr {
    // C++ Directly, Compactly and Efficiently."
    //
    // Warning:  If you add any new "leaf" node type, you need to update
-   //           "ipr/node-category.def" for the numerical mapping.
+   //           "ipr/node-category" for the numerical mapping.
 
                                 // -- Category_node --
    // A list of numerical codes in one-to-one correspondence with
@@ -101,33 +101,6 @@ namespace ipr {
    struct Parameterization {
       virtual const Parameter_list& parameters() const = 0;
       virtual const T& result() const = 0;
-   };
-
-                                // -- DeclSpecifiers --
-   enum class DeclSpecifiers : std::uint32_t {
-      None       = 0,
-      Register   = 1 << 0,   // Banned from C++17.
-      Static     = 1 << 1,
-      Extern     = 1 << 2,
-      Mutable    = 1 << 3,
-      Thread     = 1 << 4,
-      StorageClass  = Register | Static | Extern | Mutable | Thread,
-
-      Inline     = 1 << 5,
-      Virtual    = 1 << 6,   // also used as storage class specifier
-                             // for virtual base subobjects
-      Explicit   = 1 << 7,
-
-      Friend     = 1 << 9,
-      Typedef    = 1 << 10,
-
-      Public     = 1 << 11,
-      Protected  = 1 << 12,
-      Private    = 1 << 13,
-      AccessProtection = Public | Protected | Private,
-
-      Export     = 1 << 14,  // For exported declarations.
-      Constexpr  = 1 << 15,  // C++ 11
    };
 
    // -- Logogram --
@@ -2000,6 +1973,7 @@ namespace ipr {
       virtual Specifiers static_specifier() const = 0;         // `static` standard specifier.
       virtual Specifiers extern_specifier() const = 0;         // `extern` standard specifier.
       virtual Specifiers mutable_specifier() const = 0;        // `mutable` standard specifier.
+      virtual Specifiers constinit_specifier() const = 0;      // `constinit` standard specifier.
       virtual Specifiers thread_local_specifier() const = 0;   // `thread_local` standard specifier.
       virtual Specifiers register_specifier() const = 0;       // `register` standard specifier -- banned from C++17 and up.
       virtual Specifiers inline_specifier() const = 0;         // `inline` standard specifier.

@@ -2837,6 +2837,7 @@ namespace ipr::impl {
       ipr::Specifiers static_specifier() const final;
       ipr::Specifiers extern_specifier() const final;
       ipr::Specifiers mutable_specifier() const final;
+      ipr::Specifiers constinit_specifier() const final;
       ipr::Specifiers thread_local_specifier() const final;
       ipr::Specifiers register_specifier() const final;
       ipr::Specifiers inline_specifier() const final; 
