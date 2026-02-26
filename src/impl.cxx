@@ -2418,6 +2418,7 @@ namespace ipr::impl {
       ipr::Specifiers Lexicon::static_specifier() const { return impl::specifier_basis[u8"static"]; }
       ipr::Specifiers Lexicon::extern_specifier() const { return impl::specifier_basis[u8"extern"]; }
       ipr::Specifiers Lexicon::mutable_specifier() const { return impl::specifier_basis[u8"mutable"]; }
+      ipr::Specifiers Lexicon::constinit_specifier() const { return impl::specifier_basis[u8"constinit"]; }
       ipr::Specifiers Lexicon::thread_local_specifier() const { return impl::specifier_basis[u8"thread_local"]; }
       ipr::Specifiers Lexicon::register_specifier() const { return impl::specifier_basis[u8"register"]; }
       ipr::Specifiers Lexicon::inline_specifier() const { return impl::specifier_basis[u8"inline"]; }
