@@ -57,8 +57,8 @@ jobs:
       - name: Install MSVC Build Tools Preview
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://aka.ms/vs/18/pre/vs_buildtools.exe" `
-            -OutFile "$env:TEMP\vs_buildtools.exe" -UseBasicParsing
+          $url = "https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&channel=Insiders&version=VS18&source=VSLandingPage"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\vs_buildtools.exe" -UseBasicParsing
           & "$env:TEMP\vs_buildtools.exe"  --quiet  --wait --norestart `
               --add Microsoft.VisualStudio.Workload.VCTools `
               --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
