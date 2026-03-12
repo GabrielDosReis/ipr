@@ -54,6 +54,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Accept winget source agreements
+        shell: pwsh
+        run: |
+          winget source accept --name msstore --accept-source-agreements
+          winget source update --accept-source-agreements
+
       - name: Install MSVC Build Tools Preview
         shell: pwsh
         run: |
