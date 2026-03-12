@@ -59,13 +59,13 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://aka.ms/vs/18/pre/vs_buildtools.exe" `
             -OutFile "$env:TEMP\vs_buildtools.exe" -UseBasicParsing
-          Start-Process -Wait "$env:TEMP\vs_buildtools.exe" -ArgumentList `
-            "--quiet",  "--wait", "--norestart" `
-              "--add", "Microsoft.VisualStudio.Workload.VCTools", `
-              "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", `
-              "--add", "Microsoft.VisualStudio.Component.Windows11SDK.26100", `
-              "--add", "Microsoft.VisualStudio.Component.VC.CMake.Project", `
-              "--includeRecommended"
+          & "$env:TEMP\vs_buildtools.exe"  --quiet  --wait --norestart `
+              --add Microsoft.VisualStudio.Workload.VCTools `
+              --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+              --add Microsoft.VisualStudio.Component.Windows11SDK.26100 `
+              --add Microsoft.VisualStudio.Component.VC.CMake.Project `
+              --includeRecommended
+          if ($LASTEXITCODE -notin 0,3010) { throw "VS Installer failed: $LASTEXITCODE" }
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
