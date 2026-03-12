@@ -2375,16 +2375,7 @@ namespace ipr::impl {
          // for expressing combinations of elements of said family.
          template<typename T, auto& table>
          struct Basis {
-            // FIXME: MSVC has a bug in its compile-time evaluation of constexpr functions
-            //        involving dynamic dispatch.  The workaround below allows MSVC to compile
-            //        the code turning a compile-time computed integer constant into a repeated
-            //        runtime linear search.
-#ifndef MSVC_WORKAROUND_VSO1822505
-            consteval
-#else
-            constexpr
-#endif
-            T operator[](const char8_t* s) const
+            consteval T operator[](const char8_t* s) const
             { 
                constexpr auto has_name = [](auto& x, auto& y) { return x.logogram().operand().characters() == y; };
                return T{impl::project(s, table, has_name)};
