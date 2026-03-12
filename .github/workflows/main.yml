@@ -34,7 +34,7 @@ jobs:
 
       - name: Configure
         run: >
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} --config ${{ matrix.config }}
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         run: cmake --build build --parallel --config ${{ matrix.config }}
@@ -74,7 +74,7 @@ jobs:
       - name: Configure
         shell: pwsh
         run: >
-          cmake -S . -B build -G Ninja --config ${{ matrix.config }}
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         shell: pwsh
