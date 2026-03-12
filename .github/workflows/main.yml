@@ -11,29 +11,20 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
-    name: ${{ matrix.os }} -x- ${{ matrix.compiler }} -x- ${{ matrix.config }}
-    runs-on: ${{ matrix.os }}
+  # For linux runners
+  build-on-linux:
+    name: Linux -x- ${{ matrix.compiler }} -x- ${{ matrix.config }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         config: [Debug, Release]
-        os: [ubuntu-latest, windows-latest]
-        compiler: [g++-14, clang++-18, MSVC]
-        exclude:
-          - os: ubuntu-latest
-            compiler: MSVC
-          - os: windows-latest
-            compiler: g++-14
-          - os: windows-latest
-            compiler: clang++-18
+        compiler: [g++-14, clang++-18]
             
     steps:
       - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install C++ compilers, and CMake
-        if: matrix.os == 'ubuntu-latest'
         run: |
           # https://github.com/actions/runner-images/issues/7192
           echo 'APT::Get::Always-Include-Phased-Updates "false";' | sudo tee /etc/apt/apt.conf.d/99-phased-updates
@@ -41,22 +32,54 @@ jobs:
           sudo apt-get install build-essential cmake
           sudo apt-get install ${{ matrix.compiler }}
 
-      - name: Configure and build
-        uses: lukka/run-cmake@v3
-        if: matrix.os == 'ubuntu-latest'
-        with:
-          buildDirectory: build
-          cmakeBuildType: ${{ matrix.config }}
-          buildWithCMakeArgs: --parallel
-          cmakeAppendedArgs: -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-      - name: Configure and build
-        uses: lukka/run-cmake@v3
-        if: matrix.os == 'windows-latest'
-        with:
-          buildDirectory: build
-          buildWithCMakeArgs: --parallel --config ${{ matrix.config }}
-          cmakeGenerator: Ninja
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} --config ${{ matrix.config }}
 
-      - name: Run Tests
-        run: ctest build
+      - name: Build
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # For Windows runners
+  build-on-windows:
+    name: Windows -x- MSVC Preview -x- ${{ matrix.config }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+            
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MSVC Build Tools Preview
+        shell: pwsh
+        run: |
+          winget install --id Microsoft.VisualStudio.BuildTools 
+            --override "--quiet --wait --norestart
+              --add Microsoft.VisualStudio.Workload.VCTools
+              --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+              --add Microsoft.VisualStudio.Component.Windows11SDK.26100
+              --add Microsoft.VisualStudio.Component.VC.CMake.Project
+              --includeRecommended"
+            --accept-source-agreements --accept-package-agreements
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: '18'
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G Ninja --config ${{ matrix.config }}
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build --output-on-failure
