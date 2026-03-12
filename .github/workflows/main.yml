@@ -58,7 +58,7 @@ jobs:
         shell: pwsh
         run: |
           winget source reset --force
-          winget source update --accept-source-agreements
+          winget source update --name msstore --accept-source-agreements
 
       - name: Install MSVC Build Tools Preview
         shell: pwsh
