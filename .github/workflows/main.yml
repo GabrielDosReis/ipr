@@ -54,23 +54,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Accept winget source agreements
-        shell: pwsh
-        run: |
-          winget settings --enable AnonymousGeoRegion
-          winget search --source msstore --accept-source-agreements --query "dummy" 2>$null
-
       - name: Install MSVC Build Tools Preview
         shell: pwsh
         run: |
-          winget install --id Microsoft.VisualStudio.BuildTools `
-            --override "--quiet --wait --norestart `
-              --add Microsoft.VisualStudio.Workload.VCTools `
-              --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-              --add Microsoft.VisualStudio.Component.Windows11SDK.26100 `
-              --add Microsoft.VisualStudio.Component.VC.CMake.Project `
-              --includeRecommended" `
-            --accept-source-agreements --accept-package-agreements
+          Invoke-WebRequest -Uri "https://aka.ms/vs/18/pre/vs_buildtools.exe" `
+            -OutFile "$env:TEMP\vs_buildtools.exe" -UseBasicParsing
+          Start-Process -Wait "$env:TEMP\vs_buildtools.exe" -ArgumentList `
+            "--quiet",  "--wait", "--norestart" `
+              "--add", "Microsoft.VisualStudio.Workload.VCTools", `
+              "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", `
+              "--add", "Microsoft.VisualStudio.Component.Windows11SDK.26100", `
+              "--add", "Microsoft.VisualStudio.Component.VC.CMake.Project", `
+              "--includeRecommended"
 
       - name: Set up MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
