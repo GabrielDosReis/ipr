@@ -10,27 +10,44 @@ on:
       - 'doc/**'
     branches: [ main ]
 
-env:
-  build: '${{ github.workspace }}/build'
-  config: 'Release'
-
 jobs:
   build:
     name: Microsoft C++ Code Analysis
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Release]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Configure CMake
-        run: cmake -B ${{ env.build }} -DCMAKE_BUILD_TYPE=${{ env.config }}
+      - name: Install MSVC Build Tools Preview
+        shell: pwsh
+        run: |
+          $url = "https://aka.ms/vs/18/insiders/vs_buildtools.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\vs_buildtools.exe" -UseBasicParsing
+          $process = Start-Process -Wait -PassThru -FilePath "$env:TEMP\vs_buildtools.exe" `
+            -ArgumentList "--quiet  --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.26100 --add Microsoft.VisualStudio.Component.VC.CMake.Project --includeRecommended"
+          $exitCode = $process.ExitCode
+          Write-Output "VS installer exit code: $exitCode"
+          if ($exitCode -notin 0,3010,3015) { throw "VS Installer failed: $exitCode" }
+
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: '18'
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
         with:
-          cmakeBuildDirectory: ${{ env.build }}
-          buildConfiguration: ${{ env.config }}
+          cmakeBuildDirectory: build
+          buildConfiguration: ${{ matrix.config }}
           ignoredTargetPaths: ${{ github.workspace }}/tests
           ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
@@ -42,6 +59,6 @@ jobs:
           if-no-files-found: error
 
       - name: Upload SARIF to GitHub
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.run-analysis.outputs.sarif }}
