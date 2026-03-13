@@ -10,14 +10,14 @@ on:
       - 'doc/**'
     branches: [ main ]
 
-env:
-  build: '${{ github.workspace }}/build'
-  config: 'Release'
-
 jobs:
   build:
     name: Microsoft C++ Code Analysis
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Release]
 
     steps:
       - uses: actions/checkout@v4
@@ -40,14 +40,14 @@ jobs:
 
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B ${{ env.build }} -DCMAKE_BUILD_TYPE=${{ env.config }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
         uses: microsoft/msvc-code-analysis-action@v0.1.1
         with:
-          cmakeBuildDirectory: ${{ env.build }}
-          buildConfiguration: ${{ env.config }}
+          cmakeBuildDirectory: build
+          buildConfiguration: ${{ matrix.config }}
           ignoredTargetPaths: ${{ github.workspace }}/tests
           ruleset: '${{ github.workspace }}/infra/Analysis.ruleset'
 
