@@ -38,8 +38,9 @@ jobs:
         with:
           vsversion: '18'
 
-      - name: Configure CMake
-        run: cmake -B ${{ env.build }} -DCMAKE_BUILD_TYPE=${{ env.config }}
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B ${{ env.build }} -DCMAKE_BUILD_TYPE=${{ env.config }}
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
