@@ -40,7 +40,7 @@ jobs:
 
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
