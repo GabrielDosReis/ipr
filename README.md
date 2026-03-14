@@ -1,4 +1,6 @@
 ![Build & Test](https://github.com/GabrielDosReis/ipr/actions/workflows/main.yml/badge.svg)
+![Analysis](https://github.com/GabrielDosReis/ipr/actions/workflows/analysis.yml/badge.svg)
+![Docs](https://github.com/GabrielDosReis/ipr/actions/workflows/docs.yaml/badge.svg)
 
 The IPR, short for *Internal Program Representation*, is an open source
 project originally developed as the core data structures of a framework

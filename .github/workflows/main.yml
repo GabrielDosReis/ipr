@@ -13,28 +13,84 @@ on:
 jobs:
   # For linux runners
   build-on-linux:
-    name: Linux -x- ${{ matrix.compiler }} -x- ${{ matrix.config }}
+    name: Linux -x- ${{ matrix.name }} -x- ${{ matrix.config }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         config: [Debug, Release]
-        compiler: [g++-14, clang++-18]
-            
-    steps:
-      - uses: actions/checkout@v2
+        name: [gcc-15, clang-21-libstdc++, clang-21-libc++]
+        include:
+          - name: gcc-15
+            compiler: g++-15
+            install: |
+              sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+              sudo apt-get update
+              sudo apt-get install -y g++-15
+            cmake_extra: ""
+          - name: clang-21-libstdc++
+            compiler: clang++-21
+            install: |
+              wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+              sudo add-apt-repository -y "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+              sudo apt-get update
+              sudo apt-get install -y clang-21
+            cmake_extra: ""
+          - name: clang-21-libc++
+            compiler: clang++-21
+            install: |
+              wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+              sudo add-apt-repository -y "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+              sudo apt-get update
+              sudo apt-get install -y clang-21 libc++-21-dev libc++abi-21-dev
+            cmake_extra: "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
 
-      - name: Install C++ compilers, and CMake
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C++ compilers and tools
         run: |
           # https://github.com/actions/runner-images/issues/7192
           echo 'APT::Get::Always-Include-Phased-Updates "false";' | sudo tee /etc/apt/apt.conf.d/99-phased-updates
-          sudo apt update && sudo apt-get -y upgrade --fix-missing
-          sudo apt-get install build-essential cmake
-          sudo apt-get install ${{ matrix.compiler }}
+          sudo apt-get update && sudo apt-get -y upgrade --fix-missing
+          sudo apt-get install -y build-essential cmake ninja-build
+          ${{ matrix.install }}
 
       - name: Configure
         run: >
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+          ${{ matrix.cmake_extra }}
+
+      - name: Build
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # For macOS runners
+  build-on-macos:
+    name: macOS -x- Clang (Homebrew) -x- ${{ matrix.config }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM and CMake
+        run: |
+          brew install llvm cmake ninja
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
       - name: Build
         run: cmake --build build --parallel --config ${{ matrix.config }}
