@@ -1,8 +1,12 @@
 #include "doctest/doctest.h"
 
+#include <ipr/std-preamble>
+
+import cxx.ipr;
+
 #include <ipr/traversal>
 #include <ipr/impl>
-#include <ipr/utility>
+#include <ipr/utility-impl>
 
 const ipr::Region& nearest_namespace_or_block_region(const ipr::Region& current_region)
 {

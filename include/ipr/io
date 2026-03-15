@@ -8,13 +8,12 @@
 #ifndef IPR_IO_INCLUDED
 #define IPR_IO_INCLUDED
 
-#include <algorithm>
-#include <map>
-#include <ostream>
-#include <string>
-#include <vector>
-#include <ipr/interface>
-#include <ipr/utility>
+// Consumers of this header must:
+//   1. #include all needed standard headers
+//   2. import cxx.ipr;
+//   3. #include <ipr/io>
+
+#include <ipr/utility-impl>
 
 namespace ipr
 {
