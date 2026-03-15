@@ -4,33 +4,18 @@
 // See LICENSE for copyright and license notices.
 //
 
-#include <new>
-#include <stdexcept>
-#include <algorithm>
-#include <functional>
-#include <typeinfo>
-#include <cassert>
-#include <iterator>
-#include <utility>
-#include <cstring>
+#include <ipr/std-preamble>
 #include <array>
 #include <bit>
-#include <vector>
+#include <cassert>
+#include <cstring>
+#include <typeinfo>
+
+import cxx.ipr;
+
 #include <ipr/impl>
 #include <ipr/traversal>
 #include <ipr/io>
-
-namespace ipr {
-   const String& String::empty_string()
-   {
-      struct Empty_string final : impl::Node<String> {
-         constexpr util::word_view characters() const final { return u8""; }
-      };
-
-      static constexpr Empty_string empty { };
-      return empty;
-   }
-}
 
 // -- invisible logogram
 // A invisible logogram is a logogram designated by the empty string.

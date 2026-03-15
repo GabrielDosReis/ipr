@@ -1,0 +1,45 @@
+// -*- C++ -*-
+//
+// This file is part of The Pivot framework.
+// Written by Gabriel Dos Reis.
+// See LICENSE for copyright and license notices.
+//
+// Standard library preamble for translation units that use `import cxx.ipr;`
+// followed by `#include <ipr/impl>` (or other IPR project headers).
+//
+// TEMPORARY: This header exists because the implementation layer (<ipr/impl>)
+// is not yet modularized.  MSVC requires all standard #includes to appear
+// before `import cxx.ipr;` to avoid redefinition errors.  Once <ipr/impl>
+// becomes a module, this preamble is no longer needed.
+//
+// Usage:
+//     #include <ipr/std-preamble>
+//     import cxx.ipr;
+//     #include <ipr/impl>
+
+#ifndef IPR_STD_PREAMBLE_INCLUDED
+#define IPR_STD_PREAMBLE_INCLUDED
+
+#include <algorithm>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <forward_list>
+#include <functional>
+#include <iosfwd>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <new>
+#include <ostream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#endif // IPR_STD_PREAMBLE_INCLUDED

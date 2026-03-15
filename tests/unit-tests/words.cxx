@@ -1,5 +1,9 @@
 #include "doctest/doctest.h"
 
+#include <ipr/std-preamble>
+
+import cxx.ipr;
+
 #include <ipr/traversal>
 #include <ipr/impl>
 

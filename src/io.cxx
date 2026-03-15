@@ -4,14 +4,16 @@
 // See LICENSE for copyright and license notices.
 //
 
+#include <ipr/std-preamble>
 #include <assert.h>
+#include <cctype>
+#include <iostream>
+#include <typeinfo>
+
+import cxx.ipr;
+
 #include <ipr/io>
 #include <ipr/traversal>
-#include <ostream>
-#include <cctype>
-#include <typeinfo>
-#include <stdexcept>
-#include <iostream>
 
 namespace ipr {
    // Format a sequence of items via a transformer.

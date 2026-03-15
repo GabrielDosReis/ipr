@@ -4,9 +4,11 @@
 // See LICENSE for copright and license notices.
 //
 
-#include <ipr/utility>
+#include <ipr/std-preamble>
 
-#include <algorithm>
+import cxx.ipr;
+
+#include <ipr/utility-impl>
 
 char
 ipr::util::string::operator[](size_type i) const
