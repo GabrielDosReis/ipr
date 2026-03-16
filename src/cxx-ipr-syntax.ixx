@@ -8,16 +8,16 @@
 // C++ syntactic forms: tokens, attributes, declarators, constraints,
 // initialization provisions, and designators.
 //
-// The IPR focuses primarily on capturing the semantics of C++, not mimic - with 
-// high fidelity - the ISO C++ source-level syntax minutiae, grammars, and other obscurities.
-// The IPR model of declaration reflects that semantics-oriented view.  Occasionally, it 
-// is necessary to bridge the gap between the generalized semantics model and the
-// irregularities and other grammatical hacks via IPR directives.  Some of those
-// directives need to refer to some form of input source level constructs, especially in 
-// cases of templated declarations involving non-ground types.
-// This partition defines interfaces for some syntactic forms, i.e. abstractions of syntactic
-// input, to aid complete embedding of the ISO C++ specification.
-// Note: There is no effort here to reify the parse trees of the ISO C++ grammar.
+// -- The IPR focuses primarily on capturing the semantics of C++, not mimic - with
+// -- high fidelity - the ISO C++ source-level syntax minutiae, grammars, and other obscurities.
+// -- The IPR model of declaration reflects that semantics-oriented view.  Occasionally, it
+// -- is necessary to bridge the gap between the generalized semantics model and the
+// -- irregularities and other grammatical hacks via IPR directives.  Some of those
+// -- directives need to refer to some form of input source level constructs, especially in
+// -- cases of templated declarations involving non-ground types.
+// -- This partition defines interfaces for some syntactic forms, i.e. abstractions of syntactic
+// -- input, to aid complete embedding of the ISO C++ specification.
+// -- Note: There is no effort here to reify the parse trees of the ISO C++ grammar.
 
 module;
 

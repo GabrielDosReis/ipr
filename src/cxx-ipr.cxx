@@ -49,6 +49,14 @@ namespace ipr {
 }
 
 // -- ipr::Visitor --
+// Because Name is a very high-level interface to
+// Identifier, Operator, Conversion, Instantiation and
+// Qualified and these share common very high-level
+// semantics, it is convenient to have the implementation
+// of the corresponding Visitor::visit() functions forward to
+// Visitor::visit(const Name&).  That way, code duplication
+// can be substantially reduced.  The same goes for other
+// sub-hierarchies.
 void ipr::Visitor::visit(const Annotation& a) { visit(as<Node>(a)); }
 void ipr::Visitor::visit(const Region& r) { visit(as<Node>(r)); }
 void ipr::Visitor::visit(const Comment& c) { visit(as<Node>(c)); }
@@ -63,6 +71,8 @@ void ipr::Visitor::visit(const Type_id& n) { visit(as<Name>(n)); }
 void ipr::Visitor::visit(const Ctor_name& n) { visit(as<Name>(n)); }
 void ipr::Visitor::visit(const Dtor_name& n) { visit(as<Name>(n)); }
 void ipr::Visitor::visit(const Guide_name& n) { visit(as<Name>(n)); }
+
+// -- Types visiting hooks --
 void ipr::Visitor::visit(const Array& t) { visit(as<Type>(t)); }
 void ipr::Visitor::visit(const Class& t) { visit(as<Type>(t)); }
 void ipr::Visitor::visit(const Closure& t) { visit(as<Type>(t)); }
@@ -82,6 +92,7 @@ void ipr::Visitor::visit(const Sum& t) { visit(as<Type>(t)); }
 void ipr::Visitor::visit(const Forall& t) { visit(as<Type>(t)); }
 void ipr::Visitor::visit(const Auto& t) { visit(as<Type>(t)); }
 void ipr::Visitor::visit(const Union& t) { visit(as<Type>(t)); }
+// -- Expressions visiting hooks --
 void ipr::Visitor::visit(const Expr_list& e) { visit(as<Expr>(e)); }
 void ipr::Visitor::visit(const Overload& e) { visit(as<Expr>(e)); }
 void ipr::Visitor::visit(const Scope& e) { visit(as<Expr>(e)); }
@@ -176,12 +187,16 @@ void ipr::Visitor::visit(const Instantiation& e) { visit(as<Expr>(e)); }
 void ipr::Visitor::visit(const Conditional& e) { visit(as<Classic>(e)); }
 void ipr::Visitor::visit(const New& e) { visit(as<Classic>(e)); }
 void ipr::Visitor::visit(const Mapping& s) { visit(as<Expr>(s)); }
+
+// -- Directives visiting hooks --
 void ipr::Visitor::visit(const Specifiers_spread& d) { visit(as<Directive>(d)); }
 void ipr::Visitor::visit(const Structured_binding& d) { visit(as<Directive>(d)); }
 void ipr::Visitor::visit(const Using_declaration& d) { visit(as<Directive>(d)); }
 void ipr::Visitor::visit(const Using_directive& d) { visit(as<Directive>(d)); }
 void ipr::Visitor::visit(const Phased_evaluation& d) { visit(as<Directive>(d)); }
 void ipr::Visitor::visit(const Pragma& d) { visit(as<Directive>(d)); }
+
+// -- Statements visiting hooks --
 void ipr::Visitor::visit(const Labeled_stmt& s) { visit(as<Stmt>(s)); }
 void ipr::Visitor::visit(const Block& s) { visit(as<Stmt>(s)); }
 void ipr::Visitor::visit(const Ctor_body& e) { visit(as<Stmt>(e)); }
@@ -197,6 +212,10 @@ void ipr::Visitor::visit(const Continue& s) { visit(as<Stmt>(s)); }
 void ipr::Visitor::visit(const Goto& s) { visit(as<Stmt>(s)); }
 void ipr::Visitor::visit(const Return& s) { visit(as<Stmt>(s)); }
 void ipr::Visitor::visit(const Handler& s) { visit(as<Stmt>(s)); }
+
+// Forward Visitor::visit() that operates on nodes
+// derived from Decl to whatever derived visitors do
+// for general declarations.
 void ipr::Visitor::visit(const Alias& d) { visit(as<Decl>(d)); }
 void ipr::Visitor::visit(const Base_type& d) { visit(as<Decl>(d)); }
 void ipr::Visitor::visit(const Bitfield& d) { visit(as<Decl>(d)); }
