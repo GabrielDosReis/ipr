@@ -67,7 +67,9 @@ namespace ipr {
     export struct Overload;              // overload set
     export struct Parameter_list;        // function/template parameter list
 
+    // -------------------------------------------
     // -- results of type constructor constants --
+    // -------------------------------------------
     export struct Array;                 // array type
     export struct As_type;               // use-expression as type
     export struct Class;                 // user-defined type - declared as "class" or "struct"
@@ -88,7 +90,9 @@ namespace ipr {
     export struct Auto;                  // "auto" -- each occurrence is generative
     export struct Closure;               // closure type -- type of lambda expression
 
+    // ------------------------------------------
     // -- results of name constructor constants --
+    // ------------------------------------------
     export struct Identifier;            // identifier                          foo
     export struct Suffix;                // Literal operator suffix       "Plato"sv
     export struct Operator;              // C++ operator name             operator+
@@ -99,20 +103,26 @@ namespace ipr {
     export struct Dtor_name;             // destructor name                   T::~T
     export struct Guide_name;            // deduction guide name 
 
+    // --------------------------------------------------------
     // -- results of nullary expression constructor constants --
-    export struct Phantom;               // placeholder for arrays of unknown bounds, rethrow, etc.
+    // --------------------------------------------------------
+    export struct Phantom;               // placeholder for arrays of unknown bounds,
+                                         // rethrow, empty parts of a For, etc...
     export struct Eclipsis;              // the `...' in a unary fold
     export struct Lambda;                // Lambda expression
     export struct Requires;              // requires-expression
 
+    // -------------------------------------------------------
     // -- results of unary expression constructor constants --
+    // -------------------------------------------------------
     export struct Symbol;                // self-evaluating symbolic values
     export struct Address;               // address-of                          &a
     export struct Array_delete;          // array delete-expression     delete[] p
     export struct Asm;                   // asm-declaration
     export struct Complement;            // bitwise complement                  ~m
     export struct Delete;                // delete-expression             delete p
-    export struct Demotion;              // inverse of an integral/floating-point promotion
+    export struct Demotion;              // inverse of an integral/floating-point
+                                         // promotion -- implicit conversion
     export struct Deref;                 // dereference expression              *p
     export struct Expr_list;             // comma-separated expression list
     export struct Alignof;               // alignment query                  alignof(T)
@@ -120,6 +130,7 @@ namespace ipr {
     export struct Typeid;                // typeid expression
     export struct Id_expr;               // use of a name as an expression
     export struct Label;                 // a label - target of a goto-statement
+                                         //         or entry of a switch-statement
     export struct Materialization;       // temporary materialization
     export struct Not;                   // logical negation                 !cond
     export struct Enclosure;             // expression in paired delimiters
@@ -137,7 +148,9 @@ namespace ipr {
     export struct Args_cardinality;      // sizeof...(args)
     export struct Restriction;           // requires-clause
 
+    // --------------------------------------------------------
     // -- results of binary expression constructor constants --
+    // --------------------------------------------------------
     export struct Plus;                  // addition                       a + b
     export struct Plus_assign;           // in-place addition              a += b
     export struct And;                   // logical and                    a && b
@@ -195,11 +208,15 @@ namespace ipr {
     export struct Static_assert;         // static-assert declaration
     export struct Instantiation;         // substitution into parameterized expression
 
+    // --------------------------------------------------------
     // -- result of trinary expression constructor constants --
+    // --------------------------------------------------------
     export struct New;                   // new-expression              new (p) T(v)
     export struct Conditional;           // conditional                   p ? a : b
 
+    // -----------------------------------------------
     // -- result of statement constructor constants --
+    // -----------------------------------------------
     export struct Block;                 // brace-enclosed statement sequence
     export struct Break;                 // break-statement
     export struct Continue;              // continue-statement
@@ -216,7 +233,19 @@ namespace ipr {
     export struct Switch;                // switch-statement
     export struct While;                 // while-statement
 
+    // -----------------------------------------------
+    // -- result of directive constructor constants --
+    // -----------------------------------------------
+    export struct Specifiers_spread;     // spread of decl-specifier-seq over a sequence of declarators
+    export struct Structured_binding;    // structured-binding declaration
+    export struct Using_declaration;     // using-declaration
+    export struct Using_directive;       // using-directive
+    export struct Phased_evaluation;     // evaluation at designated phases of translation
+    export struct Pragma;                // language-level pragma directive
+
+    // -------------------------------------------------
     // -- result of declaration constructor constants --
+    // -------------------------------------------------
     export struct Template;              // parameterized declaration
     export struct Enumerator;            // classic enumerator
     export struct Alias;                 // alias declaration (typedef, namespace-alias, etc.)
@@ -230,6 +259,9 @@ namespace ipr {
     export struct Bitfield;              // bit-field data member
     export struct Typedecl;              // type declaration
 
+    // ------------------------
+    // -- distinguished node --
+    // ------------------------
     export struct Translation_unit;
     export struct Module_unit;
     export struct Interface_unit;

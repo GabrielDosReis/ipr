@@ -78,8 +78,15 @@ namespace ipr::util {
          Node* root { };
          std::ptrdiff_t count { };
 
+         // Do a left rotation about X.  X->left() is assumed nonnull,
+         // which after the manoeuvre becomes X's parent.
          void rotate_left(Node*);
+
+         // Same as rotate_left, except that the rotation does right.
          void rotate_right(Node*);
+
+         // After raw insertion, the tree is unbalanced again; this
+         // function re-balance the tree, fixing up properties destroyed.
          void fixup_insert(Node*);
       };
 
@@ -88,18 +95,22 @@ namespace ipr::util {
       core<Node>::rotate_left(Node* x)
       {
          Node* y = x->right();
+         // Make y's left a subtree of x's right subtree.
          x->right() = y->left();
          if (y->left() != nullptr)
             y->left()->parent() = x;
 
+         // Update y's parent and its left or right arms.
          y->parent() = x->parent();
          if (x->parent() == nullptr)
+            // x was the root of the tree; make y the new root.
             this->root = y;
          else if (x->parent()->left() == x)
             x->parent()->left() = y;
          else
             x->parent()->right() = y;
 
+         // Now, x must go on y's left.
          y->left() = x;
          x->parent() = y;
       }
@@ -169,6 +180,12 @@ namespace ipr::util {
          root->color = Color::Black;
       }
 
+      // A chain is an rb-tree that supports search and insertion, with
+      // the comparison object passed as a parameter instead of being built
+      // into the tree type directly.  The comparison object `cmp` is always
+      // invoked as `cmp(data, key)` where `data` designates an existing
+      // object stored at a node in the chain, and `key` is the parameter by which
+      // the tree is searched.
       template<class Node>
       struct chain : core<Node> {
          template<class Comp>
@@ -222,10 +239,12 @@ namespace ipr::util {
          }
 
          if (this->root == nullptr) {
+            // This is the first time we're inserting into the tree.
             this->root = z;
             z->color = Color::Black;
          }
          else if (*slot == nullptr) {
+            // key is not present, do what we're asked to do.
             *slot = z;
             z->parent() = up;
             z->color = Color::Red;
@@ -246,6 +265,10 @@ namespace ipr::util {
          template<typename Key, class Comp>
          T* find(const Key&, Comp) const;
 
+         // We want to insert a node constructed out of a Key, using
+         // an admissible comparator LESS.  Returns a pointer to the
+         // newly created node, if successfully inserted, or the old
+         // one if the Key is already present.
          template<class Key, class Comp>
          T* insert(const Key&, Comp);
 
@@ -292,6 +315,7 @@ namespace ipr::util {
       container<T>::insert(const Key& key, Comp comp)
       {
          if (this->root == nullptr) {
+            // This is the first time we're inserting into the tree.
             this->root = make_node(key);
             this->root->color = Color::Black;
             ++this->count;
@@ -318,6 +342,7 @@ namespace ipr::util {
          }
 
          if (where == nullptr) {
+            // key is not present, do what we're asked to do.
             where = *slot = make_node(key);
             where->parent() = parent;
             where->color = Color::Red;
@@ -329,12 +354,16 @@ namespace ipr::util {
       }
    }
 
-   // -- helper for implementing permanent string objects.
+   // -- helper for implementing permanent string objects.  They uniquely
+   // -- represent their contents throughout their lifetime.  Ideally,
+   // -- they are allocated from a pool.
    struct string {
       struct arena;
 
-      using size_type = std::ptrdiff_t;
+      using size_type = std::ptrdiff_t; // integer type that string length
 
+      // number of characters directly contained in this header
+      // of the string.  Taken to be the number of bytes in size_type.
       static constexpr size_type padding_count = sizeof (size_type);
 
       size_type size() const { return length; }
