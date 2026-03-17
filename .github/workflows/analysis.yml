@@ -44,7 +44,7 @@ jobs:
 
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
-        uses: microsoft/msvc-code-analysis-action@v0.1.1
+        uses: gdr-at-ms/msvc-code-analysis-action@support-cxx-modules
         with:
           cmakeBuildDirectory: build
           buildConfiguration: ${{ matrix.config }}
