@@ -42,10 +42,6 @@ jobs:
         shell: pwsh
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config }}
 
-      - name: Build
-        shell: pwsh
-        run: cmake --build build
-
       - name: Run Microsoft Visual C++ Analysis
         id: run-analysis
         uses: gdr-at-ms/msvc-code-analysis-action@support-cxx-modules
