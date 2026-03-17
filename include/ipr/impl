@@ -8,18 +8,12 @@
 #ifndef IPR_IMPL_INCLUDED
 #define IPR_IMPL_INCLUDED
 
-#include <memory>
-#include <list>
-#include <vector>
-#include <deque>
-#include <map>
-#include <forward_list>
-#include <variant>
-#include <functional>
-#include <string_view>
-#include <ipr/interface>
-#include <ipr/utility>
-#include <ipr/traversal>
+// Consumers of this header must:
+//   1. #include all needed standard headers
+//   2. import cxx.ipr;
+//   3. #include <ipr/impl>
+
+#include <ipr/utility-impl>
 
 // -----------------
 // -- Methodology --

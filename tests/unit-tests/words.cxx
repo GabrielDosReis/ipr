@@ -1,6 +1,9 @@
 #include "doctest/doctest.h"
 
-#include <ipr/traversal>
+#include <ipr/std-preamble>
+
+import cxx.ipr;
+
 #include <ipr/impl>
 
 TEST_CASE("words are unified")

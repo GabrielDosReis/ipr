@@ -3,15 +3,21 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module implementation unit for cxx.ipr.io.
+// Contains the XPR pretty-printer visitor hierarchies and
+// definitions of Printer member functions.
 
+module;
+
+#include <ipr/std-preamble>
 #include <assert.h>
-#include <ipr/io>
-#include <ipr/traversal>
-#include <ostream>
 #include <cctype>
-#include <typeinfo>
-#include <stdexcept>
 #include <iostream>
+#include <typeinfo>
+
+module cxx.ipr.io;
+
+import cxx.ipr.traversal;
 
 namespace ipr {
    // Format a sequence of items via a transformer.

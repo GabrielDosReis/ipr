@@ -4,17 +4,24 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module interface: cxx.ipr.io
+// The XPR pretty-printer for the IPR node hierarchy.
 
-#ifndef IPR_IO_INCLUDED
-#define IPR_IO_INCLUDED
+module;
 
-#include <algorithm>
-#include <map>
-#include <ostream>
-#include <string>
-#include <vector>
-#include <ipr/interface>
-#include <ipr/utility>
+#include <ipr/std-preamble>
+
+export module cxx.ipr.io;
+
+import cxx.ipr;
+
+namespace ipr::util {
+   // A predicate for types with values that can be inserted into standard streams.
+   template<typename T>
+   concept std_insertable = requires(std::ostream& os, const T& t) {
+      os << t;
+   };
+}
 
 namespace ipr
 {
@@ -25,7 +32,7 @@ namespace ipr
    // is used by XPR parser to relink uses of names to appropriate declarations.
    // The key of the map is the node_id of the name used, while the value
    // is the information about corresponding declaration.
-   struct disambiguation_map_type : std::map<const ipr::Name*, std::vector<const ipr::Decl*>>
+   export struct disambiguation_map_type : std::map<const ipr::Name*, std::vector<const ipr::Decl*>>
    {
       using declarations = std::vector<const ipr::Decl*>;
       using size_type = std::ptrdiff_t;
@@ -46,7 +53,7 @@ namespace ipr
       }
    };
 
-   struct Printer {
+   export struct Printer {
       enum class Padding {
          None, Before, After
       };
@@ -87,7 +94,7 @@ namespace ipr
    };
 
 
-   struct xpr_decl {
+   export struct xpr_decl {
       const Expr& decl;
       const bool needs_semicolon; // false, in most cases.
       xpr_decl(const Expr& d, bool add_semicolon = false)
@@ -95,7 +102,7 @@ namespace ipr
       { }
    };
 
-   struct xpr_stmt {
+   export struct xpr_stmt {
       const Expr& stmt;
       const bool needs_semicolon; // false, in most cases.
       explicit xpr_stmt(const Expr& s, bool add_semicolon = true)
@@ -103,27 +110,24 @@ namespace ipr
       { }
    };
 
-   struct xpr_type {
+   export struct xpr_type {
       const Type& type;
       explicit xpr_type(const Type& e) : type(e) { }
    };
 
-   struct xpr_expr {
+   export struct xpr_expr {
       const Expr& expr;
       explicit xpr_expr(const Expr& e) : expr(e) { }
    };
 
-   Printer& operator<<(Printer&, xpr_decl);
-   Printer& operator<<(Printer&, xpr_stmt);
-   Printer& operator<<(Printer&, xpr_type);
-   Printer& operator<<(Printer&, xpr_expr);
-   Printer& operator<<(Printer&, const Translation_unit&);
+   export Printer& operator<<(Printer&, xpr_decl);
+   export Printer& operator<<(Printer&, xpr_stmt);
+   export Printer& operator<<(Printer&, xpr_type);
+   export Printer& operator<<(Printer&, xpr_expr);
+   export Printer& operator<<(Printer&, const Translation_unit&);
 
-   Printer& operator<<(Printer&, const Identifier&);
-   Printer& operator<<(Printer&, const Logogram&);
-   Printer& operator<<(Printer&, Mapping_level);
-   Printer& operator<<(Printer&, Decl_position);
+   export Printer& operator<<(Printer&, const Identifier&);
+   export Printer& operator<<(Printer&, const Logogram&);
+   export Printer& operator<<(Printer&, Mapping_level);
+   export Printer& operator<<(Printer&, Decl_position);
 }
-
-#endif // IPR_IO_INCLUDED
-

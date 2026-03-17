@@ -26,12 +26,22 @@ else()
 endif()
 
 add_library(${PROJECT_NAME}
-   src/interface.cxx
    src/impl.cxx
-   src/io.cxx
-   src/traversal.cxx
+   src/cxx-ipr-io.cxx
+   src/cxx-ipr-traversal.cxx
    src/input.cxx
    src/utility.cxx
+   src/cxx-ipr.cxx
+)
+
+target_sources(${PROJECT_NAME}
+   PUBLIC
+      FILE_SET CXX_MODULES FILES
+         src/cxx-ipr-vocabulary.ixx
+         src/cxx-ipr-syntax.ixx
+         src/cxx-ipr.ixx
+         src/cxx-ipr-traversal.ixx
+         src/cxx-ipr-io.ixx
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -41,18 +51,10 @@ target_include_directories(${PROJECT_NAME}
 
 target_sources(${PROJECT_NAME}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/include/ipr/ancillary
-        ${PROJECT_SOURCE_DIR}/include/ipr/attribute
-        ${PROJECT_SOURCE_DIR}/include/ipr/cxx-form
         ${PROJECT_SOURCE_DIR}/include/ipr/impl
-        ${PROJECT_SOURCE_DIR}/include/ipr/interface
-        ${PROJECT_SOURCE_DIR}/include/ipr/io
         ${PROJECT_SOURCE_DIR}/include/ipr/lexer
-        ${PROJECT_SOURCE_DIR}/include/ipr/location
         ${PROJECT_SOURCE_DIR}/include/ipr/node-category
-        ${PROJECT_SOURCE_DIR}/include/ipr/synopsis
-        ${PROJECT_SOURCE_DIR}/include/ipr/traversal
-        ${PROJECT_SOURCE_DIR}/include/ipr/utility
+        ${PROJECT_SOURCE_DIR}/include/ipr/utility-impl
         ${PROJECT_SOURCE_DIR}/include/ipr/input
         ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
 )
@@ -99,6 +101,7 @@ install(
    TARGETS ipr
    LIBRARY DESTINATION lib
    ARCHIVE DESTINATION lib
+   FILE_SET CXX_MODULES DESTINATION lib/cmake/ipr
 )
 install(
    DIRECTORY include/ipr

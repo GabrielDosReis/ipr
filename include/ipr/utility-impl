@@ -4,59 +4,20 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Implementation-only utilities for <ipr/impl> and <ipr/io>.
+// The interface-facing subset of the old <ipr/utility> is now
+// part of the cxx.ipr module.
 
-#ifndef IPR_UTILITY_INCLUDED
-#define IPR_UTILITY_INCLUDED
+#ifndef IPR_UTILITY_IMPL_INCLUDED
+#define IPR_UTILITY_IMPL_INCLUDED
 
-#include <cstddef>
-#include <utility>
-#include <memory>
-#include <new>
-#include <stdexcept>
-#include <algorithm>
-#include <iosfwd>
-#include <memory>
-#include <type_traits>
-#include <concepts>
-#include <string>
+// Standard headers required by this file must be included by the consumer
+// BEFORE including this header, to avoid clashes with import cxx.ipr.
 
 namespace ipr::util {
-   // Predicate to detect enumeration types.
-   template<typename T>
-   concept EnumType = std::is_enum_v<T>;
-
-   // The underlying type of an enumeration
-   template<EnumType T>
-   using raw = std::underlying_type_t<T>;
-   
-   // Return the value representation of an enumeration value.
-   template<typename T> requires EnumType<T>
-   constexpr auto rep(T t)
-   {
-      return static_cast<raw<T>>(t);
-   }
-
-   // A predicate for types with values that can be inserted into standard streams.
-   template<typename T>
-   concept std_insertable = requires(std::ostream& os, const T& t) {
-      os << t;
-   };
-
-   // Type of view over words as stored internally.
-   using word_view = std::u8string_view;
-
-   // -- Check for nonnull pointer.
-   template<typename T>
-   inline T* check(T* ptr)
-   {
-      if (ptr == nullptr)
-         throw std::logic_error("attempt to dereference a null pointer");
-      return ptr;
-   }
-
    // At various places in the implementation of the IPR interface, certain logical
    // references are stored as pointers because of implementation necessity, or sometimes convenience.
-   // This wrapper class ensures that when the data behind those logical references are 
+   // This wrapper class ensures that when the data behind those logical references are
    // access the implementation pointer is not null.  Note that the role served by this
    // class is not the same as ipr::Optional (which is a genuine representation of optional information),
    // or std::reference_wrapper (which assumes existence of reference to begin with).
@@ -208,12 +169,10 @@ namespace ipr::util {
                   rotate_left(z->parent()->parent());
                }
             }
-
          }
 
          root->color = Color::Black;
       }
-
 
       // A chain is an rb-tree that supports search and insertion, with
       // the comparison object passed as a parameter instead of being built
@@ -294,7 +253,6 @@ namespace ipr::util {
       struct node : link<node<T>> {
          T data;
       };
-
 
       template<typename T>
       struct container : core<node<T>>, private std::allocator<node<T>> {
@@ -390,7 +348,6 @@ namespace ipr::util {
       }
    }
 
-
    // -- helper for implementing permanent string objects.  They uniquely
    // -- represent their contents throughout their lifetime.  Ideally,
    // -- they are allocated from a pool.
@@ -442,7 +399,6 @@ namespace ipr::util {
       string* next_header;
    };
 
-
    struct lexicographical_compare {
       template<typename In1, typename In2, class Compare>
       int operator()(In1 first1, In1 last1, In2 first2, In2 last2,
@@ -457,4 +413,4 @@ namespace ipr::util {
    };
 }
 
-#endif // IPR_UTILITY_INCLUDED
+#endif // IPR_UTILITY_IMPL_INCLUDED
