@@ -8,7 +8,6 @@
 import cxx.ipr;
 
 #include <ipr/impl>
-#include <ipr/io>
 #include <ipr/utility-impl>
 
 const std::vector<std::u8string_view> specs {

@@ -42,12 +42,6 @@ namespace ipr {
     }
 }
 
-// Helper for implicit conversion Derived -> Base (same as in <ipr/traversal>).
-namespace ipr {
-    template<class T, class U>
-    inline const T& as(const U& u) { return u; }
-}
-
 // -- ipr::Visitor --
 // Because Name is a very high-level interface to
 // Identifier, Operator, Conversion, Instantiation and

@@ -360,6 +360,22 @@ namespace ipr {
     };
 }
 
+// -- Vocabulary-level predicates --
+
+namespace ipr {
+    // Returns true if both operands share the same physical storage.
+    export constexpr bool physically_same(const Node& lhs, const Node& rhs)
+    {
+        return &lhs == &rhs;
+    }
+
+    // Helper function, for implicit conversion Derived -> Base.
+    // It lets view a node, from a more concrete node category (Derived),
+    // as a member of more abstract node category (Base).
+    export template<class T, class U>
+    inline const T& as(const U& u) { return u; }
+}
+
 // -- Structural base templates --
 
 namespace ipr {

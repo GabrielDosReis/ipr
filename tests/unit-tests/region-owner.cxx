@@ -3,8 +3,8 @@
 #include <ipr/std-preamble>
 
 import cxx.ipr;
+import cxx.ipr.traversal;
 
-#include <ipr/traversal>
 #include <ipr/impl>
 #include <ipr/utility-impl>
 

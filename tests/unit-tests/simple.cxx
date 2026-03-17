@@ -4,10 +4,9 @@
 #include <sstream>
 
 import cxx.ipr;
+import cxx.ipr.io;
 
 #include <ipr/impl>
-#include <ipr/io>
-#include <ipr/traversal>
 
 TEST_CASE("global constant variable can be printed") {
   using namespace ipr;

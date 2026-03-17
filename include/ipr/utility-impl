@@ -15,12 +15,6 @@
 // BEFORE including this header, to avoid clashes with import cxx.ipr.
 
 namespace ipr::util {
-   // A predicate for types with values that can be inserted into standard streams.
-   template<typename T>
-   concept std_insertable = requires(std::ostream& os, const T& t) {
-      os << t;
-   };
-
    // At various places in the implementation of the IPR interface, certain logical
    // references are stored as pointers because of implementation necessity, or sometimes convenience.
    // This wrapper class ensures that when the data behind those logical references are

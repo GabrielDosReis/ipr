@@ -4,48 +4,36 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module interface: cxx.ipr.traversal
+// Utility functions and visitor adapters for traversing the IPR node hierarchy.
 
-#ifndef IPR_TRAVERSAL_INCLUDED
-#define IPR_TRAVERSAL_INCLUDED
+module;
 
-// Consumers of this header must:
-//   1. #include <ipr/std-preamble>
-//   2. import cxx.ipr;
-//   3. #include <ipr/traversal>
+#include <ipr/std-preamble>
+
+export module cxx.ipr.traversal;
+
+import cxx.ipr;
 
 namespace ipr {
-   // Returns true if both operands share the same physical storage.
-   constexpr bool physically_same(const Node& lhs, const Node& rhs)
-   {
-      return &lhs == &rhs;
-   }
-
    // This collection of routines implements structural equality
    // of Nodes.  They are, for example, useful in determining
    // when two (type-) expressions are same, from structural
    // point of view in context like dependent types.
 
-   bool structurally_same(const Node&, const Node&);
+   export bool structurally_same(const Node&, const Node&);
 
    // -- builtin types
    // This predicate holds for representation of built types: they are
    // the fix points of the As_type functor.
-   inline bool denote_builtin_type(const As_type& t)
+   export inline bool denote_builtin_type(const As_type& t)
    {
       return physically_same(t, t.expr());
    }
 
-   // -- utility functions --
-
-   // Helper function, for implicit conversion Derived -> Base.
-   // It lets view a node, from a more concrete node category (Derived),
-   // as a member of more abstract node category (Base).
-   template<class T, class U>
-   inline const T& as(const U& u) { return u; }
-
    // This visitor class applies the same function to all major nodes.
    // A typical example of use is to throw an exception or do nothing.
-   template<class F>
+   export template<class F>
    struct Constant_visitor : Visitor, F {
       void visit(const Node& n) override { (*this)(n); }
       void visit(const Name& n) override { (*this)(n); }
@@ -58,13 +46,13 @@ namespace ipr {
 
    // This function object class implement "no-op" semantics.  Useful
    // with the above Visitor.
-   struct No_op {
+   export struct No_op {
       void operator()(const Node&) const { }
    };
 
    // This function object type throw an exception indicating that a
    // Visitor::visit() is missing for a particular IPR node type.
-   struct Missing_overrider {
+   export struct Missing_overrider {
       void operator()(const Node&) const;
    };
 
@@ -72,7 +60,7 @@ namespace ipr {
       // This helper function returns a pointer to its argument, if that
       // node is from the category indicated by the template parameter.
       // This is a cheap, specialized version of dynamic cast.
-      template<class T>
+      export template<class T>
       inline const T*
       view(const Node& n)
       {
@@ -87,5 +75,3 @@ namespace ipr {
       }
    }
 }
-
-#endif // IPR_TRAVERSAL_INCLUDED

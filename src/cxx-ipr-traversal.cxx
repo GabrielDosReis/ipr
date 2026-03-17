@@ -3,13 +3,16 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module implementation unit for cxx.ipr.traversal.
+// Contains out-of-line definitions: structurally_same template overloads
+// for Unary<>, Binary<>, Ternary<>, and Missing_overrider::operator().
+
+module;
 
 #include <ipr/std-preamble>
 #include <typeinfo>
 
-import cxx.ipr;
-
-#include <ipr/traversal>
+module cxx.ipr.traversal;
 
 namespace ipr {
 

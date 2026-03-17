@@ -12,10 +12,9 @@
 #include <typeinfo>
 
 import cxx.ipr;
+import cxx.ipr.traversal;   // for util::view
 
 #include <ipr/impl>
-#include <ipr/traversal>
-#include <ipr/io>
 
 // -- invisible logogram
 // A invisible logogram is a logogram designated by the empty string.

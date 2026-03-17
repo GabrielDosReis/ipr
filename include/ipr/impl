@@ -14,7 +14,6 @@
 //   3. #include <ipr/impl>
 
 #include <ipr/utility-impl>
-#include <ipr/traversal>
 
 // -----------------
 // -- Methodology --

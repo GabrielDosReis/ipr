@@ -4,7 +4,6 @@
 
 import cxx.ipr;
 
-#include <ipr/traversal>
 #include <ipr/impl>
 
 TEST_CASE("words are unified")
