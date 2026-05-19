@@ -1,0 +1,45 @@
+name: GCC
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+
+jobs:
+  build:
+    name: GCC 15 -x- ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GCC 15
+        run: |
+          # https://github.com/actions/runner-images/issues/7192
+          echo 'APT::Get::Always-Include-Phased-Updates "false";' | sudo tee /etc/apt/apt.conf.d/99-phased-updates
+          sudo apt-get update && sudo apt-get -y upgrade --fix-missing
+          sudo apt-get install -y build-essential cmake ninja-build
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y g++-15
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=g++-15
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+
+      - name: Build
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

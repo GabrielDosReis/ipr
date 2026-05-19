@@ -1,0 +1,41 @@
+name: Clang (macOS)
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Clang (Homebrew) -x- ${{ matrix.config }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM and CMake
+        run: |
+          brew install llvm cmake ninja
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
+          -DCMAKE_OSX_SYSROOT=$(xcrun --show-sdk-path)
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+
+      - name: Build
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

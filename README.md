@@ -1,4 +1,8 @@
-![Build & Test](https://github.com/GabrielDosReis/ipr/actions/workflows/main.yml/badge.svg)
+![MSVC](https://github.com/GabrielDosReis/ipr/actions/workflows/msvc.yml/badge.svg)
+![GCC](https://github.com/GabrielDosReis/ipr/actions/workflows/gcc.yml/badge.svg)
+![Clang (libstdc++)](https://github.com/GabrielDosReis/ipr/actions/workflows/clang-libstdcpp.yml/badge.svg)
+![Clang (libc++)](https://github.com/GabrielDosReis/ipr/actions/workflows/clang-libcpp.yml/badge.svg)
+![Clang (macOS)](https://github.com/GabrielDosReis/ipr/actions/workflows/clang-macos.yml/badge.svg)
 ![Analysis](https://github.com/GabrielDosReis/ipr/actions/workflows/analysis.yml/badge.svg)
 ![Docs](https://github.com/GabrielDosReis/ipr/actions/workflows/docs.yaml/badge.svg)
 

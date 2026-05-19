@@ -1,0 +1,46 @@
+name: Clang (libstdc++)
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Clang 21 libstdc++ -x- ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Clang 21
+        run: |
+          # https://github.com/actions/runner-images/issues/7192
+          echo 'APT::Get::Always-Include-Phased-Updates "false";' | sudo tee /etc/apt/apt.conf.d/99-phased-updates
+          sudo apt-get update && sudo apt-get -y upgrade --fix-missing
+          sudo apt-get install -y build-essential cmake ninja-build
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo add-apt-repository -y "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt-get update
+          sudo apt-get install -y clang-21
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_CXX_COMPILER=clang++-21
+          -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+
+      - name: Build
+        run: cmake --build build --parallel --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
