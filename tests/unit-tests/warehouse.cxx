@@ -1,10 +1,9 @@
 #include "doctest/doctest.h"
 
-#include <ipr/std-preamble>
+#include <algorithm>
+#include <iterator>
 
-import cxx.ipr;
-
-#include <ipr/impl>
+import cxx.ipr.impl;
 
 TEST_CASE("warehouse") {
     ipr::impl::Lexicon lexicon{};

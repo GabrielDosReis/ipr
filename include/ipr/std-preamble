@@ -4,18 +4,15 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
-// Standard library preamble for translation units that use `import cxx.ipr;`
-// followed by `#include <ipr/impl>` (or other IPR project headers).
+// Standard library preamble for IPR module interface and implementation units.
+// This header is included in the global module fragment of IPR .ixx and .cxx
+// files to ensure standard library headers are available before the module
+// purview begins.
 //
-// TEMPORARY: This header exists because the implementation layer (<ipr/impl>)
-// is not yet modularized.  MSVC requires all standard #includes to appear
-// before `import cxx.ipr;` to avoid redefinition errors.  Once <ipr/impl>
-// becomes a module, this preamble is no longer needed.
-//
-// Usage:
+// Usage (in a module interface or implementation unit):
+//     module;
 //     #include <ipr/std-preamble>
-//     import cxx.ipr;
-//     #include <ipr/impl>
+//     export module cxx.ipr.impl;   // or: module cxx.ipr.impl;
 
 #ifndef IPR_STD_PREAMBLE_INCLUDED
 #define IPR_STD_PREAMBLE_INCLUDED

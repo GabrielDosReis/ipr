@@ -1,12 +1,9 @@
 #include <doctest/doctest.h>
 
-#include <ipr/std-preamble>
 #include <sstream>
 
-import cxx.ipr;
+import cxx.ipr.impl;
 import cxx.ipr.io;
-
-#include <ipr/impl>
 
 TEST_CASE("global constant variable can be printed") {
   using namespace ipr;

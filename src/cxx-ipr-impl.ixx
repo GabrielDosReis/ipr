@@ -4,62 +4,398 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module interface: cxx.ipr.impl
+// Implementation layer for the IPR: utility types, template infrastructure,
+// node types, factory classes, Lexicon, and translation units.
 
-#ifndef IPR_IMPL_INCLUDED
-#define IPR_IMPL_INCLUDED
+module;
 
-// Consumers of this header must:
-//   1. #include all needed standard headers
-//   2. import cxx.ipr;
-//   3. #include <ipr/impl>
+#include <ipr/std-preamble>
 
-#include <ipr/utility-impl>
+export module cxx.ipr.impl;
 
-// -----------------
-// -- Methodology --
-// -----------------
-// This file provides implementations for the interface classes
-// defined in <ipr/interface>.  The basic rule is that every class
-// found in that header file has at least one implementation in
-// this file.  That rule applies to all abstract interfaces such as
-// "ipr::Expr", as well as more concrete ones like "ipr::Address".
-//    Implementations for the abstract interfaces usually consists in
-// providing implementations for common operations on some set of
-// interfaces.  For instance, "impl::Expr provides implementation for
-// the ipr::Expr::type() operation.
-//    For that to work properly, without using virtual inheritance,
-// we parameterize the implementations of the abstract interfaces with
-// (set of) concrete interfaces.  That ensures, for example, that
-// impl::Unary overrides ipr::Node::accept() and forward to the right
-// ipr::Visitor::visit() hook.
+export import cxx.ipr;
+
+// -------------------
+// -- Utility types --
+// -------------------
 
 namespace ipr::util {
-   // Interface nodes are neither copyable nor moveable, by virtue of being abstract classes.
-   // Similarly, implementation of those interfaces are not intended to be copyable nor moveable.
-   // This utility class captures the intent of disabling the automatic generation of the usual
-   // copy/move operations.  The class definition is more verbose than the intent.
+   template<typename T>
+   struct ref {
+      ref(T* p = { }) : ptr{p} { }
+      T& get() const { return *util::check(ptr); }
+   private:
+      T* ptr;
+   };
+
+   namespace rb_tree {
+      enum class Color { Black, Red };
+
+      template<class Node>
+      struct link {
+         enum Dir { Left, Right, Parent };
+
+         Node*& parent() { return arm[Parent]; }
+         Node*& left() { return arm[Left]; }
+         Node*& right() { return arm[Right]; }
+
+         Node* arm[3] { };
+         Color color = Color::Red;
+      };
+
+      template<class Node>
+      struct core {
+         std::ptrdiff_t size() const { return count; }
+
+      protected:
+         Node* root { };
+         std::ptrdiff_t count { };
+
+         void rotate_left(Node*);
+         void rotate_right(Node*);
+         void fixup_insert(Node*);
+      };
+
+      template<class Node>
+      void
+      core<Node>::rotate_left(Node* x)
+      {
+         Node* y = x->right();
+         x->right() = y->left();
+         if (y->left() != nullptr)
+            y->left()->parent() = x;
+
+         y->parent() = x->parent();
+         if (x->parent() == nullptr)
+            this->root = y;
+         else if (x->parent()->left() == x)
+            x->parent()->left() = y;
+         else
+            x->parent()->right() = y;
+
+         y->left() = x;
+         x->parent() = y;
+      }
+
+      template<class Node>
+      void
+      core<Node>::rotate_right(Node* x)
+      {
+         Node* y = x->left();
+
+         x->left() = y->right();
+         if (y->right() != nullptr)
+            y->right()->parent() = x;
+
+         y->parent() = x->parent();
+         if (x->parent() == nullptr)
+            this->root = y;
+         else if (x->parent()->right() == x)
+            x->parent()->right() = y;
+         else
+            x->parent()->left() = y;
+
+         y->right() = x;
+         x->parent() = y;
+      }
+
+      template<class Node>
+      void
+      core<Node>::fixup_insert(Node* z)
+      {
+         while (z != root and z->parent()->color == Color::Red) {
+            if (z->parent() == z->parent()->parent()->left()) {
+               Node* y = z->parent()->parent()->right();
+               if (y != nullptr and y->color == Color::Red) {
+                  z->parent()->color = Color::Black;
+                  y->color = Color::Black;
+                  z->parent()->parent()->color = Color::Red;
+                  z = z->parent()->parent();
+               } else {
+                  if (z->parent()->right() == z) {
+                     z = z->parent();
+                     rotate_left(z);
+                  }
+                  z->parent()->color = Color::Black;
+                  z->parent()->parent()->color = Color::Red;
+                  rotate_right(z->parent()->parent());
+               }
+            } else {
+               Node* y = z->parent()->parent()->left();
+               if (y != nullptr and y->color == Color::Red) {
+                  z->parent()->color = Color::Black;
+                  y->color = Color::Black;
+                  z->parent()->parent()->color = Color::Red;
+                  z = z->parent()->parent();
+               } else {
+                  if (z->parent()->left() == z) {
+                     z = z->parent();
+                     rotate_right(z);
+                  }
+                  z->parent()->color = Color::Black;
+                  z->parent()->parent()->color = Color::Red;
+                  rotate_left(z->parent()->parent());
+               }
+            }
+         }
+
+         root->color = Color::Black;
+      }
+
+      template<class Node>
+      struct chain : core<Node> {
+         template<class Comp>
+         Node* insert(Node*, Comp);
+
+         template<typename Key, class Comp>
+         Node* find(const Key&, Comp) const;
+      };
+
+      template<class Node>
+      template<typename Key, class Comp>
+      Node*
+      chain<Node>::find(const Key& key, Comp comp) const
+      {
+         bool found = false;
+         Node* result = this->root;
+         while (result != nullptr and not found) {
+            auto ordering = comp(*result, key) ;
+            if (ordering < 0)
+               result = result->left();
+            else if (ordering > 0)
+               result = result->right();
+            else
+               found = true;
+         }
+
+         return result;
+      }
+
+      template<class Node>
+      template<class Comp>
+      Node*
+      chain<Node>::insert(Node* z, Comp comp)
+      {
+         Node** slot = &this->root;
+         Node* up = nullptr;
+
+         bool found = false;
+         while (not found and *slot != nullptr) {
+            auto ordering = comp(**slot, *z);
+            if (ordering < 0) {
+               up = *slot;
+               slot = &up->left();
+            }
+            else if (ordering > 0) {
+               up = *slot;
+               slot = &up->right();
+            }
+            else
+               found = true;
+         }
+
+         if (this->root == nullptr) {
+            this->root = z;
+            z->color = Color::Black;
+         }
+         else if (*slot == nullptr) {
+            *slot = z;
+            z->parent() = up;
+            z->color = Color::Red;
+            this->fixup_insert(z);
+         }
+
+         ++this->count;
+         return z;
+      }
+
+      template<typename T>
+      struct node : link<node<T>> {
+         T data;
+      };
+
+      template<typename T>
+      struct container : core<node<T>>, private std::allocator<node<T>> {
+         template<typename Key, class Comp>
+         T* find(const Key&, Comp) const;
+
+         template<class Key, class Comp>
+         T* insert(const Key&, Comp);
+
+      private:
+         template<class U>
+         node<T>* make_node(const U& u) {
+            node<T>* n = this->allocate(1);
+            new (&n->data) T(u);
+            n->left() = nullptr;
+            n->right() = nullptr;
+            n->parent() = nullptr;
+            return n;
+         }
+
+         void destroy_node(node<T>* n) {
+            if (n != nullptr) {
+               n->data.~T();
+               this->deallocate(n, 1);
+            }
+         }
+      };
+
+      template<typename T>
+      template<typename Key, class Comp>
+      T*
+      container<T>::find(const Key& key, Comp comp) const
+      {
+         for (node<T>* x = this->root; x != nullptr; ) {
+            auto ordering = comp(x->data, key);
+            if (ordering < 0)
+               x = x->left();
+            else if (ordering > 0)
+               x = x->right();
+            else
+               return &x->data;
+         }
+
+         return nullptr;
+      }
+
+      template<typename T>
+      template<typename Key, class Comp>
+      T*
+      container<T>::insert(const Key& key, Comp comp)
+      {
+         if (this->root == nullptr) {
+            this->root = make_node(key);
+            this->root->color = Color::Black;
+            ++this->count;
+            return &this->root->data;
+         }
+
+         node<T>** slot = &this->root;
+         node<T>* parent = nullptr;
+         node<T>* where = nullptr;
+         bool found = false;
+
+         for (where = this->root; where != nullptr and not found; where = *slot) {
+            auto ordering = comp(where->data, key);
+            if (ordering < 0) {
+               parent = where;
+               slot = &where->left();
+            }
+            else if (ordering > 0) {
+               parent = where;
+               slot = &where->right();
+            }
+            else
+               found = true;
+         }
+
+         if (where == nullptr) {
+            where = *slot = make_node(key);
+            where->parent() = parent;
+            where->color = Color::Red;
+            ++this->count;
+            this->fixup_insert(where);
+         }
+
+         return &where->data;
+      }
+   }
+
+   struct string {
+      struct arena;
+
+      using size_type = std::ptrdiff_t;
+
+      static constexpr size_type padding_count = sizeof (size_type);
+
+      size_type size() const { return length; }
+      char operator[](size_type) const;
+
+      const char8_t* begin() const { return data; }
+      const char8_t* end() const { return begin() + length; }
+
+      size_type length;
+      char8_t data[padding_count];
+   };
+
+   struct string::arena {
+      arena();
+      ~arena();
+
+      const string* make_string(const char8_t*, size_type);
+
+   private:
+      util::string* allocate(size_type);
+      auto remaining_header_count() const
+      {
+         return mem->storage + bufsz - next_header;
+      }
+
+      struct pool;
+
+      static constexpr size_type headersz = sizeof (util::string);
+      static constexpr size_type bufsz = headersz << (20 - sizeof (pool*));
+
+      struct pool {
+         pool* previous;
+         util::string storage[bufsz];
+      };
+
+      static constexpr size_type poolsz = sizeof (pool);
+
+      pool* mem;
+      string* next_header;
+   };
+
+   struct lexicographical_compare {
+      template<typename In1, typename In2, class Compare>
+      int operator()(In1 first1, In1 last1, In2 first2, In2 last2,
+                     Compare compare) const
+      {
+         for (; first1 != last1 and first2 != last2; ++first1, ++first2)
+            if (auto cmp = compare(*first1, *first2))
+               return cmp;
+
+         return first1 == last1 ? (first2 == last2 ? 0 : -1) : 1;
+      }
+   };
+}
+
+// -----------------------------------
+// -- Base implementation templates --
+// -----------------------------------
+
+namespace ipr::util {
    struct immotile {
       constexpr immotile() = default;
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~immotile() = default;
       immotile(immotile&&) = delete;
       immotile(const immotile&) = delete;
       immotile& operator=(immotile&&) = delete;
       immotile& operator=(const immotile&) = delete;
    };
+
+   enum class hash_code : std::size_t { };
 }
 
 namespace ipr::impl {
-                             // -- impl::Node --
    template<class T>
    struct Node : T {
       using Interface = T;
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Node() = default;
       void accept(ipr::Visitor& v) const final { v.visit(*this); }
    };
 
-   // -- impl::immotile_node
    template<typename T>
    struct immotile_node : impl::Node<T>, util::immotile { };
 
-   // -- Generic implementation of ipr::Basic_unary
+   template<typename T>
+   using immotile_base = immotile_node<T>;
+
    template<class Interface>
    struct Basic_unary : Interface {
       using typename Interface::Arg_type;
@@ -69,11 +405,9 @@ namespace ipr::impl {
       constexpr Arg_type operand() const final { return rep; }
    };
 
-   // -- impl::Unary_node: Shorthand for the implementation of generic unary nodes.
    template<typename T>
    using Unary_node = impl::Basic_unary<immotile_node<T>>;
 
-   // -- Generic implementation of ipr::Basic_binary --
    template<class Interface>
    struct Basic_binary : Interface {
       using typename Interface::Arg1_type;
@@ -90,11 +424,9 @@ namespace ipr::impl {
       constexpr Arg2_type second() const final { return rep.second; }
    };
 
-   // -- impl::Binary_node: Short hand for implementation of generic binary nodes.
    template<typename T>
    using Binary_node = impl::Basic_binary<immotile_node<T>>;
 
-                           // -- impl::Ternary --
    template<class Interface>
    struct Ternary : Interface {
       using typename Interface::Arg1_type;
@@ -114,7 +446,6 @@ namespace ipr::impl {
       Arg3_type third() const final { return rep.third; }
    };
 
-                           // -- impl::Quaternary --
    template<class Interface>
    struct Quaternary : Interface {
       using typename Interface::Arg1_type;
@@ -137,86 +468,14 @@ namespace ipr::impl {
       Arg4_type fourth() const final { return rep.fourth; }
    };
 
-   using Logogram = Basic_unary<ipr::Logogram>;
-
-   using Comment = Unary_node<ipr::Comment>;
-
-   using Identifier = Unary_node<ipr::Identifier>;
-   using Suffix = Unary_node<ipr::Suffix>;
-   using Operator = Unary_node<ipr::Operator>;
-   using Conversion = Unary_node<ipr::Conversion>;
-   using Ctor_name = Unary_node<ipr::Ctor_name>;
-   using Dtor_name = Unary_node<ipr::Dtor_name>;
-   using Guide_name = Unary_node<ipr::Guide_name>;
    using Type_id = Unary_node<ipr::Type_id>;
-
-   // -- Generic implementarion of ipr::Transfer
-   using Transfer = impl::Basic_binary<ipr::Transfer>;
-
-   // -- Specialized implementation of ipr::Transfer
-   // An object of this class pairs a specified language linkage with the natural
-   // C++ calling convention.
-   struct Transfer_from_linkage : ipr::Transfer {
-      constexpr explicit Transfer_from_linkage(const ipr::Language_linkage& l) : link{l} { }
-      const ipr::Language_linkage& first() const final { return link; }
-      const ipr::Calling_convention& second() const final;
-   private:
-      const ipr::Language_linkage& link;
-   };
-
-   // -- Specialized implementation of ipr::Transfer
-   // An object of this class pairs the C++ language linkage with a specified calling convention.
-   struct Transfer_from_cc : ipr::Transfer {
-      constexpr explicit Transfer_from_cc(const ipr::Calling_convention& cc) : conv{cc} { }
-      const ipr::Language_linkage& first() const final;
-      const ipr::Calling_convention& second() const final { return conv; }
-   private:
-      const ipr::Calling_convention& conv;
-   };
 }
 
-namespace ipr::util {
-   // Type for representing the hash of data (mostly character strings) used internally.
-   enum class hash_code : std::size_t { };
-}
+// ------------------------------
+// -- Sequence implementations --
+// ------------------------------
 
 namespace ipr::impl {
-                             // -- impl::String --
-   struct String : immotile_node<ipr::String> {
-      constexpr String(const char8_t* s) : txt{ s } { }
-      constexpr String(util::word_view w) : txt{ w } { }
-      constexpr util::word_view characters() const final { return txt; }
-   private:
-      const util::word_view txt;
-   };
-}
-
-namespace ipr::util {
-   // String pool.  Used to intern words used for external designation of entities.
-   struct string_pool : private std::map<hash_code, std::forward_list<impl::String>> {
-      const ipr::String& intern(word_view);
-   private:
-      util::string::arena strings;
-   };
-}
-
-namespace ipr::impl {
-   // --------------------------------------
-   // -- Implementations of ipr::Sequence --
-   // --------------------------------------
-   // The Sequence<> interface admits various implementations.
-   // Here is the list of the implementations currently in use:
-   //   (a) ref_sequence<T>
-   //   (b) obj_sequence<T>
-   //   (c) obj_list<T>
-   //   (d) empty_sequence<T>
-   // Variants exist in form of
-   //    (i) decl_sequence<T>
-   //   (ii) singleton_ref<T>
-   //  (iii) singleton_obj<T>
-
-   // -- When a class implements an interface, return that interface;
-   // -- otherwise, the type itself.
    template<typename T>
    concept Has_interface = requires { typename T::Interface; };
 
@@ -225,7 +484,6 @@ namespace ipr::impl {
       using type = T;
    };
 
-   // Remove any wrapper or implementation class.
    template<Has_interface T>
    struct abstraction<T> {
       using type = typename T::Interface;
@@ -237,12 +495,6 @@ namespace ipr::impl {
    template<typename T>
    using projection = typename abstraction<T>::type;
 
-                          // -- impl::ref_sequence --
-   // The class ref_sequence<T> implements Sequence<T> by storing
-   // references (e.g. pointers) to data of type T, allocated
-   // somewhere else.  That for example if useful when keeping track
-   // of redeclarations in decl-sets.
-   // In general, it can be used to implement the notion of sub-sequence.
    template<typename T>
    struct ref_sequence : ipr::Sequence<T>, private std::vector<const void*> {
       using Seq = Sequence<T>;
@@ -260,11 +512,7 @@ namespace ipr::impl {
       const T& get(Index p) const final { return *pointer(this->at(p)); }
    };
 
-                          // -- impl::Warehouse --
-   // The class Warehouse<T> is intended to be used by clients of the
-   // impl::Lexicon to temporarily accumulate a sequence of references to
-   // data of type T to assist in construction of ipr nodes such as product or sum.
-   template<typename T>
+   export template<typename T>
    struct Warehouse : private ref_sequence<T> {
       using Rep = ref_sequence<T>;
       explicit Warehouse(std::size_t n = 0) : Rep(n) { }
@@ -277,8 +525,6 @@ namespace ipr::impl {
       void push_back(const T& item) { Rep::push_back(&item); }
    };
 
-   // -- stable_farm --
-   // Backing store for stable reference-producing factories.
    template<typename T>
    struct stable_farm : std::forward_list<T> {
       using std::forward_list<T>::forward_list;
@@ -290,12 +536,6 @@ namespace ipr::impl {
       }
    };
 
-                             // -- impl::obj_sequence --
-   // The class obj_sequence<T> implements the interface Sequence<T> by storing the
-   // actual values as random access sequence of objects, instead of references to
-   // values (as is the case of ref_sequence<T>).  This Sequence implementation
-   // is useful for potentially large sequence of items (e.g. enumerator lists)
-   // and for which iteration is frequent.
    template<typename T>
    struct obj_sequence : ipr::Sequence<projection<T>>, private std::deque<T> {
       using Seq = ipr::Sequence<projection<T>>;
@@ -323,12 +563,6 @@ namespace ipr::impl {
       }
    };
 
-                             // -- impl::obj_list --
-   // The class obj_list<T> implements Sequence<T> by storing the actual
-   // values in a singly-linked list, instead of references to values (as is
-   // the case of ref_sequence<T>).  This Sequence implementation can be used
-   // for typically small sequence of items (e.g. parameter lists, or direct
-   // base class lists)
    template<typename T>
    struct obj_list : ipr::Sequence<projection<T>>, private stable_farm<T> {
       using Seq = ipr::Sequence<projection<T>>;
@@ -367,13 +601,6 @@ namespace ipr::impl {
       typename Impl::iterator mark;
    };
 
-                              // -- impl::empty_sequence --
-   // There are various situations where the general notion of
-   // sequence leads to consider empty sequence in implementations.
-   // We could just use the generic ref_sequence<> or obj_list<>;
-   // however, this specialization will help control data size
-   // inflation, as the general sequences need at least two words
-   // to keep track of their elements (even when they are empty).
    template<class T>
    struct empty_sequence : ipr::Sequence<T> {
       using Index = typename Sequence<T>::Index;
@@ -385,13 +612,6 @@ namespace ipr::impl {
       }
    };
 
-   // --impl::singleton
-   // A singleton container (in Standard C++ sense), providing the backing store for
-   // the implementation of a singleton sequence.  No allocator or other complications.
-   // Usual minimal requirements: begin(), end()
-   // Optionally: front().
-   // FIXME: It is a pity it takes this amount of code to provide that simple
-   //        interface, in C++20.
    template<typename T>
    struct singleton {
       using iterator = T*;
@@ -408,7 +628,6 @@ namespace ipr::impl {
       T item;
    };
 
-   // A sequence implementation for the case of a collection consisting of exactly one element.
    template<typename T>
    struct singleton_obj : ipr::Sequence<projection<T>> {
       using Index = typename Sequence<projection<T>>::Index;
@@ -430,19 +649,16 @@ namespace ipr::impl {
    };
 }
 
+// ------------------------------------------------
+// -- Expression, type, and scope base templates --
+// ------------------------------------------------
+
 namespace ipr::impl {
-   // The natural C++ data and control transfer.
    const ipr::Transfer& cxx_transfer();
-
-   // The two language linkages required of all C++ implementations.
    const ipr::Language_linkage& c_linkage();
-   inline const ipr::Language_linkage& cxx_linkage() { return cxx_transfer().language_linkage(); }
-
-   // The type of types, including itselt.
-   // Yes, we have a ``Type: Type'' problem.
+   const ipr::Language_linkage& cxx_linkage() { return cxx_transfer().language_linkage(); }
    const ipr::Type& typename_type();
 
-   // -- impl::Classic
    template<class Operation>
    struct Classic : Operation {
       Optional<ipr::Expr> op_impl { };
@@ -451,7 +667,6 @@ namespace ipr::impl {
       Optional<ipr::Expr> implementation() const final { return op_impl; }
    };
 
-   // -- impl::Expr
    template<class Interface>
    struct Expr : immotile_node<Interface> {
       Optional<ipr::Type> typing;
@@ -459,35 +674,20 @@ namespace ipr::impl {
       const ipr::Type& type() const final { return typing.get(); }
    };
 
-   // -- impl::Unary_expr: Short hand for the implementation of generic unary expression nodes.
    template<typename T>
    using Unary_expr = Basic_unary<Expr<T>>;
-
-   // -- impl::Classic_unary_expr
    template<typename T>
    using Classic_unary_expr = Classic<Unary_expr<T>>;
-
-   // -- impl::Binary_expr
    template<typename T>
    using Binary_expr = impl::Basic_binary<Expr<T>>;
-
-   // -- impl::Classic_binary_expr
    template<typename T>
    using Classic_binary_expr = Classic<Binary_expr<T>>;
 
-   // -----------------------
-   // -- Generalized types --
-   // -----------------------
-   // impl::Type<T> implements the common operations supported
-   // by all type node objects.  Almost all C++ types have "C++" language linkage.
-   // The exceptions are handled elsewhere.
    template<class T>
    struct Type : impl::Node<T> {
       const ipr::Transfer& transfer() const final { return impl::cxx_transfer(); }
    };
 
-   // A composite type is one built from existing types and built-in type constructors.
-   // Their names are exactly the type-expressions referencing the types themselves.
    template<typename T>
    struct Composite : impl::Type<T> {
       constexpr Composite() : id{*this} { }
@@ -497,68 +697,26 @@ namespace ipr::impl {
       impl::Type_id id;
    };
 
-   // -- impl::Unary_type
    template<typename T>
    using Unary_type = impl::Basic_unary<Composite<T>>;
-
-   // -- impl::Binary_type
    template<typename T>
    using Binary_type = impl::Basic_binary<Composite<T>>;
-
-   // -- impl::Ternary_type
    template<typename T>
    using Ternary_type = Ternary<Composite<T>>;
 }
 
-namespace ipr::impl{
-   // ----------------------------------------------------
-   // -- Scopes, sequence of declarations and overloads --
-   // ----------------------------------------------------
-   //
-   // A scope is defined to be a sequence of declarations.
-   // There may be multiple instances of a declaration in
-   // a scope.  All declarations sharing the same name
-   // form an overload set.  Consequently a scope is partitioned
-   // into overload sets, each of which is uniquely identified
-   // by its name.
-   // An overload set, in turn, is partitioned in sub-sets of
-   // (multiple) declarations with same type.  So, each decl-set
-   // within its overload set, is uniquely determined by its
-   // type.  Each decl-set has a "standard" representative,
-   // called the "master declaration".  A master declaration is
-   // the first seen declaration of a decl-set.
-   //
-   // There are few special cases of the above general description.
-   // Parameters, base-classes and enumerators cannot be multiply
-   // declared.  Therefore within a parameter-lits, a base-class
-   // list or an enumeration definition, each decl-set is
-   // singleton whose sole element is the master declaration.
-   //
-   // A scope chains declaration together.  A declaration in a
-   // Scope has a "position", that uniquely identifies it as a member
-   // of a sequence.  To provide a relatively fast "subscription by position"
-   // operation on a scope, the chain of declaration is
-   // organized as a red-back tree where the position is used as key.
-   // And alternative is a hash table, when we get there.
+// --------------------------
+// -- Scope infrastructure --
+// --------------------------
 
-   // The chain of declarations in a scope.
+namespace ipr::impl {
    struct scope_datum : util::rb_tree::link<scope_datum> {
-      // The specifiers for this declaration.  S
       ipr::Specifiers spec = { };
-
-      // Back-pointer to this declaration.  It shall be set at
-      // the declaration creation.
       const ipr::Decl* decl = { };
    };
 
-                              // -- impl::decl_sequence --
    struct decl_sequence : ref_sequence<ipr::Decl> { };
 
-                              // -- impl::singleton_ref --
-   // A singleton_ref is a specialization of ref_sequence that contains
-   // exactly a single reference.  It is mostly used to support the
-   // general interface of singly-item as inherited in parameter-list or
-   // enumerator definitions or EH regions.
    template<typename T>
    struct singleton_ref : ipr::Sequence<T> {
       using Index = typename Sequence<T>::Index;
@@ -573,16 +731,9 @@ namespace ipr::impl{
       }
    };
 
-   // Parameters, base-subobjects and enumerations cannot be
-   // multiply declared in a given region.  Therefore such a
-   // declaration is the sole member in its own decl-set.
-   // Furthermore, there cannot be other declaration with
-   // different type but same name.  Therefore the name for
-   // such a declaration defines an overload set with a single
-   // member.  This class implements such a special overload set.
    template<typename T>
    struct singleton_overload : immotile_node<ipr::Overload> {
-      T decl;                          // Really the declset, but it is a singleton.
+      T decl;
       template<typename... Args>
       explicit singleton_overload(const Args&... args) : decl{args...} { }
       const ipr::Name& name() const { return decl.name(); }
@@ -593,19 +744,9 @@ namespace ipr::impl{
             return decl;
          return { };
       }
-      // Where needed, implicitly unwrap the singleton to reveal its content.
       operator const T&() const { return decl; }
    };
-}
 
-namespace ipr::impl {
-   // Scopes, as expressions, have Product types.  Such types could
-   // be implemented directly as a separate sequence of types.
-   // However, it would require coordination from the various
-   // scope updaters to keep the types in sync.  An alternative,
-   // implemented by typed_sequence<Seq>, is to wrap sequences
-   // in "type envelop" and return the nth type as being the
-   // type of the nth declaration in the sequence.
    template<class Seq>
    struct typed_sequence : impl::Composite<ipr::Product>,
                            ipr::Sequence<ipr::Type> {
@@ -623,14 +764,7 @@ namespace ipr::impl {
          return seq.get(i).type();
       }
    };
-}
 
-namespace ipr::impl {
-   // -- homogeneous_scope
-   // A sequence of homogenous node can be represented directly as a container
-   // of the concrete implementations classes instead of pointers to the
-   // interface nodes.  This is the case, in particular, for enumerators of
-   // an enumeration or parameters in a parameter list.
    template<typename Member, template<typename> class Seq = obj_list>
    struct homogeneous_scope : impl::Node<ipr::Scope>,
                               ipr::Sequence<ipr::Decl>,
@@ -638,6 +772,8 @@ namespace ipr::impl {
       using Index = typename ipr::Sequence<ipr::Decl>::Index;
       using Members = Seq<singleton_overload<Member>>;
       typed_sequence<Members> decls;
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~homogeneous_scope() = default;
       template<typename... Args>
       homogeneous_scope(Args&&... args) : decls{std::forward<Args>(args)...} { }
       Index size() const final { return decls.size(); }
@@ -652,7 +788,6 @@ namespace ipr::impl {
       }
    };
 
-   // FIXME: Remove this linear search.
    template<typename Member, template<typename> class Seq>
    Optional<ipr::Overload>
    homogeneous_scope<Member, Seq>::operator[](const ipr::Name& n) const
@@ -664,7 +799,6 @@ namespace ipr::impl {
       return { };
    }
 
-   // -- impl::homogeneous_region:
    template<typename Member, template<typename> class Seq = obj_list>
    struct homogeneous_region : impl::Node<ipr::Region> {
       using location_span = ipr::Region::Location_span;
@@ -672,6 +806,8 @@ namespace ipr::impl {
       location_span extent;
       Optional<ipr::Expr> owned_by { };
       homogeneous_scope<Member, Seq> scope;
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~homogeneous_region() = default;
 
       explicit homogeneous_region(const ipr::Region& p) : parent(p) { }
       template<typename... Args>
@@ -687,8 +823,11 @@ namespace ipr::impl {
    };
 }
 
+// ----------------------------------------------------------
+// -- Directive, statement, and declaration base templates --
+// ----------------------------------------------------------
+
 namespace ipr::impl {
-   // -- impl::Directive
    template<typename T, Phases f>
    struct Directive : impl::Expr<T> {
       Phases phases() const final { return f; }
@@ -708,17 +847,7 @@ namespace ipr::impl {
 
    template<typename S>
    using immotile_stmt = Stmt<immotile_node<S>>;
-}
 
-namespace ipr::impl {
-   // -- unique_decl:
-   // Some declarations (e.g. parameters, base-classes, enumerators)
-   // cannot be redeclared in their declarative regions.  Consequently
-   // their decl-sets and overload sets are singleton, containing
-   // only the mater declarations.  Consequently, it seems
-   // heavyweight space wasteful to deploy the general representation
-   // machinery for them.  The class unique_decl<> implements the
-   // specialization of Decl<> in those cases.
    template<class Interface>
    struct unique_decl : immotile_stmt<Interface> {
       unique_decl() : seq{*this} { }
@@ -731,11 +860,323 @@ namespace ipr::impl {
    };
 }
 
+// ----------------------------------------------------------
+// -- Comparison, overload, and declaration infrastructure --
+// ----------------------------------------------------------
+
 namespace ipr::impl {
-   struct Parameter_list;
+   template<typename T,
+         typename std::enable_if_t<std::is_scalar_v<T>, int> = 0>
+   constexpr int compare(T lhs, T rhs)
+   {
+      constexpr std::less<> lt { };
+      return lt(lhs, rhs) ? -1 : (lt(rhs, lhs) ? 1 : 0);
+   }
+
+   constexpr int compare(const ipr::Node& lhs, const ipr::Node& rhs)
+   {
+      return compare(&lhs, &rhs);
+   }
+
+   constexpr int compare(const ipr::String& lhs, const ipr::String& rhs)
+   {
+      return lhs.characters().compare(rhs.characters());
+   }
+
+   inline int compare(const ipr::Logogram& lhs, const ipr::Logogram& rhs)
+   {
+      return compare(lhs.what(), rhs.what());
+   }
+
+   inline int compare(const ipr::Language_linkage& lhs, const ipr::Language_linkage& rhs)
+   {
+      return compare(lhs.language(), rhs.language());
+   }
+
+   template<class Interface>
+   struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
+      using Base = impl::Classic<Binary_node<Interface>>;
+      using Base::Base;
+      const ipr::Type& type() const final { return this->rep.first; }
+   };
+
+   template<class T>
+   struct node_ref {
+      const T& node;
+      explicit node_ref(const T& t) : node(t) { }
+   };
+
+   struct overload_entry : util::rb_tree::link<overload_entry> {
+      const ipr::Type& type;
+      ref_sequence<ipr::Decl> declset;
+      explicit overload_entry(const ipr::Type& t) : type(t) { }
+   };
+
+   template<class> struct master_decl_data;
+   struct Overload;
+
+   template<class Interface>
+   struct basic_decl_data : scope_datum {
+      master_decl_data<Interface>* master_data;
+
+      explicit basic_decl_data(master_decl_data<Interface>* mdd)
+            : master_data(mdd)
+      { }
+   };
+
+   template<class Interface>
+   struct master_decl_data : basic_decl_data<Interface>, overload_entry {
+      Optional<Interface> def { };
+      util::ref<const ipr::Language_linkage> lang_linkage { };
+
+      impl::Overload* overload;
+      const ipr::Region* home;
+      master_decl_data(impl::Overload* ovl, const ipr::Type& t)
+            : basic_decl_data<Interface>{this},
+               overload_entry{t},
+               overload{ovl},
+               home{nullptr}
+      { }
+   };
+
+   template<>
+   struct master_decl_data<ipr::Template>
+      : basic_decl_data<ipr::Template>, overload_entry {
+      using Base = basic_decl_data<ipr::Template>;
+      Optional<ipr::Template> def { };
+      util::ref<const ipr::Language_linkage> lang_linkage { };
+      const ipr::Template* primary;
+      const ipr::Region* home;
+
+      impl::Overload* overload;
+
+      decl_sequence specs;
+
+      master_decl_data(impl::Overload*, const ipr::Type&);
+   };
+
+   struct Overload : impl::Expr<ipr::Overload> {
+      const ipr::Name& name;
+
+      util::rb_tree::chain<overload_entry> entries;
+      std::vector<scope_datum*> masters;
+
+      explicit Overload(const ipr::Name&);
+      Optional<ipr::Decl> operator[](const ipr::Type&) const final;
+      overload_entry* lookup(const ipr::Type&) const;
+
+      template<class T>
+      void push_back(master_decl_data<T>*);
+   };
+
+   struct node_compare {
+      int operator()(const ipr::Node& lhs, const ipr::Node& rhs) const
+      {
+         return compare(lhs, rhs);
+      }
+
+      int
+      operator()(const overload_entry& e, const ipr::Type& t) const
+      {
+         return (*this)(e.type, t);
+      }
+
+      int
+      operator()(const overload_entry& l, const overload_entry& r) const
+      {
+         return (*this)(l.type, r.type);
+      }
+   };
+
+   template<class T>
+   void
+   Overload::push_back(master_decl_data<T>* data) {
+      entries.insert(data, node_compare());
+      masters.push_back(data);
+   }
+
+   template<typename Base>
+   struct Controlled_stmt : immotile_stmt<Base> {
+      using typename Base::Arg1_type;
+      using typename Base::Arg2_type;
+      util::ref<std::remove_reference_t<Arg1_type>> control;
+      util::ref<std::remove_reference_t<Arg2_type>> stmt;
+      Arg1_type first() const final { return control.get(); }
+      Arg2_type second() const final { return stmt.get(); }
+      const ipr::Type& type() const final { return second().type(); }
+   };
+
+   template<class D>
+   struct Decl : immotile_stmt<D> {
+      basic_decl_data<D> decl_data;
+
+      Decl() : decl_data{ nullptr } { }
+
+      const ipr::Language_linkage& language_linkage() const final
+      {
+         return util::check(decl_data.master_data)->lang_linkage.get();
+      }
+
+      const ipr::Region& home_region() const final {
+         return *util::check(util::check(decl_data.master_data)->home);
+      }
+
+      using D::specifiers;
+      void specifiers(ipr::Specifiers s) {
+         decl_data.spec = s;
+      }
+   };
+
+   template<typename T>
+   struct decl_rep : T {
+      using Interface = typename T::Interface;
+      decl_rep(master_decl_data<Interface>* mdd)
+      {
+         this->decl_data.master_data = mdd;
+         this->decl_data.decl = this;
+         mdd->declset.push_back(this);
+      }
+
+      const ipr::Name& name() const final
+      {
+         return this->decl_data.master_data->overload->name;
+      }
+
+      ipr::Specifiers specifiers() const final
+      {
+         return this->decl_data.spec;
+      }
+
+      const ipr::Type& type() const final
+      {
+         return this->decl_data.master_data->type;
+      }
+
+      const ipr::Scope& scope() const
+      {
+         return this->decl_data.master_data->overload->where;
+      }
+
+      Decl_position position() const
+      {
+         return this->decl_data.scope_pos;
+      }
+
+      const ipr::Decl& master() const final
+      {
+         return *util::check(this->decl_data.master_data->decl);
+      }
+
+      const ipr::Sequence<ipr::Decl>& decl_set() const final
+      {
+         return this->decl_data.master_data->declset;
+      }
+
+      Optional<Interface> definition() const
+      {
+         return this->decl_data.master_data->def;
+      }
+   };
+
+   template<typename T>
+   struct decl_factory {
+      using Interface = typename T::Interface;
+      stable_farm<decl_rep<T>> decls;
+      stable_farm<master_decl_data<Interface>> master_info;
+
+      decl_rep<T>* declare(Overload* ovl, const ipr::Type& t)
+      {
+         master_decl_data<Interface>* data = master_info.make(ovl, t);
+         decl_rep<T>* master = decls.make(data);
+         ovl->push_back(data);
+
+         return master;
+      }
+
+      decl_rep<T>* redeclare(overload_entry* decl)
+      {
+         return decls.make
+            (static_cast<master_decl_data<Interface>*>(decl));
+      }
+   };
+}
+
+// ----------------
+// -- Name nodes --
+// ----------------
+
+namespace ipr::impl {
+   export using Logogram = Basic_unary<ipr::Logogram>;
+
+   export using Comment = Unary_node<ipr::Comment>;
+
+   export using Identifier = Unary_node<ipr::Identifier>;
+   export using Suffix = Unary_node<ipr::Suffix>;
+   export using Operator = Unary_node<ipr::Operator>;
+   export using Conversion = Unary_node<ipr::Conversion>;
+   export using Ctor_name = Unary_node<ipr::Ctor_name>;
+   export using Dtor_name = Unary_node<ipr::Dtor_name>;
+   export using Guide_name = Unary_node<ipr::Guide_name>;
+   // Note: Type_id is defined earlier in this file, needed by Composite<T>.
+
+   // -- Generic implementarion of ipr::Transfer
+   export using Transfer = impl::Basic_binary<ipr::Transfer>;
+
+   // -- Specialized implementation of ipr::Transfer
+   // An object of this class pairs a specified language linkage with the natural
+   // C++ calling convention.
+   export struct Transfer_from_linkage : ipr::Transfer {
+      constexpr explicit Transfer_from_linkage(const ipr::Language_linkage& l) : link{l} { }
+      const ipr::Language_linkage& first() const final { return link; }
+      const ipr::Calling_convention& second() const final;
+   private:
+      const ipr::Language_linkage& link;
+   };
+
+   // -- Specialized implementation of ipr::Transfer
+   // An object of this class pairs the C++ language linkage with a specified calling convention.
+   export struct Transfer_from_cc : ipr::Transfer {
+      constexpr explicit Transfer_from_cc(const ipr::Calling_convention& cc) : conv{cc} { }
+      const ipr::Language_linkage& first() const final;
+      const ipr::Calling_convention& second() const final { return conv; }
+   private:
+      const ipr::Calling_convention& conv;
+   };
+}
+
+// ----------------------------
+// -- String and string pool --
+// ----------------------------
+
+namespace ipr::impl {
+                             // -- impl::String --
+   export struct String : immotile_node<ipr::String> {
+      constexpr String(const char8_t* s) : txt{ s } { }
+      constexpr String(util::word_view w) : txt{ w } { }
+      constexpr util::word_view characters() const final { return txt; }
+   private:
+      const util::word_view txt;
+   };
+}
+
+namespace ipr::util {
+   // String pool.  Used to intern words used for external designation of entities.
+   export struct string_pool : private std::map<util::hash_code, std::forward_list<impl::String>> {
+      const ipr::String& intern(word_view);
+   private:
+      util::string::arena strings;
+   };
+}
+
+// -----------------------------------------------
+// -- Parameters (needed before cxx_form::impl) --
+// -----------------------------------------------
+
+namespace ipr::impl {
+   export struct Parameter_list;
 
                               // -- impl::Parameter --
-   struct Parameter final : unique_decl<ipr::Parameter> {
+   export struct Parameter final : unique_decl<ipr::Parameter> {
       Optional<ipr::Expr> init;
       Parameter(const ipr::Name&, const ipr::Type&, Decl_position);
       const ipr::Name& name() const final { return id; }
@@ -753,7 +1194,7 @@ namespace ipr::impl {
    };
 
                               // -- impl::Parameter_list --
-   struct Parameter_list : impl::Node<ipr::Parameter_list> {
+   export struct Parameter_list : impl::Node<ipr::Parameter_list> {
       Parameter_list(const ipr::Region&, Mapping_level);
       const ipr::Product& type() const final;
       const ipr::Region& region() const final;
@@ -778,6 +1219,10 @@ namespace ipr::impl {
    };
 }
 
+// ---------------------------------------------------------
+// -- C++ syntactic form implementations (cxx_form::impl) --
+// ---------------------------------------------------------
+
 namespace ipr::cxx_form::impl {
    // -- implementation of ipr::cxx_form::Constraint
    template<typename T>
@@ -787,7 +1232,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Constraint::Monadic
-   struct Monadic_constraint : impl::Constraint<cxx_form::Constraint::Monadic> {
+   export struct Monadic_constraint : impl::Constraint<cxx_form::Constraint::Monadic> {
       explicit Monadic_constraint(const ipr::Identifier& n) : id{n} { }
       Monadic_constraint(const ipr::Expr& s, const ipr::Identifier& n) : outer{s}, id{n} { }
       Optional<ipr::Expr> scope() const final { return outer; }
@@ -798,7 +1243,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Constraint::Polyadic
-   struct Polyadic_constraint : impl::Constraint<cxx_form::Constraint::Polyadic> {
+   export struct Polyadic_constraint : impl::Constraint<cxx_form::Constraint::Polyadic> {
       ipr::impl::ref_sequence<ipr::Expr> args;
       explicit Polyadic_constraint(const ipr::Identifier& n) : id{n} { }
       Polyadic_constraint(const ipr::Expr& s, const ipr::Identifier& n) : outer{s}, id{n} { }
@@ -818,7 +1263,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Requirement::Simple
-   struct Simple_requirement : impl::Requirement<cxx_form::Requirement::Simple> {
+   export struct Simple_requirement : impl::Requirement<cxx_form::Requirement::Simple> {
       explicit Simple_requirement(const ipr::Expr& x) : pattern{x} { }
       const ipr::Expr& expr() const final { return pattern; }
    private:
@@ -826,7 +1271,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Requirement::Type
-   struct Type_requirement : impl::Requirement<cxx_form::Requirement::Type> {
+   export struct Type_requirement : impl::Requirement<cxx_form::Requirement::Type> {
       explicit Type_requirement(const ipr::Name& n) : name{n} { }
       Type_requirement(const ipr::Expr& s, const ipr::Name& n) : outer{s}, name{n} { }
       Optional<ipr::Expr> scope() const final { return outer; }
@@ -837,7 +1282,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Requirement::Compound
-   struct Compound_requirement : impl::Requirement<cxx_form::Requirement::Compound> {
+   export struct Compound_requirement : impl::Requirement<cxx_form::Requirement::Compound> {
       Optional<cxx_form::Constraint> type;
       bool has_noexcept = false;
       explicit Compound_requirement(const ipr::Expr& x) : pattern{x} { }
@@ -849,7 +1294,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Requirement::Compound
-   struct Nested_requirement : impl::Requirement<cxx_form::Requirement::Nested> {
+   export struct Nested_requirement : impl::Requirement<cxx_form::Requirement::Nested> {
       explicit Nested_requirement(const ipr::Expr& x) : cond{x} { }
       const ipr::Expr& condition() const final { return cond; }
    private:
@@ -866,7 +1311,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Pointer
-   struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
+   export struct Pointer_indirector : impl::Indirector<cxx_form::Indirector::Pointer> {
       explicit Pointer_indirector(ipr::Qualifiers q) : quals{q} { }
       ipr::Qualifiers qualifiers() const final { return quals; }
    private:
@@ -874,7 +1319,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Reference
-   struct Reference_indirector : impl::Indirector<cxx_form::Indirector::Reference> {
+   export struct Reference_indirector : impl::Indirector<cxx_form::Indirector::Reference> {
       explicit Reference_indirector(Reference_flavor f) : how{f} { }
       Reference_flavor flavor() const final { return how; }
    private:
@@ -882,7 +1327,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Indirector::Member
-   struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
+   export struct Member_indirector : impl::Indirector<cxx_form::Indirector::Member> {
       Member_indirector(const ipr::Expr& s, ipr::Qualifiers q) : whole{s}, quals{q} { }
       const ipr::Expr& scope() const final { return whole; }
       ipr::Qualifiers qualifiers() const final { return quals; }
@@ -901,7 +1346,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Morphism::Function
-   struct Function_morphism : impl::Morphism<cxx_form::Morphism::Function> {
+   export struct Function_morphism : impl::Morphism<cxx_form::Morphism::Function> {
       ipr::impl::Parameter_list inputs;
       Optional<ipr::Expr> eh_spec;
       ipr::Qualifiers quals { };
@@ -914,7 +1359,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Morphism::Array
-   struct Array_morphism : impl::Morphism<cxx_form::Morphism::Array> {
+   export struct Array_morphism : impl::Morphism<cxx_form::Morphism::Array> {
       Optional<ipr::Expr> array_bound;
       Optional<ipr::Expr> bound() const final { return array_bound; }
    };
@@ -948,13 +1393,13 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Species_declarator::Unqualified_id
-   using Unqualified_id_species = Name_species<cxx_form::Species_declarator::Unqualified_id, ipr::Name>;
+   export using Unqualified_id_species = Name_species<cxx_form::Species_declarator::Unqualified_id, ipr::Name>;
 
    // -- implementation of ipr::cxx_form::Species_declarator::Pack
-   using Pack_species = Name_species<cxx_form::Species_declarator::Pack, ipr::Identifier>;
+   export using Pack_species = Name_species<cxx_form::Species_declarator::Pack, ipr::Identifier>;
 
    // -- implementation of ipr::cxx_form::Species_declarator::Qualified_id
-   struct Qualified_id_species : impl::Id_species<cxx_form::Species_declarator::Qualified_id> {
+   export struct Qualified_id_species : impl::Id_species<cxx_form::Species_declarator::Qualified_id> {
       Qualified_id_species(const ipr::Expr& s, const ipr::Name& n) : outer{s}, id{n} { }
       const ipr::Expr& scope() const final { return outer; }
       const ipr::Name& member() const final { return id; }
@@ -964,8 +1409,8 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Species_declarator::Parenthesized
-   struct Parenthesized_species : impl::Species<cxx_form::Species_declarator::Parenthesized> {
-      util::ref<const Declarator::Term> declarator;
+   export struct Parenthesized_species : impl::Species<cxx_form::Species_declarator::Parenthesized> {
+      ipr::util::ref<const Declarator::Term> declarator;
       const Declarator::Term& term() const final { return declarator.get(); }
    };
 
@@ -979,15 +1424,15 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Declarator::Term
-   struct Term_declarator : impl::Declarator<cxx_form::Declarator::Term> {
+   export struct Term_declarator : impl::Declarator<cxx_form::Declarator::Term> {
       ipr::impl::ref_sequence<cxx_form::Indirector> prefix;
-      util::ref<cxx_form::Species_declarator> tail;
+      ipr::util::ref<cxx_form::Species_declarator> tail;
       const ipr::Sequence<cxx_form::Indirector>& indirectors() const final { return prefix; }
       const Species_declarator& species() const final { return tail.get(); }
    };
 
    // -- implementation of ipr::cxx_form::Declarator::Targeted
-   struct Targeted_declarator : impl::Declarator<cxx_form::Declarator::Targeted> {
+   export struct Targeted_declarator : impl::Declarator<cxx_form::Declarator::Targeted> {
       Targeted_declarator(const cxx_form::Species_declarator& s, const ipr::Type& t)
          : domain{s}, range{t} { }
       const cxx_form::Species_declarator& species() const final { return domain; }
@@ -1018,7 +1463,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Field_designator
-   struct Field_designator : impl::Subobject_designator<cxx_form::Field_designator> {
+   export struct Field_designator : impl::Subobject_designator<cxx_form::Field_designator> {
       explicit Field_designator(const ipr::Identifier& x) : id{x} { }
       const ipr::Identifier& name() const final { return id; }
    private:
@@ -1026,7 +1471,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Slot_designator
-   struct Slot_designator : impl::Subobject_designator<cxx_form::Slot_designator> {
+   export struct Slot_designator : impl::Subobject_designator<cxx_form::Slot_designator> {
       explicit Slot_designator(const ipr::Expr& x) : idx{x} { }
       const ipr::Expr& index() const final { return idx; }
    private:
@@ -1034,7 +1479,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Earmarked_initializer
-   struct Earmarked_initializer : cxx_form::Earmarked_initializer {
+   export struct Earmarked_initializer : cxx_form::Earmarked_initializer {
       using Interface = cxx_form::Earmarked_initializer;
       Earmarked_initializer(const cxx_form::Subobject_designator& f, const cxx_form::Initialization_provision& x)
          : sub{f}, init{x} { }
@@ -1046,7 +1491,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Classic_provision
-   struct Classic_provision : impl::Initialization_provision<ipr::cxx_form::Classic_provision> {
+   export struct Classic_provision : impl::Initialization_provision<ipr::cxx_form::Classic_provision> {
       explicit Classic_provision(const ipr::cxx_form::Elemental_initializer& i) : init{i} { }
       const ipr::cxx_form::Elemental_initializer& initializer() const final { return init; }
    private:
@@ -1054,7 +1499,7 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Parenthesized_provision
-   struct Parenthesized_provision : impl::Initialization_provision<ipr::cxx_form::Parenthesized_provision> {
+   export struct Parenthesized_provision : impl::Initialization_provision<ipr::cxx_form::Parenthesized_provision> {
       explicit Parenthesized_provision(const ipr::Expr& x) : expr{x} { }
       const ipr::Expr& initializer() const final { return expr; }
    private:
@@ -1062,19 +1507,19 @@ namespace ipr::cxx_form::impl {
    };
 
    // -- implementation of ipr::cxx_form::Braced_provision
-   struct Braced_provision : impl::Initialization_provision<impl::Elemental_initializer<ipr::cxx_form::Braced_provision>> {
+   export struct Braced_provision : impl::Initialization_provision<impl::Elemental_initializer<ipr::cxx_form::Braced_provision>> {
       ipr::impl::ref_sequence<cxx_form::Elemental_initializer> seq;
       const ipr::Sequence<cxx_form::Elemental_initializer>& elements() const final { return seq; }
    };
 
    // -- implementation of ipr::cxx_form::Designated_list_provision
-   struct Designated_list_provision : impl::Initialization_provision<impl::Elemental_initializer<cxx_form::Designated_list_provision>> {
+   export struct Designated_list_provision : impl::Initialization_provision<impl::Elemental_initializer<cxx_form::Designated_list_provision>> {
       ipr::impl::obj_sequence<cxx_form::impl::Earmarked_initializer> seq;
       const ipr::Sequence<cxx_form::Earmarked_initializer>& elements() const final { return seq; }
    };   
 
    // -- Factory of C++ declarator forms.
-   struct form_factory {
+   export struct form_factory {
       Monadic_constraint* make_monadic_constraint(const ipr::Identifier&);
       Monadic_constraint* make_monadic_constraint(const ipr::Expr&, const ipr::Identifier&);
       Polyadic_constraint* make_polyadic_constraint(const ipr::Identifier&);
@@ -1132,17 +1577,13 @@ namespace ipr::cxx_form::impl {
    };
 }
 
+// ---------------------------------
+// -- Token, attributes, captures --
+// ---------------------------------
+
 namespace ipr::impl {
-   struct Lexicon;
-
-   template<class T>
-   struct node_ref {
-      const T& node;
-      explicit node_ref(const T& t) : node(t) { }
-   };
-
                               // -- impl::Token --
-   struct Token : ipr::Lexeme, ipr::Token {
+   export struct Token : ipr::Lexeme, ipr::Token {
       using Interface = ipr::Token;
       Token(const ipr::String&, const Source_location&, TokenValue, TokenCategory);
       const ipr::String& spelling() const final { return text; }
@@ -1159,8 +1600,6 @@ namespace ipr::impl {
    };
 
    // -- Parameterized implementation of ipr::Attribute.
-   // -- The type parameter is used here as a device to implement an overrider
-   // -- for ipr::Attribute::visit(), for all T implementation classes of attribute.
    template<typename T>
    struct Attribute : T {
       void accept(typename T::Visitor& v) const final { v.visit(*this); }
@@ -1171,29 +1610,16 @@ namespace ipr::impl {
    template<typename T>
    using Binary_attribute = impl::Basic_binary<impl::Attribute<T>>;
 
-   // -- implementation of ipr::BasicAttribute
-   using BasicAttribute = Unary_attribute<ipr::BasicAttribute>;
-
-   // -- implementation of ipr::ScopedAttribute
-   using ScopedAttribute = Binary_attribute<ipr::ScopedAttribute>;
-
-   // -- implementation of ipr::LabeledAttribute
-   using LabeledAttribute = Binary_attribute<ipr::LabeledAttribute>;
-
-   // -- implementation of ipr::CalledAttribute
-   using CalledAttribute = Binary_attribute<ipr::CalledAttribute>;
-
-   // -- implementation of ipr::ExpandedAttribute
-   using ExpandedAttribute = Binary_attribute<ipr::ExpandedAttribute>;
-
-   // -- implementation of ipr::FactoredAttribute
-   using FactoredAttribute = Binary_attribute<ipr::FactoredAttribute>;
-
-   // -- implementation of ipr::ElaboratedAttribute
-   using ElaboratedAttribute = Unary_attribute<ipr::ElaboratedAttribute>;
+   export using BasicAttribute = Unary_attribute<ipr::BasicAttribute>;
+   export using ScopedAttribute = Binary_attribute<ipr::ScopedAttribute>;
+   export using LabeledAttribute = Binary_attribute<ipr::LabeledAttribute>;
+   export using CalledAttribute = Binary_attribute<ipr::CalledAttribute>;
+   export using ExpandedAttribute = Binary_attribute<ipr::ExpandedAttribute>;
+   export using FactoredAttribute = Binary_attribute<ipr::FactoredAttribute>;
+   export using ElaboratedAttribute = Unary_attribute<ipr::ElaboratedAttribute>;
 
    // -- Attributes factory --
-   struct attr_factory {
+   export struct attr_factory {
       const ipr::BasicAttribute& make_basic_attribute(const ipr::Token&);
       const ipr::ScopedAttribute& make_scoped_attribute(const ipr::Token&, const ipr::Token&);
       const ipr::LabeledAttribute& make_labeled_attribute(const ipr::Token&, const ipr::Attribute&);
@@ -1212,7 +1638,7 @@ namespace ipr::impl {
    };
 
    // -- implementation for ipr::Capture
-   struct Capture : ipr::Capture {
+   export struct Capture : ipr::Capture {
       using Interface = ipr::Capture;
       Capture(const ipr::Decl& d, ipr::Binding_mode m) : decl{d}, md{m} { }
       ipr::Binding_mode mode() const final { return md; }
@@ -1228,24 +1654,21 @@ namespace ipr::impl {
       void accept(typename T::Visitor& v) const final { v.visit(*this); }
    };
 
-   // -- implementation of ipr::Capture_specification::Default
-   struct Default_capture_specification : Capture_specification<ipr::Capture_specification::Default> {
+   export struct Default_capture_specification : Capture_specification<ipr::Capture_specification::Default> {
       explicit Default_capture_specification(Binding_mode m) : md{m} { }
       Binding_mode mode() const final { return md; }
    private:
       const Binding_mode md;
    };
 
-   // -- implementation of ipr::Capture_specification::Implicit_object
-   struct Implicit_object_capture_specification : Capture_specification<ipr::Capture_specification::Implicit_object> {
+   export struct Implicit_object_capture_specification : Capture_specification<ipr::Capture_specification::Implicit_object> {
       explicit Implicit_object_capture_specification(Binding_mode m) : md{m} { }
       Binding_mode how() const final { return md; }
    private:
       const Binding_mode md;
    };
 
-   // -- implementation of ipr::Capture_specification::Enclosing_local
-   struct Enclosing_local_capture_specification : Capture_specification<ipr::Capture_specification::Enclosing_local> {
+   export struct Enclosing_local_capture_specification : Capture_specification<ipr::Capture_specification::Enclosing_local> {
       Enclosing_local_capture_specification(const ipr::Decl& x, Binding_mode m) : decl{x}, md{m} { }
       Binding_mode mode() const final { return md; }
       const ipr::Identifier& name() const final;
@@ -1255,8 +1678,7 @@ namespace ipr::impl {
       const Binding_mode md;
    };
 
-   // -- implementation of ipr::Capture_capture::Binding
-   struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
+   export struct Binding_capture_specification : Capture_specification<ipr::Capture_specification::Binding> {
       Binding_capture_specification(const ipr::Identifier& n, const ipr::Expr& x, Binding_mode m) : id{n}, init{x}, md{m} { }
       Binding_mode mode() const final { return md; }
       const ipr::Identifier& name() const final { return id; }
@@ -1267,8 +1689,7 @@ namespace ipr::impl {
       const Binding_mode md;
    };
 
-   // -- implementation of ipr::Capture_specification::Expansion.
-   struct Expansion_capture_specification : Capture_specification<ipr::Capture_specification::Expansion> {
+   export struct Expansion_capture_specification : Capture_specification<ipr::Capture_specification::Expansion> {
       explicit Expansion_capture_specification(const Named& x) : cap{x} { }
       const Named& what() const final { return cap; }
    private:
@@ -1276,7 +1697,7 @@ namespace ipr::impl {
    };
 
    // -- capture specification factory
-   struct capture_spec_factory {
+   export struct capture_spec_factory {
       const ipr::Capture_specification::Default& default_capture(Binding_mode);
       const ipr::Capture_specification::Implicit_object& implicit_object_capture(Binding_mode);
       const ipr::Capture_specification::Enclosing_local& enclosing_local_capture(const ipr::Decl&, Binding_mode);
@@ -1291,300 +1712,18 @@ namespace ipr::impl {
    };
 
                               // -- impl::Module_name --
-   struct Module_name : ipr::Module_name {
+   export struct Module_name : ipr::Module_name {
       ref_sequence<ipr::Identifier> components;
 
       const ipr::Sequence<ipr::Identifier>& stems() const final;
    };
+}
 
+// ------------------
+// -- Declarations --
+// ------------------
 
-   template<typename T,
-         typename std::enable_if_t<std::is_scalar_v<T>, int> = 0>
-   constexpr int compare(T lhs, T rhs)
-   {
-      constexpr std::less<> lt { };
-      return lt(lhs, rhs) ? -1 : (lt(rhs, lhs) ? 1 : 0);
-   }
-
-   constexpr int compare(const ipr::Node& lhs, const ipr::Node& rhs)
-   {
-      return compare(&lhs, &rhs);
-   }
-
-   constexpr int compare(const ipr::String& lhs, const ipr::String& rhs)
-   {
-      return lhs.characters().compare(rhs.characters());
-   }
-
-   inline int compare(const ipr::Logogram& lhs, const ipr::Logogram& rhs)
-   {
-      return compare(lhs.what(), rhs.what());
-   }
-
-   inline int compare(const ipr::Language_linkage& lhs, const ipr::Language_linkage& rhs)
-   {
-      return compare(lhs.language(), rhs.language());
-   }
-
-                              // -- Conversion_expr --
-   template<class Interface>
-   struct Conversion_expr : impl::Classic<Binary_node<Interface>> {
-      using Base = impl::Classic<Binary_node<Interface>>;
-      using Base::Base;
-      const ipr::Type& type() const final { return this->rep.first; }
-   };
-
-   // All declarations (except parameters, base-classes, enumerations)
-   // maintain data about their position and master declaration.  Since
-   // all declarations in a given decl-set have the same type, only
-   // the master declaration has the "type" information.
-   // Similarly, only the master declaration maintains the home
-   // region information.
-   //
-   // In a given decl-set, only one of the declarations is a definition.
-   // The master declaration keeps track of that definition, so all
-   // other redeclarations can refer to it through the master
-   // declaration data.
-
-   template<class> struct master_decl_data;
-   struct Overload;
-
-   // An entry in an overload set.  Part of the data that a
-   // master declaration manages.  It is determined, within
-   // an overload set, by its type.  All redeclarations must
-   // register themselves before the master declaration, at
-   // the creation time.
-
-   struct overload_entry : util::rb_tree::link<overload_entry> {
-      const ipr::Type& type;
-      ref_sequence<ipr::Decl> declset;
-      explicit overload_entry(const ipr::Type& t) : type(t) { }
-   };
-
-
-   template<class Interface>
-   struct basic_decl_data : scope_datum {
-      // Information about the master declaration.  This pointer
-      // shall be set at actual declaration creation time.
-      master_decl_data<Interface>* master_data;
-
-      explicit basic_decl_data(master_decl_data<Interface>* mdd)
-            : master_data(mdd)
-      { }
-   };
-
-   // A master declaration is the first seen introduction of
-   // a name with a given type.  Further redeclarations
-   // are represented by basic_decl_data<> and are linked to the
-   // master declaration.  That forms the declaration-set of
-   // that declaration.
-
-   template<class Interface>
-   struct master_decl_data : basic_decl_data<Interface>, overload_entry {
-      // The declaration that is considered to be the definition.
-      Optional<Interface> def { };
-      util::ref<const ipr::Language_linkage> lang_linkage { };
-
-      // The overload set that contains this master declaration.  It
-      // shall be set at the time the node for the master declaration
-      // is created.
-      impl::Overload* overload;
-      const ipr::Region* home;
-      master_decl_data(impl::Overload* ovl, const ipr::Type& t)
-            : basic_decl_data<Interface>{this},
-               overload_entry{t},
-               overload{ovl},
-               home{nullptr}
-      { }
-   };
-
-   template<>
-   struct master_decl_data<ipr::Template>
-      : basic_decl_data<ipr::Template>, overload_entry {
-      using Base = basic_decl_data<ipr::Template>;
-      // The declaration that is considered to be the definition.
-      Optional<ipr::Template> def { };
-      util::ref<const ipr::Language_linkage> lang_linkage { };
-      const ipr::Template* primary;
-      const ipr::Region* home;
-
-      // The overload set that contains this master declaration.  It
-      // shall be set at the time the node for the master declaration
-      // is created.
-      impl::Overload* overload;
-
-      // Sequence of specializations
-      decl_sequence specs;
-
-      master_decl_data(impl::Overload*, const ipr::Type&);
-   };
-
-
-   struct Overload : impl::Expr<ipr::Overload> {
-      // The name of this overload set.
-      const ipr::Name& name;
-
-      // All entries in this overload set, chained together in a
-      // red-back tree to permit fast retrieval based on type (as key).
-      // They are all master declarations.
-      util::rb_tree::chain<overload_entry> entries;
-
-      // A sequence of master declarations.  They are added as they
-      // appear in their enclosing scope.
-      std::vector<scope_datum*> masters;
-
-      explicit Overload(const ipr::Name&);
-      Optional<ipr::Decl> operator[](const ipr::Type&) const final;
-      overload_entry* lookup(const ipr::Type&) const;
-
-      template<class T>
-      void push_back(master_decl_data<T>*);
-   };
-
-   struct node_compare {
-      int operator()(const ipr::Node& lhs, const ipr::Node& rhs) const
-      {
-         return compare(lhs, rhs);
-      }
-
-      int
-      operator()(const overload_entry& e, const ipr::Type& t) const
-      {
-         return (*this)(e.type, t);
-      }
-
-      int
-      operator()(const overload_entry& l, const overload_entry& r) const
-      {
-         return (*this)(l.type, r.type);
-      }
-   };
-
-   // Capture the commonality of controlled statements such as `do-statement',
-   // `while-statement', and `switch-statement'.
-   template<typename Base>
-   struct Controlled_stmt : immotile_stmt<Base> {
-      using typename Base::Arg1_type;
-      using typename Base::Arg2_type;
-      util::ref<std::remove_reference_t<Arg1_type>> control;
-      util::ref<std::remove_reference_t<Arg2_type>> stmt;
-      Arg1_type first() const final { return control.get(); }
-      Arg2_type second() const final { return stmt.get(); }
-      const ipr::Type& type() const final { return second().type(); }
-   };
-
-   // The class template Decl<> implements common operations
-   // for most declarations nodes.  The exception cases are
-   // handled by the class template unique_decl<>.
-
-   template<class D>
-   struct Decl : immotile_stmt<D> {
-      basic_decl_data<D> decl_data;
-
-      Decl() : decl_data{ nullptr } { }
-
-      const ipr::Language_linkage& language_linkage() const final
-      {
-         return util::check(decl_data.master_data)->lang_linkage.get();
-      }
-
-      const ipr::Region& home_region() const final {
-         return *util::check(util::check(decl_data.master_data)->home);
-      }
-
-      // Set declaration specifiers for this decl.
-      using D::specifiers;
-      void specifiers(ipr::Specifiers s) {
-         decl_data.spec = s;
-      }
-   };
-
-   struct Base_type final : unique_decl<ipr::Base_type> {
-      const ipr::Type& base;
-      const ipr::Region& where;
-      const Decl_position scope_pos;
-      ipr::Specifiers spec;
-
-      Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
-      const ipr::Type& type() const final { return base; }
-      // FIXME: for a base-class subobject, the home region and lexical
-      //        region are slightly different.  The home region should be that
-      //        of the class this is a base class, whereas the lexical region
-      //        should be the actual lexical region where the base type was specified.
-      const ipr::Region& lexical_region() const final { return where; }
-      const ipr::Region& home_region() const final { return where; }
-      Decl_position position() const final { return scope_pos; }
-      Optional<ipr::Expr> initializer() const final;
-      Specifiers specifiers() const final { return spec; }
-   };
-
-   struct Enumerator final : unique_decl<ipr::Enumerator> {
-      const ipr::Name& id;
-      const ipr::Enum& typing;
-      const Decl_position scope_pos;
-      util::ref<const ipr::Region> where;
-      Optional<ipr::Expr> init;
-
-      Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
-      const ipr::Name& name() const final { return id; }
-      const ipr::Type& type() const final { return typing; }
-      const ipr::Region& lexical_region() const final { return where.get(); }
-      const ipr::Region& home_region() const final { return where.get(); }
-      Decl_position position() const final { return scope_pos; }
-      Optional<ipr::Expr> initializer() const final { return init; }
-   };
-
-   template<typename T>
-   struct decl_rep : T {
-      using Interface = typename T::Interface;
-      decl_rep(master_decl_data<Interface>* mdd)
-      {
-         this->decl_data.master_data = mdd;
-         this->decl_data.decl = this;
-         mdd->declset.push_back(this);
-      }
-
-      const ipr::Name& name() const final
-      {
-         return this->decl_data.master_data->overload->name;
-      }
-
-      ipr::Specifiers specifiers() const final
-      {
-         return this->decl_data.spec;
-      }
-
-      const ipr::Type& type() const final
-      {
-         return this->decl_data.master_data->type;
-      }
-
-      const ipr::Scope& scope() const
-      {
-         return this->decl_data.master_data->overload->where;
-      }
-
-      Decl_position position() const
-      {
-         return this->decl_data.scope_pos;
-      }
-
-      const ipr::Decl& master() const final
-      {
-         return *util::check(this->decl_data.master_data->decl);
-      }
-
-      const ipr::Sequence<ipr::Decl>& decl_set() const final
-      {
-         return this->decl_data.master_data->declset;
-      }
-
-      Optional<Interface> definition() const
-      {
-         return this->decl_data.master_data->def;
-      }
-   };
-
+namespace ipr::impl {
    // -- impl::symbolic_type
    // Representation of generalized built-in type.
    // All built-in types have type "typename" and, of course, have C++ linkage.
@@ -1600,25 +1739,60 @@ namespace ipr::impl {
    };
 
    using extended_type = symbolic_type<ipr::Identifier>;
-   using Array = Binary_type<ipr::Array>;
-   using Decltype = Unary_type<ipr::Decltype>;
-   using As_type = Unary_type<ipr::As_type>;
-   using Tor = Binary_type<ipr::Tor>;
-   using Function = Ternary_type<ipr::Function>;
-   using Pointer = Unary_type<ipr::Pointer>;
-   using Product = Unary_type<ipr::Product>;
-   using Ptr_to_member = Binary_type<ipr::Ptr_to_member>;
-   using Qualified = Binary_type<ipr::Qualified>;
-   using Reference = Unary_type<ipr::Reference>;
-   using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
-   using Sum = Unary_type<ipr::Sum>;
-   using Forall = Binary_type<ipr::Forall>;
+
+   export struct Base_type final : unique_decl<ipr::Base_type> {
+      const ipr::Type& base;
+      const ipr::Region& where;
+      const Decl_position scope_pos;
+      ipr::Specifiers spec;
+
+      Base_type(const ipr::Type&, const ipr::Region&, Decl_position);
+      const ipr::Type& type() const final { return base; }
+      const ipr::Region& lexical_region() const final { return where; }
+      const ipr::Region& home_region() const final { return where; }
+      Decl_position position() const final { return scope_pos; }
+      Optional<ipr::Expr> initializer() const final;
+      Specifiers specifiers() const final { return spec; }
+   };
+
+   export struct Enumerator final : unique_decl<ipr::Enumerator> {
+      const ipr::Name& id;
+      const ipr::Enum& typing;
+      const Decl_position scope_pos;
+      util::ref<const ipr::Region> where;
+      Optional<ipr::Expr> init;
+
+      Enumerator(const ipr::Name&, const ipr::Enum&, Decl_position);
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return typing; }
+      const ipr::Region& lexical_region() const final { return where.get(); }
+      const ipr::Region& home_region() const final { return where.get(); }
+      Decl_position position() const final { return scope_pos; }
+      Optional<ipr::Expr> initializer() const final { return init; }
+   };
+}
+
+// ----------------
+// -- Type nodes --
+// ----------------
+
+namespace ipr::impl {
+   export using Array = Binary_type<ipr::Array>;
+   export using Decltype = Unary_type<ipr::Decltype>;
+   export using As_type = Unary_type<ipr::As_type>;
+   export using Tor = Binary_type<ipr::Tor>;
+   export using Function = Ternary_type<ipr::Function>;
+   export using Pointer = Unary_type<ipr::Pointer>;
+   export using Product = Unary_type<ipr::Product>;
+   export using Ptr_to_member = Binary_type<ipr::Ptr_to_member>;
+   export using Qualified = Binary_type<ipr::Qualified>;
+   export using Reference = Unary_type<ipr::Reference>;
+   export using Rvalue_reference = Unary_type<ipr::Rvalue_reference>;
+   export using Sum = Unary_type<ipr::Sum>;
+   export using Forall = Binary_type<ipr::Forall>;
 
    // -- Specialized implementation of ipr::As_type.
-   // A given core expression can be proclaimed to name a type with a specified data
-   // or control transfer. That is useful for interoperating with code fragments
-   // written in other languages.
-   struct As_type_with_transfer : immotile_node<ipr::As_type> {
+   export struct As_type_with_transfer : immotile_node<ipr::As_type> {
       struct Rep {
          const ipr::Expr& expr;
          const ipr::Transfer& xfer;
@@ -1635,8 +1809,7 @@ namespace ipr::impl {
    };
 
    // -- Specialized implementation of ipr::Function.
-   // A function type with a specified data or control transfer (other than C++) protocol.
-   struct Function_with_transfer : immotile_node<ipr::Function> {
+   export struct Function_with_transfer : immotile_node<ipr::Function> {
       struct Rep {
          const ipr::Product& source;
          const ipr::Type& target;
@@ -1655,18 +1828,24 @@ namespace ipr::impl {
       Type_id id;
       Rep rep;
    };
+}
 
-   using Phantom = Expr<ipr::Phantom>;
-   using Eclipsis = Expr<ipr::Eclipsis>;
+// ----------------------
+// -- Expression nodes --
+// ----------------------
 
-   struct Symbol final : Unary_expr<ipr::Symbol> {
+namespace ipr::impl {
+   export using Phantom = Expr<ipr::Phantom>;
+   export using Eclipsis = Expr<ipr::Eclipsis>;
+
+   export struct Symbol final : Unary_expr<ipr::Symbol> {
       explicit constexpr Symbol(const ipr::Name& n) : Unary_expr<ipr::Symbol>{ n } { }
       constexpr Symbol(const ipr::Name& n, const ipr::Type& t)
           : Unary_expr<ipr::Symbol>{ n }
       { typing = t; }
    };
 
-   struct Lambda : impl::Parameterization<ipr::Expr, impl::Node<ipr::Lambda>> {
+   export struct Lambda : impl::Parameterization<ipr::Expr, impl::Node<ipr::Lambda>> {
       util::ref<const ipr::Closure> typing;
       Optional<ipr::Type> value_type;
       Optional<ipr::Expr> decl_constraint;
@@ -1685,7 +1864,7 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Capture_specification>& captures() const final { return env_spec; }
    };
 
-   struct Requires : immotile_node<ipr::Requires> {
+   export struct Requires : immotile_node<ipr::Requires> {
       impl::Parameter_list formals;
       impl::ref_sequence<cxx_form::Requirement> requirements;
       Requires(const ipr::Region& r, Mapping_level l) : formals{r, l} { }
@@ -1694,19 +1873,19 @@ namespace ipr::impl {
       const ipr::Sequence<cxx_form::Requirement>& body() const final { return requirements; }
    };
 
-   using Address = Classic_unary_expr<ipr::Address>;
-   using Array_delete = Classic_unary_expr<ipr::Array_delete>;
-   using Complement = Classic_unary_expr<ipr::Complement>;
-   using Delete = Classic_unary_expr<ipr::Delete>;
-   using Demotion = Unary_expr<ipr::Demotion>;
-   using Deref = Classic_unary_expr<ipr::Deref>;
+   export using Address = Classic_unary_expr<ipr::Address>;
+   export using Array_delete = Classic_unary_expr<ipr::Array_delete>;
+   export using Complement = Classic_unary_expr<ipr::Complement>;
+   export using Delete = Classic_unary_expr<ipr::Delete>;
+   export using Demotion = Unary_expr<ipr::Demotion>;
+   export using Deref = Classic_unary_expr<ipr::Deref>;
 
-   struct Asm : impl::Unary_node<ipr::Asm> {
+   export struct Asm : impl::Unary_node<ipr::Asm> {
       explicit Asm(const ipr::String&);
       const ipr::Type& type() const final;
    };
 
-   struct Expr_list : immotile_node<ipr::Expr_list> {
+   export struct Expr_list : immotile_node<ipr::Expr_list> {
       typed_sequence<ref_sequence<ipr::Expr>> seq;
 
       Expr_list();
@@ -1719,81 +1898,81 @@ namespace ipr::impl {
       void push_back(const ipr::Expr* e) { seq.seq.push_back(e); }
    };
 
-   using Alignof = Unary_expr<ipr::Alignof>;
-   using Sizeof = Unary_expr<ipr::Sizeof>;
-   using Args_cardinality = Unary_expr<ipr::Args_cardinality>;
-   using Typeid = Unary_expr<ipr::Typeid>;
-   using Label = Unary_expr<ipr::Label>;
+   export using Alignof = Unary_expr<ipr::Alignof>;
+   export using Sizeof = Unary_expr<ipr::Sizeof>;
+   export using Args_cardinality = Unary_expr<ipr::Args_cardinality>;
+   export using Typeid = Unary_expr<ipr::Typeid>;
+   export using Label = Unary_expr<ipr::Label>;
 
-   struct Restriction : Unary_node<ipr::Restriction> {
+   export struct Restriction : Unary_node<ipr::Restriction> {
       explicit Restriction(const ipr::Expr& x) : Unary_node<ipr::Restriction>{x} { }
       const ipr::Type& type() const final;
    };
 
-   struct Id_expr : Unary_expr<ipr::Id_expr> {
+   export struct Id_expr : Unary_expr<ipr::Id_expr> {
       Optional<ipr::Expr> decls { };
 
       explicit Id_expr(const ipr::Name&);
       Optional<ipr::Expr> resolution() const final;
    };
 
-   using Materialization = Unary_expr<ipr::Materialization>;
-   using Not = Classic_unary_expr<ipr::Not>;
+   export using Materialization = Unary_expr<ipr::Materialization>;
+   export using Not = Classic_unary_expr<ipr::Not>;
 
-   struct Enclosure : impl::Unary_expr<ipr::Enclosure> {
+   export struct Enclosure : impl::Unary_expr<ipr::Enclosure> {
       Enclosure(ipr::Delimiter, const ipr::Expr&);
       Delimiter delimiters() const final { return delim; }
    private:
       Delimiter delim;
    };
 
-   using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
-   using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
-   using Post_decrement = Classic_unary_expr<ipr::Post_decrement>;
-   using Post_increment = Classic_unary_expr<ipr::Post_increment>;
-   using Promotion = Unary_expr<ipr::Promotion>;
-   using Read = Unary_expr<ipr::Read>;
-   using Throw = Classic_unary_expr<ipr::Throw>;
+   export using Pre_decrement = Classic_unary_expr<ipr::Pre_decrement>;
+   export using Pre_increment = Classic_unary_expr<ipr::Pre_increment>;
+   export using Post_decrement = Classic_unary_expr<ipr::Post_decrement>;
+   export using Post_increment = Classic_unary_expr<ipr::Post_increment>;
+   export using Promotion = Unary_expr<ipr::Promotion>;
+   export using Read = Unary_expr<ipr::Read>;
+   export using Throw = Classic_unary_expr<ipr::Throw>;
 
-   using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
-   using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
-   using Expansion = Classic_unary_expr<ipr::Expansion>;
-   using Construction = Classic_unary_expr<ipr::Construction>;
-   using Noexcept = Unary_expr<ipr::Noexcept>;
+   export using Unary_minus = Classic_unary_expr<ipr::Unary_minus>;
+   export using Unary_plus = Classic_unary_expr<ipr::Unary_plus>;
+   export using Expansion = Classic_unary_expr<ipr::Expansion>;
+   export using Construction = Classic_unary_expr<ipr::Construction>;
+   export using Noexcept = Unary_expr<ipr::Noexcept>;
 
-   using Rewrite = Binary_node<ipr::Rewrite>;
-   using And = Classic_binary_expr<ipr::And>;
-   using Annotation = Binary_node<ipr::Annotation>;
-   using Array_ref = Classic_binary_expr<ipr::Array_ref>;
-   using Arrow = Classic_binary_expr<ipr::Arrow>;
-   using Arrow_star = Classic_binary_expr<ipr::Arrow_star>;
-   using Assign = Classic_binary_expr<ipr::Assign>;
-   using Bitand = Classic_binary_expr<ipr::Bitand>;
-   using Bitand_assign = Classic_binary_expr<ipr::Bitand_assign>;
-   using Bitor = Classic_binary_expr<ipr::Bitor>;
-   using Bitor_assign = Classic_binary_expr<ipr::Bitor_assign>;
-   using Bitxor = Classic_binary_expr<ipr::Bitxor>;
-   using Bitxor_assign = Classic_binary_expr<ipr::Bitxor_assign>;
-   using Call = Classic_binary_expr<ipr::Call>;
-   using Cast = Conversion_expr<ipr::Cast>;
-   using Coercion = Classic_binary_expr<ipr::Coercion>;
-   using Comma = Classic_binary_expr<ipr::Comma>;
-   using Const_cast = Conversion_expr<ipr::Const_cast>;
-   using Div = Classic_binary_expr<ipr::Div>;
-   using Div_assign = Classic_binary_expr<ipr::Div_assign>;
-   using Dot = Classic_binary_expr<ipr::Dot>;
-   using Dot_star = Classic_binary_expr<ipr::Dot_star>;
-   using Dynamic_cast = Conversion_expr<ipr::Dynamic_cast>;
-   using Equal = Classic_binary_expr<ipr::Equal>;
-   using Greater = Classic_binary_expr<ipr::Greater>;
-   using Greater_equal = Classic_binary_expr<ipr::Greater_equal>;
-   using Less = Classic_binary_expr<ipr::Less>;
-   using Less_equal = Classic_binary_expr<ipr::Less_equal>;
-   using Literal = Conversion_expr<ipr::Literal>;
-   using Lshift = Classic_binary_expr<ipr::Lshift>;
-   using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
+   export using Rewrite = Binary_node<ipr::Rewrite>;
+   export using And = Classic_binary_expr<ipr::And>;
+   export using Annotation = Binary_node<ipr::Annotation>;
+   export using Array_ref = Classic_binary_expr<ipr::Array_ref>;
+   export using Arrow = Classic_binary_expr<ipr::Arrow>;
+   export using Arrow_star = Classic_binary_expr<ipr::Arrow_star>;
+   export using Assign = Classic_binary_expr<ipr::Assign>;
+   export using Bitand = Classic_binary_expr<ipr::Bitand>;
+   export using Bitand_assign = Classic_binary_expr<ipr::Bitand_assign>;
+   export using Bitor = Classic_binary_expr<ipr::Bitor>;
+   export using Bitor_assign = Classic_binary_expr<ipr::Bitor_assign>;
+   export using Bitxor = Classic_binary_expr<ipr::Bitxor>;
+   export using Bitxor_assign = Classic_binary_expr<ipr::Bitxor_assign>;
+   export using Call = Classic_binary_expr<ipr::Call>;
+   export using Cast = Conversion_expr<ipr::Cast>;
+   export using Coercion = Classic_binary_expr<ipr::Coercion>;
+   export using Comma = Classic_binary_expr<ipr::Comma>;
+   export using Const_cast = Conversion_expr<ipr::Const_cast>;
+   export using Div = Classic_binary_expr<ipr::Div>;
+   export using Div_assign = Classic_binary_expr<ipr::Div_assign>;
+   export using Dot = Classic_binary_expr<ipr::Dot>;
+   export using Dot_star = Classic_binary_expr<ipr::Dot_star>;
+   export using Dynamic_cast = Conversion_expr<ipr::Dynamic_cast>;
+   export using Equal = Classic_binary_expr<ipr::Equal>;
+   export using Greater = Classic_binary_expr<ipr::Greater>;
+   export using Greater_equal = Classic_binary_expr<ipr::Greater_equal>;
+   export using Less = Classic_binary_expr<ipr::Less>;
+   export using Less_equal = Classic_binary_expr<ipr::Less_equal>;
+   export using Literal = Conversion_expr<ipr::Literal>;
+   export using Lshift = Classic_binary_expr<ipr::Lshift>;
+   export using Lshift_assign = Classic_binary_expr<ipr::Lshift_assign>;
 
-   struct Mapping : impl::Parameterization<ipr::Expr, impl::Expr<ipr::Mapping>> {
+   export struct Mapping : impl::Parameterization<ipr::Expr, impl::Expr<ipr::Mapping>> {
       Mapping(const ipr::Region&, Mapping_level);
       impl::Parameter* param(const ipr::Name& n, const ipr::Type& t)
       {
@@ -1801,31 +1980,31 @@ namespace ipr::impl {
       }
    };
 
-   using Member_init = Binary_expr<ipr::Member_init>;
-   using Minus = Classic_binary_expr<ipr::Minus>;
-   using Minus_assign = Classic_binary_expr<ipr::Minus_assign>;
-   using Modulo = Classic_binary_expr<ipr::Modulo>;
-   using Modulo_assign = Classic_binary_expr<ipr::Modulo_assign>;
-   using Mul = Classic_binary_expr<ipr::Mul>;
-   using Mul_assign = Classic_binary_expr<ipr::Mul_assign>;
-   using Narrow = Binary_expr<ipr::Narrow>;
-   using Not_equal = Classic_binary_expr<ipr::Not_equal>;
-   using Or = Classic_binary_expr<ipr::Or>;
-   using Plus = Classic_binary_expr<ipr::Plus>;
-   using Plus_assign = Classic_binary_expr<ipr::Plus_assign>;
-   using Pretend = Binary_expr<ipr::Pretend>;
-   using Qualification = Binary_expr<ipr::Qualification>;
-   using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
-   using Rshift = Classic_binary_expr<ipr::Rshift>;
-   using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
-   using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
-   using Static_cast = Conversion_expr<ipr::Static_cast>;
-   using Template_id = Binary_node<ipr::Template_id>;
-   using Widen = Binary_expr<ipr::Widen>;
+   export using Member_init = Binary_expr<ipr::Member_init>;
+   export using Minus = Classic_binary_expr<ipr::Minus>;
+   export using Minus_assign = Classic_binary_expr<ipr::Minus_assign>;
+   export using Modulo = Classic_binary_expr<ipr::Modulo>;
+   export using Modulo_assign = Classic_binary_expr<ipr::Modulo_assign>;
+   export using Mul = Classic_binary_expr<ipr::Mul>;
+   export using Mul_assign = Classic_binary_expr<ipr::Mul_assign>;
+   export using Narrow = Binary_expr<ipr::Narrow>;
+   export using Not_equal = Classic_binary_expr<ipr::Not_equal>;
+   export using Or = Classic_binary_expr<ipr::Or>;
+   export using Plus = Classic_binary_expr<ipr::Plus>;
+   export using Plus_assign = Classic_binary_expr<ipr::Plus_assign>;
+   export using Pretend = Binary_expr<ipr::Pretend>;
+   export using Qualification = Binary_expr<ipr::Qualification>;
+   export using Reinterpret_cast = Conversion_expr<ipr::Reinterpret_cast>;
+   export using Rshift = Classic_binary_expr<ipr::Rshift>;
+   export using Rshift_assign = Classic_binary_expr<ipr::Rshift_assign>;
+   export using Scope_ref = Classic_binary_expr<ipr::Scope_ref>;
+   export using Static_cast = Conversion_expr<ipr::Static_cast>;
+   export using Template_id = Binary_node<ipr::Template_id>;
+   export using Widen = Binary_expr<ipr::Widen>;
    // A Where node where the attendant() is not a scope.
-   using Where_no_decl = Binary_node<ipr::Where>;
+   export using Where_no_decl = Binary_node<ipr::Where>;
 
-   struct Instantiation : immotile_node<ipr::Instantiation> {
+   export struct Instantiation : immotile_node<ipr::Instantiation> {
       Optional<ipr::Expr> result;
       Instantiation(const ipr::Expr& e, const ipr::Substitution& s) : expr{e}, subst{s} { }
       const ipr::Expr& pattern() const final { return expr; }
@@ -1836,24 +2015,24 @@ namespace ipr::impl {
       const ipr::Substitution& subst;
    };
 
-   struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
+   export struct Binary_fold : Classic_binary_expr<ipr::Binary_fold> {
       Category_code fold_op;
 
       Binary_fold(Category_code, const ipr::Expr&, const ipr::Expr&);
       Category_code operation() const final;
    };
 
-   struct New : impl::Classic_binary_expr<ipr::New> {
+   export struct New : impl::Classic_binary_expr<ipr::New> {
       bool global = false;
 
       New(Optional<ipr::Expr_list>, const ipr::Construction&);
       bool global_requested() const final;
    };
 
-   using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
+   export using Conditional = Ternary<Classic<Expr<ipr::Conditional>>>;
 
    // An elementary substitution is a subsitution the domain of which is a singleton.
-   struct Elementary_substitution : ipr::Substitution {
+   export struct Elementary_substitution : ipr::Substitution {
       Elementary_substitution(const ipr::Parameter& p, const ipr::Expr& v) : parm{p}, value{v} { }
       const ipr::Expr& operator[](const ipr::Parameter& p) const final
       {
@@ -1865,14 +2044,20 @@ namespace ipr::impl {
    };
 
    // A general substitution is a substitution the domain of which has cardinality greater than one.
-   struct General_substitution : ipr::Substitution {
+   export struct General_substitution : ipr::Substitution {
       const ipr::Expr& operator[](const ipr::Parameter&) const final;
       General_substitution& subst(const ipr::Parameter&, const ipr::Expr&);
    private:
       std::map<const ipr::Parameter*, const ipr::Expr*> mapping;
    };
+}
 
-   struct Template : impl::Decl<ipr::Template> {
+// -----------------------
+// -- Declaration nodes --
+// -----------------------
+
+namespace ipr::impl {
+   export struct Template : impl::Decl<ipr::Template> {
       util::ref<impl::Mapping> init;
       util::ref<const ipr::Region> lexreg;
 
@@ -1880,50 +2065,24 @@ namespace ipr::impl {
       const ipr::Template& primary_template() const final;
       const ipr::Sequence<ipr::Decl>& specializations() const final;
       const ipr::Mapping& mapping() const final { return init.get(); }
-      // FIXME: The initializer should actually be the mapping, since a Template is a
-      //        *named* mapping.  In Classic IPR, and in the current incarnation, the initializer
-      //        is the initializer of the current instantiation.
       Optional<ipr::Expr> initializer() const final { return { mapping().result() }; }
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
 
-   template<typename T>
-   struct decl_factory {
-      using Interface = typename T::Interface;
-      stable_farm<decl_rep<T>> decls;
-      stable_farm<master_decl_data<Interface>> master_info;
-
-      // We have gotten an overload-set for a name, and we are about
-      // to enter the first declaration for that name with the type T.
-      decl_rep<T>* declare(Overload* ovl, const ipr::Type& t)
-      {
-         // Grab bookkeeping memory for this master declaration.
-         master_decl_data<Interface>* data = master_info.make(ovl, t);
-         // The actual representation for the declaration points back
-         // to the master declaration bookkeeping store.
-         decl_rep<T>* master = decls.make(data);
-         // Inform the overload-set that we have a new master declaration.
-         ovl->push_back(data);
-
-         return master;
-      }
-
-      decl_rep<T>* redeclare(overload_entry* decl)
-      {
-         return decls.make
-            (static_cast<master_decl_data<Interface>*>(decl));
-      }
+   struct fundecl_data : std::variant<impl::Parameter_list*, impl::Mapping*> {
+      ipr::FunctionTraits traits { };
+      impl::Parameter_list* parameters() const { return std::get<0>(*this); }
+      impl::Mapping* mapping() const { return std::get<1>(*this); }
    };
 
-
-   struct Alias : impl::Decl<ipr::Alias> {
+   export struct Alias : impl::Decl<ipr::Alias> {
       util::ref<const ipr::Expr> aliasee;
 
       Alias();
       Optional<ipr::Expr> initializer() const final { return aliasee.get(); }
    };
 
-   struct Var : impl::Decl<ipr::Var> {
+   export struct Var : impl::Decl<ipr::Var> {
       Optional<ipr::Expr> init;
       util::ref<const ipr::Region> lexreg;
 
@@ -1932,16 +2091,14 @@ namespace ipr::impl {
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
 
-   // FIXME: Field should use unique_decl, not impl::Decl.
-   struct Field : impl::Decl<ipr::Field> {
+   export struct Field : impl::Decl<ipr::Field> {
       Optional<ipr::Expr> init;
 
       Field();
       Optional<ipr::Expr> initializer() const final { return init; }
    };
 
-   // FIXME: Bitfield should use unique_decl, not impl::Decl
-   struct Bitfield : impl::Decl<ipr::Bitfield> {
+   export struct Bitfield : impl::Decl<ipr::Bitfield> {
       util::ref<const ipr::Expr> length;
       Optional<ipr::Expr> init;
 
@@ -1950,7 +2107,7 @@ namespace ipr::impl {
       Optional<ipr::Expr> initializer() const final { return init; }
    };
 
-   struct Typedecl : impl::Decl<ipr::Typedecl> {
+   export struct Typedecl : impl::Decl<ipr::Typedecl> {
       Optional<ipr::Type> init;
       util::ref<const ipr::Region> lexreg;
 
@@ -1959,7 +2116,7 @@ namespace ipr::impl {
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
 
-   struct Concept : impl::Decl<ipr::Concept> {
+   export struct Concept : impl::Decl<ipr::Concept> {
       impl::Parameter_list inputs;
       util::ref<const ipr::Expr> init;
       explicit Concept(const ipr::Region& r) : inputs{r, { }} { }
@@ -1968,17 +2125,7 @@ namespace ipr::impl {
       Optional<ipr::Expr> initializer() const final { return { *this }; }
    };
 
-   // For a non-defining function declaration, the parameters - if any is named
-   // or has a default argument - are stored with that particular declaration.
-   // A function definition is one that specifies the initializer (Mapping) which
-   // already has room for the named parameters or the default arguments.
-   struct fundecl_data : std::variant<impl::Parameter_list*, impl::Mapping*> {
-      ipr::FunctionTraits traits { };
-      impl::Parameter_list* parameters() const { return std::get<0>(*this); }
-      impl::Mapping* mapping() const { return std::get<1>(*this); }
-   };
-
-   struct Fundecl : impl::Decl<ipr::Fundecl> {
+   export struct Fundecl : impl::Decl<ipr::Fundecl> {
       fundecl_data data;
       util::ref<const ipr::Region> lexreg;
 
@@ -1990,13 +2137,14 @@ namespace ipr::impl {
       Optional<ipr::Expr> initializer() const final;
       const ipr::Region& lexical_region() const final { return lexreg.get(); }
    };
+}
 
-   // A heterogeneous scope is a sequence of declarations of
-   // almost of kinds.  The omitted kinds being parameters,
-   // base-class subobjects and enumerators.   Those form
-   // a homogeneous scope, implemented by homogeneous_scope.
+// ---------------------------------------
+// -- Scope, Region, user-defined types --
+// ---------------------------------------
 
-   struct Scope : immotile_node<ipr::Scope> {
+namespace ipr::impl {
+   export struct Scope : immotile_node<ipr::Scope> {
       Scope();
       const ipr::Type& type() const final { return decls; }
       const ipr::Sequence<ipr::Decl>& elements() const final { return decls.seq; }
@@ -2023,20 +2171,18 @@ namespace ipr::impl {
       decl_factory<impl::Template> primary_maps;
       decl_factory<impl::Template> secondary_maps;
 
-      template<class T> inline void add_member(T*);
+      template<class T> void add_member(T*);
    };
 
-
-   // A heterogeneous region is a region of program text that
-   // contains heterogeneous scope (as defined above).
-
-   struct Region : immotile_node<ipr::Region>, cxx_form::impl::form_factory {
+   // GCC BUG: internal compiler error in is_really_empty_class from emit_mem_initializers
+   // when this class has an explicit destructor.
+   export struct Region : immotile_node<ipr::Region>, cxx_form::impl::form_factory {
       using location_span = ipr::Region::Location_span;
       Optional<ipr::Region> parent;
       location_span extent;
       Optional<ipr::Expr> owned_by { };
       impl::Scope scope;
-      impl::ref_sequence<ipr::Expr> expr_seq;         // all the expressions making up the body.
+      impl::ref_sequence<ipr::Expr> expr_seq;
 
       const ipr::Region& enclosing() const final { return parent.get(); }
       const ipr::Sequence<ipr::Expr>& body() const final { return expr_seq; }
@@ -2047,7 +2193,6 @@ namespace ipr::impl {
 
       impl::Region* make_subregion();
 
-      // Convenient functions, forwarding to those of SCOPE.
       impl::Alias* declare_alias(const ipr::Name& n, const ipr::Type& t)
       {
          return scope.make_alias(n, t);
@@ -2095,13 +2240,11 @@ namespace ipr::impl {
       stable_farm<Region> subregions;
    };
 
-
-   // Implement common operations for user-defined types.  The case
-   // of enums is handled separately because its body is a
-   // homogeneous region.
-
+   // Implement common operations for user-defined types.
    template<class Interface>
    struct Udt : impl::Type<Interface> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Udt() = default;
       Region body;
       Optional<ipr::Name> id;
       explicit Udt(const ipr::Region* pr) : body(pr)
@@ -2168,7 +2311,7 @@ namespace ipr::impl {
       }
    };
 
-   struct Enum : impl::Type<ipr::Enum> {
+   export struct Enum : impl::Type<ipr::Enum> {
       Optional<ipr::Type> underlying;
       homogeneous_region<impl::Enumerator, obj_sequence> body;
       Optional<ipr::Name> id;
@@ -2184,17 +2327,23 @@ namespace ipr::impl {
       impl::Enumerator* add_member(const ipr::Name&);
    };
 
-   struct Union : Udt<ipr::Union> {
+   export struct Union : Udt<ipr::Union> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Union() = default;
       explicit Union(const ipr::Region&);
       const ipr::Type& type() const final;
    };
 
-   struct Namespace : Udt<ipr::Namespace> {
+   export struct Namespace : Udt<ipr::Namespace> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Namespace() = default;
       explicit Namespace(const ipr::Region*);
       const ipr::Type& type() const final;
    };
 
-   struct Class : impl::Udt<ipr::Class> {
+   export struct Class : impl::Udt<ipr::Class> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Class() = default;
       homogeneous_region<impl::Base_type> base_subobjects;
       explicit Class(const ipr::Region&);
       const ipr::Type& type() const final;
@@ -2202,29 +2351,217 @@ namespace ipr::impl {
       impl::Base_type* declare_base(const ipr::Type&);
    };
 
-   struct Auto : impl::Composite<ipr::Auto> {
+   export struct Auto : impl::Composite<ipr::Auto> {
    };
 
-   struct Closure : impl::Udt<ipr::Closure> {
+   export struct Closure : impl::Udt<ipr::Closure> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Closure() = default;
       impl::obj_list<impl::Capture> captures;
       explicit Closure(const ipr::Region&);
       const ipr::Type& type() const final;
       const ipr::Sequence<ipr::Capture>& members() const final { return captures; }
    };
+}
 
-   // This class is responsible for creating nodes that
-   // represent types.  It is responsible for the storage
-   // management that is implied.  Notice that the type nodes
-   // created by this class may need additional processing such
-   // as setting their types (as expressions) and their names.
+// -------------------------------
+// -- Directives and statements --
+// -------------------------------
 
-   struct type_factory {
+namespace ipr::impl {
+   export struct Specifiers_spread : impl::Directive<ipr::Specifiers_spread, Phases::Elaboration> {
+      impl::ref_sequence<cxx_form::Proclamator> proc_seq;
+      ipr::Specifiers specs { };
+
+      const ipr::Sequence<cxx_form::Proclamator>& targets() const final { return proc_seq; }
+      ipr::Specifiers specifiers() const final { return specs; }
+   };
+
+   export struct Structured_binding : impl::Directive<ipr::Structured_binding, Phases::Elaboration> {
+      impl::ref_sequence<ipr::Identifier> ids;
+      util::ref<const ipr::Expr> init;
+      impl::ref_sequence<ipr::Decl> decl_seq;
+      ipr::Specifiers specs { };
+      ipr::Binding_mode binding_mode { };
+
+      ipr::Specifiers specifiers() const final { return specs; }
+      ipr::Binding_mode mode() const final { return binding_mode; }
+      const ipr::Sequence<ipr::Identifier>& names() const final { return ids; }
+      const ipr::Expr& initializer() const final { return init.get(); }
+      const ipr::Sequence<ipr::Decl>& bindings() const final { return decl_seq; }
+   };
+
+   export struct single_using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
+      single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
+      const ipr::Sequence<Designator>& designators() const final { return what; }
+   private:
+      singleton_obj<Designator> what;
+   };
+
+   export struct Using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
+      impl::obj_list<Designator> seq;
+
+      const ipr::Sequence<Designator>& designators() const final { return seq; }
+   };
+
+   export struct Using_directive : impl::Directive<ipr::Using_directive, Phases::Elaboration> {
+      explicit Using_directive(const ipr::Scope&);
+      const ipr::Scope& nominated_scope() const final { return scope; }
+   private:
+      const ipr::Scope& scope;
+   };
+
+   export struct Phased_evaluation : immotile_node<ipr::Phased_evaluation> {
+      Phased_evaluation(const ipr::Expr& x, Phases f) : expr{x}, ph{f} { }
+      Phases phases() const final { return ph; }
+      const ipr::Expr& expression() const final { return expr; }
+   private:
+      const ipr::Expr& expr;
+      Phases ph;
+   };
+
+   export struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
+      obj_list<impl::Token> tokens;
+      const ipr::Sequence<ipr::Token>& operand() const final { return tokens; }
+   };
+
+   export using Ctor_body = impl::Basic_binary<impl::Stmt<impl::Expr<ipr::Ctor_body>>>;
+   export using Do = Controlled_stmt<ipr::Do>;
+   export using Expr_stmt = impl::Unary_node<impl::Stmt<ipr::Expr_stmt>>;
+   export using Goto = impl::Unary_node<impl::Stmt<ipr::Goto>>;
+   export using If = Ternary<Stmt<Expr<ipr::If>>>;
+   export using Labeled_stmt = impl::Binary_node<impl::Stmt<ipr::Labeled_stmt>>;
+   export using Return = impl::Basic_unary<impl::Stmt<impl::Expr<ipr::Return>>>;
+   export using Switch = Controlled_stmt<ipr::Switch>;
+   export using While = Controlled_stmt<ipr::While>;
+
+   export struct EH_parameter : unique_decl<ipr::EH_parameter> {
+      EH_parameter(const ipr::Region&, const ipr::Name&, const ipr::Type&);
+      const ipr::Name& name() const final { return id; }
+      const ipr::Type& type() const final { return typing; }
+      const ipr::Region& home_region() const final { return home; }
+      const ipr::Region& lexical_region() const final { return home; }
+   private:
+      const ipr::Name& id;
+      const ipr::Type& typing;
+      const ipr::Region& home;
+   };
+
+   export struct handler_block : impl::Stmt<impl::Expr<ipr::Block>> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~handler_block() = default;
+      impl::Region lexical_region;
+      handler_block(const ipr::Region&);
+      const ipr::Region& region() const final { return lexical_region; }
+      const ipr::Sequence<ipr::Handler>& handlers() const final { return none; }
+
+      impl::Scope* scope() { return &lexical_region.scope; }
+      void add_stmt(const ipr::Expr& s)
+      {
+         lexical_region.expr_seq.push_back(&s);
+      }
+   private:
+      impl::empty_sequence<ipr::Handler> none;
+   };
+
+   export struct eh_region : homogeneous_region<impl::EH_parameter, singleton_obj> {
+      using base = homogeneous_region<impl::EH_parameter, singleton_obj>;
+      using base::base;
+      const ipr::EH_parameter& parameter() const { return scope.decls.seq.element(); }
+    };
+
+   export struct Handler : immotile_stmt<ipr::Handler> {
+      Handler(const ipr::Region&, const ipr::Name&, const ipr::Type&);
+      const ipr::Type& type() const final { return block.type(); }
+      const ipr::EH_parameter& exception() const final { return eh.parameter(); }
+      const ipr::Block& body() const final { return block; }
+      impl::handler_block& body() { return block; }
+   private:
+      eh_region eh;
+      impl::handler_block block;
+   };
+
+   export struct Block : impl::Stmt<Expr<ipr::Block>> {
+      impl::Region lexical_region;
+      explicit Block(const ipr::Region&);
+      const ipr::Region& region() const final { return lexical_region; }
+      const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
+
+      impl::Scope* scope() { return &lexical_region.scope; }
+      impl::Handler* new_handler(const ipr::Name&, const ipr::Type&);
+      void add_stmt(const ipr::Expr& s)
+      {
+         lexical_region.expr_seq.push_back(&s);
+      }
+   private:
+      impl::obj_list<impl::Handler> handler_seq;
+   };
+
+   export struct For : immotile_stmt<ipr::For> {
+      util::ref<const ipr::Expr> init;
+      util::ref<const ipr::Expr> cond;
+      util::ref<const ipr::Expr> inc;
+      util::ref<const ipr::Stmt> stmt;
+
+      For();
+      const ipr::Type& type() const final { return body().type(); }
+      const ipr::Expr& initializer() const final { return init.get(); }
+      const ipr::Expr& condition() const final { return cond.get(); }
+      const ipr::Expr& increment() const final { return inc.get(); }
+      const ipr::Stmt& body() const final { return stmt.get(); }
+   };
+
+   export struct For_in : immotile_stmt<ipr::For_in> {
+      util::ref<const ipr::Var> var;
+      util::ref<const ipr::Expr> seq;
+      util::ref<const ipr::Stmt> stmt;
+
+      For_in();
+      const ipr::Type& type() const final { return body().type(); }
+      const ipr::Var& variable() const final { return var.get(); }
+      const ipr::Expr& sequence() const final { return seq.get(); }
+      const ipr::Stmt& body() const final { return stmt.get(); }
+   };
+
+   export struct Break : immotile_stmt<ipr::Break> {
+      util::ref<const ipr::Stmt> stmt;
+      Break();
+      const ipr::Type& type() const final;
+      const ipr::Stmt& from() const final { return stmt.get(); }
+   };
+
+   export struct Continue : immotile_stmt<ipr::Continue> {
+      util::ref<const ipr::Stmt> stmt;
+      Continue();
+      const ipr::Type& type() const final;
+      const ipr::Stmt& iteration() const final { return stmt.get(); }
+   };
+
+   export struct Where : immotile_node<ipr::Where> {
+      impl::Region region;
+      util::ref<const ipr::Expr> result;
+
+      explicit Where(const ipr::Region&);
+      const ipr::Expr& first() const final { return result.get(); }
+      const ipr::Scope& second() const final { return region.bindings(); }
+   };
+
+   export struct Static_assert : impl::Binary_node<ipr::Static_assert> {
+      Static_assert(const ipr::Expr&, Optional<ipr::String>);
+      const ipr::Type& type() const final;
+   };
+}
+
+// ---------------------------
+// -- Factories and Lexicon --
+// ---------------------------
+
+namespace ipr::impl {
+   export struct type_factory {
       const ipr::Transfer& get_transfer_from_linkage(const ipr::Language_linkage&);
       const ipr::Transfer& get_transfer_from_convention(const ipr::Calling_convention&);
       const ipr::Transfer& get_transfer(const ipr::Language_linkage&, const ipr::Calling_convention&);
 
-      // Build an IPR node for an expression that denotes a type.
-      // The transfer protocol, if not specified, is assumed to be C++.
       const ipr::As_type& get_as_type(const ipr::Identifier&);
       const ipr::As_type& get_as_type(const ipr::Expr&);
       const ipr::As_type& get_as_type(const ipr::Expr&, const ipr::Transfer&);
@@ -2284,227 +2621,7 @@ namespace ipr::impl {
       stable_farm<impl::Auto> autos;
    };
 
-   // -- Implementation of directives --
-   struct Specifiers_spread : impl::Directive<ipr::Specifiers_spread, Phases::Elaboration> {
-      impl::ref_sequence<cxx_form::Proclamator> proc_seq;
-      ipr::Specifiers specs { };
-
-      const ipr::Sequence<cxx_form::Proclamator>& targets() const final { return proc_seq; }
-      ipr::Specifiers specifiers() const final { return specs; }
-   };
-
-   struct Structured_binding : impl::Directive<ipr::Structured_binding, Phases::Elaboration> {
-      impl::ref_sequence<ipr::Identifier> ids;           // names in this structured binding
-      util::ref<const ipr::Expr> init;                   // initializer of this structured binding
-      impl::ref_sequence<ipr::Decl> decl_seq;            // declarations resulting from this structured binding
-      ipr::Specifiers specs { };                         // the non-type part of decl-specifier-seq in
-                                                         // this structured binding.  Note: `type()` contains the
-                                                         // the type part of the decl-specifier-seq
-      ipr::Binding_mode binding_mode { };                // the binding mode of this structured binding
-
-      ipr::Specifiers specifiers() const final { return specs; }
-      ipr::Binding_mode mode() const final { return binding_mode; }
-      const ipr::Sequence<ipr::Identifier>& names() const final { return ids; }
-      const ipr::Expr& initializer() const final { return init.get(); }
-      const ipr::Sequence<ipr::Decl>& bindings() const final { return decl_seq; }
-   };
-
-   // Implementation of ipr::Using_declaration in case where using-declarator-list is a singleton.
-   struct single_using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
-      single_using_declaration(const ipr::Scope_ref&, Designator::Mode);
-      const ipr::Sequence<Designator>& designators() const final { return what; }
-   private:
-      singleton_obj<Designator> what;
-   };
-
-   struct Using_declaration : impl::Directive<ipr::Using_declaration, Phases::Elaboration> {
-      impl::obj_list<Designator> seq;
-
-      const ipr::Sequence<Designator>& designators() const final { return seq; }
-   };
-
-   struct Using_directive : impl::Directive<ipr::Using_directive, Phases::Elaboration> {
-      explicit Using_directive(const ipr::Scope&);
-      const ipr::Scope& nominated_scope() const final { return scope; }
-   private:
-      const ipr::Scope& scope;
-   };
-
-   // -- impl::Phased_evaluation
-   struct Phased_evaluation : immotile_node<ipr::Phased_evaluation> {
-      Phased_evaluation(const ipr::Expr& x, Phases f) : expr{x}, ph{f} { }
-      Phases phases() const final { return ph; }
-      const ipr::Expr& expression() const final { return expr; }
-   private:
-      const ipr::Expr& expr;
-      Phases ph;
-   };
-
-   struct Pragma : impl::Directive<ipr::Pragma, Phases::All> {
-      obj_list<impl::Token> tokens;
-      const ipr::Sequence<ipr::Token>& operand() const final { return tokens; }
-   };
-
-   // ----------------------------------
-   // -- Implementation of statements --
-   // ----------------------------------
-
-   using Ctor_body = impl::Basic_binary<impl::Stmt<impl::Expr<ipr::Ctor_body>>>;
-   using Do = Controlled_stmt<ipr::Do>;
-   using Expr_stmt = impl::Unary_node<impl::Stmt<ipr::Expr_stmt>>;
-   using Goto = impl::Unary_node<impl::Stmt<ipr::Goto>>;
-   using If = Ternary<Stmt<Expr<ipr::If>>>;
-   using Labeled_stmt = impl::Binary_node<impl::Stmt<ipr::Labeled_stmt>>;
-   using Return = impl::Basic_unary<impl::Stmt<impl::Expr<ipr::Return>>>;
-   using Switch = Controlled_stmt<ipr::Switch>;
-   using While = Controlled_stmt<ipr::While>;
-
-   // -- impl::EH_parameter
-   struct EH_parameter : unique_decl<ipr::EH_parameter> {
-      EH_parameter(const ipr::Region&, const ipr::Name&, const ipr::Type&);
-      const ipr::Name& name() const final { return id; }
-      const ipr::Type& type() const final { return typing; }
-      const ipr::Region& home_region() const final { return home; }
-      const ipr::Region& lexical_region() const final { return home; }
-   private:
-      const ipr::Name& id;
-      const ipr::Type& typing;
-      const ipr::Region& home;
-   };
-
-   // -- impl::handler_block
-   // The block-statement body of a handler.  It has no associated EH handlers of its own.
-   struct handler_block : impl::Stmt<impl::Expr<ipr::Block>> {
-      impl::Region lexical_region;
-      handler_block(const ipr::Region&);
-      const ipr::Region& region() const final { return lexical_region; }
-      const ipr::Sequence<ipr::Handler>& handlers() const final { return none; }
-
-      // The scope of declarations in this block
-      impl::Scope* scope() { return &lexical_region.scope; }
-      void add_stmt(const ipr::Expr& s)
-      {
-         lexical_region.expr_seq.push_back(&s);
-      }
-   private:
-      impl::empty_sequence<ipr::Handler> none;
-   };
-
-   // -- impl::eh_region
-   // The region containing the declaration of the exception parameter of a Handler.
-   // Like for function parameter region, this region encloses the region of the
-   // ipr::Block (body) associated with the Handler.
-   // Note: the enclosing() region of this eh_region is the same as the enclosing
-   //       region() of the Block with which the Handler is associated.
-   struct eh_region : homogeneous_region<impl::EH_parameter, singleton_obj> {
-      using base = homogeneous_region<impl::EH_parameter, singleton_obj>;
-      using base::base;
-      const ipr::EH_parameter& parameter() const { return scope.decls.seq.element(); }
-    };
-
-   // -- impl::Handler
-   struct Handler : immotile_stmt<ipr::Handler> {
-      Handler(const ipr::Region&, const ipr::Name&, const ipr::Type&);
-      const ipr::Type& type() const final { return block.type(); }
-      const ipr::EH_parameter& exception() const final { return eh.parameter(); }
-      const ipr::Block& body() const final { return block; }
-      impl::handler_block& body() { return block; }
-   private:
-      eh_region eh;
-      impl::handler_block block;
-   };
-
-   // A Block holds a heterogeneous region, suitable for
-   // recording the set of declarations appearing in that
-   // block.  It also holds a sequence of handlers, when the
-   // block actually represents a C++ try-block.
-   struct Block : impl::Stmt<Expr<ipr::Block>> {
-      impl::Region lexical_region;
-      explicit Block(const ipr::Region&);
-      const ipr::Region& region() const final { return lexical_region; }
-      const ipr::Sequence<ipr::Handler>& handlers() const final { return handler_seq; }
-
-      // The scope of declarations in this block
-      impl::Scope* scope() { return &lexical_region.scope; }
-      impl::Handler* new_handler(const ipr::Name&, const ipr::Type&);
-      void add_stmt(const ipr::Expr& s)
-      {
-         lexical_region.expr_seq.push_back(&s);
-      }
-   private:
-      impl::obj_list<impl::Handler> handler_seq;
-   };
-
-
-   // A for-statement node in its most general form is a quaternry
-   // expresion; for flexibility, it is made in a way that
-   // supports settings of its components after construction.
-
-   struct For : immotile_stmt<ipr::For> {
-      util::ref<const ipr::Expr> init;
-      util::ref<const ipr::Expr> cond;
-      util::ref<const ipr::Expr> inc;
-      util::ref<const ipr::Stmt> stmt;
-
-      For();
-      const ipr::Type& type() const final { return body().type(); }
-      const ipr::Expr& initializer() const final { return init.get(); }
-      const ipr::Expr& condition() const final { return cond.get(); }
-      const ipr::Expr& increment() const final { return inc.get(); }
-      const ipr::Stmt& body() const final { return stmt.get(); }
-   };
-
-   struct For_in : immotile_stmt<ipr::For_in> {
-      util::ref<const ipr::Var> var;
-      util::ref<const ipr::Expr> seq;
-      util::ref<const ipr::Stmt> stmt;
-
-      For_in();
-      const ipr::Type& type() const final { return body().type(); }
-      const ipr::Var& variable() const final { return var.get(); }
-      const ipr::Expr& sequence() const final { return seq.get(); }
-      const ipr::Stmt& body() const final { return stmt.get(); }
-   };
-
-
-   // A Break node can record the selction- of iteration-statement it
-   // transfers control out of.
-
-   struct Break : immotile_stmt<ipr::Break> {
-      util::ref<const ipr::Stmt> stmt;
-      Break();
-      const ipr::Type& type() const final;
-      const ipr::Stmt& from() const final { return stmt.get(); }
-   };
-
-   // Like a Break, a Continue node can refer back to the
-   // iteration-statement containing it.
-   struct Continue : immotile_stmt<ipr::Continue> {
-      util::ref<const ipr::Stmt> stmt;
-      Continue();
-      const ipr::Type& type() const final;
-      const ipr::Stmt& iteration() const final { return stmt.get(); }
-   };
-
-   // Type of `Where`-nodes introducing declarations in their `attendant()` expressions.
-   // Note: See impl::Where_no_decls for the degenerated case where the `attendant()`
-   //       is just a classic expression, with no declaration introduced.
-   struct Where : immotile_node<ipr::Where> {
-      impl::Region region;                            // hosts the declarations in the `attendant()`.
-      util::ref<const ipr::Expr> result;              // the `main()` expression.
-
-      explicit Where(const ipr::Region&);
-      const ipr::Expr& first() const final { return result.get(); }
-      const ipr::Scope& second() const final { return region.bindings(); }
-   };
-
-   // -- impl::Static_assert
-   struct Static_assert : impl::Binary_node<ipr::Static_assert> {
-      Static_assert(const ipr::Expr&, Optional<ipr::String>);
-      const ipr::Type& type() const final;
-   };
-
-   struct name_factory {
+   export struct name_factory {
       const ipr::String& get_string(util::word_view);
       const ipr::Identifier& get_identifier(const ipr::String&);
       const ipr::Identifier& get_identifier(util::word_view);
@@ -2528,30 +2645,18 @@ namespace ipr::impl {
       util::rb_tree::container<impl::Guide_name> guide_ids;
    };
 
-   struct expr_factory : name_factory {
-      // Returns an IPR node a language linkage.
+   export struct expr_factory : name_factory {
       const ipr::Language_linkage& get_linkage(util::word_view);
       const ipr::Language_linkage& get_linkage(const ipr::String&);
-
-      // Rerturn an IPR for a calling convention.
       const ipr::Calling_convention& get_calling_convention(util::word_view);
-
-      // Return a symbol with a given name and type.
       const ipr::Symbol& get_symbol(const ipr::Name&, const ipr::Type&);
       const ipr::Symbol& get_label(const ipr::Identifier&);
-      // Return a symbolic value for `this` with a given type.
       const ipr::Symbol& get_this(const ipr::Type&);
 
       Annotation* make_annotation(const ipr::String&, const ipr::Literal&);
-
-      // Build a node for a missing expression of an unspecified type.
       Phantom* make_phantom();
-      // Build an unspecified expression node of a given type.
       const ipr::Phantom* make_phantom(const ipr::Type&);
-
       Eclipsis* make_eclipsis(const ipr::Type&);
-
-      // Returns an IPR node for a typed literal expression.
       Literal* make_literal(const ipr::Type&, const ipr::String&);
       Literal* make_literal(const ipr::Type&, util::word_view);
 
@@ -2651,7 +2756,6 @@ namespace ipr::impl {
       General_substitution* make_general_substitution();
 
    protected:
-      // Note: These factory functions are not to be called directly.  See impl::Lexicon for their equivalent.
       impl::Asm* make_asm_expr(const ipr::String&);
       impl::Static_assert* make_static_assert_expr(const ipr::Expr&, Optional<ipr::String> = { });
 
@@ -2763,7 +2867,7 @@ namespace ipr::impl {
       stable_farm<impl::General_substitution> gen_substs;
    };
 
-   struct dir_factory {
+   export struct dir_factory {
       impl::Specifiers_spread* make_specifiers_spread();
       impl::Structured_binding* make_structured_binding();
       impl::single_using_declaration* make_using_declaration(const ipr::Scope_ref&,
@@ -2782,9 +2886,7 @@ namespace ipr::impl {
       stable_farm<impl::Pragma> pragmas;
    };
 
-   // This factory class takes on the implementation burden of
-   // allocating storage for statement nodes and their constructions.
-   struct stmt_factory : expr_factory, dir_factory {
+   export struct stmt_factory : expr_factory, dir_factory {
       impl::Break* make_break();
       impl::Continue* make_continue();
       impl::Block* make_block(const ipr::Region&, Optional<ipr::Type> = { });
@@ -2820,7 +2922,7 @@ namespace ipr::impl {
    };
 
                               // -- impl::Lexicon --
-   struct Lexicon : ipr::Lexicon, type_factory, stmt_factory {
+   export struct Lexicon : ipr::Lexicon, type_factory, stmt_factory {
       Lexicon();
       ~Lexicon();
 
@@ -2862,7 +2964,6 @@ namespace ipr::impl {
 
       const ipr::Type& void_type() const final;
       const ipr::Type& bool_type() const final;
-
       const ipr::Type& char_type() const final;
       const ipr::Type& schar_type() const final;
       const ipr::Type& uchar_type() const final;
@@ -2870,25 +2971,18 @@ namespace ipr::impl {
       const ipr::Type& char8_t_type() const final;
       const ipr::Type& char16_t_type() const final;
       const ipr::Type& char32_t_type() const final;
-
       const ipr::Type& short_type() const final;
       const ipr::Type& ushort_type() const final;
-
       const ipr::Type& int_type() const final;
       const ipr::Type& uint_type() const final;
-
       const ipr::Type& long_type() const final;
       const ipr::Type& ulong_type() const final;
-
       const ipr::Type& long_long_type() const final;
       const ipr::Type& ulong_long_type() const final;
-
       const ipr::Type& float_type() const final;
       const ipr::Type& double_type() const final;
       const ipr::Type& long_double_type() const final;
-
       const ipr::Type& ellipsis_type() const final;
-
       const ipr::Type& typename_type() const final;
       const ipr::Type& class_type() const final;
       const ipr::Type& union_type() const final;
@@ -2913,10 +3007,18 @@ namespace ipr::impl {
       stable_farm<impl::Token> tokens;
       util::rb_tree::container<ref_sequence<ipr::Expr>> expr_seqs;
    };
+}
 
-   template<typename T>
+// -----------------------------------
+// -- Translation units and modules --
+// -----------------------------------
+
+namespace ipr::impl {
+   export template<typename T>
    struct unit_base : T {
       using Interface = T;
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~unit_base() = default;
       unit_base(impl::Lexicon& l)
             : context{ l },
                global_ns{nullptr}
@@ -2946,8 +3048,10 @@ namespace ipr::impl {
       ref_sequence<ipr::Module> modules_imported;
    };
 
-   template<typename T>
+   export template<typename T>
    struct basic_unit : unit_base<T> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~basic_unit() = default;
       const ipr::Module& parent;
       impl::ref_sequence<ipr::Decl> owned_decls;
 
@@ -2960,10 +3064,12 @@ namespace ipr::impl {
       }
    };
 
-   using Translation_unit = unit_base<ipr::Translation_unit>;
-   using Module_unit = basic_unit<ipr::Module_unit>;
+   export using Translation_unit = unit_base<ipr::Translation_unit>;
+   export using Module_unit = basic_unit<ipr::Module_unit>;
 
-   struct Interface_unit : basic_unit<ipr::Interface_unit> {
+   export struct Interface_unit : basic_unit<ipr::Interface_unit> {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Interface_unit() = default;
       impl::ref_sequence<ipr::Module> modules_exported;
       impl::ref_sequence<ipr::Decl> decls_exported;
 
@@ -2972,7 +3078,9 @@ namespace ipr::impl {
       const ipr::Sequence<ipr::Decl>& exported_declarations() const final;
    };
 
-   struct Module : ipr::Module {
+   export struct Module : ipr::Module {
+      // GCC BUG workaround: cross-module protected destructor not seen as accessible.
+      ~Module() = default;
       using ImplUnits = impl::obj_list<impl::Module_unit>;
       impl::Lexicon& lexicon;
       impl::Module_name stems;
@@ -2986,5 +3094,3 @@ namespace ipr::impl {
       impl::Module_unit* make_unit();
    };
 }
-
-#endif
