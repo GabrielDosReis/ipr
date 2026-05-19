@@ -6,11 +6,8 @@
 //
 // Module implementation unit for cxx.ipr.
 // Contains out-of-line definitions of functions declared in the module
-// interface whose definitions depend on implementation types from <ipr/impl>.
-//
-// TEMPORARY: This file exists because the implementation layer (<ipr/impl>)
-// is not yet modularized.  Once <ipr/impl> becomes a module, these definitions
-// should move to its module implementation unit.
+// interface: Visitor::visit() default forwarding hooks, and
+// String::empty_string().
 
 module;
 
@@ -18,23 +15,12 @@ module;
 
 module cxx.ipr;
 
-// Minimal replica of impl::Node<T> — just enough to define
-// String::empty_string().  The full <ipr/impl> is not included here to
-// avoid duplicate definitions with impl.cxx.
-// TEMPORARY: This workaround disappears when <ipr/impl> is modularized.
-namespace ipr::impl {
-    template<typename T>
-    struct Node : T {
-        using Interface = T;
-        void accept(ipr::Visitor& v) const final { v.visit(*this); }
-    };
-}
-
 namespace ipr {
     const String& String::empty_string()
     {
-        struct Empty_string final : impl::Node<String> {
+        struct Empty_string final : String {
             constexpr util::word_view characters() const final { return u8""; }
+            void accept(Visitor& v) const final { v.visit(*this); }
         };
 
         static constexpr Empty_string empty { };

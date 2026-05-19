@@ -30,7 +30,6 @@ add_library(${PROJECT_NAME}
    src/cxx-ipr-io.cxx
    src/cxx-ipr-traversal.cxx
    src/input.cxx
-   src/utility.cxx
    src/cxx-ipr.cxx
 )
 
@@ -42,6 +41,7 @@ target_sources(${PROJECT_NAME}
          src/cxx-ipr.ixx
          src/cxx-ipr-traversal.ixx
          src/cxx-ipr-io.ixx
+         src/cxx-ipr-impl.ixx
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -51,10 +51,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_sources(${PROJECT_NAME}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/include/ipr/impl
         ${PROJECT_SOURCE_DIR}/include/ipr/lexer
         ${PROJECT_SOURCE_DIR}/include/ipr/node-category
-        ${PROJECT_SOURCE_DIR}/include/ipr/utility-impl
         ${PROJECT_SOURCE_DIR}/include/ipr/input
         ${PROJECT_SOURCE_DIR}/3rdparty/doctest/doctest.h
 )

@@ -1,14 +1,11 @@
 #include <doctest/doctest.h>
 
-#include <ipr/std-preamble>
+#include <algorithm>
 #include <ctime>
 #include <ranges>
 #include <sstream>
 
-import cxx.ipr;
-
-#include <ipr/impl>
-#include <ipr/utility-impl>
+import cxx.ipr.impl;
 
 const std::vector<std::u8string_view> specs {
     u8"export",

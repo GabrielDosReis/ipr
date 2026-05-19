@@ -3,6 +3,11 @@
 // Written by Gabriel Dos Reis.
 // See LICENSE for copyright and license notices.
 //
+// Module implementation unit for cxx.ipr.impl.
+// Contains out-of-line definitions for factory methods, constructors,
+// scope operations, Lexicon members, and util::string/string::arena.
+
+module;
 
 #include <ipr/std-preamble>
 #include <array>
@@ -11,10 +16,9 @@
 #include <cstring>
 #include <typeinfo>
 
-import cxx.ipr;
-import cxx.ipr.traversal;   // for util::view
+module cxx.ipr.impl;
 
-#include <ipr/impl>
+import cxx.ipr.traversal;   // for util::view
 
 // -- invisible logogram
 // A invisible logogram is a logogram designated by the empty string.
@@ -551,13 +555,6 @@ namespace ipr::impl {
       impl::overload_entry*
       Overload::lookup(const ipr::Type& t) const {
          return  entries.find(t, node_compare());
-      }
-
-      template<class T>
-      void
-      Overload::push_back(master_decl_data<T>* data) {
-         entries.insert(data, node_compare());
-         masters.push_back(data);
       }
 
       // -- Directives --
@@ -1467,7 +1464,7 @@ namespace ipr::impl {
       }
 
       template<class T>
-      inline void
+      void
       Scope::add_member(T* decl)
       {
          decls.seq.push_back(decl);
@@ -2532,35 +2529,78 @@ namespace ipr::impl {
       }
 }
 
+// ------------------------------------------
+// -- util::string and util::string::arena --
+// ------------------------------------------
 
-/*
-#include <ipr/impl>
-#include <ipr/io>
-#include <iostream>
+namespace ipr::util {
+   char
+   string::operator[](string::size_type i) const
+   {
+      if (i < 0 or i >= length)
+         throw std::domain_error("invalid index for util::string::operator[]");
+      return data[i];
+   }
 
-int main()
-{
-   using namespace ipr;
-   impl::Lexicon lexicon { };
-   impl::Translation_unit unit { lexicon };   // current translation unit
+   string::arena::arena()
+         : mem(static_cast<pool*>(operator new(poolsz))),
+           next_header(mem->storage)
+   {
+      mem->previous = nullptr;
+   }
 
-   impl::Scope* global_scope = unit.global_scope();
+   string::arena::~arena()
+   {
+      while (mem != nullptr) {
+         pool* cur = mem;
+         mem = mem->previous;
+         operator delete (cur);
+      }
+   }
 
-   // Build the variable's name,
-   auto& name = lexicon.get_identifier(u8"bufsz");
-   // then its type,
-   auto& type = lexicon.get_qualified(lexicon.const_qualifier(), lexicon.int_type());
-   // and the actual impl::Var node,
-   impl::Var* var = global_scope->make_var(name, type);
-   // set its initializer,
-   var->init = lexicon.make_literal(lexicon.int_type(), u8"1024");
-   // and inject it into its scope.
+   // Allocate storage sufficient to hold an immutable string of length "n".
+   string*
+   string::arena::allocate(size_type n)
+   {
+      const auto m = (n - string::padding_count + headersz - 1) / headersz + 1;
+      string* header{};
 
-   // Print out the whole translation unit
-   Printer pp { std::cout };
-   pp << unit;
-   std::cout << std::endl;
+      // If we have enough space left, just grab it.
+      if (m <= remaining_header_count()) {
+         header = next_header;
+         next_header += m;
+      }
+      // If we need to allocate storage more than what can possibly fit
+      // in a fresh pool object, just allocate that string on its own.
+      else if (n > bufsz) {
+         pool* new_pool = static_cast<pool*>
+            (operator new(poolsz + (n - bufsz)));
+         header = new_pool->storage;
 
+         new_pool->previous = mem->previous;
+         mem->previous = new_pool;
+      }
+      // Not enough space left.  Take the bet that there does not
+      // remain sufficient room in the buffer.  This is likely so if
+      // the buffer is allocated sufficiently large to start with.
+      else {
+         pool* new_pool = static_cast<pool*>(operator new(poolsz));
+         new_pool->previous = mem;
+         mem = new_pool;
+
+         header = mem->storage;
+         next_header = header + m;
+      }
+
+      return header;
+   }
+
+   const string*
+   string::arena::make_string(const char8_t* s, size_type n)
+   {
+      string* header = allocate(n);
+      header->length = n;
+      std::copy(s, s + n, &header->data[0]);
+      return header;
+   }
 }
-
-*/
